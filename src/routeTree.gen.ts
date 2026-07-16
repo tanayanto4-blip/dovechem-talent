@@ -11,7 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CandidatePortalRouteImport } from './routes/candidate.portal'
 import { Route as CandidateLoginRouteImport } from './routes/candidate.login'
+import { Route as CandidatePortalIndexRouteImport } from './routes/candidate.portal.index'
+import { Route as CandidatePortalTestsRouteImport } from './routes/candidate.portal.tests'
+import { Route as CandidatePortalDataRouteImport } from './routes/candidate.portal.data'
+import { Route as CandidatePortalBerkasRouteImport } from './routes/candidate.portal.berkas'
+import { Route as CandidatePortalTestTestIdRouteImport } from './routes/candidate.portal.test.$testId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -23,40 +29,116 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CandidatePortalRoute = CandidatePortalRouteImport.update({
+  id: '/candidate/portal',
+  path: '/candidate/portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CandidateLoginRoute = CandidateLoginRouteImport.update({
   id: '/candidate/login',
   path: '/candidate/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CandidatePortalIndexRoute = CandidatePortalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CandidatePortalRoute,
+} as any)
+const CandidatePortalTestsRoute = CandidatePortalTestsRouteImport.update({
+  id: '/tests',
+  path: '/tests',
+  getParentRoute: () => CandidatePortalRoute,
+} as any)
+const CandidatePortalDataRoute = CandidatePortalDataRouteImport.update({
+  id: '/data',
+  path: '/data',
+  getParentRoute: () => CandidatePortalRoute,
+} as any)
+const CandidatePortalBerkasRoute = CandidatePortalBerkasRouteImport.update({
+  id: '/berkas',
+  path: '/berkas',
+  getParentRoute: () => CandidatePortalRoute,
+} as any)
+const CandidatePortalTestTestIdRoute =
+  CandidatePortalTestTestIdRouteImport.update({
+    id: '/test/$testId',
+    path: '/test/$testId',
+    getParentRoute: () => CandidatePortalRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/candidate/login': typeof CandidateLoginRoute
+  '/candidate/portal': typeof CandidatePortalRouteWithChildren
+  '/candidate/portal/berkas': typeof CandidatePortalBerkasRoute
+  '/candidate/portal/data': typeof CandidatePortalDataRoute
+  '/candidate/portal/tests': typeof CandidatePortalTestsRoute
+  '/candidate/portal/': typeof CandidatePortalIndexRoute
+  '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/candidate/login': typeof CandidateLoginRoute
+  '/candidate/portal/berkas': typeof CandidatePortalBerkasRoute
+  '/candidate/portal/data': typeof CandidatePortalDataRoute
+  '/candidate/portal/tests': typeof CandidatePortalTestsRoute
+  '/candidate/portal': typeof CandidatePortalIndexRoute
+  '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/candidate/login': typeof CandidateLoginRoute
+  '/candidate/portal': typeof CandidatePortalRouteWithChildren
+  '/candidate/portal/berkas': typeof CandidatePortalBerkasRoute
+  '/candidate/portal/data': typeof CandidatePortalDataRoute
+  '/candidate/portal/tests': typeof CandidatePortalTestsRoute
+  '/candidate/portal/': typeof CandidatePortalIndexRoute
+  '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/candidate/login'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/candidate/login'
+    | '/candidate/portal'
+    | '/candidate/portal/berkas'
+    | '/candidate/portal/data'
+    | '/candidate/portal/tests'
+    | '/candidate/portal/'
+    | '/candidate/portal/test/$testId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/candidate/login'
-  id: '__root__' | '/' | '/auth' | '/candidate/login'
+  to:
+    | '/'
+    | '/auth'
+    | '/candidate/login'
+    | '/candidate/portal/berkas'
+    | '/candidate/portal/data'
+    | '/candidate/portal/tests'
+    | '/candidate/portal'
+    | '/candidate/portal/test/$testId'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/candidate/login'
+    | '/candidate/portal'
+    | '/candidate/portal/berkas'
+    | '/candidate/portal/data'
+    | '/candidate/portal/tests'
+    | '/candidate/portal/'
+    | '/candidate/portal/test/$testId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   CandidateLoginRoute: typeof CandidateLoginRoute
+  CandidatePortalRoute: typeof CandidatePortalRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -75,6 +157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/candidate/portal': {
+      id: '/candidate/portal'
+      path: '/candidate/portal'
+      fullPath: '/candidate/portal'
+      preLoaderRoute: typeof CandidatePortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/candidate/login': {
       id: '/candidate/login'
       path: '/candidate/login'
@@ -82,13 +171,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CandidateLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/candidate/portal/': {
+      id: '/candidate/portal/'
+      path: '/'
+      fullPath: '/candidate/portal/'
+      preLoaderRoute: typeof CandidatePortalIndexRouteImport
+      parentRoute: typeof CandidatePortalRoute
+    }
+    '/candidate/portal/tests': {
+      id: '/candidate/portal/tests'
+      path: '/tests'
+      fullPath: '/candidate/portal/tests'
+      preLoaderRoute: typeof CandidatePortalTestsRouteImport
+      parentRoute: typeof CandidatePortalRoute
+    }
+    '/candidate/portal/data': {
+      id: '/candidate/portal/data'
+      path: '/data'
+      fullPath: '/candidate/portal/data'
+      preLoaderRoute: typeof CandidatePortalDataRouteImport
+      parentRoute: typeof CandidatePortalRoute
+    }
+    '/candidate/portal/berkas': {
+      id: '/candidate/portal/berkas'
+      path: '/berkas'
+      fullPath: '/candidate/portal/berkas'
+      preLoaderRoute: typeof CandidatePortalBerkasRouteImport
+      parentRoute: typeof CandidatePortalRoute
+    }
+    '/candidate/portal/test/$testId': {
+      id: '/candidate/portal/test/$testId'
+      path: '/test/$testId'
+      fullPath: '/candidate/portal/test/$testId'
+      preLoaderRoute: typeof CandidatePortalTestTestIdRouteImport
+      parentRoute: typeof CandidatePortalRoute
+    }
   }
 }
+
+interface CandidatePortalRouteChildren {
+  CandidatePortalBerkasRoute: typeof CandidatePortalBerkasRoute
+  CandidatePortalDataRoute: typeof CandidatePortalDataRoute
+  CandidatePortalTestsRoute: typeof CandidatePortalTestsRoute
+  CandidatePortalIndexRoute: typeof CandidatePortalIndexRoute
+  CandidatePortalTestTestIdRoute: typeof CandidatePortalTestTestIdRoute
+}
+
+const CandidatePortalRouteChildren: CandidatePortalRouteChildren = {
+  CandidatePortalBerkasRoute: CandidatePortalBerkasRoute,
+  CandidatePortalDataRoute: CandidatePortalDataRoute,
+  CandidatePortalTestsRoute: CandidatePortalTestsRoute,
+  CandidatePortalIndexRoute: CandidatePortalIndexRoute,
+  CandidatePortalTestTestIdRoute: CandidatePortalTestTestIdRoute,
+}
+
+const CandidatePortalRouteWithChildren = CandidatePortalRoute._addFileChildren(
+  CandidatePortalRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   CandidateLoginRoute: CandidateLoginRoute,
+  CandidatePortalRoute: CandidatePortalRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

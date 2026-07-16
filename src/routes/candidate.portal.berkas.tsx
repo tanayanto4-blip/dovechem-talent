@@ -80,7 +80,7 @@ function FileRow({ ft, existing, onFile }: any) {
           <div className="text-xs text-muted-foreground">{existing ? existing.file_name : ft.desc}</div>
         </div>
       </div>
-      <input ref={ref} type="file" hidden accept=".pdf,.jpg,.jpeg,.png" onChange={async (e) => {
+      <input ref={ref} type="file" hidden accept=".pdf,.jpg,.jpeg,.png" onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
         const f = e.target.files?.[0]; if (!f) return;
         setBusy(true); await onFile(f); setBusy(false);
         if (ref.current) ref.current.value = "";
