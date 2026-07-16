@@ -59,7 +59,7 @@ function BerkasPage() {
       </CardHeader>
       <CardContent className="space-y-3">
         {FILE_TYPES.map((ft) => (
-          <FileRow key={ft.key} ft={ft} existing={uploaded.get(ft.key)} onFile={(f) => handleFile(ft.key, f)} />
+          <FileRow key={ft.key} ft={ft} existing={uploaded.get(ft.key)} onFile={(f: File) => handleFile(ft.key, f)} />
         ))}
       </CardContent>
     </Card>
