@@ -9,38 +9,215 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CandidatePortalRouteImport } from './routes/candidate.portal'
+import { Route as CandidateLoginRouteImport } from './routes/candidate.login'
+import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
+import { Route as AdminCodesRouteImport } from './routes/admin.codes'
+import { Route as AdminCandidatesRouteImport } from './routes/admin.candidates'
+import { Route as CandidatePortalIndexRouteImport } from './routes/candidate.portal.index'
+import { Route as CandidatePortalTestsRouteImport } from './routes/candidate.portal.tests'
+import { Route as CandidatePortalDataRouteImport } from './routes/candidate.portal.data'
+import { Route as CandidatePortalBerkasRouteImport } from './routes/candidate.portal.berkas'
+import { Route as AdminCandidatesIdRouteImport } from './routes/admin.candidates.$id'
+import { Route as CandidatePortalTestTestIdRouteImport } from './routes/candidate.portal.test.$testId'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CandidatePortalRoute = CandidatePortalRouteImport.update({
+  id: '/candidate/portal',
+  path: '/candidate/portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CandidateLoginRoute = CandidateLoginRouteImport.update({
+  id: '/candidate/login',
+  path: '/candidate/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCodesRoute = AdminCodesRouteImport.update({
+  id: '/codes',
+  path: '/codes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCandidatesRoute = AdminCandidatesRouteImport.update({
+  id: '/candidates',
+  path: '/candidates',
+  getParentRoute: () => AdminRoute,
+} as any)
+const CandidatePortalIndexRoute = CandidatePortalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CandidatePortalRoute,
+} as any)
+const CandidatePortalTestsRoute = CandidatePortalTestsRouteImport.update({
+  id: '/tests',
+  path: '/tests',
+  getParentRoute: () => CandidatePortalRoute,
+} as any)
+const CandidatePortalDataRoute = CandidatePortalDataRouteImport.update({
+  id: '/data',
+  path: '/data',
+  getParentRoute: () => CandidatePortalRoute,
+} as any)
+const CandidatePortalBerkasRoute = CandidatePortalBerkasRouteImport.update({
+  id: '/berkas',
+  path: '/berkas',
+  getParentRoute: () => CandidatePortalRoute,
+} as any)
+const AdminCandidatesIdRoute = AdminCandidatesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminCandidatesRoute,
+} as any)
+const CandidatePortalTestTestIdRoute =
+  CandidatePortalTestTestIdRouteImport.update({
+    id: '/test/$testId',
+    path: '/test/$testId',
+    getParentRoute: () => CandidatePortalRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/admin/candidates': typeof AdminCandidatesRouteWithChildren
+  '/admin/codes': typeof AdminCodesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/candidate/login': typeof CandidateLoginRoute
+  '/candidate/portal': typeof CandidatePortalRouteWithChildren
+  '/admin/candidates/$id': typeof AdminCandidatesIdRoute
+  '/candidate/portal/berkas': typeof CandidatePortalBerkasRoute
+  '/candidate/portal/data': typeof CandidatePortalDataRoute
+  '/candidate/portal/tests': typeof CandidatePortalTestsRoute
+  '/candidate/portal/': typeof CandidatePortalIndexRoute
+  '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/admin/candidates': typeof AdminCandidatesRouteWithChildren
+  '/admin/codes': typeof AdminCodesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/candidate/login': typeof CandidateLoginRoute
+  '/admin/candidates/$id': typeof AdminCandidatesIdRoute
+  '/candidate/portal/berkas': typeof CandidatePortalBerkasRoute
+  '/candidate/portal/data': typeof CandidatePortalDataRoute
+  '/candidate/portal/tests': typeof CandidatePortalTestsRoute
+  '/candidate/portal': typeof CandidatePortalIndexRoute
+  '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/admin/candidates': typeof AdminCandidatesRouteWithChildren
+  '/admin/codes': typeof AdminCodesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/candidate/login': typeof CandidateLoginRoute
+  '/candidate/portal': typeof CandidatePortalRouteWithChildren
+  '/admin/candidates/$id': typeof AdminCandidatesIdRoute
+  '/candidate/portal/berkas': typeof CandidatePortalBerkasRoute
+  '/candidate/portal/data': typeof CandidatePortalDataRoute
+  '/candidate/portal/tests': typeof CandidatePortalTestsRoute
+  '/candidate/portal/': typeof CandidatePortalIndexRoute
+  '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/admin/candidates'
+    | '/admin/codes'
+    | '/admin/dashboard'
+    | '/candidate/login'
+    | '/candidate/portal'
+    | '/admin/candidates/$id'
+    | '/candidate/portal/berkas'
+    | '/candidate/portal/data'
+    | '/candidate/portal/tests'
+    | '/candidate/portal/'
+    | '/candidate/portal/test/$testId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/admin/candidates'
+    | '/admin/codes'
+    | '/admin/dashboard'
+    | '/candidate/login'
+    | '/admin/candidates/$id'
+    | '/candidate/portal/berkas'
+    | '/candidate/portal/data'
+    | '/candidate/portal/tests'
+    | '/candidate/portal'
+    | '/candidate/portal/test/$testId'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/auth'
+    | '/admin/candidates'
+    | '/admin/codes'
+    | '/admin/dashboard'
+    | '/candidate/login'
+    | '/candidate/portal'
+    | '/admin/candidates/$id'
+    | '/candidate/portal/berkas'
+    | '/candidate/portal/data'
+    | '/candidate/portal/tests'
+    | '/candidate/portal/'
+    | '/candidate/portal/test/$testId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  CandidateLoginRoute: typeof CandidateLoginRoute
+  CandidatePortalRoute: typeof CandidatePortalRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +225,139 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/candidate/portal': {
+      id: '/candidate/portal'
+      path: '/candidate/portal'
+      fullPath: '/candidate/portal'
+      preLoaderRoute: typeof CandidatePortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/candidate/login': {
+      id: '/candidate/login'
+      path: '/candidate/login'
+      fullPath: '/candidate/login'
+      preLoaderRoute: typeof CandidateLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/codes': {
+      id: '/admin/codes'
+      path: '/codes'
+      fullPath: '/admin/codes'
+      preLoaderRoute: typeof AdminCodesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/candidates': {
+      id: '/admin/candidates'
+      path: '/candidates'
+      fullPath: '/admin/candidates'
+      preLoaderRoute: typeof AdminCandidatesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/candidate/portal/': {
+      id: '/candidate/portal/'
+      path: '/'
+      fullPath: '/candidate/portal/'
+      preLoaderRoute: typeof CandidatePortalIndexRouteImport
+      parentRoute: typeof CandidatePortalRoute
+    }
+    '/candidate/portal/tests': {
+      id: '/candidate/portal/tests'
+      path: '/tests'
+      fullPath: '/candidate/portal/tests'
+      preLoaderRoute: typeof CandidatePortalTestsRouteImport
+      parentRoute: typeof CandidatePortalRoute
+    }
+    '/candidate/portal/data': {
+      id: '/candidate/portal/data'
+      path: '/data'
+      fullPath: '/candidate/portal/data'
+      preLoaderRoute: typeof CandidatePortalDataRouteImport
+      parentRoute: typeof CandidatePortalRoute
+    }
+    '/candidate/portal/berkas': {
+      id: '/candidate/portal/berkas'
+      path: '/berkas'
+      fullPath: '/candidate/portal/berkas'
+      preLoaderRoute: typeof CandidatePortalBerkasRouteImport
+      parentRoute: typeof CandidatePortalRoute
+    }
+    '/admin/candidates/$id': {
+      id: '/admin/candidates/$id'
+      path: '/$id'
+      fullPath: '/admin/candidates/$id'
+      preLoaderRoute: typeof AdminCandidatesIdRouteImport
+      parentRoute: typeof AdminCandidatesRoute
+    }
+    '/candidate/portal/test/$testId': {
+      id: '/candidate/portal/test/$testId'
+      path: '/test/$testId'
+      fullPath: '/candidate/portal/test/$testId'
+      preLoaderRoute: typeof CandidatePortalTestTestIdRouteImport
+      parentRoute: typeof CandidatePortalRoute
+    }
   }
 }
 
+interface AdminCandidatesRouteChildren {
+  AdminCandidatesIdRoute: typeof AdminCandidatesIdRoute
+}
+
+const AdminCandidatesRouteChildren: AdminCandidatesRouteChildren = {
+  AdminCandidatesIdRoute: AdminCandidatesIdRoute,
+}
+
+const AdminCandidatesRouteWithChildren = AdminCandidatesRoute._addFileChildren(
+  AdminCandidatesRouteChildren,
+)
+
+interface AdminRouteChildren {
+  AdminCandidatesRoute: typeof AdminCandidatesRouteWithChildren
+  AdminCodesRoute: typeof AdminCodesRoute
+  AdminDashboardRoute: typeof AdminDashboardRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminCandidatesRoute: AdminCandidatesRouteWithChildren,
+  AdminCodesRoute: AdminCodesRoute,
+  AdminDashboardRoute: AdminDashboardRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface CandidatePortalRouteChildren {
+  CandidatePortalBerkasRoute: typeof CandidatePortalBerkasRoute
+  CandidatePortalDataRoute: typeof CandidatePortalDataRoute
+  CandidatePortalTestsRoute: typeof CandidatePortalTestsRoute
+  CandidatePortalIndexRoute: typeof CandidatePortalIndexRoute
+  CandidatePortalTestTestIdRoute: typeof CandidatePortalTestTestIdRoute
+}
+
+const CandidatePortalRouteChildren: CandidatePortalRouteChildren = {
+  CandidatePortalBerkasRoute: CandidatePortalBerkasRoute,
+  CandidatePortalDataRoute: CandidatePortalDataRoute,
+  CandidatePortalTestsRoute: CandidatePortalTestsRoute,
+  CandidatePortalIndexRoute: CandidatePortalIndexRoute,
+  CandidatePortalTestTestIdRoute: CandidatePortalTestTestIdRoute,
+}
+
+const CandidatePortalRouteWithChildren = CandidatePortalRoute._addFileChildren(
+  CandidatePortalRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
+  AuthRoute: AuthRoute,
+  CandidateLoginRoute: CandidateLoginRoute,
+  CandidatePortalRoute: CandidatePortalRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
