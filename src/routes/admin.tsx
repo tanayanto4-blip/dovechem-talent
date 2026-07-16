@@ -27,6 +27,7 @@ function AdminLayout() {
     { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/admin/codes", label: "Kode Kandidat", icon: KeyRound },
     { to: "/admin/candidates", label: "Kandidat", icon: Users },
+    { to: "/admin/users", label: "User Admin/HR", icon: UserCog },
   ];
 
   async function signOut() {
