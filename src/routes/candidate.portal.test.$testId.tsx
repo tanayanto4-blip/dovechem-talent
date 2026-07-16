@@ -69,7 +69,7 @@ function TakeTest() {
     finally { setSubmitting(false); }
   }
 
-  if (isLoading || !data) return <div className="text-muted-foreground">Memuat test...</div>;
+  if (isLoading || !data || !data.test) return <div className="text-muted-foreground">Memuat test...</div>;
   if (data.attempt.status === "finished") {
     return <Card><CardContent className="py-8 text-center">Test sudah selesai. Skor: <b>{data.attempt.score}</b></CardContent></Card>;
   }
