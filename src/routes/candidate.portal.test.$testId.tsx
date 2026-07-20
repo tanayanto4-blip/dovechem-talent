@@ -31,6 +31,7 @@ function TakeTest() {
   });
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [discPicks, setDiscPicks] = useState<Record<string, { most?: string; least?: string }>>({});
   const [remaining, setRemaining] = useState<number>(0);
   const [submitting, setSubmitting] = useState(false);
 
@@ -76,9 +77,33 @@ function TakeTest() {
 
   const mins = Math.floor(remaining / 60).toString().padStart(2, "0");
   const secs = (remaining % 60).toString().padStart(2, "0");
-  const answered = Object.keys(answers).length;
   const total = data.questions.length;
   const isKraepelin = data.test.test_type === "kraepelin";
+  const isDisc = data.test.test_type === "disc";
+  const answered = isDisc
+    ? Object.values(discPicks).filter((p) => p.most && p.least && p.most !== p.least).length
+    : Object.keys(answers).length;
+
+  function setDisc(qid: string, kind: "most" | "least", key: string) {
+    setDiscPicks((prev) => {
+      const cur = { ...(prev[qid] ?? {}) };
+      // Toggle off if same, else set and clear opposite if collides
+      if (cur[kind] === key) delete cur[kind];
+      else {
+        cur[kind] = key;
+        const other = kind === "most" ? "least" : "most";
+        if (cur[other] === key) delete cur[other];
+      }
+      const next = { ...prev, [qid]: cur };
+      // sync to answers as JSON when both chosen
+      if (cur.most && cur.least && cur.most !== cur.least) {
+        setAnswers((a) => ({ ...a, [qid]: JSON.stringify({ most: cur.most, least: cur.least }) }));
+      } else {
+        setAnswers((a) => { const c = { ...a }; delete c[qid]; return c; });
+      }
+      return next;
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -100,16 +125,78 @@ function TakeTest() {
         </CardHeader>
       </Card>
 
+      {isDisc && (
+        <Card className="border-primary/30 bg-primary/5 shadow-card">
+          <CardContent className="space-y-2 p-6 text-sm">
+            <div className="font-semibold text-primary">Petunjuk Pengisian DISC</div>
+            <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
+              <li>Setiap kelompok berisi 4 pernyataan.</li>
+              <li>Pilih <b className="text-foreground">M (Most)</b> pada pernyataan yang <b>paling menggambarkan</b> diri Anda.</li>
+              <li>Pilih <b className="text-foreground">L (Least)</b> pada pernyataan yang <b>paling tidak menggambarkan</b> diri Anda.</li>
+              <li>Hanya boleh 1 M dan 1 L per kelompok, dan tidak boleh pada pernyataan yang sama.</li>
+              <li>Jawablah spontan sesuai diri Anda — tidak ada jawaban benar/salah.</li>
+            </ol>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="space-y-4">
         {data.questions.map((q: any, i: number) => (
           <Card key={q.id} className="shadow-card">
             <CardContent className="p-6">
-              <div className="mb-3 text-xs font-semibold uppercase tracking-widest text-secondary">Soal {i + 1}</div>
-              <div className="text-base font-medium">{q.question_text}</div>
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-xs font-semibold uppercase tracking-widest text-secondary">
+                  {isDisc ? `Kelompok ${i + 1} dari ${total}` : `Soal ${i + 1}`}
+                </div>
+                {isDisc && (
+                  <div className="text-[11px] text-muted-foreground">
+                    {discPicks[q.id]?.most && discPicks[q.id]?.least ? (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">✓ Terisi</span>
+                    ) : (
+                      <span>Pilih 1 M &amp; 1 L</span>
+                    )}
+                  </div>
+                )}
+              </div>
+              {!isDisc && <div className="text-base font-medium">{q.question_text}</div>}
               {isKraepelin ? (
                 <div className="mt-4 max-w-xs">
                   <Label className="text-xs text-muted-foreground">Jawaban Anda</Label>
                   <Input inputMode="numeric" value={answers[q.id] ?? ""} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} className="mt-1" />
+                </div>
+              ) : isDisc ? (
+                <div className="overflow-hidden rounded-md border">
+                  <div className="grid grid-cols-[1fr_56px_56px] bg-muted/60 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <div className="px-3 py-2 text-left">Pernyataan</div>
+                    <div className="border-l py-2">M</div>
+                    <div className="border-l py-2">L</div>
+                  </div>
+                  {(q.options ?? []).map((opt: any) => {
+                    const pick = discPicks[q.id] ?? {};
+                    const isMost = pick.most === opt.key;
+                    const isLeast = pick.least === opt.key;
+                    return (
+                      <div key={opt.key} className="grid grid-cols-[1fr_56px_56px] items-center border-t text-sm">
+                        <div className="px-3 py-3">{opt.label}</div>
+                        <button
+                          type="button"
+                          onClick={() => setDisc(q.id, "most", opt.key)}
+                          className={`h-full border-l py-3 transition ${isMost ? "bg-primary text-primary-foreground font-semibold" : "hover:bg-accent"}`}
+                          aria-label={`Paling menggambarkan: ${opt.label}`}
+                        >
+                          {isMost ? "M" : "○"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDisc(q.id, "least", opt.key)}
+                          className={`h-full border-l py-3 transition ${isLeast ? "bg-destructive text-destructive-foreground font-semibold" : "hover:bg-accent"}`}
+                          aria-label={`Paling tidak menggambarkan: ${opt.label}`}
+                        >
+                          {isLeast ? "L" : "○"}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <RadioGroup className="mt-4 space-y-2" value={answers[q.id] ?? ""} onValueChange={(v) => setAnswers({ ...answers, [q.id]: v })}>
@@ -125,6 +212,7 @@ function TakeTest() {
           </Card>
         ))}
       </div>
+
 
       <div className="sticky bottom-4 flex justify-end">
         <Button size="lg" onClick={() => handleSubmit(false)} disabled={submitting || answered === 0}>

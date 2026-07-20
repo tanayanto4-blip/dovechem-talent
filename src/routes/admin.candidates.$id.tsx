@@ -95,9 +95,23 @@ function CandidateDetail() {
                       {a.status === "finished" ? `Skor: ${a.score}` : "In progress"}
                     </Badge>
                   </div>
-                  {a.result && (
+                  {a.result && a.tests?.test_type === "disc" && a.result.most ? (
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs font-semibold uppercase text-muted-foreground">Profil DISC — Dominan: <span className="text-primary">{a.result.dominant}</span></div>
+                      <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                        {(["D","I","S","C"] as const).map((k) => (
+                          <div key={k} className="rounded border bg-muted/40 p-2">
+                            <div className="text-lg font-bold text-primary">{k}</div>
+                            <div>Most: <b>{a.result.most?.[k] ?? 0}</b></div>
+                            <div>Least: <b>{a.result.least?.[k] ?? 0}</b></div>
+                            <div>Change: <b>{a.result.change?.[k] ?? 0}</b></div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : a.result ? (
                     <pre className="mt-3 overflow-x-auto rounded bg-muted p-2 text-xs">{JSON.stringify(a.result, null, 2)}</pre>
-                  )}
+                  ) : null}
                 </div>
               ))}
             </div>
