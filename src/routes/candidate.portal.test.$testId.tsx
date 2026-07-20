@@ -31,6 +31,7 @@ function TakeTest() {
   });
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [discPicks, setDiscPicks] = useState<Record<string, { most?: string; least?: string }>>({});
   const [remaining, setRemaining] = useState<number>(0);
   const [submitting, setSubmitting] = useState(false);
 
