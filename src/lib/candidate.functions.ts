@@ -189,11 +189,24 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       score = Math.round((correct / total) * 100);
       result = { correct, total };
     } else if (test.test_type === "disc") {
-      const counts: Record<string, number> = { D: 0, I: 0, S: 0, C: 0 };
-      for (const a of data.answers) if (counts[a.answer] !== undefined) counts[a.answer]++;
-      const dominant = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
-      score = counts[dominant] * 10;
-      result = { counts, dominant };
+      const most: Record<string, number> = { D: 0, I: 0, S: 0, C: 0 };
+      const least: Record<string, number> = { D: 0, I: 0, S: 0, C: 0 };
+      for (const a of data.answers) {
+        try {
+          const v = JSON.parse(a.answer);
+          if (v && most[v.most] !== undefined) most[v.most]++;
+          if (v && least[v.least] !== undefined) least[v.least]++;
+        } catch { /* legacy single-letter answer */
+          if (most[a.answer] !== undefined) most[a.answer]++;
+        }
+      }
+      const change: Record<string, number> = {
+        D: most.D - least.D, I: most.I - least.I, S: most.S - least.S, C: most.C - least.C,
+      };
+      const dominant = (Object.entries(most).sort((a, b) => b[1] - a[1])[0] ?? ["D", 0])[0];
+      const totalGroups = (qs.data ?? []).length || 24;
+      score = Math.round((most[dominant] / totalGroups) * 100);
+      result = { most, least, change, dominant };
     } else if (test.test_type === "kraepelin") {
       // answers are numeric strings; score = correctness rate provided by client-side check
       const map = new Map(data.answers.map((a) => [a.question_id, a.answer]));
