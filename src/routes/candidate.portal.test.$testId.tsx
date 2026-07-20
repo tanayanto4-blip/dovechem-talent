@@ -77,9 +77,33 @@ function TakeTest() {
 
   const mins = Math.floor(remaining / 60).toString().padStart(2, "0");
   const secs = (remaining % 60).toString().padStart(2, "0");
-  const answered = Object.keys(answers).length;
   const total = data.questions.length;
   const isKraepelin = data.test.test_type === "kraepelin";
+  const isDisc = data.test.test_type === "disc";
+  const answered = isDisc
+    ? Object.values(discPicks).filter((p) => p.most && p.least && p.most !== p.least).length
+    : Object.keys(answers).length;
+
+  function setDisc(qid: string, kind: "most" | "least", key: string) {
+    setDiscPicks((prev) => {
+      const cur = { ...(prev[qid] ?? {}) };
+      // Toggle off if same, else set and clear opposite if collides
+      if (cur[kind] === key) delete cur[kind];
+      else {
+        cur[kind] = key;
+        const other = kind === "most" ? "least" : "most";
+        if (cur[other] === key) delete cur[other];
+      }
+      const next = { ...prev, [qid]: cur };
+      // sync to answers as JSON when both chosen
+      if (cur.most && cur.least && cur.most !== cur.least) {
+        setAnswers((a) => ({ ...a, [qid]: JSON.stringify({ most: cur.most, least: cur.least }) }));
+      } else {
+        setAnswers((a) => { const c = { ...a }; delete c[qid]; return c; });
+      }
+      return next;
+    });
+  }
 
   return (
     <div className="space-y-6">
