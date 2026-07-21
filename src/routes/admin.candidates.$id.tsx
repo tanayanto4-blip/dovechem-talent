@@ -86,14 +86,19 @@ function CandidateDetail() {
             <div className="space-y-3">
               {c.test_attempts.map((a: any) => (
                 <div key={a.id} className="rounded-md border p-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="font-semibold">{a.tests?.name}</div>
                       <div className="text-xs text-muted-foreground uppercase">{a.tests?.test_type}</div>
                     </div>
-                    <Badge className={a.status === "finished" ? "bg-success" : ""} variant={a.status === "finished" ? "default" : "secondary"}>
-                      {a.status === "finished" ? `Skor: ${a.score}` : "In progress"}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className={a.status === "finished" ? "bg-success" : ""} variant={a.status === "finished" ? "default" : "secondary"}>
+                        {a.status === "finished" ? `Skor: ${a.score}` : "In progress"}
+                      </Badge>
+                      <Button asChild size="sm" variant="outline">
+                        <Link to="/admin/attempts/$attemptId" params={{ attemptId: a.id }}>Lihat Jawaban</Link>
+                      </Button>
+                    </div>
                   </div>
                   {a.result && a.tests?.test_type === "disc" && a.result.most ? (
                     <div className="mt-3 space-y-2">
