@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ClipboardList, ArrowRight, Timer } from "lucide-react";
 
-export const Route = createFileRoute("/admin/tests")({ component: TestsList });
+export const Route = createFileRoute("/admin/tests/")({ component: TestsList });
 
 function TestsList() {
   const fn = useServerFn(listTests);
