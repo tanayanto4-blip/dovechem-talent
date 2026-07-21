@@ -152,6 +152,30 @@ export const candidateStartTest = createServerFn({ method: "POST" })
     return { attempt, test: test.data, questions: questions.data ?? [] };
   });
 
+const AttemptInput = z.object({ code: z.string().min(3), attempt_id: z.string().uuid() });
+export const candidateGetAttempt = createServerFn({ method: "POST" })
+  .inputValidator((d) => AttemptInput.parse(d))
+  .handler(async ({ data }) => {
+    const sb = await admin();
+    const { data: codeRow } = await sb.from("candidate_codes").select("id").eq("code", data.code.toUpperCase()).maybeSingle();
+    if (!codeRow) throw new Error("Kode tidak valid.");
+    const { data: cand } = await sb.from("candidates").select("id").eq("code_id", codeRow.id).single();
+    if (!cand) throw new Error("Kandidat tidak ditemukan.");
+    const { data: attempt, error } = await sb
+      .from("test_attempts")
+      .select("*, tests(*), test_answers(*)")
+      .eq("id", data.attempt_id)
+      .eq("candidate_id", cand.id)
+      .single();
+    if (error) throw new Error(error.message);
+    const { data: questions } = await sb
+      .from("test_questions")
+      .select("*")
+      .eq("test_id", (attempt as any).test_id)
+      .order("question_number");
+    return { attempt, questions: questions ?? [] };
+  });
+
 const SubmitTestInput = z.object({
   code: z.string().min(3),
   attempt_id: z.string().uuid(),
