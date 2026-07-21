@@ -109,6 +109,46 @@ export const getCandidateDetail = createServerFn({ method: "POST" })
     return { candidate: cand };
   });
 
+export const getAttemptDetail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ attempt_id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: attempt, error } = await context.supabase
+      .from("test_attempts")
+      .select("*, tests(*), candidates(id, full_name, email, candidate_codes(code))")
+      .eq("id", data.attempt_id)
+      .single();
+    if (error) throw new Error(error.message);
+    const [qs, ans] = await Promise.all([
+      context.supabase.from("test_questions").select("*").eq("test_id", (attempt as any).test_id).order("question_number"),
+      context.supabase.from("test_answers").select("*").eq("attempt_id", data.attempt_id),
+    ]);
+    return { attempt, questions: qs.data ?? [], answers: ans.data ?? [] };
+  });
+
+export const listTests = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("tests")
+      .select("*, test_questions(id)")
+      .order("code");
+    if (error) throw new Error(error.message);
+    return { tests: data ?? [] };
+  });
+
+export const getTestDetail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ test_id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const [t, qs] = await Promise.all([
+      context.supabase.from("tests").select("*").eq("id", data.test_id).single(),
+      context.supabase.from("test_questions").select("*").eq("test_id", data.test_id).order("question_number"),
+    ]);
+    if (t.error) throw new Error(t.error.message);
+    return { test: t.data, questions: qs.data ?? [] };
+  });
+
 export const getFileSignedUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ path: z.string() }).parse(d))
