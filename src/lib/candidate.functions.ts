@@ -128,6 +128,28 @@ export const candidateUploadFile = createServerFn({ method: "POST" })
     return { ok: true, path };
   });
 
+export const candidateGetAttemptResult = createServerFn({ method: "POST" })
+  .inputValidator((d) => z.object({ code: z.string().min(3), attempt_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const sb = await admin();
+    const { data: codeRow } = await sb.from("candidate_codes").select("id").eq("code", data.code.toUpperCase()).maybeSingle();
+    if (!codeRow) throw new Error("Kode tidak valid.");
+    const { data: cand } = await sb.from("candidates").select("id").eq("code_id", codeRow.id).single();
+    if (!cand) throw new Error("Kandidat tidak ditemukan.");
+    const { data: attempt, error } = await sb
+      .from("test_attempts")
+      .select("*, tests(*)")
+      .eq("id", data.attempt_id)
+      .eq("candidate_id", cand.id)
+      .single();
+    if (error) throw new Error(error.message);
+    const [qs, ans] = await Promise.all([
+      sb.from("test_questions").select("*").eq("test_id", (attempt as any).test_id).order("question_number"),
+      sb.from("test_answers").select("*").eq("attempt_id", data.attempt_id),
+    ]);
+    return { attempt, questions: qs.data ?? [], answers: ans.data ?? [] };
+  });
+
 const StartTestInput = z.object({ code: z.string().min(3), test_id: z.string().uuid() });
 export const candidateStartTest = createServerFn({ method: "POST" })
   .inputValidator((d) => StartTestInput.parse(d))
