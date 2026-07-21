@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyRoles } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
-import { Beaker, LayoutDashboard, KeyRound, Users, LogOut, UserCog, ClipboardList } from "lucide-react";
+import { Beaker, LayoutDashboard, KeyRound, Users, LogOut, UserCog } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
@@ -27,7 +27,6 @@ function AdminLayout() {
     { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/admin/codes", label: "Kode Kandidat", icon: KeyRound },
     { to: "/admin/candidates", label: "Kandidat", icon: Users },
-    { to: "/admin/tests", label: "Bank Soal", icon: ClipboardList },
     { to: "/admin/users", label: "User Admin/HR", icon: UserCog },
   ];
 

@@ -15,7 +15,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CandidatePortalRouteImport } from './routes/candidate.portal'
 import { Route as CandidateLoginRouteImport } from './routes/candidate.login'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
-import { Route as AdminTestsRouteImport } from './routes/admin.tests'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminCodesRouteImport } from './routes/admin.codes'
 import { Route as AdminCandidatesRouteImport } from './routes/admin.candidates'
@@ -23,11 +22,8 @@ import { Route as CandidatePortalIndexRouteImport } from './routes/candidate.por
 import { Route as CandidatePortalTestsRouteImport } from './routes/candidate.portal.tests'
 import { Route as CandidatePortalDataRouteImport } from './routes/candidate.portal.data'
 import { Route as CandidatePortalBerkasRouteImport } from './routes/candidate.portal.berkas'
-import { Route as AdminTestsTestIdRouteImport } from './routes/admin.tests.$testId'
 import { Route as AdminCandidatesIdRouteImport } from './routes/admin.candidates.$id'
-import { Route as AdminAttemptsAttemptIdRouteImport } from './routes/admin.attempts.$attemptId'
 import { Route as CandidatePortalTestTestIdRouteImport } from './routes/candidate.portal.test.$testId'
-import { Route as CandidatePortalResultAttemptIdRouteImport } from './routes/candidate.portal.result.$attemptId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -57,11 +53,6 @@ const CandidateLoginRoute = CandidateLoginRouteImport.update({
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminTestsRoute = AdminTestsRouteImport.update({
-  id: '/tests',
-  path: '/tests',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
@@ -99,31 +90,15 @@ const CandidatePortalBerkasRoute = CandidatePortalBerkasRouteImport.update({
   path: '/berkas',
   getParentRoute: () => CandidatePortalRoute,
 } as any)
-const AdminTestsTestIdRoute = AdminTestsTestIdRouteImport.update({
-  id: '/$testId',
-  path: '/$testId',
-  getParentRoute: () => AdminTestsRoute,
-} as any)
 const AdminCandidatesIdRoute = AdminCandidatesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => AdminCandidatesRoute,
 } as any)
-const AdminAttemptsAttemptIdRoute = AdminAttemptsAttemptIdRouteImport.update({
-  id: '/attempts/$attemptId',
-  path: '/attempts/$attemptId',
-  getParentRoute: () => AdminRoute,
-} as any)
 const CandidatePortalTestTestIdRoute =
   CandidatePortalTestTestIdRouteImport.update({
     id: '/test/$testId',
     path: '/test/$testId',
-    getParentRoute: () => CandidatePortalRoute,
-  } as any)
-const CandidatePortalResultAttemptIdRoute =
-  CandidatePortalResultAttemptIdRouteImport.update({
-    id: '/result/$attemptId',
-    path: '/result/$attemptId',
     getParentRoute: () => CandidatePortalRoute,
   } as any)
 
@@ -134,18 +109,14 @@ export interface FileRoutesByFullPath {
   '/admin/candidates': typeof AdminCandidatesRouteWithChildren
   '/admin/codes': typeof AdminCodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/tests': typeof AdminTestsRouteWithChildren
   '/admin/users': typeof AdminUsersRoute
   '/candidate/login': typeof CandidateLoginRoute
   '/candidate/portal': typeof CandidatePortalRouteWithChildren
-  '/admin/attempts/$attemptId': typeof AdminAttemptsAttemptIdRoute
   '/admin/candidates/$id': typeof AdminCandidatesIdRoute
-  '/admin/tests/$testId': typeof AdminTestsTestIdRoute
   '/candidate/portal/berkas': typeof CandidatePortalBerkasRoute
   '/candidate/portal/data': typeof CandidatePortalDataRoute
   '/candidate/portal/tests': typeof CandidatePortalTestsRoute
   '/candidate/portal/': typeof CandidatePortalIndexRoute
-  '/candidate/portal/result/$attemptId': typeof CandidatePortalResultAttemptIdRoute
   '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
 }
 export interface FileRoutesByTo {
@@ -155,17 +126,13 @@ export interface FileRoutesByTo {
   '/admin/candidates': typeof AdminCandidatesRouteWithChildren
   '/admin/codes': typeof AdminCodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/tests': typeof AdminTestsRouteWithChildren
   '/admin/users': typeof AdminUsersRoute
   '/candidate/login': typeof CandidateLoginRoute
-  '/admin/attempts/$attemptId': typeof AdminAttemptsAttemptIdRoute
   '/admin/candidates/$id': typeof AdminCandidatesIdRoute
-  '/admin/tests/$testId': typeof AdminTestsTestIdRoute
   '/candidate/portal/berkas': typeof CandidatePortalBerkasRoute
   '/candidate/portal/data': typeof CandidatePortalDataRoute
   '/candidate/portal/tests': typeof CandidatePortalTestsRoute
   '/candidate/portal': typeof CandidatePortalIndexRoute
-  '/candidate/portal/result/$attemptId': typeof CandidatePortalResultAttemptIdRoute
   '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
 }
 export interface FileRoutesById {
@@ -176,18 +143,14 @@ export interface FileRoutesById {
   '/admin/candidates': typeof AdminCandidatesRouteWithChildren
   '/admin/codes': typeof AdminCodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/tests': typeof AdminTestsRouteWithChildren
   '/admin/users': typeof AdminUsersRoute
   '/candidate/login': typeof CandidateLoginRoute
   '/candidate/portal': typeof CandidatePortalRouteWithChildren
-  '/admin/attempts/$attemptId': typeof AdminAttemptsAttemptIdRoute
   '/admin/candidates/$id': typeof AdminCandidatesIdRoute
-  '/admin/tests/$testId': typeof AdminTestsTestIdRoute
   '/candidate/portal/berkas': typeof CandidatePortalBerkasRoute
   '/candidate/portal/data': typeof CandidatePortalDataRoute
   '/candidate/portal/tests': typeof CandidatePortalTestsRoute
   '/candidate/portal/': typeof CandidatePortalIndexRoute
-  '/candidate/portal/result/$attemptId': typeof CandidatePortalResultAttemptIdRoute
   '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
 }
 export interface FileRouteTypes {
@@ -199,18 +162,14 @@ export interface FileRouteTypes {
     | '/admin/candidates'
     | '/admin/codes'
     | '/admin/dashboard'
-    | '/admin/tests'
     | '/admin/users'
     | '/candidate/login'
     | '/candidate/portal'
-    | '/admin/attempts/$attemptId'
     | '/admin/candidates/$id'
-    | '/admin/tests/$testId'
     | '/candidate/portal/berkas'
     | '/candidate/portal/data'
     | '/candidate/portal/tests'
     | '/candidate/portal/'
-    | '/candidate/portal/result/$attemptId'
     | '/candidate/portal/test/$testId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -220,17 +179,13 @@ export interface FileRouteTypes {
     | '/admin/candidates'
     | '/admin/codes'
     | '/admin/dashboard'
-    | '/admin/tests'
     | '/admin/users'
     | '/candidate/login'
-    | '/admin/attempts/$attemptId'
     | '/admin/candidates/$id'
-    | '/admin/tests/$testId'
     | '/candidate/portal/berkas'
     | '/candidate/portal/data'
     | '/candidate/portal/tests'
     | '/candidate/portal'
-    | '/candidate/portal/result/$attemptId'
     | '/candidate/portal/test/$testId'
   id:
     | '__root__'
@@ -240,18 +195,14 @@ export interface FileRouteTypes {
     | '/admin/candidates'
     | '/admin/codes'
     | '/admin/dashboard'
-    | '/admin/tests'
     | '/admin/users'
     | '/candidate/login'
     | '/candidate/portal'
-    | '/admin/attempts/$attemptId'
     | '/admin/candidates/$id'
-    | '/admin/tests/$testId'
     | '/candidate/portal/berkas'
     | '/candidate/portal/data'
     | '/candidate/portal/tests'
     | '/candidate/portal/'
-    | '/candidate/portal/result/$attemptId'
     | '/candidate/portal/test/$testId'
   fileRoutesById: FileRoutesById
 }
@@ -307,13 +258,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/tests': {
-      id: '/admin/tests'
-      path: '/tests'
-      fullPath: '/admin/tests'
-      preLoaderRoute: typeof AdminTestsRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/dashboard': {
       id: '/admin/dashboard'
       path: '/dashboard'
@@ -363,13 +307,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CandidatePortalBerkasRouteImport
       parentRoute: typeof CandidatePortalRoute
     }
-    '/admin/tests/$testId': {
-      id: '/admin/tests/$testId'
-      path: '/$testId'
-      fullPath: '/admin/tests/$testId'
-      preLoaderRoute: typeof AdminTestsTestIdRouteImport
-      parentRoute: typeof AdminTestsRoute
-    }
     '/admin/candidates/$id': {
       id: '/admin/candidates/$id'
       path: '/$id'
@@ -377,25 +314,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCandidatesIdRouteImport
       parentRoute: typeof AdminCandidatesRoute
     }
-    '/admin/attempts/$attemptId': {
-      id: '/admin/attempts/$attemptId'
-      path: '/attempts/$attemptId'
-      fullPath: '/admin/attempts/$attemptId'
-      preLoaderRoute: typeof AdminAttemptsAttemptIdRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/candidate/portal/test/$testId': {
       id: '/candidate/portal/test/$testId'
       path: '/test/$testId'
       fullPath: '/candidate/portal/test/$testId'
       preLoaderRoute: typeof CandidatePortalTestTestIdRouteImport
-      parentRoute: typeof CandidatePortalRoute
-    }
-    '/candidate/portal/result/$attemptId': {
-      id: '/candidate/portal/result/$attemptId'
-      path: '/result/$attemptId'
-      fullPath: '/candidate/portal/result/$attemptId'
-      preLoaderRoute: typeof CandidatePortalResultAttemptIdRouteImport
       parentRoute: typeof CandidatePortalRoute
     }
   }
@@ -413,34 +336,18 @@ const AdminCandidatesRouteWithChildren = AdminCandidatesRoute._addFileChildren(
   AdminCandidatesRouteChildren,
 )
 
-interface AdminTestsRouteChildren {
-  AdminTestsTestIdRoute: typeof AdminTestsTestIdRoute
-}
-
-const AdminTestsRouteChildren: AdminTestsRouteChildren = {
-  AdminTestsTestIdRoute: AdminTestsTestIdRoute,
-}
-
-const AdminTestsRouteWithChildren = AdminTestsRoute._addFileChildren(
-  AdminTestsRouteChildren,
-)
-
 interface AdminRouteChildren {
   AdminCandidatesRoute: typeof AdminCandidatesRouteWithChildren
   AdminCodesRoute: typeof AdminCodesRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
-  AdminTestsRoute: typeof AdminTestsRouteWithChildren
   AdminUsersRoute: typeof AdminUsersRoute
-  AdminAttemptsAttemptIdRoute: typeof AdminAttemptsAttemptIdRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminCandidatesRoute: AdminCandidatesRouteWithChildren,
   AdminCodesRoute: AdminCodesRoute,
   AdminDashboardRoute: AdminDashboardRoute,
-  AdminTestsRoute: AdminTestsRouteWithChildren,
   AdminUsersRoute: AdminUsersRoute,
-  AdminAttemptsAttemptIdRoute: AdminAttemptsAttemptIdRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -450,7 +357,6 @@ interface CandidatePortalRouteChildren {
   CandidatePortalDataRoute: typeof CandidatePortalDataRoute
   CandidatePortalTestsRoute: typeof CandidatePortalTestsRoute
   CandidatePortalIndexRoute: typeof CandidatePortalIndexRoute
-  CandidatePortalResultAttemptIdRoute: typeof CandidatePortalResultAttemptIdRoute
   CandidatePortalTestTestIdRoute: typeof CandidatePortalTestTestIdRoute
 }
 
@@ -459,7 +365,6 @@ const CandidatePortalRouteChildren: CandidatePortalRouteChildren = {
   CandidatePortalDataRoute: CandidatePortalDataRoute,
   CandidatePortalTestsRoute: CandidatePortalTestsRoute,
   CandidatePortalIndexRoute: CandidatePortalIndexRoute,
-  CandidatePortalResultAttemptIdRoute: CandidatePortalResultAttemptIdRoute,
   CandidatePortalTestTestIdRoute: CandidatePortalTestTestIdRoute,
 }
 

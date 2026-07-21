@@ -61,15 +61,6 @@ function TestsPage() {
                 >
                   {done ? <><CheckCircle2 className="mr-2 h-4 w-4" /> Sudah Selesai</> : <>Mulai Test <ArrowRight className="ml-2 h-4 w-4" /></>}
                 </Button>
-                {done && (
-                  <Button
-                    className="mt-2 w-full"
-                    variant="secondary"
-                    onClick={() => nav({ to: "/candidate/portal/result/$attemptId", params: { attemptId: attempt.id } })}
-                  >
-                    Lihat Hasil & Lembar Jawaban
-                  </Button>
-                )}
               </CardContent>
             </Card>
           );
