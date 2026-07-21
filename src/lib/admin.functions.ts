@@ -118,6 +118,50 @@ export const getFileSignedUrl = createServerFn({ method: "POST" })
     return { url: signed.signedUrl };
   });
 
+export const listTests = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("tests")
+      .select("*, test_questions(id)")
+      .order("code");
+    if (error) throw new Error(error.message);
+    return { tests: (data ?? []).map((t: any) => ({ ...t, question_count: t.test_questions?.length ?? 0 })) };
+  });
+
+export const getTestWithQuestions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [t, q] = await Promise.all([
+      supabaseAdmin.from("tests").select("*").eq("id", data.id).single(),
+      supabaseAdmin.from("test_questions").select("*").eq("test_id", data.id).order("question_number"),
+    ]);
+    if (t.error) throw new Error(t.error.message);
+    return { test: t.data, questions: q.data ?? [] };
+  });
+
+export const getAttemptDetail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: attempt, error } = await supabaseAdmin
+      .from("test_attempts")
+      .select("*, tests(*), candidates(id, full_name, candidate_codes(code)), test_answers(*)")
+      .eq("id", data.id)
+      .single();
+    if (error) throw new Error(error.message);
+    const { data: questions } = await supabaseAdmin
+      .from("test_questions")
+      .select("*")
+      .eq("test_id", (attempt as any).test_id)
+      .order("question_number");
+    return { attempt, questions: questions ?? [] };
+  });
+
 export const dashboardStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

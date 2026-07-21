@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateGetProfile } from "@/lib/candidate.functions";
@@ -53,14 +53,21 @@ function TestsPage() {
                   <span className="inline-flex items-center gap-1"><Timer className="h-3.5 w-3.5" /> {t.duration_minutes} menit</span>
                   <span className="uppercase">{t.test_type}</span>
                 </div>
-                <Button
-                  className="mt-5 w-full"
-                  variant={done ? "outline" : "default"}
-                  disabled={!data?.candidate?.data_completed || done}
-                  onClick={() => nav({ to: "/candidate/portal/test/$testId", params: { testId: t.id } })}
-                >
-                  {done ? <><CheckCircle2 className="mr-2 h-4 w-4" /> Sudah Selesai</> : <>Mulai Test <ArrowRight className="ml-2 h-4 w-4" /></>}
-                </Button>
+                {done ? (
+                  <Button asChild className="mt-5 w-full" variant="outline">
+                    <Link to="/candidate/portal/result/$attemptId" params={{ attemptId: attempt.id }}>
+                      <CheckCircle2 className="mr-2 h-4 w-4" /> Lihat Hasil & Jawaban
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button
+                    className="mt-5 w-full"
+                    disabled={!data?.candidate?.data_completed}
+                    onClick={() => nav({ to: "/candidate/portal/test/$testId", params: { testId: t.id } })}
+                  >
+                    Mulai Test <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                )}
               </CardContent>
             </Card>
           );
