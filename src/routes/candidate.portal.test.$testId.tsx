@@ -15,30 +15,6 @@ import { Timer, Check, Loader2, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/candidate/portal/test/$testId")({ component: TakeTest });
 
-function QuestionText({ text }: { text?: string | null }) {
-  if (!text) return null;
-  const parts: Array<{ type: "img" | "text"; value: string }> = [];
-  const re = /\[IMG:([^\]]+)\]/g;
-  let last = 0; let m: RegExpExecArray | null;
-  while ((m = re.exec(text)) !== null) {
-    if (m.index > last) parts.push({ type: "text", value: text.slice(last, m.index) });
-    parts.push({ type: "img", value: m[1] });
-    last = m.index + m[0].length;
-  }
-  if (last < text.length) parts.push({ type: "text", value: text.slice(last) });
-  return (
-    <div className="space-y-3">
-      {parts.map((p, idx) =>
-        p.type === "img" ? (
-          <img key={idx} src={p.value} alt="Gambar soal" className="max-w-full rounded-md border bg-white p-2" />
-        ) : (
-          <div key={idx} className="text-base font-medium whitespace-pre-wrap">{p.value}</div>
-        ),
-      )}
-    </div>
-  );
-}
-
 function TakeTest() {
   const { testId } = Route.useParams();
   const session = useCandidateSession();
@@ -377,7 +353,7 @@ function TakeTest() {
                   </div>
                 )}
               </div>
-              {!isDisc && !isMbti && <QuestionText text={q.question_text} />}
+              {!isDisc && !isMbti && <div className="text-base font-medium">{q.question_text}</div>}
               {isMbti ? (
                 <div className="rounded-md border bg-card">
                   {q.question_text && (
