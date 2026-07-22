@@ -97,28 +97,33 @@ function CodesPage() {
     finally { setBulkSaving(false); }
   }
 
-  async function onBulkExpiry() {
-    const v = prompt("Set masa berlaku SEMUA kode (YYYY-MM-DDTHH:mm). Kosongkan lalu OK untuk hapus batas:", "");
-    if (v === null) return;
-    const iso = v ? toIso(v) : null;
-    if (v && !iso) { toast.error("Format tanggal tidak valid"); return; }
+  async function submitBulkExpiry(e: React.FormEvent) {
+    e.preventDefault();
+    const iso = expiryValue ? toIso(expiryValue) : null;
+    if (expiryValue && !iso) { toast.error("Format tanggal tidak valid"); return; }
     try {
       const res = await bulkExpiry({ data: { expires_at: iso } });
       toast.success(`${res.updated} kode diperbarui`);
       qc.invalidateQueries({ queryKey: ["codes"] });
+      setExpiryOpen(false);
     } catch (e: any) { toast.error(e.message); }
   }
 
-  async function onEditExpiry(id: string, current: string | null) {
-    const cur = current ? new Date(current).toISOString().slice(0, 16) : "";
-    const v = prompt("Masa berlaku (YYYY-MM-DDTHH:mm). Kosongkan lalu OK untuk hapus batas:", cur);
-    if (v === null) return;
-    const iso = v ? toIso(v) : null;
-    if (v && !iso) { toast.error("Format tanggal tidak valid"); return; }
+  function onEditExpiry(id: string, current: string | null) {
+    const cur = current ? new Date(new Date(current).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
+    setEditExpiry({ id, value: cur });
+  }
+
+  async function submitEditExpiry(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editExpiry) return;
+    const iso = editExpiry.value ? toIso(editExpiry.value) : null;
+    if (editExpiry.value && !iso) { toast.error("Format tanggal tidak valid"); return; }
     try {
-      await setExpiry({ data: { id, expires_at: iso } });
+      await setExpiry({ data: { id: editExpiry.id, expires_at: iso } });
       qc.invalidateQueries({ queryKey: ["codes"] });
       toast.success("Masa berlaku diperbarui");
+      setEditExpiry(null);
     } catch (e: any) { toast.error(e.message); }
   }
 
