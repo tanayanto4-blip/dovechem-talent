@@ -337,44 +337,107 @@ function MbtiAdmin() {
     });
   }
 
-  async function handleImport() {
+  const MBTI_PAIRS: Record<string, string> = { E: "I", I: "E", S: "N", N: "S", T: "F", F: "T", J: "P", P: "J" };
+
+  function runPreview() {
     if (!activeTestId) return;
     const trimmed = importText.trim();
-    let rows: ImportRow[] = [];
+    if (!trimmed) { toast.error("Isi CSV atau JSON dulu"); return; }
     const isJson = trimmed.startsWith("{") || trimmed.startsWith("[");
+    let rows: ImportRow[] = [];
     try {
       rows = isJson ? parseJsonImport(trimmed) : parseCsv(importText);
     } catch (e: any) {
       toast.error(`Gagal membaca ${isJson ? "JSON" : "CSV"}: ${e?.message ?? "format tidak valid"}`);
+      setImportPreview(null);
       return;
     }
-    if (!rows.length) { toast.error(`${isJson ? "JSON" : "CSV"} kosong atau format tidak dikenali`); return; }
+    if (!rows.length) { toast.error(`${isJson ? "JSON" : "CSV"} kosong atau format tidak dikenali`); setImportPreview(null); return; }
+
+    const existingNums = new Set(questions.map((q) => q.question_number));
+    const seenInFile = new Map<number, number>(); // num -> first rowIdx
+    const aggregate: ImportIssue[] = [];
+    const parsedNums: (number | null)[] = [];
+
+    // First pass — assign numbers (auto for missing), detect in-file duplicates
+    let auto = nextNumber;
+    const takenAuto = new Set(existingNums);
+    for (let i = 0; i < rows.length; i++) {
+      const raw = Number(rows[i].number);
+      let num: number | null = null;
+      if (Number.isFinite(raw) && raw >= 1) num = raw;
+      else { while (takenAuto.has(auto)) auto++; num = auto; takenAuto.add(auto); auto++; }
+      parsedNums.push(num);
+    }
+
+    const detailed = rows.map((r, i) => {
+      const issues: ImportIssue[] = [];
+      const num = parsedNums[i];
+      const push = (kind: string, severity: "error" | "warning", message: string) => {
+        const iss: ImportIssue = { rowIdx: i, number: num, kind, severity, message };
+        issues.push(iss); aggregate.push(iss);
+      };
+
+      // Nomor kosong (info) — hanya jika input asli tidak berupa angka valid
+      const rawNum = Number(r.number);
+      if (!Number.isFinite(rawNum) || rawNum < 1) {
+        push("missing_number", "warning", `Baris ${i + 1}: nomor kosong → otomatis diberi #${num}`);
+      }
+      // Duplikat di dalam file
+      if (num != null) {
+        const first = seenInFile.get(num);
+        if (first !== undefined) push("duplicate_number", "error", `Baris ${i + 1}: nomor #${num} duplikat (juga di baris ${first + 1})`);
+        else seenInFile.set(num, i);
+      }
+      // Pernyataan kosong
+      if (!r.a_label?.trim()) push("empty_statement", "error", `Baris ${i + 1} (#${num}): pernyataan A kosong`);
+      if (!r.b_label?.trim()) push("empty_statement", "error", `Baris ${i + 1} (#${num}): pernyataan B kosong`);
+      // Dimensi valid & pasangan MBTI
+      const aDim = String(r.a_dim ?? "").toUpperCase();
+      const bDim = String(r.b_dim ?? "").toUpperCase();
+      const aOk = DIM_LIST.includes(aDim as Dim);
+      const bOk = DIM_LIST.includes(bDim as Dim);
+      if (!aOk) push("invalid_dimension", "error", `Baris ${i + 1} (#${num}): dimensi A "${r.a_dim ?? ""}" tidak valid`);
+      if (!bOk) push("invalid_dimension", "error", `Baris ${i + 1} (#${num}): dimensi B "${r.b_dim ?? ""}" tidak valid`);
+      if (aOk && bOk) {
+        if (aDim === bDim) push("invalid_pair", "error", `Baris ${i + 1} (#${num}): A dan B pada dimensi yang sama (${aDim})`);
+        else if (MBTI_PAIRS[aDim] !== bDim) push("invalid_pair", "error", `Baris ${i + 1} (#${num}): pasangan ${aDim}/${bDim} bukan pasangan MBTI (harus E/I · S/N · T/F · J/P)`);
+      }
+
+      const overwrite = num != null && existingNums.has(num);
+      if (overwrite) push("overwrite", "warning", `Baris ${i + 1} (#${num}): akan menimpa soal yang sudah ada`);
+
+      const valid = !issues.some((x) => x.severity === "error");
+      return { rowIdx: i, number: num, row: r, valid, overwrite, issues };
+    });
+
+    const validCount = detailed.filter((d) => d.valid).length;
+    const overwriteCount = detailed.filter((d) => d.overwrite && d.valid).length;
+    setImportPreview({ rows: detailed, issues: aggregate, validCount, overwriteCount, source: isJson ? "json" : "csv" });
+    setImportLog(null);
+  }
+
+  async function handleImport() {
+    if (!activeTestId || !importPreview) return;
+    const isJson = importPreview.source === "json";
+    const valid = importPreview.rows.filter((d) => d.valid && d.number != null);
+    if (!valid.length) { toast.error("Tidak ada baris valid untuk diimpor"); return; }
     setImportRunning(true);
     setImportLog(null);
-    const usedNums = new Set(questions.map((q) => q.question_number));
-    let auto = nextNumber;
     let ok = 0, fail = 0;
     const errors: string[] = [];
     const toDraft: number[] = [];
     const toPublish: number[] = [];
-    for (let i = 0; i < rows.length; i++) {
-      const r = rows[i];
+    for (const d of valid) {
+      const r = d.row; const num = d.number!;
       try {
-        let num = Number(r.number);
-        if (!Number.isFinite(num) || num < 1) { while (usedNums.has(auto)) auto++; num = auto; }
-        usedNums.add(num); if (num >= auto) auto = num + 1;
-        const aDim = String(r.a_dim ?? "").toUpperCase() as Dim;
-        const bDim = String(r.b_dim ?? "").toUpperCase() as Dim;
-        if (!DIM_LIST.includes(aDim) || !DIM_LIST.includes(bDim)) throw new Error(`Dimensi tidak valid (${r.a_dim}/${r.b_dim})`);
-        if (aDim === bDim) throw new Error("Dimensi A dan B harus berbeda");
-        if (!r.a_label?.trim() || !r.b_label?.trim()) throw new Error("Pernyataan A/B kosong");
         await upsertFn({ data: {
           test_id: activeTestId,
           question_number: num,
           question_text: (r.question_text?.trim() || "Pilih pernyataan yang paling menggambarkan diri Anda."),
           options: [
-            { key: "A", label: r.a_label.trim(), dimension: aDim },
-            { key: "B", label: r.b_label.trim(), dimension: bDim },
+            { key: "A", label: r.a_label!.trim(), dimension: String(r.a_dim).toUpperCase() as Dim },
+            { key: "B", label: r.b_label!.trim(), dimension: String(r.b_dim).toUpperCase() as Dim },
           ],
         }});
         if (isJson && r.active === false) toDraft.push(num);
@@ -382,10 +445,9 @@ function MbtiAdmin() {
         ok++;
       } catch (e: any) {
         fail++;
-        errors.push(`Baris ${i + 1}: ${e?.message ?? "gagal"}`);
+        errors.push(`Baris ${d.rowIdx + 1} (#${num}): ${e?.message ?? "gagal"}`);
       }
     }
-    // Apply publish/draft status carried by JSON export
     if (isJson && (toDraft.length || toPublish.length)) {
       try {
         const refetched = await detailFn({ data: { id: activeTestId } });
@@ -398,11 +460,14 @@ function MbtiAdmin() {
         errors.push(`Gagal menerapkan status publish/draft: ${e?.message ?? ""}`);
       }
     }
+    const skipped = importPreview.rows.length - valid.length;
+    if (skipped > 0) errors.unshift(`${skipped} baris dilewati karena tidak valid (lihat preview).`);
     setImportRunning(false);
     setImportLog({ ok, fail, errors });
-    if (ok) toast.success(`${ok} soal diimpor${isJson ? " (JSON)" : ""}`);
+    if (ok) toast.success(`${ok} soal diimpor${isJson ? " (JSON)" : ""}${skipped ? `, ${skipped} dilewati` : ""}`);
     if (fail) toast.error(`${fail} baris gagal`);
     qc.invalidateQueries({ queryKey: ["admin-mbti", activeTestId] });
+    setImportPreview(null);
   }
 
   function downloadTemplate() {
