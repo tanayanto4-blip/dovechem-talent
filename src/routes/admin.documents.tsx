@@ -162,9 +162,18 @@ function DocumentsBank() {
             Seluruh berkas yang diunggah kandidat (KTP, KK, CV, ijazah, transkrip, dll.) tersedia otomatis di sini.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-3 text-xs">
           <Badge variant="secondary" className="gap-1"><FolderOpen className="h-3 w-3" /> {filtered.length} berkas</Badge>
           <Badge variant="secondary">{humanSize(totalSize)}</Badge>
+          <Button
+            size="sm"
+            onClick={downloadZip}
+            disabled={zipping || filtered.length === 0}
+            className="gap-2"
+          >
+            <FileArchive className="h-4 w-4" />
+            {zipping ? `Mengemas... ${zipProgress}%` : `Unduh ZIP (${filtered.length})`}
+          </Button>
         </div>
       </div>
 
