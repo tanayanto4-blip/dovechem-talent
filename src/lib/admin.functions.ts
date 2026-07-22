@@ -532,6 +532,39 @@ export const setMbtiQuestionsActive = createServerFn({ method: "POST" })
     return { ok: true, updated: count ?? ids.length, skipped: data.ids.length - ids.length };
   });
 
+/** Bulk delete multiple MBTI questions. Restricted to MBTI test_type; logs a snapshot. */
+export const deleteMbtiQuestions = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) => z.object({ ids: z.array(z.string().uuid()).min(1).max(500) }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const before = await supabaseAdmin
+      .from("test_questions")
+      .select("id, test_id, question_number, question_text, options, dimension, tests!inner(test_type)")
+      .in("id", data.ids);
+    const rows = ((before.data ?? []) as any[]).filter((r) => r.tests?.test_type === "mbti");
+    if (rows.length === 0) throw new Error("Tidak ada soal MBTI yang cocok.");
+    const ids = rows.map((r) => r.id);
+    const { error, count } = await supabaseAdmin
+      .from("test_questions")
+      .delete({ count: "exact" })
+      .in("id", ids);
+    if (error) throw new Error(error.message);
+    await logAudit(context, "mbti.question.bulk_delete", "test_question", null, {
+      count: count ?? ids.length,
+      requested: data.ids.length,
+      ids,
+      numbers: rows.map((r) => r.question_number),
+      test_ids: Array.from(new Set(rows.map((r) => r.test_id))),
+      snapshot: rows.map((r) => ({
+        id: r.id, test_id: r.test_id, question_number: r.question_number,
+        question_text: r.question_text, options: r.options, dimension: r.dimension,
+      })),
+    });
+    return { ok: true, deleted: count ?? ids.length, skipped: data.ids.length - ids.length };
+  });
+
+
 /** Reassign question_number for MBTI questions to match the given ID order (1..N). */
 export const reorderMbtiQuestions = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
