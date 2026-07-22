@@ -36,7 +36,7 @@ function CandidateResult() {
         <div className="flex gap-2">
           {isMbti && a.result?.type && (
             <Button size="sm" variant="secondary" onClick={() => exportMbtiPdf(a.result, {
-              candidateName: session.full_name ?? a.candidates?.full_name,
+              candidateName: session.candidate_name ?? a.candidates?.full_name,
               candidateCode: session.code,
               position: a.candidates?.position ?? undefined,
               attemptId: a.id,
