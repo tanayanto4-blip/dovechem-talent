@@ -603,6 +603,32 @@ function MbtiAdmin() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={confirmBulkDelete} onOpenChange={(o) => { if (!o && bulkRunning !== "delete") setConfirmBulkDelete(false); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Hapus {selected.size} soal MBTI terpilih?</DialogTitle></DialogHeader>
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>Tindakan ini <b>permanen</b> dan menghapus soal beserta jawaban terkait dari attempt manapun.</p>
+            <div className="max-h-48 overflow-auto rounded border bg-muted/30 p-2 text-xs">
+              Nomor yang akan dihapus:{" "}
+              {questions
+                .filter((q) => selected.has(q.id))
+                .map((q) => q.question_number)
+                .sort((a, b) => a - b)
+                .join(", ") || "-"}
+            </div>
+            <p>Aksi ini tercatat pada Audit Log sebagai <code>mbti.question.bulk_delete</code>.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmBulkDelete(false)} disabled={bulkRunning === "delete"}>Batal</Button>
+            <Button variant="destructive" onClick={handleBulkDelete} disabled={bulkRunning === "delete" || selected.size === 0}>
+              {bulkRunning === "delete" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              Hapus {selected.size} soal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
       <Dialog open={importOpen} onOpenChange={(o) => { if (!importRunning) { setImportOpen(o); if (!o) { setImportText(""); setImportLog(null); } } }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle>Impor Soal MBTI dari CSV</DialogTitle></DialogHeader>
