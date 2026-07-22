@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Timer, Check, Loader2, AlertCircle } from "lucide-react";
+import { Timer, Check, Loader2, AlertCircle, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import wptQ7 from "@/assets/wpt-q7.jpg.asset.json";
 import wptQ38 from "@/assets/wpt-q38.jpg.asset.json";
 import wptQ42 from "@/assets/wpt-q42.jpg.asset.json";
@@ -23,6 +24,64 @@ const WPT_IMAGES: Record<number, { url: string; caption: string }> = {
   42: { url: wptQ42.url, caption: "Bentuk geometris dengan titik-titik bernomor 1–24 — pilih dua angka yang bila dihubungkan garis lurus membagi bentuk menjadi dua bagian yang dapat disatukan menjadi bujur sangkar sempurna." },
   49: { url: wptQ49.url, caption: "Lima bagian bentuk (1–5) — tentukan empat bagian yang dapat digabung menjadi sebuah segitiga." },
 };
+
+
+function WptImageFigure({ url, caption, number }: { url: string; caption: string; number: number }) {
+  const [zoom, setZoom] = useState(1);
+  const alt = `Ilustrasi soal WPT nomor ${number}`;
+  return (
+    <figure className="mt-3 w-full overflow-hidden rounded-md border bg-white p-2 sm:p-3">
+      <Dialog onOpenChange={(o) => { if (!o) setZoom(1); }}>
+        <DialogTrigger asChild>
+          <button
+            type="button"
+            className="group relative block w-full cursor-zoom-in"
+            aria-label={`Perbesar ${alt}`}
+          >
+            <img
+              src={url}
+              alt={alt}
+              className="mx-auto block h-auto w-full max-w-full object-contain sm:max-h-[60vh] sm:w-auto"
+              loading="lazy"
+            />
+            <span className="pointer-events-none absolute right-2 top-2 inline-flex items-center gap-1 rounded-md bg-black/70 px-2 py-1 text-[11px] font-medium text-white opacity-90 shadow group-hover:opacity-100">
+              <Maximize2 className="h-3.5 w-3.5" /> Perbesar
+            </span>
+          </button>
+        </DialogTrigger>
+        <DialogContent className="max-w-[95vw] p-3 sm:max-w-4xl">
+          <DialogTitle className="text-sm">Ilustrasi Soal WPT No. {number}</DialogTitle>
+          <DialogDescription className="text-xs leading-snug">{caption}</DialogDescription>
+          <div className="mt-2 flex items-center justify-center gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))} disabled={zoom <= 0.5}>
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <span className="min-w-[3rem] text-center text-xs tabular-nums text-muted-foreground">{Math.round(zoom * 100)}%</span>
+            <Button type="button" size="sm" variant="outline" onClick={() => setZoom((z) => Math.min(4, +(z + 0.25).toFixed(2)))} disabled={zoom >= 4}>
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setZoom(1)}>Reset</Button>
+          </div>
+          <div className="mt-2 max-h-[75vh] w-full overflow-auto rounded-md border bg-white">
+            <div className="flex min-h-full min-w-full items-center justify-center p-3">
+              <img
+                src={url}
+                alt={alt}
+                style={{ transform: `scale(${zoom})`, transformOrigin: "center center" }}
+                className="block h-auto max-w-none select-none transition-transform"
+                draggable={false}
+              />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <figcaption className="mt-2 text-center text-[11px] leading-snug text-muted-foreground sm:text-xs">
+        {caption} · <span className="font-medium">Klik gambar untuk memperbesar</span>
+      </figcaption>
+    </figure>
+  );
+}
+
 
 export const Route = createFileRoute("/candidate/portal/test/$testId")({ component: TakeTest });
 
@@ -366,17 +425,11 @@ function TakeTest() {
               </div>
               {!isDisc && !isMbti && <div className="text-base font-medium">{q.question_text}</div>}
               {isWpt && WPT_IMAGES[q.question_number] && (
-                <figure className="mt-3 w-full overflow-hidden rounded-md border bg-white p-2 sm:p-3">
-                  <img
-                    src={WPT_IMAGES[q.question_number].url}
-                    alt={`Ilustrasi soal WPT nomor ${q.question_number}`}
-                    className="mx-auto block h-auto w-full max-w-full object-contain sm:max-h-[60vh] sm:w-auto"
-                    loading="lazy"
-                  />
-                  <figcaption className="mt-2 text-center text-[11px] leading-snug text-muted-foreground sm:text-xs">
-                    {WPT_IMAGES[q.question_number].caption}
-                  </figcaption>
-                </figure>
+                <WptImageFigure
+                  url={WPT_IMAGES[q.question_number].url}
+                  caption={WPT_IMAGES[q.question_number].caption}
+                  number={q.question_number}
+                />
               )}
               {isMbti ? (
                 <div className="rounded-md border bg-card">
