@@ -241,7 +241,22 @@ export const getFileSignedUrl = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { data: signed, error } = await context.supabase.storage.from("candidate-files").createSignedUrl(data.path, 60 * 10);
     if (error) throw new Error(error.message);
+    await logAudit(context, "candidate.file.view", "file", null, { path: data.path });
     return { url: signed.signedUrl };
+  });
+
+/** Document bank: list every uploaded candidate file with candidate identity for staff/admin. */
+export const listAllCandidateFiles = createServerFn({ method: "GET" })
+  .middleware([requireStaff])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("candidate_files")
+      .select("id, file_type, file_name, file_path, file_size, mime_type, uploaded_at, candidate_id, candidates(id, full_name, nik, position_applied, candidate_codes(code))")
+      .order("uploaded_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    await logAudit(context, "candidate.files.list", "area", null, { count: data?.length ?? 0 });
+    return { files: data ?? [] };
   });
 
 export const listTests = createServerFn({ method: "GET" })
