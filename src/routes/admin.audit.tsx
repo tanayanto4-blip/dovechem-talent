@@ -130,10 +130,16 @@ function AuditPage() {
                       </td>
                       <td className="px-4 py-2">
                         <div className="font-medium">
-                          {r.actor?.full_name || r.actor?.username || "—"}
+                          {r.actor_type === "candidate"
+                            ? (r.actor_label || "Kandidat")
+                            : (r.actor?.full_name || r.actor?.username || r.actor_label || "—")}
                         </div>
                         <div className="font-mono text-[10px] text-muted-foreground">
-                          {r.actor_id.slice(0, 8)}…
+                          {r.actor_type === "candidate"
+                            ? "kandidat"
+                            : r.actor_id
+                              ? `${r.actor_id.slice(0, 8)}…`
+                              : r.actor_type}
                         </div>
                       </td>
                       <td className="px-4 py-2">
