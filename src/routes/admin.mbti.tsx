@@ -384,12 +384,46 @@ function MbtiAdmin() {
                 const b = q.options?.find((o) => o.key === "B");
                 const isActive = q.active !== false;
                 const isChecked = selected.has(q.id);
+                const globalIdx = sortedAll.findIndex((s) => s.id === q.id);
+                const isFirst = globalIdx <= 0;
+                const isLast = globalIdx === sortedAll.length - 1;
+                const filterActive = search.trim().length > 0 || dimFilter !== "all";
                 return (
-                  <div key={q.id} className={`grid gap-3 p-4 md:grid-cols-[32px_56px_1fr_170px_120px] ${isChecked ? "bg-primary/5" : ""}`}>
+                  <div key={q.id} className={`grid gap-3 p-4 md:grid-cols-[32px_120px_1fr_170px_160px] ${isChecked ? "bg-primary/5" : ""}`}>
                     <div className="flex items-start pt-1">
                       <Checkbox checked={isChecked} onCheckedChange={(v) => toggleOne(q.id, v === true)} aria-label={`Pilih soal ${q.question_number}`} />
                     </div>
-                    <div className="text-sm font-mono font-semibold text-muted-foreground">#{q.question_number}</div>
+                    <div className="flex flex-col gap-1">
+                      <div className="text-sm font-mono font-semibold text-muted-foreground">#{q.question_number}</div>
+                      <div className="flex items-center gap-1">
+                        <Button size="icon" variant="outline" className="h-7 w-7" disabled={reordering || isFirst || filterActive} onClick={() => moveQuestion(q.id, -1)} title={filterActive ? "Bersihkan filter untuk memindahkan" : "Naik"} aria-label="Pindah ke atas">
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button size="icon" variant="outline" className="h-7 w-7" disabled={reordering || isLast || filterActive} onClick={() => moveQuestion(q.id, 1)} title={filterActive ? "Bersihkan filter untuk memindahkan" : "Turun"} aria-label="Pindah ke bawah">
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={sortedAll.length}
+                        defaultValue={q.question_number}
+                        key={q.question_number}
+                        disabled={reordering || filterActive}
+                        className="h-7 w-full px-2 text-xs"
+                        title={filterActive ? "Bersihkan filter untuk mengubah posisi" : "Ketik posisi baru lalu tekan Enter"}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            const v = Number((e.target as HTMLInputElement).value);
+                            if (Number.isFinite(v) && v >= 1) moveToPosition(q.id, v);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const v = Number(e.target.value);
+                          if (Number.isFinite(v) && v >= 1 && v !== q.question_number) moveToPosition(q.id, v);
+                        }}
+                      />
+                    </div>
                     <div className="min-w-0 space-y-2">
                       <div className="text-xs text-muted-foreground">{q.question_text}</div>
                       <div className="grid gap-2 sm:grid-cols-2">
