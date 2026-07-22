@@ -160,6 +160,7 @@ function MbtiAdmin() {
               <SelectContent>{mbtiTests.map((t) => (<SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>))}</SelectContent>
             </Select>
           )}
+          <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-2 h-4 w-4" /> Impor CSV</Button>
           <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> Tambah Soal</Button>
         </div>
       </div>
