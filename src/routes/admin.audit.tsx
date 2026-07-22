@@ -6,7 +6,44 @@ import { listAuditLogs } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, ShieldCheck } from "lucide-react";
+import { Download, RefreshCw, ShieldCheck } from "lucide-react";
+
+function toCsv(rows: Row[]): string {
+  const headers = ["waktu", "actor_type", "actor_name", "actor_id", "action", "action_label", "target_type", "target_id", "metadata"];
+  const esc = (v: unknown) => {
+    const s = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lines = [headers.join(",")];
+  for (const r of rows) {
+    lines.push([
+      new Date(r.created_at).toISOString(),
+      r.actor_type,
+      r.actor?.full_name || r.actor?.username || r.actor_label || "",
+      r.actor_id ?? "",
+      r.action,
+      ACTION_LABEL[r.action] ?? r.action,
+      r.target_type,
+      r.target_id ?? "",
+      r.metadata ?? {},
+    ].map(esc).join(","));
+  }
+  return lines.join("\n");
+}
+
+function downloadCsv(rows: Row[]) {
+  const csv = toCsv(rows);
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  a.href = url;
+  a.download = `audit-log-${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 export const Route = createFileRoute("/admin/audit")({
   head: () => ({
@@ -72,9 +109,14 @@ function AuditPage() {
             Catatan aktivitas admin/HR untuk keperluan security review.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => q.refetch()} disabled={q.isFetching}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${q.isFetching ? "animate-spin" : ""}`} /> Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => downloadCsv(rows)} disabled={rows.length === 0}>
+            <Download className="mr-2 h-4 w-4" /> Ekspor CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => q.refetch()} disabled={q.isFetching}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${q.isFetching ? "animate-spin" : ""}`} /> Refresh
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
