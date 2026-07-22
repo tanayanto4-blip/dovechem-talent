@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Download, ExternalLink, Eye, FileText, FolderOpen, Search } from "lucide-react";
+import { Download, ExternalLink, Eye, FileArchive, FileText, FolderOpen, Search } from "lucide-react";
+import { toast } from "sonner";
 
 function mimeKind(name: string, mime?: string | null): "image" | "pdf" | "other" {
   const m = (mime ?? "").toLowerCase();
