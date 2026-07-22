@@ -5,7 +5,7 @@ import { getAttemptDetail } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Printer } from "lucide-react";
 
 export const Route = createFileRoute("/admin/attempts/$id")({ component: AttemptDetail });
 
@@ -22,10 +22,13 @@ function AttemptDetail() {
   const candId = a.candidates?.id;
 
   return (
-    <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm">
-        <Link to="/admin/candidates/$id" params={{ id: candId }}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke kandidat</Link>
-      </Button>
+    <div className="space-y-6 print-area">
+      <div className="no-print flex items-center justify-between">
+        <Button asChild variant="ghost" size="sm">
+          <Link to="/admin/candidates/$id" params={{ id: candId }}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke kandidat</Link>
+        </Button>
+        <Button size="sm" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Ekspor PDF</Button>
+      </div>
       <div>
         <h1 className="font-display text-3xl font-bold text-primary">Lembar Jawaban — {t?.name}</h1>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">

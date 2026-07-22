@@ -6,7 +6,7 @@ import { useCandidateSession } from "@/lib/candidate-session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Printer } from "lucide-react";
 
 export const Route = createFileRoute("/candidate/portal/result/$attemptId")({ component: CandidateResult });
 
@@ -28,8 +28,11 @@ function CandidateResult() {
   const isDisc = t?.test_type === "disc";
 
   return (
-    <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm"><Link to="/candidate/portal/tests"><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Link></Button>
+    <div className="space-y-6 print-area">
+      <div className="no-print flex items-center justify-between">
+        <Button asChild variant="ghost" size="sm"><Link to="/candidate/portal/tests"><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Link></Button>
+        <Button size="sm" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Ekspor PDF</Button>
+      </div>
       <div>
         <h1 className="font-display text-2xl font-bold text-primary">Hasil — {t?.name}</h1>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
