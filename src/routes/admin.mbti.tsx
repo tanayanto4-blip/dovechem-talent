@@ -89,6 +89,43 @@ function MbtiAdmin() {
   const [importText, setImportText] = useState("");
   const [importRunning, setImportRunning] = useState(false);
   const [importLog, setImportLog] = useState<{ ok: number; fail: number; errors: string[] } | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkRunning, setBulkRunning] = useState<null | "on" | "off">(null);
+  const bulkFn = useServerFn(setMbtiQuestionsActive);
+
+  const filteredIds = useMemo(() => filtered.map((q) => q.id), [filtered]);
+  const allSelected = filteredIds.length > 0 && filteredIds.every((id) => selected.has(id));
+  const someSelected = !allSelected && filteredIds.some((id) => selected.has(id));
+  function toggleOne(id: string, on: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id); else next.delete(id);
+      return next;
+    });
+  }
+  function toggleAllFiltered(on: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      filteredIds.forEach((id) => { if (on) next.add(id); else next.delete(id); });
+      return next;
+    });
+  }
+  async function handleBulk(active: boolean) {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+    setBulkRunning(active ? "on" : "off");
+    try {
+      const res: any = await bulkFn({ data: { ids, active } });
+      const skipped = res?.skipped ?? 0;
+      toast.success(`${active ? "Dipublish" : "Di-unpublish"} ${res?.updated ?? ids.length} soal${skipped ? ` (${skipped} dilewati)` : ""}.`);
+      setSelected(new Set());
+      qc.invalidateQueries({ queryKey: ["admin-mbti", activeTestId] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal memperbarui status publish.");
+    } finally {
+      setBulkRunning(null);
+    }
+  }
 
   function openCreate() { setDraft(emptyDraft(nextNumber)); }
   function openEdit(q: QRow) {
