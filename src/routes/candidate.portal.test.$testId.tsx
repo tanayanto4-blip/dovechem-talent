@@ -107,9 +107,10 @@ function TakeTest() {
   const isDisc = data.test.test_type === "disc";
   const isMbti = data.test.test_type === "mbti";
   const isEq = data.test.test_type === "eq";
+  const isWpt = data.test.test_type === "wpt";
   const answered = isDisc
     ? Object.values(discPicks).filter((p) => p.most && p.least && p.most !== p.least).length
-    : Object.keys(answers).length;
+    : Object.keys(answers).filter((k) => (answers[k] ?? "").trim() !== "").length;
 
   const inflight = useRef(0);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
