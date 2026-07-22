@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
@@ -22,7 +22,7 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, Pencil, Plus, Trash2, Search, Upload, Download } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2, Search, Upload, Download, Eye } from "lucide-react";
 
 export const Route = createFileRoute("/admin/mbti")({
   head: () => ({ meta: [
@@ -218,6 +218,7 @@ function MbtiAdmin() {
               <SelectContent>{mbtiTests.map((t) => (<SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>))}</SelectContent>
             </Select>
           )}
+          <Button asChild variant="outline"><Link to="/admin/mbti/preview"><Eye className="mr-2 h-4 w-4" /> Preview</Link></Button>
           <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-2 h-4 w-4" /> Impor CSV</Button>
           <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> Tambah Soal</Button>
         </div>
