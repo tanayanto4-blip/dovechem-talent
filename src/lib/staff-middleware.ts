@@ -25,6 +25,15 @@ function getRequestClientInfo(): { ip: string | null; user_agent: string | null 
  * using the service-role client (RLS-bypass) so the trail is always written
  * even when the caller has no INSERT policy grant.
  */
+/**
+ * Rate-limit thresholds for repeated denied admin access from the same source.
+ * If more than DENY_LIMIT denials occur within DENY_WINDOW_SECONDS for the
+ * same (ip, user_id) pair, subsequent requests are answered with HTTP 429
+ * (Retry-After: DENY_WINDOW_SECONDS) and audited as `admin.access.rate_limited`.
+ */
+const DENY_LIMIT = 10;
+const DENY_WINDOW_SECONDS = 60;
+
 async function denyAndAudit(params: {
   userId: string | null;
   reason: "not_staff" | "not_admin";
@@ -32,12 +41,35 @@ async function denyAndAudit(params: {
   roles?: string[];
 }): Promise<never> {
   const { ip, user_agent } = getRequestClientInfo();
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  // Count recent denials from the same source (ip OR user_id) within the window.
+  let rateLimited = false;
   try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sinceIso = new Date(Date.now() - DENY_WINDOW_SECONDS * 1000).toISOString();
+    let query = supabaseAdmin
+      .from("audit_logs")
+      .select("id", { count: "exact", head: true })
+      .in("action", ["admin.access.denied", "admin.access.rate_limited"])
+      .gte("created_at", sinceIso);
+    if (params.userId) {
+      query = query.eq("actor_id", params.userId);
+    } else if (ip) {
+      query = query.eq("metadata->>ip", ip);
+    } else {
+      query = query.eq("id", "00000000-0000-0000-0000-000000000000");
+    }
+    const { count } = await query;
+    if ((count ?? 0) >= DENY_LIMIT) rateLimited = true;
+  } catch (e) {
+    console.error("audit_deny_ratecheck_failed", (e as Error).message);
+  }
+
+  try {
     await supabaseAdmin.from("audit_logs").insert({
       actor_id: params.userId,
       actor_type: "staff",
-      action: "admin.access.denied",
+      action: rateLimited ? "admin.access.rate_limited" : "admin.access.denied",
       target_type: "rbac",
       target_id: null,
       metadata: {
@@ -46,11 +78,32 @@ async function denyAndAudit(params: {
         roles: params.roles ?? [],
         ip,
         user_agent,
+        ...(rateLimited
+          ? { rate_limit: { limit: DENY_LIMIT, window_seconds: DENY_WINDOW_SECONDS } }
+          : {}),
       },
     });
   } catch (e) {
     console.error("audit_deny_insert_failed", (e as Error).message);
   }
+
+  if (rateLimited) {
+    throw new Response(
+      JSON.stringify({
+        error: "Too Many Requests",
+        reason: "rate_limited",
+        retry_after_seconds: DENY_WINDOW_SECONDS,
+      }),
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": String(DENY_WINDOW_SECONDS),
+        },
+      },
+    );
+  }
+
   throw new Response(
     JSON.stringify({
       error: "Forbidden",
