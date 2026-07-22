@@ -300,6 +300,9 @@ const AuditListInput = z.object({
   target_id: z.string().trim().max(120).optional().nullable(),
   from: z.string().datetime().optional().nullable(),
   to: z.string().datetime().optional().nullable(),
+  actor_id: z.string().uuid().optional().nullable(),
+  actor_type: z.enum(["staff", "candidate", "system"]).optional().nullable(),
+  only_denied: z.boolean().optional().nullable(),
 });
 
 export const listAuditLogs = createServerFn({ method: "POST" })
@@ -313,7 +316,10 @@ export const listAuditLogs = createServerFn({ method: "POST" })
       .select("id, actor_id, actor_type, actor_label, action, target_type, target_id, metadata, created_at", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
-    if (data.action) q = q.eq("action", data.action);
+    if (data.only_denied) q = q.eq("action", "admin.access.denied");
+    else if (data.action) q = q.eq("action", data.action);
+    if (data.actor_id) q = q.eq("actor_id", data.actor_id);
+    if (data.actor_type) q = q.eq("actor_type", data.actor_type);
     if (data.target_id) q = q.ilike("target_id", `%${data.target_id}%`);
     if (data.from) q = q.gte("created_at", data.from);
     if (data.to) q = q.lte("created_at", data.to);
