@@ -55,6 +55,7 @@ function MbtiAdmin() {
   const toggleFn = useServerFn(setTestActive);
   const upsertFn = useServerFn(upsertMbtiQuestion);
   const deleteFn = useServerFn(deleteMbtiQuestion);
+  const logExportFn = useServerFn(logMbtiExport);
 
   const { data: testsData, isLoading: loadingTests } = useQuery({ queryKey: ["admin-tests"], queryFn: () => listFn({ data: {} as never }) });
   const mbtiTests = useMemo(() => ((testsData?.tests ?? []) as any[]).filter((t) => t.test_type === "mbti"), [testsData]);
