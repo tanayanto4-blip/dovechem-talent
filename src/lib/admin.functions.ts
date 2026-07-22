@@ -304,7 +304,7 @@ export const listAuditLogs = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     let q = context.supabase
       .from("audit_logs")
-      .select("id, actor_id, action, target_type, target_id, metadata, created_at")
+      .select("id, actor_id, actor_type, actor_label, action, target_type, target_id, metadata, created_at")
       .order("created_at", { ascending: false })
       .limit(data.limit ?? 100);
     if (data.action) q = q.eq("action", data.action);
