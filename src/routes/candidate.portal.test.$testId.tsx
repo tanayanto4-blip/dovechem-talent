@@ -22,6 +22,7 @@ function TakeTest() {
   const qc = useQueryClient();
   const start = useServerFn(candidateStartTest);
   const submit = useServerFn(candidateSubmitTest);
+  const saveAnswer = useServerFn(candidateSaveAnswer);
 
   const { data, isLoading } = useQuery({
     queryKey: ["start-test", testId, session?.code],
@@ -34,6 +35,30 @@ function TakeTest() {
   const [discPicks, setDiscPicks] = useState<Record<string, { most?: string; least?: string }>>({});
   const [remaining, setRemaining] = useState<number>(0);
   const [submitting, setSubmitting] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const hydratedRef = useRef(false);
+
+  // Hydrate saved answers on first load so the candidate can resume.
+  useEffect(() => {
+    if (hydratedRef.current || !data?.attempt) return;
+    hydratedRef.current = true;
+    const restored: Record<string, string> = {};
+    const restoredDisc: Record<string, { most?: string; least?: string }> = {};
+    for (const row of (data.answers ?? []) as Array<{ question_id: string; answer: string }>) {
+      restored[row.question_id] = row.answer;
+      try {
+        const parsed = JSON.parse(row.answer);
+        if (parsed && (parsed.most || parsed.least)) {
+          restoredDisc[row.question_id] = { most: parsed.most, least: parsed.least };
+        }
+      } catch { /* not JSON, regular answer */ }
+    }
+    if (Object.keys(restored).length > 0) {
+      setAnswers(restored);
+      if (Object.keys(restoredDisc).length > 0) setDiscPicks(restoredDisc);
+      setSaveState("saved");
+    }
+  }, [data]);
 
   useEffect(() => {
     if (!data?.test || !data?.attempt) return;
