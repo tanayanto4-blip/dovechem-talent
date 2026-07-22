@@ -33,13 +33,12 @@ const src = readFileSync(resolve(here, "../candidate.functions.ts"), "utf8");
 
 // ---------- helpers ----------
 function extractHandler(name: string): string {
-  const re = new RegExp(
-    `export const ${name}\\s*=\\s*createServerFn[\\s\\S]*?\\n\\s*\\}\\);`,
-    "m",
-  );
-  const m = src.match(re);
-  if (!m) throw new Error(`handler ${name} not found`);
-  return m[0];
+  const startRe = new RegExp(`export const ${name}\\s*=\\s*createServerFn`);
+  const start = src.search(startRe);
+  if (start < 0) throw new Error(`handler ${name} not found`);
+  const rest = src.slice(start + 1);
+  const nextIdx = rest.search(/\nexport const \w+\s*=\s*createServerFn/);
+  return nextIdx < 0 ? src.slice(start) : src.slice(start, start + 1 + nextIdx);
 }
 
 // -------------------------------------------------------------------------
