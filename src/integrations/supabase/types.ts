@@ -305,6 +305,7 @@ export type Database = {
       }
       test_questions: {
         Row: {
+          active: boolean
           correct_answer: string | null
           created_at: string
           dimension: string | null
@@ -315,6 +316,7 @@ export type Database = {
           test_id: string
         }
         Insert: {
+          active?: boolean
           correct_answer?: string | null
           created_at?: string
           dimension?: string | null
@@ -325,6 +327,7 @@ export type Database = {
           test_id: string
         }
         Update: {
+          active?: boolean
           correct_answer?: string | null
           created_at?: string
           dimension?: string | null
