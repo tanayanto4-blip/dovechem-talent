@@ -27,9 +27,8 @@ function PortalHome() {
   if (isLoading) return <div className="text-muted-foreground">Memuat...</div>;
 
   const dataDone = data?.candidate?.data_completed;
-  const requiredFiles = ["ktp", "kk", "cv", "ijazah", "transkrip"];
-  const uploadedTypes = new Set((data?.files ?? []).map((f: any) => f.file_type));
-  const filesDone = requiredFiles.every((t) => uploadedTypes.has(t));
+  const checklist = computeChecklist(data?.files);
+  const filesDone = checklist.complete;
   const totalTests = data?.tests?.length ?? 0;
   const finishedTests = (data?.attempts ?? []).filter((a: any) => a.status === "finished").length;
   const testsDone = totalTests > 0 && finishedTests === totalTests;
