@@ -101,25 +101,47 @@ export const candidateSaveProfile = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
+const ALLOWED_MIME = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+]);
+const ALLOWED_EXT = new Set(["pdf", "jpg", "jpeg", "png", "webp"]);
+
 const UploadInput = z.object({
   code: z.string().trim().min(3),
   file_type: z.enum(["ktp", "kk", "cv", "ijazah", "transkrip", "foto", "npwp"]),
   file_name: z.string().min(1).max(200),
   mime_type: z.string().max(120),
-  file_size: z.number().int().nonnegative(),
-  base64: z.string().min(1),
+  file_size: z.number().int().nonnegative().max(MAX_UPLOAD_BYTES),
+  base64: z.string().min(1).max(20 * 1024 * 1024),
 });
 
 export const candidateUploadFile = createServerFn({ method: "POST" })
   .inputValidator((d) => UploadInput.parse(d))
   .handler(async ({ data }) => {
-    if (data.file_size > 10 * 1024 * 1024) throw new Error("Ukuran file maksimal 10MB.");
+    if (data.file_size > MAX_UPLOAD_BYTES) throw new Error("Ukuran file maksimal 10MB.");
+    const mime = data.mime_type.toLowerCase().trim();
+    if (!ALLOWED_MIME.has(mime)) {
+      throw new Error("Tipe file tidak diizinkan. Hanya PDF, JPG, PNG, atau WEBP.");
+    }
+    const ext = (data.file_name.split(".").pop() || "").toLowerCase();
+    if (!ALLOWED_EXT.has(ext)) {
+      throw new Error("Ekstensi file tidak diizinkan.");
+    }
+    const buf = Buffer.from(data.base64, "base64");
+    if (buf.length === 0) throw new Error("File kosong.");
+    if (buf.length > MAX_UPLOAD_BYTES) throw new Error("Ukuran file maksimal 10MB.");
+    if (Math.abs(buf.length - data.file_size) > 1024) {
+      throw new Error("Ukuran file tidak sesuai dengan konten.");
+    }
     const sb = await admin();
     const codeRow = await resolveActiveCode(sb, data.code);
     const { data: cand } = await sb.from("candidates").select("id").eq("code_id", codeRow.id).single();
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
-    const buf = Buffer.from(data.base64, "base64");
-    const ext = data.file_name.split(".").pop() || "bin";
     const path = `${cand.id}/${data.file_type}-${Date.now()}.${ext}`;
     const up = await sb.storage.from("candidate-files").upload(path, buf, {
       contentType: data.mime_type,
