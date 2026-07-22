@@ -295,6 +295,34 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       const total = (qs.data ?? []).length || 1;
       score = Math.round((correct / total) * 100);
       result = { correct, total };
+    } else if (test.test_type === "mbti") {
+      // Forced-choice: each option carries a dimension letter (E/I, S/N, T/F, J/P).
+      const counts: Record<string, number> = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+      const qMap = new Map((qs.data ?? []).map((q: any) => [q.id, q]));
+      for (const a of data.answers) {
+        const q: any = qMap.get(a.question_id);
+        const opt = (q?.options ?? []).find((o: any) => o.key === a.answer);
+        const dim = opt?.dimension;
+        if (dim && counts[dim] !== undefined) counts[dim]++;
+      }
+      const pick = (x: string, y: string) => (counts[x] >= counts[y] ? x : y);
+      const type = `${pick("E", "I")}${pick("S", "N")}${pick("T", "F")}${pick("J", "P")}`;
+      const pairs = {
+        EI: { E: counts.E, I: counts.I },
+        SN: { S: counts.S, N: counts.N },
+        TF: { T: counts.T, F: counts.F },
+        JP: { J: counts.J, P: counts.P },
+      };
+      // Score = average clarity of the dominant letter in each pair (0-100).
+      const clarity = (a: number, b: number) => (a + b === 0 ? 0 : Math.round((Math.max(a, b) / (a + b)) * 100));
+      const clarityByPair = {
+        EI: clarity(counts.E, counts.I),
+        SN: clarity(counts.S, counts.N),
+        TF: clarity(counts.T, counts.F),
+        JP: clarity(counts.J, counts.P),
+      };
+      score = Math.round((clarityByPair.EI + clarityByPair.SN + clarityByPair.TF + clarityByPair.JP) / 4);
+      result = { type, counts, pairs, clarity: clarityByPair };
     }
 
     const finishedAt = new Date().toISOString();
