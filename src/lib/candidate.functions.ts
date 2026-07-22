@@ -148,7 +148,18 @@ export const candidateUploadFile = createServerFn({ method: "POST" })
       upsert: true,
     });
     if (up.error) throw new Error(up.error.message);
-    // delete old row of same type, insert new
+    // Compute next version number
+    const { data: last } = await sb
+      .from("candidate_file_versions")
+      .select("version")
+      .eq("candidate_id", cand.id)
+      .eq("file_type", data.file_type)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const nextVersion = ((last?.version as number | undefined) ?? 0) + 1;
+
+    // Update current pointer
     await sb.from("candidate_files").delete().eq("candidate_id", cand.id).eq("file_type", data.file_type);
     const { error } = await sb.from("candidate_files").insert({
       candidate_id: cand.id,
@@ -159,7 +170,20 @@ export const candidateUploadFile = createServerFn({ method: "POST" })
       mime_type: data.mime_type,
     });
     if (error) throw new Error(error.message);
-    return { ok: true, path };
+
+    // Append to versions history
+    await sb.from("candidate_file_versions").insert({
+      candidate_id: cand.id,
+      file_type: data.file_type,
+      version: nextVersion,
+      file_path: path,
+      file_name: data.file_name,
+      file_size: data.file_size,
+      mime_type: data.mime_type,
+      uploader_kind: "candidate",
+      uploader_label: `Kandidat (${data.code})`,
+    });
+    return { ok: true, path, version: nextVersion };
   });
 
 const StartTestInput = z.object({ code: z.string().min(3), test_id: z.string().uuid() });
