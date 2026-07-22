@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Copy, Trash2, Layers, Power, PowerOff } from "lucide-react";
+import { Plus, Copy, Trash2, Layers, Power, PowerOff, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/admin/codes")({ component: CodesPage });
 
@@ -31,6 +31,22 @@ function CodesPage() {
   const [bulkForm, setBulkForm] = useState({ count: 300, prefix: "DOV", name_prefix: "Kandidat", position_applied: "", start_number: 1 });
   const [saving, setSaving] = useState(false);
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [autoSaving, setAutoSaving] = useState(false);
+
+  async function onAuto() {
+    const n = Number(prompt("Berapa kode akses yang dibuat otomatis?", "300")) || 0;
+    if (n <= 0) return;
+    setAutoSaving(true);
+    try {
+      const res = await bulkCreate({ data: {
+        count: n, prefix: "DOV", name_prefix: "Kandidat",
+        position_applied: null, start_number: 1,
+      }});
+      toast.success(`${res.created} kode otomatis dibuat & aktif — siap login`);
+      qc.invalidateQueries({ queryKey: ["codes"] });
+    } catch (e: any) { toast.error(e.message); }
+    finally { setAutoSaving(false); }
+  }
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -80,6 +96,9 @@ function CodesPage() {
           <p className="text-muted-foreground">Buat kode akses untuk kandidat login ke portal test.</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button onClick={onAuto} disabled={autoSaving} className="bg-gradient-to-r from-primary to-primary-glow">
+            <Zap className="mr-2 h-4 w-4" /> {autoSaving ? "Membuat..." : "Otomatis Buat Kode"}
+          </Button>
           <Button variant="outline" onClick={() => onBulkActive(true)}><Power className="mr-2 h-4 w-4" /> Aktifkan Semua</Button>
           <Button variant="outline" onClick={() => onBulkActive(false)}><PowerOff className="mr-2 h-4 w-4" /> Nonaktifkan Semua</Button>
           <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
