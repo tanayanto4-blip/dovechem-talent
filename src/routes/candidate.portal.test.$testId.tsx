@@ -465,6 +465,32 @@ function TakeTest() {
 
 
 
+              ) : isEq ? (
+                <div className="mt-4">
+                  <div className="grid grid-cols-5 gap-2">
+                    {(q.options ?? []).map((opt: any) => {
+                      const picked = answers[q.id] === opt.key;
+                      return (
+                        <button
+                          key={opt.key}
+                          type="button"
+                          onClick={() => pickMcq(q.id, opt.key)}
+                          aria-label={opt.label}
+                          className={`flex flex-col items-center justify-center rounded-md border px-2 py-3 text-center transition ${
+                            picked
+                              ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                              : "border-input bg-background text-muted-foreground hover:border-primary/40 hover:text-primary"
+                          }`}
+                        >
+                          <span className="text-lg font-bold">{opt.key}</span>
+                          <span className={`mt-0.5 text-[10px] leading-tight ${picked ? "text-primary-foreground/90" : ""}`}>
+                            {opt.label.replace(/^\d+\s*[—-]\s*/, "")}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               ) : (
                 <RadioGroup className="mt-4 space-y-2" value={answers[q.id] ?? ""} onValueChange={(v) => pickMcq(q.id, v)}>
                   {(q.options ?? []).map((opt: any) => (
