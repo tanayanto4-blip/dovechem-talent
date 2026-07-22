@@ -94,6 +94,9 @@ function MbtiAdmin() {
   type ImportIssue = { rowIdx: number; number: number | null; kind: string; severity: "error" | "warning"; message: string };
   type ImportPreview = { rows: Array<{ rowIdx: number; number: number | null; row: ImportRow; valid: boolean; overwrite: boolean; issues: ImportIssue[] }>; issues: ImportIssue[]; validCount: number; overwriteCount: number; source: "csv" | "json" };
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  type ConflictMode = "overwrite" | "skip" | "resequence";
+  type StatusMode = "from_file" | "all_draft" | "all_published" | "keep_existing";
+  const [importOpts, setImportOpts] = useState<{ conflict: ConflictMode; status: StatusMode }>({ conflict: "overwrite", status: "from_file" });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkRunning, setBulkRunning] = useState<null | "on" | "off" | "delete">(null);
   const bulkFn = useServerFn(setMbtiQuestionsActive);
@@ -358,15 +361,23 @@ function MbtiAdmin() {
     const seenInFile = new Map<number, number>(); // num -> first rowIdx
     const aggregate: ImportIssue[] = [];
     const parsedNums: (number | null)[] = [];
+    const conflict = importOpts.conflict;
 
-    // First pass — assign numbers (auto for missing), detect in-file duplicates
+    // First pass — assign numbers.
+    // resequence: ignore file numbers, give every row the next free number.
+    // overwrite/skip: honor file numbers; auto-assign only if missing.
     let auto = nextNumber;
     const takenAuto = new Set(existingNums);
     for (let i = 0; i < rows.length; i++) {
-      const raw = Number(rows[i].number);
       let num: number | null = null;
-      if (Number.isFinite(raw) && raw >= 1) num = raw;
-      else { while (takenAuto.has(auto)) auto++; num = auto; takenAuto.add(auto); auto++; }
+      if (conflict === "resequence") {
+        while (takenAuto.has(auto)) auto++;
+        num = auto; takenAuto.add(auto); auto++;
+      } else {
+        const raw = Number(rows[i].number);
+        if (Number.isFinite(raw) && raw >= 1) num = raw;
+        else { while (takenAuto.has(auto)) auto++; num = auto; takenAuto.add(auto); auto++; }
+      }
       parsedNums.push(num);
     }
 
@@ -378,9 +389,11 @@ function MbtiAdmin() {
         issues.push(iss); aggregate.push(iss);
       };
 
-      // Nomor kosong (info) — hanya jika input asli tidak berupa angka valid
+      // Nomor kosong / resequence info
       const rawNum = Number(r.number);
-      if (!Number.isFinite(rawNum) || rawNum < 1) {
+      if (conflict === "resequence" && Number.isFinite(rawNum) && rawNum >= 1 && rawNum !== num) {
+        push("resequenced", "warning", `Baris ${i + 1}: nomor #${rawNum} diubah menjadi #${num} (resequence)`);
+      } else if (!Number.isFinite(rawNum) || rawNum < 1) {
         push("missing_number", "warning", `Baris ${i + 1}: nomor kosong → otomatis diberi #${num}`);
       }
       // Duplikat di dalam file
@@ -405,7 +418,14 @@ function MbtiAdmin() {
       }
 
       const overwrite = num != null && existingNums.has(num);
-      if (overwrite) push("overwrite", "warning", `Baris ${i + 1} (#${num}): akan menimpa soal yang sudah ada`);
+      if (overwrite) {
+        if (conflict === "skip") {
+          push("skipped_conflict", "error", `Baris ${i + 1} (#${num}): dilewati — nomor sudah ada (mode Skip)`);
+        } else if (conflict === "overwrite") {
+          push("overwrite", "warning", `Baris ${i + 1} (#${num}): akan menimpa soal yang sudah ada`);
+        }
+        // resequence never conflicts (numbers assigned fresh)
+      }
 
       const valid = !issues.some((x) => x.severity === "error");
       return { rowIdx: i, number: num, row: r, valid, overwrite, issues };
@@ -440,15 +460,23 @@ function MbtiAdmin() {
             { key: "B", label: r.b_label!.trim(), dimension: String(r.b_dim).toUpperCase() as Dim },
           ],
         }});
-        if (isJson && r.active === false) toDraft.push(num);
-        else if (isJson && r.active === true) toPublish.push(num);
+        const statusMode = importOpts.status;
+        let effectiveActive: boolean | null = null;
+        if (statusMode === "all_draft") effectiveActive = false;
+        else if (statusMode === "all_published") effectiveActive = true;
+        else if (statusMode === "keep_existing") effectiveActive = d.overwrite ? null : true;
+        else if (isJson && r.active === false) effectiveActive = false;
+        else if (isJson && r.active === true) effectiveActive = true;
+        else effectiveActive = null; // CSV & from_file with no info → leave as-is
+        if (effectiveActive === false) toDraft.push(num);
+        else if (effectiveActive === true) toPublish.push(num);
         ok++;
       } catch (e: any) {
         fail++;
         errors.push(`Baris ${d.rowIdx + 1} (#${num}): ${e?.message ?? "gagal"}`);
       }
     }
-    if (isJson && (toDraft.length || toPublish.length)) {
+    if (toDraft.length || toPublish.length) {
       try {
         const refetched = await detailFn({ data: { id: activeTestId } });
         const byNum = new Map<number, string>(((refetched?.questions ?? []) as any[]).map((q) => [q.question_number, q.id]));
@@ -869,6 +897,36 @@ function MbtiAdmin() {
                 placeholder={'CSV: number,question_text,a_label,a_dim,b_label,b_dim\natau JSON: { "format": "mbti-bank-soal", "questions": [ ... ] }'}
               />
             </div>
+
+            <div className="grid gap-3 rounded-md border p-3 sm:grid-cols-2">
+              <div>
+                <Label className="text-xs">Jika nomor soal sudah ada</Label>
+                <select
+                  value={importOpts.conflict}
+                  onChange={(e) => { setImportOpts((s) => ({ ...s, conflict: e.target.value as ConflictMode })); setImportPreview(null); }}
+                  className="mt-1 w-full rounded-md border bg-background p-2 text-sm"
+                >
+                  <option value="overwrite">Overwrite — timpa soal yang ada</option>
+                  <option value="skip">Skip — lewati baris yang konflik</option>
+                  <option value="resequence">Resequence — beri nomor baru berurutan</option>
+                </select>
+              </div>
+              <div>
+                <Label className="text-xs">Status Publish/Draft</Label>
+                <select
+                  value={importOpts.status}
+                  onChange={(e) => { setImportOpts((s) => ({ ...s, status: e.target.value as StatusMode })); setImportPreview(null); }}
+                  className="mt-1 w-full rounded-md border bg-background p-2 text-sm"
+                >
+                  <option value="from_file">Ikuti file (JSON) / biarkan (CSV)</option>
+                  <option value="all_published">Semua → Published</option>
+                  <option value="all_draft">Semua → Draft</option>
+                  <option value="keep_existing">Pertahankan status DB untuk overwrite; baru → Published</option>
+                </select>
+              </div>
+            </div>
+
+
 
             {importPreview && (
               <div className="rounded-md border p-3 text-sm">
