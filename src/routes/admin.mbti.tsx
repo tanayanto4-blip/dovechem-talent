@@ -898,6 +898,36 @@ function MbtiAdmin() {
               />
             </div>
 
+            <div className="grid gap-3 rounded-md border p-3 sm:grid-cols-2">
+              <div>
+                <Label className="text-xs">Jika nomor soal sudah ada</Label>
+                <select
+                  value={importOpts.conflict}
+                  onChange={(e) => { setImportOpts((s) => ({ ...s, conflict: e.target.value as ConflictMode })); setImportPreview(null); }}
+                  className="mt-1 w-full rounded-md border bg-background p-2 text-sm"
+                >
+                  <option value="overwrite">Overwrite — timpa soal yang ada</option>
+                  <option value="skip">Skip — lewati baris yang konflik</option>
+                  <option value="resequence">Resequence — beri nomor baru berurutan</option>
+                </select>
+              </div>
+              <div>
+                <Label className="text-xs">Status Publish/Draft</Label>
+                <select
+                  value={importOpts.status}
+                  onChange={(e) => { setImportOpts((s) => ({ ...s, status: e.target.value as StatusMode })); setImportPreview(null); }}
+                  className="mt-1 w-full rounded-md border bg-background p-2 text-sm"
+                >
+                  <option value="from_file">Ikuti file (JSON) / biarkan (CSV)</option>
+                  <option value="all_published">Semua → Published</option>
+                  <option value="all_draft">Semua → Draft</option>
+                  <option value="keep_existing">Pertahankan status DB untuk overwrite; baru → Published</option>
+                </select>
+              </div>
+            </div>
+
+
+
             {importPreview && (
               <div className="rounded-md border p-3 text-sm">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
