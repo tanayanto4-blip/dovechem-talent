@@ -91,6 +91,7 @@ export const bulkCreateCandidateCodes = createServerFn({ method: "POST" })
         candidate_name: `${namePrefix} ${String(start + i).padStart(3, "0")}`,
         position_applied: data.position_applied || null,
         active: true,
+        expires_at: data.expires_at || null,
         created_by: context.userId,
       });
     }
