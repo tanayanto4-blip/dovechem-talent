@@ -623,6 +623,32 @@ export const reorderMbtiQuestions = createServerFn({ method: "POST" })
       after,
     });
     return { ok: true, count: finalOrder.length };
+
+/** Audit trail for MBTI question-bank exports (CSV/JSON) initiated from the admin UI. */
+export const logMbtiExport = createServerFn({ method: "POST" })
+  .middleware([requireStaff])
+  .inputValidator((d) =>
+    z
+      .object({
+        test_id: z.string().uuid(),
+        format: z.enum(["csv", "json"]),
+        count: z.number().int().nonnegative(),
+        published_count: z.number().int().nonnegative().optional(),
+        draft_count: z.number().int().nonnegative().optional(),
+        filename: z.string().trim().max(200).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await logAudit(context, "mbti.bank.export", "test", data.test_id, {
+      format: data.format,
+      count: data.count,
+      published_count: data.published_count ?? null,
+      draft_count: data.draft_count ?? null,
+      filename: data.filename ?? null,
+    });
+    return { ok: true };
   });
+
 
 
