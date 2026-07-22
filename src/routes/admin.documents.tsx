@@ -267,64 +267,81 @@ function DocumentsBank() {
                   <TableRow>
                     <TableHead>Kandidat</TableHead>
                     <TableHead>Kode</TableHead>
-                    <TableHead>Tipe</TableHead>
-                    <TableHead>Nama Berkas</TableHead>
-                    <TableHead>Ukuran</TableHead>
-                    <TableHead>Diunggah</TableHead>
+                    <TableHead>Berkas</TableHead>
+                    <TableHead>Total Ukuran</TableHead>
+                    <TableHead>Terakhir Unggah</TableHead>
                     <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((f) => (
-                    <TableRow key={f.id}>
-                      <TableCell>
-                        <Link
-                          to="/admin/candidates/$id"
-                          params={{ id: f.candidate_id }}
-                          className="font-medium text-primary hover:underline"
-                        >
-                          {f.candidates?.full_name ?? "(tanpa nama)"}
-                        </Link>
-                        <div className="text-xs text-muted-foreground">
-                          {f.candidates?.position_applied ?? "-"}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">{f.candidates?.candidate_codes?.code ?? "-"}</TableCell>
-                      <TableCell><Badge variant="outline" className="uppercase">{f.file_type}</Badge></TableCell>
-                      <TableCell className="max-w-[260px] truncate" title={f.file_name}>{f.file_name}</TableCell>
-                      <TableCell className="text-xs">{humanSize(f.file_size)}</TableCell>
-                      <TableCell className="text-xs">{new Date(f.uploaded_at).toLocaleString("id-ID")}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => preview(f)}
-                            disabled={previewLoading === f.id}
+                  {(() => {
+                    const groups = new Map<string, any[]>();
+                    for (const f of filtered) {
+                      const key = f.candidate_id ?? "unknown";
+                      if (!groups.has(key)) groups.set(key, []);
+                      groups.get(key)!.push(f);
+                    }
+                    const rows = Array.from(groups.entries()).map(([id, items]) => {
+                      const c = items[0]?.candidates;
+                      const totalSize = items.reduce((s, f) => s + (f.file_size ?? 0), 0);
+                      const last = items.reduce((m, f) => {
+                        const t = new Date(f.uploaded_at).getTime();
+                        return t > m ? t : m;
+                      }, 0);
+                      return { id, c, items, totalSize, last };
+                    }).sort((a, b) => (a.c?.full_name ?? "").localeCompare(b.c?.full_name ?? ""));
+                    return rows.map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell>
+                          <Link
+                            to="/admin/candidates/$id"
+                            params={{ id: r.id }}
+                            className="font-medium text-primary hover:underline"
                           >
-                            <Eye className="mr-2 h-3.5 w-3.5" />
-                            {previewLoading === f.id ? "Memuat..." : "Preview"}
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => open(f.file_path)}>
-                            <Download className="mr-2 h-3.5 w-3.5" /> Buka
-                          </Button>
+                            {r.c?.full_name ?? "(tanpa nama)"}
+                          </Link>
+                          <div className="text-xs text-muted-foreground">
+                            {r.c?.position_applied ?? "-"}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">{r.c?.candidate_codes?.code ?? "-"}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {r.items.map((f) => (
+                              <button
+                                key={f.id}
+                                onClick={() => preview(f)}
+                                disabled={previewLoading === f.id}
+                                className="inline-flex items-center gap-1 rounded border bg-muted/40 px-2 py-0.5 text-[11px] hover:bg-muted"
+                                title={`${f.file_name} · ${humanSize(f.file_size)}`}
+                              >
+                                <Badge variant="outline" className="h-4 px-1 text-[9px] uppercase">{f.file_type}</Badge>
+                                <span className="max-w-[140px] truncate">{f.file_name}</span>
+                              </button>
+                            ))}
+                          </div>
+                          <div className="mt-1 text-[11px] text-muted-foreground">{r.items.length} berkas</div>
+                        </TableCell>
+                        <TableCell className="text-xs">{humanSize(r.totalSize)}</TableCell>
+                        <TableCell className="text-xs">{r.last ? new Date(r.last).toLocaleString("id-ID") : "-"}</TableCell>
+                        <TableCell className="text-right">
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => downloadCandidateZip(f.candidate_id)}
-                            disabled={zippingCandidate === f.candidate_id}
-                            title={`Unduh semua berkas ${f.candidates?.full_name ?? "kandidat"} dalam satu ZIP`}
+                            onClick={() => downloadCandidateZip(r.id)}
+                            disabled={zippingCandidate === r.id}
                           >
                             <FileArchive className="mr-2 h-3.5 w-3.5" />
-                            {zippingCandidate === f.candidate_id ? "Mengemas..." : "ZIP Kandidat"}
+                            {zippingCandidate === r.id ? "Mengemas..." : "Unduh ZIP"}
                           </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                      </TableRow>
+                    ));
+                  })()}
                 </TableBody>
               </Table>
             </div>
+
           )}
         </CardContent>
       </Card>
