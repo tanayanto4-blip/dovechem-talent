@@ -863,12 +863,47 @@ function MbtiAdmin() {
               <Label className="text-xs">Isi CSV atau JSON</Label>
               <textarea
                 value={importText}
-                onChange={(e) => setImportText(e.target.value)}
-                rows={10}
+                onChange={(e) => { setImportText(e.target.value); setImportPreview(null); }}
+                rows={8}
                 className="mt-1 w-full rounded-md border bg-background p-2 font-mono text-xs"
                 placeholder={'CSV: number,question_text,a_label,a_dim,b_label,b_dim\natau JSON: { "format": "mbti-bank-soal", "questions": [ ... ] }'}
               />
             </div>
+
+            {importPreview && (
+              <div className="rounded-md border p-3 text-sm">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">Total: {importPreview.rows.length}</Badge>
+                  <Badge className="bg-success text-success-foreground">Valid: {importPreview.validCount}</Badge>
+                  <Badge variant="destructive">Bermasalah: {importPreview.rows.length - importPreview.validCount}</Badge>
+                  {importPreview.overwriteCount > 0 && (
+                    <Badge variant="secondary">Akan menimpa: {importPreview.overwriteCount}</Badge>
+                  )}
+                  <Badge variant="outline" className="uppercase">{importPreview.source}</Badge>
+                </div>
+                {importPreview.issues.length === 0 ? (
+                  <div className="flex items-center gap-2 text-success"><CheckCircle2 className="h-4 w-4" /> Tidak ada masalah — siap diimpor.</div>
+                ) : (
+                  <>
+                    <div className="mb-1 text-xs text-muted-foreground">
+                      Baris yang bermasalah <b>tidak akan diimpor</b>. Perbaiki lalu klik <b>Cek ulang</b>.
+                    </div>
+                    <ul className="max-h-52 overflow-auto divide-y rounded border">
+                      {importPreview.issues.map((iss, i) => (
+                        <li key={i} className="flex items-start gap-2 p-2 text-xs">
+                          <Badge
+                            variant={iss.severity === "error" ? "destructive" : "secondary"}
+                            className="mt-0.5 shrink-0 text-[10px] uppercase"
+                          >{iss.kind.replace(/_/g, " ")}</Badge>
+                          <span className="flex-1">{iss.message}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            )}
+
             {importLog && (
               <div className="rounded-md border p-3 text-sm">
                 <div><b className="text-success">Sukses:</b> {importLog.ok} · <b className="text-destructive">Gagal:</b> {importLog.fail}</div>
@@ -882,8 +917,16 @@ function MbtiAdmin() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setImportOpen(false)} disabled={importRunning}>Tutup</Button>
-            <Button onClick={handleImport} disabled={importRunning || !importText.trim()}>
-              {importRunning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />} Impor
+            <Button variant="outline" onClick={runPreview} disabled={importRunning || !importText.trim()}>
+              <Search className="mr-2 h-4 w-4" /> {importPreview ? "Cek ulang" : "Cek & Preview"}
+            </Button>
+            <Button
+              onClick={handleImport}
+              disabled={importRunning || !importPreview || importPreview.validCount === 0}
+              title={!importPreview ? "Klik Cek & Preview lebih dulu" : undefined}
+            >
+              {importRunning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+              Impor {importPreview ? `${importPreview.validCount} valid` : ""}
             </Button>
           </DialogFooter>
         </DialogContent>
