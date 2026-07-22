@@ -92,8 +92,28 @@ function MbtiAdmin() {
   const [importRunning, setImportRunning] = useState(false);
   const [importLog, setImportLog] = useState<{ ok: number; fail: number; errors: string[] } | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [bulkRunning, setBulkRunning] = useState<null | "on" | "off">(null);
+  const [bulkRunning, setBulkRunning] = useState<null | "on" | "off" | "delete">(null);
   const bulkFn = useServerFn(setMbtiQuestionsActive);
+  const bulkDeleteFn = useServerFn(deleteMbtiQuestions);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+
+  async function handleBulkDelete() {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+    setBulkRunning("delete");
+    try {
+      const res: any = await bulkDeleteFn({ data: { ids } });
+      const skipped = res?.skipped ?? 0;
+      toast.success(`Menghapus ${res?.deleted ?? ids.length} soal${skipped ? ` (${skipped} dilewati)` : ""}.`);
+      setSelected(new Set());
+      setConfirmBulkDelete(false);
+      qc.invalidateQueries({ queryKey: ["admin-mbti", activeTestId] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal menghapus soal.");
+    } finally {
+      setBulkRunning(null);
+    }
+  }
 
   const filteredIds = useMemo(() => filtered.map((q) => q.id), [filtered]);
   const allSelected = filteredIds.length > 0 && filteredIds.every((id) => selected.has(id));
