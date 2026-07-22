@@ -1,7 +1,31 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { requireStaff } from "@/lib/staff-middleware";
+import { requireStaff, requireAdmin } from "@/lib/staff-middleware";
 import { z } from "zod";
+
+type AuditCtx = { supabase: any; userId: string };
+async function logAudit(
+  ctx: AuditCtx,
+  action: string,
+  target_type: string,
+  target_id: string | null,
+  metadata: Record<string, unknown> = {},
+) {
+  try {
+    await ctx.supabase.from("audit_logs").insert({
+      actor_id: ctx.userId,
+      action,
+      target_type,
+      target_id,
+      metadata,
+    });
+  } catch (e) {
+    // Do not block the primary action on audit-log failure; surface in server logs.
+    console.error("audit_log_insert_failed", { action, target_type, target_id, error: (e as Error).message });
+  }
+}
+
+
 
 
 
@@ -125,6 +149,13 @@ export const bulkSetCodesActive = createServerFn({ method: "POST" })
       .update({ active: data.active }, { count: "exact" })
       .not("id", "is", null);
     if (error) throw new Error(error.message);
+    await logAudit(
+      context,
+      data.active ? "code.activate_bulk" : "code.deactivate_bulk",
+      "candidate_code",
+      null,
+      { updated: count ?? 0 },
+    );
     return { updated: count ?? 0 };
   });
 
@@ -143,10 +174,23 @@ export const toggleCode = createServerFn({ method: "POST" })
   .middleware([requireStaff])
   .inputValidator((d) => z.object({ id: z.string().uuid(), active: z.boolean() }).parse(d))
   .handler(async ({ context, data }) => {
+    const { data: existing } = await context.supabase
+      .from("candidate_codes")
+      .select("code")
+      .eq("id", data.id)
+      .maybeSingle();
     const { error } = await context.supabase.from("candidate_codes").update({ active: data.active }).eq("id", data.id);
     if (error) throw new Error(error.message);
+    await logAudit(
+      context,
+      data.active ? "code.activate" : "code.deactivate",
+      "candidate_code",
+      data.id,
+      { code: existing?.code ?? null },
+    );
     return { ok: true };
   });
+
 
 export const deleteCode = createServerFn({ method: "POST" })
   .middleware([requireStaff])
@@ -231,8 +275,44 @@ export const getAttemptDetail = createServerFn({ method: "POST" })
       .select("*")
       .eq("test_id", (attempt as any).test_id)
       .order("question_number");
+    await logAudit(context, "attempt.view", "test_attempt", data.id, {
+      candidate_id: (attempt as any)?.candidates?.id ?? null,
+      test_id: (attempt as any)?.test_id ?? null,
+      test_name: (attempt as any)?.tests?.name ?? null,
+    });
     return { attempt, questions: questions ?? [] };
   });
+
+const AuditListInput = z.object({
+  limit: z.number().int().min(1).max(500).optional(),
+  action: z.string().max(64).optional().nullable(),
+});
+
+export const listAuditLogs = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) => AuditListInput.parse(d ?? {}))
+  .handler(async ({ context, data }) => {
+    let q = context.supabase
+      .from("audit_logs")
+      .select("id, actor_id, action, target_type, target_id, metadata, created_at")
+      .order("created_at", { ascending: false })
+      .limit(data.limit ?? 100);
+    if (data.action) q = q.eq("action", data.action);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    // Resolve actor display names from profiles (best-effort).
+    const ids = Array.from(new Set((rows ?? []).map((r: any) => r.actor_id).filter(Boolean)));
+    let actors: Record<string, { full_name: string | null; username: string | null }> = {};
+    if (ids.length) {
+      const { data: profs } = await context.supabase
+        .from("profiles")
+        .select("id, full_name, username")
+        .in("id", ids);
+      for (const p of profs ?? []) actors[(p as any).id] = { full_name: (p as any).full_name, username: (p as any).username };
+    }
+    return { logs: (rows ?? []).map((r: any) => ({ ...r, actor: actors[r.actor_id] ?? null })) };
+  });
+
 
 export const dashboardStats = createServerFn({ method: "GET" })
   .middleware([requireStaff])
