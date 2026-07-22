@@ -394,9 +394,20 @@ export const setTestActive = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ id: z.string().uuid(), active: z.boolean() }).parse(d))
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const before = await supabaseAdmin.from("tests").select("name, code, test_type, active").eq("id", data.id).single();
     const { error } = await supabaseAdmin.from("tests").update({ active: data.active }).eq("id", data.id);
     if (error) throw new Error(error.message);
-    await logAudit(context, data.active ? "test.publish" : "test.unpublish", "test", data.id, { active: data.active });
+    const t: any = before.data ?? {};
+    const isMbti = t.test_type === "mbti";
+    await logAudit(
+      context,
+      isMbti
+        ? (data.active ? "mbti.test.publish" : "mbti.test.unpublish")
+        : (data.active ? "test.publish" : "test.unpublish"),
+      "test",
+      data.id,
+      { active: data.active, previous_active: t.active ?? null, test_name: t.name ?? null, test_code: t.code ?? null, test_type: t.test_type ?? null },
+    );
     return { ok: true };
   });
 
@@ -432,14 +443,31 @@ export const upsertMbtiQuestion = createServerFn({ method: "POST" })
       dimension,
     };
     if (data.question_id) {
+      const prev = await supabaseAdmin
+        .from("test_questions")
+        .select("question_number, question_text, options, dimension")
+        .eq("id", data.question_id)
+        .maybeSingle();
       const { error } = await supabaseAdmin.from("test_questions").update(payload).eq("id", data.question_id);
       if (error) throw new Error(error.message);
-      await logAudit(context, "mbti.question.update", "test_question", data.question_id, { question_number: data.question_number });
+      await logAudit(context, "mbti.question.update", "test_question", data.question_id, {
+        test_id: data.test_id,
+        question_number: data.question_number,
+        dimension,
+        before: prev.data ?? null,
+        after: { question_number: data.question_number, question_text: data.question_text, options: data.options, dimension },
+      });
       return { ok: true, id: data.question_id };
     }
     const { data: ins, error } = await supabaseAdmin.from("test_questions").insert(payload).select("id").single();
     if (error) throw new Error(error.message);
-    await logAudit(context, "mbti.question.create", "test_question", (ins as any).id, { question_number: data.question_number });
+    await logAudit(context, "mbti.question.create", "test_question", (ins as any).id, {
+      test_id: data.test_id,
+      question_number: data.question_number,
+      dimension,
+      question_text: data.question_text,
+      options: data.options,
+    });
     return { ok: true, id: (ins as any).id };
   });
 
@@ -449,8 +477,17 @@ export const deleteMbtiQuestion = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const prev = await supabaseAdmin
+      .from("test_questions")
+      .select("test_id, question_number, question_text, options, dimension")
+      .eq("id", data.id)
+      .maybeSingle();
     const { error } = await supabaseAdmin.from("test_questions").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
-    await logAudit(context, "mbti.question.delete", "test_question", data.id, {});
+    await logAudit(context, "mbti.question.delete", "test_question", data.id, {
+      test_id: (prev.data as any)?.test_id ?? null,
+      question_number: (prev.data as any)?.question_number ?? null,
+      snapshot: prev.data ?? null,
+    });
     return { ok: true };
   });
