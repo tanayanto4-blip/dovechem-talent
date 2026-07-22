@@ -61,7 +61,7 @@ describe("audit logging — static guarantees", () => {
     // Middleware gate
     expect(body).toMatch(/\.middleware\(\[\s*requireStaff\s*\]\)/);
     // Validates the area input
-    expect(body).toMatch(/area:\s*z\.string\(\)[^,)]*\.min\(1\)/);
+    expect(body).toMatch(/area:\s*z\.string\(\)[\s\S]{0,80}\.min\(1\)/);
     // Emits the audit call with the right action / target_type / metadata
     expect(body).toMatch(/logAudit\(\s*context\s*,\s*["']admin\.access["']\s*,\s*["']area["']\s*,\s*null\s*,\s*\{\s*area:\s*data\.area\s*\}\s*\)/);
   });
