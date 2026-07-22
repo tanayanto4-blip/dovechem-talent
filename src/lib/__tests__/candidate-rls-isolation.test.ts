@@ -112,9 +112,13 @@ describe("candidate RLS — static scope checks", () => {
       );
       expect(handlersTouching.length, `expected a handler that touches ${table}`).toBeGreaterThan(0);
       for (const h of handlersTouching) {
+        // Accept either the `cand.id` variable pattern OR the inline
+        // `.eq("candidate_id", (await sb.from("candidates")…).data?.id ?? "")`
+        // pattern used in some read handlers.
         const hasOwnershipCheck =
           /\.eq\(["']candidate_id["'],\s*cand\.id/.test(h.body) ||
-          /candidate_id:\s*cand\.id/.test(h.body);
+          /candidate_id:\s*cand\.id/.test(h.body) ||
+          /\.eq\(["']candidate_id["'],[\s\S]{0,400}?candidates[\s\S]{0,200}?\.data\?\.id/.test(h.body);
         expect(
           hasOwnershipCheck,
           `${h.name} touches ${table} but never scopes by cand.id`,
