@@ -94,6 +94,9 @@ function MbtiAdmin() {
   type ImportIssue = { rowIdx: number; number: number | null; kind: string; severity: "error" | "warning"; message: string };
   type ImportPreview = { rows: Array<{ rowIdx: number; number: number | null; row: ImportRow; valid: boolean; overwrite: boolean; issues: ImportIssue[] }>; issues: ImportIssue[]; validCount: number; overwriteCount: number; source: "csv" | "json" };
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  type ConflictMode = "overwrite" | "skip" | "resequence";
+  type StatusMode = "from_file" | "all_draft" | "all_published" | "keep_existing";
+  const [importOpts, setImportOpts] = useState<{ conflict: ConflictMode; status: StatusMode }>({ conflict: "overwrite", status: "from_file" });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkRunning, setBulkRunning] = useState<null | "on" | "off" | "delete">(null);
   const bulkFn = useServerFn(setMbtiQuestionsActive);
