@@ -109,6 +109,9 @@ function AuditPage() {
             Catatan aktivitas admin/HR untuk keperluan security review.
           </p>
         </div>
+        <Button variant="outline" size="sm" onClick={() => downloadCsv(rows)} disabled={rows.length === 0}>
+          <Download className="mr-2 h-4 w-4" /> Ekspor CSV
+        </Button>
         <Button variant="outline" size="sm" onClick={() => q.refetch()} disabled={q.isFetching}>
           <RefreshCw className={`mr-2 h-4 w-4 ${q.isFetching ? "animate-spin" : ""}`} /> Refresh
         </Button>
