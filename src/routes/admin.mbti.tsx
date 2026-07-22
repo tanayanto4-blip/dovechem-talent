@@ -541,11 +541,18 @@ function MbtiAdmin() {
     }
     const stamp = new Date().toISOString().slice(0, 10);
     const scope = selected.size > 0 ? `terpilih-${rows.length}` : `all-${rows.length}`;
+    const filename = `mbti-bank-soal-${scope}-${stamp}.csv`;
     triggerDownload(
       new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8" }),
-      `mbti-bank-soal-${scope}-${stamp}.csv`,
+      filename,
     );
     toast.success(`Diekspor ${rows.length} soal ke CSV.`);
+    if (activeTestId) {
+      const published_count = rows.filter((q) => q.active !== false).length;
+      const draft_count = rows.length - published_count;
+      logExportFn({ data: { test_id: activeTestId, format: "csv", count: rows.length, published_count, draft_count, filename } })
+        .catch((e) => console.error("audit_log_mbti_export_failed", e));
+    }
   }
   function exportJson() {
     const rows = exportRows();
