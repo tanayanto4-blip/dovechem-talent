@@ -12,6 +12,13 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Timer, Check, Loader2, AlertCircle } from "lucide-react";
+import wptQ7 from "@/assets/wpt-q7.jpg.asset.json";
+import wptQ49 from "@/assets/wpt-q49.jpg.asset.json";
+
+const WPT_IMAGES: Record<number, { url: string; caption: string }> = {
+  7: { url: wptQ7.url, caption: "Pilihan gambar 1–5 dan dua gambar dalam tanda kurung { } — pilih nomor gambar yang tersusun dari dua gambar di dalam tanda kurung." },
+  49: { url: wptQ49.url, caption: "Lima bagian bentuk (1–5) — tentukan empat bagian yang dapat digabung menjadi sebuah segitiga." },
+};
 
 export const Route = createFileRoute("/candidate/portal/test/$testId")({ component: TakeTest });
 
@@ -354,6 +361,19 @@ function TakeTest() {
                 )}
               </div>
               {!isDisc && !isMbti && <div className="text-base font-medium">{q.question_text}</div>}
+              {isWpt && WPT_IMAGES[q.question_number] && (
+                <figure className="mt-3 overflow-hidden rounded-md border bg-white p-3">
+                  <img
+                    src={WPT_IMAGES[q.question_number].url}
+                    alt={`Ilustrasi soal WPT nomor ${q.question_number}`}
+                    className="mx-auto h-auto max-h-64 w-auto max-w-full object-contain"
+                    loading="lazy"
+                  />
+                  <figcaption className="mt-2 text-center text-[11px] text-muted-foreground">
+                    {WPT_IMAGES[q.question_number].caption}
+                  </figcaption>
+                </figure>
+              )}
               {isMbti ? (
                 <div className="rounded-md border bg-card">
                   {q.question_text && (
