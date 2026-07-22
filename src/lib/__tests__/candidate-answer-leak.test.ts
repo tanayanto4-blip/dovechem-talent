@@ -38,20 +38,37 @@ describe("candidate endpoints never expose correct_answer", () => {
     }
   });
 
-  it("never selects '*' from test_questions", () => {
-    // Match .from("test_questions") ... .select("...") on the following chain.
-    const matches = [
-      ...source.matchAll(
-        /\.from\(\s*["'`]test_questions["'`]\s*\)[\s\S]{0,200}?\.select\(\s*(["'`])([\s\S]*?)\1\s*\)/g,
-      ),
-    ];
-    expect(matches.length, "no test_questions selects found — update the test if the module changed").toBeGreaterThan(0);
-    for (const m of matches) {
-      const projection = m[2];
-      expect(projection.trim(), `test_questions select must not be "*" (found: ${projection})`).not.toBe("*");
-      expect(projection).not.toMatch(/\bcorrect_answer\b/);
+  it("never selects '*' or correct_answer from test_questions in browser-returning handlers", () => {
+    // candidateSubmitTest legitimately reads correct_answer server-side to
+    // compute the score, but only returns aggregate numbers. Every other
+    // candidate handler that returns question rows to the browser must
+    // project an explicit safe column list.
+    const RETURN_QUESTION_ROWS = ["candidateStartTest", "candidateGetAttempt"];
+    for (const name of RETURN_QUESTION_ROWS) {
+      const body = extractHandlerBody(source, name);
+      const matches = [
+        ...body.matchAll(
+          /\.from\(\s*["'`]test_questions["'`]\s*\)[\s\S]{0,200}?\.select\(\s*(["'`])([\s\S]*?)\1\s*\)/g,
+        ),
+      ];
+      expect(matches.length, `${name}: expected at least one test_questions select`).toBeGreaterThan(0);
+      for (const m of matches) {
+        const projection = m[2].trim();
+        expect(projection, `${name} must not select "*" from test_questions`).not.toBe("*");
+        expect(projection, `${name} must not include correct_answer in projection`).not.toMatch(/\bcorrect_answer\b/);
+      }
     }
   });
+
+  it("candidateSubmitTest does not return correct_answer in its response shape", () => {
+    const body = extractHandlerBody(source, "candidateSubmitTest");
+    // Grab everything inside the handler's return statements.
+    const returns = [...body.matchAll(/return\s+([\s\S]*?);/g)].map((m) => m[1]);
+    for (const r of returns) {
+      expect(r, "candidateSubmitTest return must not expose correct_answer").not.toMatch(/\bcorrect_answer\b/);
+    }
+  });
+
 
   it("never mentions correct_answer inside candidateGetAttempt / candidateStartTest bodies", () => {
     // Extract each candidate-facing handler body and assert correct_answer
