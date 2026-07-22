@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { createCandidateCode, deleteCode, listCandidateCodes, toggleCode } from "@/lib/admin.functions";
+import { bulkCreateCandidateCodes, bulkSetCodesActive, createCandidateCode, deleteCode, listCandidateCodes, toggleCode } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
