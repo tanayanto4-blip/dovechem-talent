@@ -301,6 +301,29 @@ function MbtiAdmin() {
             </Select>
             <div className="text-xs text-muted-foreground">{filtered.length} / {questions.length}</div>
           </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border bg-muted/30 px-3 py-2">
+            <Checkbox
+              checked={allSelected ? true : someSelected ? "indeterminate" : false}
+              onCheckedChange={(v) => toggleAllFiltered(v === true)}
+              aria-label="Pilih semua"
+            />
+            <span className="text-xs text-muted-foreground">
+              {selected.size > 0 ? `${selected.size} soal terpilih` : "Pilih beberapa soal untuk publikasi massal"}
+            </span>
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              <Button size="sm" variant="outline" disabled={selected.size === 0 || !!bulkRunning} onClick={() => handleBulk(true)}>
+                {bulkRunning === "on" ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="mr-1 h-3.5 w-3.5" />}
+                Publish terpilih
+              </Button>
+              <Button size="sm" variant="outline" disabled={selected.size === 0 || !!bulkRunning} onClick={() => handleBulk(false)}>
+                {bulkRunning === "off" ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <EyeOff className="mr-1 h-3.5 w-3.5" />}
+                Unpublish terpilih
+              </Button>
+              {selected.size > 0 && (
+                <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())} disabled={!!bulkRunning}>Bersihkan</Button>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {loadingDetail ? (
@@ -312,8 +335,13 @@ function MbtiAdmin() {
               {filtered.map((q) => {
                 const a = q.options?.find((o) => o.key === "A");
                 const b = q.options?.find((o) => o.key === "B");
+                const isActive = q.active !== false;
+                const isChecked = selected.has(q.id);
                 return (
-                  <div key={q.id} className="grid gap-3 p-4 md:grid-cols-[56px_1fr_140px_120px]">
+                  <div key={q.id} className={`grid gap-3 p-4 md:grid-cols-[32px_56px_1fr_170px_120px] ${isChecked ? "bg-primary/5" : ""}`}>
+                    <div className="flex items-start pt-1">
+                      <Checkbox checked={isChecked} onCheckedChange={(v) => toggleOne(q.id, v === true)} aria-label={`Pilih soal ${q.question_number}`} />
+                    </div>
                     <div className="text-sm font-mono font-semibold text-muted-foreground">#{q.question_number}</div>
                     <div className="min-w-0 space-y-2">
                       <div className="text-xs text-muted-foreground">{q.question_text}</div>
@@ -328,7 +356,12 @@ function MbtiAdmin() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center"><Badge variant="secondary">{q.dimension ?? "-"}</Badge></div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary">{q.dimension ?? "-"}</Badge>
+                      <Badge className={isActive ? "bg-success" : ""} variant={isActive ? "default" : "secondary"}>
+                        {isActive ? "Published" : "Draft"}
+                      </Badge>
+                    </div>
                     <div className="flex items-center justify-end gap-2">
                       <Button size="sm" variant="outline" onClick={() => openEdit(q)}><Pencil className="mr-1 h-3.5 w-3.5" /> Edit</Button>
                       <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={() => setConfirmDelete(q)} disabled={deletingId === q.id}>
@@ -342,6 +375,7 @@ function MbtiAdmin() {
           )}
         </CardContent>
       </Card>
+
 
       <Dialog open={!!draft} onOpenChange={(o) => !o && setDraft(null)}>
         <DialogContent className="max-w-2xl">
