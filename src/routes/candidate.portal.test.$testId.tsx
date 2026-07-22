@@ -107,9 +107,10 @@ function TakeTest() {
   const isDisc = data.test.test_type === "disc";
   const isMbti = data.test.test_type === "mbti";
   const isEq = data.test.test_type === "eq";
+  const isWpt = data.test.test_type === "wpt";
   const answered = isDisc
     ? Object.values(discPicks).filter((p) => p.most && p.least && p.most !== p.least).length
-    : Object.keys(answers).length;
+    : Object.keys(answers).filter((k) => (answers[k] ?? "").trim() !== "").length;
 
   const inflight = useRef(0);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
@@ -307,6 +308,29 @@ function TakeTest() {
         </Card>
       )}
 
+      {isWpt && (
+        <Card className="border-primary/30 bg-primary/5 shadow-card">
+          <CardContent className="space-y-3 p-6 text-sm">
+            <div className="font-semibold text-primary">Konsep Wonderlic Personnel Test (WPT) — Form A</div>
+            <p className="text-muted-foreground">
+              Tes ini mengukur <b className="text-foreground">kemampuan memecahkan masalah</b> secara umum: verbal, numerik, logika, dan spasial.
+              Berisi <b className="text-foreground">50 soal</b> yang secara bertahap semakin sulit. Anda memiliki
+              waktu <b className="text-foreground">12 menit</b> untuk menjawab sebanyak mungkin dengan benar.
+            </p>
+            <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
+              <li>Kerjakan tanpa alat bantu (kalkulator, kamus, dll.).</li>
+              <li>Bacalah tiap soal dengan teliti; jangan menghabiskan waktu terlalu lama pada satu soal — lewati bila perlu, lalu kembali.</li>
+              <li><b className="text-foreground">Kolom jawaban dibiarkan kosong</b> — tulis sendiri jawaban Anda pada tanda kurung di sisi kanan setiap soal (boleh angka, huruf, kata, YA/TIDAK, dsb. sesuai perintah soal).</li>
+              <li>Contoh: <i>MENUAI adalah lawan kata dari 1. mendapat  2. bersorak  3. melanjutkan  4. berada  5. menabur</i> → jawaban: <b className="text-foreground">5</b>.</li>
+              <li>Autosave aktif. Anda tidak mungkin menyelesaikan semuanya — kerjakan semampu Anda.</li>
+            </ol>
+            <div className="rounded-md border border-primary/20 bg-background p-3 text-xs text-muted-foreground">
+              Penilaian dilakukan secara manual oleh tim HR berdasarkan jumlah jawaban yang benar dalam batas waktu.
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
 
 
 
@@ -489,6 +513,22 @@ function TakeTest() {
                         </button>
                       );
                     })}
+                  </div>
+                </div>
+              ) : isWpt ? (
+                <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+                  <span className="text-xs text-muted-foreground">Tulis jawaban di sini</span>
+                  <div className="flex items-center gap-1 font-mono text-lg">
+                    <span className="text-muted-foreground">(</span>
+                    <Input
+                      value={answers[q.id] ?? ""}
+                      onChange={(e) => { const v = e.target.value; setAnswers({ ...answers, [q.id]: v }); persistDebounced(q.id, v); }}
+                      placeholder="_____"
+                      maxLength={60}
+                      className="h-9 w-40 text-center font-mono"
+                      aria-label={`Jawaban soal ${i + 1}`}
+                    />
+                    <span className="text-muted-foreground">)</span>
                   </div>
                 </div>
               ) : (
