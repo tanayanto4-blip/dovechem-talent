@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Download, ExternalLink, Eye, FileText, FolderOpen, Search } from "lucide-react";
+import { Download, ExternalLink, Eye, FileArchive, FileText, FolderOpen, Search } from "lucide-react";
+import { toast } from "sonner";
 
 function mimeKind(name: string, mime?: string | null): "image" | "pdf" | "other" {
   const m = (mime ?? "").toLowerCase();
@@ -96,6 +97,60 @@ function DocumentsBank() {
     }
   }
 
+  const [zipping, setZipping] = useState(false);
+  const [zipProgress, setZipProgress] = useState(0);
+
+  function safeName(s: string) {
+    return (s || "unknown").replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_").slice(0, 80);
+  }
+
+  async function downloadZip() {
+    if (filtered.length === 0 || zipping) return;
+    setZipping(true);
+    setZipProgress(0);
+    try {
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      const used = new Set<string>();
+      let done = 0;
+      for (const f of filtered) {
+        try {
+          const { url } = await signed({ data: { path: f.file_path } });
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const buf = await res.arrayBuffer();
+          const folder = safeName(f.candidates?.full_name ?? "tanpa-nama");
+          let name = `${safeName(f.file_type || "file")}__${safeName(f.file_name)}`;
+          let path = `${folder}/${name}`;
+          let i = 1;
+          while (used.has(path)) { path = `${folder}/${i++}_${name}`; }
+          used.add(path);
+          zip.file(path, buf);
+        } catch (e) {
+          console.warn("Gagal mengunduh:", f.file_name, e);
+        } finally {
+          done += 1;
+          setZipProgress(Math.round((done / filtered.length) * 100));
+        }
+      }
+      const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
+      const a = document.createElement("a");
+      const href = URL.createObjectURL(blob);
+      a.href = href;
+      a.download = `bank-dokumen-kandidat_${new Date().toISOString().slice(0, 10)}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(href);
+      toast.success(`ZIP siap · ${used.size} berkas`);
+    } catch (e: any) {
+      toast.error(`Gagal membuat ZIP: ${e?.message ?? e}`);
+    } finally {
+      setZipping(false);
+      setZipProgress(0);
+    }
+  }
+
   const totalSize = filtered.reduce((s, f) => s + (f.file_size ?? 0), 0);
 
   return (
@@ -107,9 +162,18 @@ function DocumentsBank() {
             Seluruh berkas yang diunggah kandidat (KTP, KK, CV, ijazah, transkrip, dll.) tersedia otomatis di sini.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-3 text-xs">
           <Badge variant="secondary" className="gap-1"><FolderOpen className="h-3 w-3" /> {filtered.length} berkas</Badge>
           <Badge variant="secondary">{humanSize(totalSize)}</Badge>
+          <Button
+            size="sm"
+            onClick={downloadZip}
+            disabled={zipping || filtered.length === 0}
+            className="gap-2"
+          >
+            <FileArchive className="h-4 w-4" />
+            {zipping ? `Mengemas... ${zipProgress}%` : `Unduh ZIP (${filtered.length})`}
+          </Button>
         </div>
       </div>
 
