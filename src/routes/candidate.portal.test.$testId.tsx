@@ -303,7 +303,7 @@ function TakeTest() {
                       <button
                         key={opt.key}
                         type="button"
-                        onClick={() => setAnswers({ ...answers, [q.id]: opt.key })}
+                        onClick={() => pickMcq(q.id, opt.key)}
                         className={`flex items-start gap-3 rounded-md border p-4 text-left text-sm transition ${
                           picked
                             ? "border-primary bg-primary/10 shadow-sm"
