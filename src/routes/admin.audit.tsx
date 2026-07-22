@@ -69,13 +69,14 @@ function isDenied(r: Row) {
 }
 
 function toCsv(rows: Row[]): string {
-  const headers = ["waktu", "actor_type", "actor_name", "actor_id", "action", "action_label", "target_type", "target_id", "metadata"];
+  const headers = ["waktu", "actor_type", "actor_name", "actor_id", "action", "action_label", "target_type", "target_id", "ip", "user_agent", "metadata"];
   const esc = (v: unknown) => {
     const s = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
     return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const lines = [headers.join(",")];
   for (const r of rows) {
+    const meta = (r.metadata ?? {}) as Record<string, unknown>;
     lines.push([
       new Date(r.created_at).toISOString(),
       r.actor_type,
@@ -85,6 +86,8 @@ function toCsv(rows: Row[]): string {
       ACTION_LABEL[r.action] ?? r.action,
       r.target_type,
       r.target_id ?? "",
+      (meta.ip as string) ?? "",
+      (meta.user_agent as string) ?? "",
       r.metadata ?? {},
     ].map(esc).join(","));
   }
