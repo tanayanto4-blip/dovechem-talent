@@ -476,7 +476,7 @@ function MbtiAdmin() {
         errors.push(`Baris ${d.rowIdx + 1} (#${num}): ${e?.message ?? "gagal"}`);
       }
     }
-    if (isJson && (toDraft.length || toPublish.length)) {
+    if (toDraft.length || toPublish.length) {
       try {
         const refetched = await detailFn({ data: { id: activeTestId } });
         const byNum = new Map<number, string>(((refetched?.questions ?? []) as any[]).map((q) => [q.question_number, q.id]));
