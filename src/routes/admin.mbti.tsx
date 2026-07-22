@@ -825,7 +825,7 @@ function MbtiAdmin() {
       </Dialog>
 
 
-      <Dialog open={importOpen} onOpenChange={(o) => { if (!importRunning) { setImportOpen(o); if (!o) { setImportText(""); setImportLog(null); } } }}>
+      <Dialog open={importOpen} onOpenChange={(o) => { if (!importRunning) { setImportOpen(o); if (!o) { setImportText(""); setImportLog(null); setImportPreview(null); } } }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle>Impor Soal MBTI dari CSV / JSON</DialogTitle></DialogHeader>
           <div className="space-y-3">
