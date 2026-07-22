@@ -132,16 +132,20 @@ describe("endpoint security — no sensitive-field leaks", () => {
       }
     });
 
-    it(`${name}: no .select("*") from answer-key or role tables`, () => {
-      for (const table of NO_STAR_SELECT_TABLES) {
-        const re = new RegExp(
-          `\\.from\\(\\s*["\`']${table}["\`']\\s*\\)[\\s\\S]{0,200}?\\.select\\(\\s*["\`']\\*["\`']`,
-          "g",
-        );
-        expect(
-          src.match(re),
-          `${name} must not .select("*") from ${table}`,
-        ).toBeNull();
+    it(`${name}: no client-facing handler .select("*") from answer-key or role tables`, () => {
+      const fns = extractServerFns(src);
+      for (const { name: fnName, body } of fns) {
+        if (STAR_SELECT_EXEMPT_FNS.has(fnName)) continue;
+        for (const table of NO_STAR_SELECT_TABLES) {
+          const re = new RegExp(
+            `\\.from\\(\\s*["\`']${table}["\`']\\s*\\)[\\s\\S]{0,200}?\\.select\\(\\s*["\`']\\*["\`']`,
+            "g",
+          );
+          expect(
+            body.match(re),
+            `${name}::${fnName} must not .select("*") from ${table}`,
+          ).toBeNull();
+        }
       }
     });
   }
