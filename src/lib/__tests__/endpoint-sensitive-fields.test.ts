@@ -53,10 +53,12 @@ const SELECT_STAR_WHITELIST: Record<string, readonly string[]> = {
   test_questions: [
     // scoring uses correct_answer server-side but returns only score/summary
     "candidateSubmitTest",
-    // staff-only bank-of-questions views (requireStaff/requireAdmin)
+    // staff-only bank-of-questions / attempt-review views (requireStaff/requireAdmin)
     "adminListQuestions",
     "adminGetQuestion",
     "getTestQuestionsForReview",
+    "getTestWithQuestions",
+    "getAttemptDetail",
   ],
 };
 
