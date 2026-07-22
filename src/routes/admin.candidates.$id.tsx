@@ -14,7 +14,17 @@ function CandidateDetail() {
   const { id } = Route.useParams();
   const detail = useServerFn(getCandidateDetail);
   const signed = useServerFn(getFileSignedUrl);
+  const versionsFn = useServerFn(listCandidateFileVersions);
   const { data } = useQuery({ queryKey: ["candidate", id], queryFn: () => detail({ data: { id } }) });
+  const { data: vData } = useQuery({
+    queryKey: ["candidate-file-versions", id],
+    queryFn: () => versionsFn({ data: { candidate_id: id } }),
+  });
+  const versions = (vData?.versions ?? []) as any[];
+  const groupedVersions = versions.reduce<Record<string, any[]>>((acc, v) => {
+    (acc[v.file_type] ||= []).push(v);
+    return acc;
+  }, {});
   const c = data?.candidate as any;
 
   async function openFile(path: string) {
