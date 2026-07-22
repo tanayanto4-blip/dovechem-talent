@@ -144,12 +144,12 @@ function CodesPage() {
           <p className="text-muted-foreground">Buat kode akses untuk kandidat login ke portal test.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={onAuto} disabled={autoSaving} className="bg-gradient-to-r from-primary to-primary-glow">
+          <Button onClick={() => setAutoOpen(true)} disabled={autoSaving} className="bg-gradient-to-r from-primary to-primary-glow">
             <Zap className="mr-2 h-4 w-4" /> {autoSaving ? "Membuat..." : "Otomatis Buat Kode"}
           </Button>
           <Button variant="outline" onClick={() => onBulkActive(true)}><Power className="mr-2 h-4 w-4" /> Aktifkan Semua</Button>
           <Button variant="outline" onClick={() => onBulkActive(false)}><PowerOff className="mr-2 h-4 w-4" /> Nonaktifkan Semua</Button>
-          <Button variant="outline" onClick={onBulkExpiry}><CalendarClock className="mr-2 h-4 w-4" /> Set Masa Berlaku Semua</Button>
+          <Button variant="outline" onClick={() => { setExpiryValue(""); setExpiryOpen(true); }}><CalendarClock className="mr-2 h-4 w-4" /> Set Masa Berlaku Semua</Button>
           <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
             <DialogTrigger asChild><Button variant="secondary"><Layers className="mr-2 h-4 w-4" /> Buat Massal</Button></DialogTrigger>
             <DialogContent>
