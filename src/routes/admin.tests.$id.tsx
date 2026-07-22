@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { MbtiAdmin } from "./admin.mbti";
 
 export const Route = createFileRoute("/admin/tests/$id")({ component: TestDetail });
 
@@ -16,6 +17,14 @@ function TestDetail() {
 
   if (isLoading || !data) return <div className="text-muted-foreground">Memuat...</div>;
   const t = data.test as any;
+  if (t.test_type === "mbti") {
+    return (
+      <div className="space-y-4">
+        <Button asChild variant="ghost" size="sm"><Link to="/admin/tests"><ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Bank Soal</Link></Button>
+        <MbtiAdmin />
+      </div>
+    );
+  }
   const isDisc = t.test_type === "disc";
 
   return (
