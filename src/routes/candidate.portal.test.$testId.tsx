@@ -276,6 +276,40 @@ function TakeTest() {
         </Card>
       )}
 
+      {isEq && (
+        <Card className="border-primary/30 bg-primary/5 shadow-card">
+          <CardContent className="space-y-4 p-6 text-sm">
+            <div>
+              <div className="font-semibold text-primary">Petunjuk Pengisian EQ (Emotional Quotient)</div>
+              <p className="mt-1 text-muted-foreground">
+                Baca setiap pernyataan lalu nilai seberapa <b className="text-foreground">kuat pernyataan itu berlaku untuk Anda</b> pada skala <b className="text-foreground">1 sampai 5</b>.
+                Tidak ada jawaban benar/salah — jawablah spontan dan jujur sesuai keseharian Anda.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
+              {[
+                { k: "1", t: "Tidak Terjadi" },
+                { k: "2", t: "Jarang Terjadi" },
+                { k: "3", t: "Kadang Terjadi" },
+                { k: "4", t: "Kebiasaan" },
+                { k: "5", t: "Selalu Terjadi" },
+              ].map((s) => (
+                <div key={s.k} className="rounded-md border bg-background p-2 text-center">
+                  <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">{s.k}</div>
+                  <div className="mt-1 text-[11px] text-muted-foreground">{s.t}</div>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-md border border-primary/20 bg-background p-3 text-xs text-muted-foreground">
+              Kuesioner ini mengukur 5 dimensi kecerdasan emosional: <b className="text-foreground">Kesadaran Diri, Pengelolaan Emosi, Motivasi, Empati,</b> dan <b className="text-foreground">Keterampilan Sosial</b>.
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
+
+
 
       <div className="space-y-4">
         {data.questions.map((q: any, i: number) => (
