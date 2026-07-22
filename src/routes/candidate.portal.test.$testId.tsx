@@ -166,10 +166,10 @@ function TakeTest() {
                 </div>
               ) : isDisc ? (
                 <div className="rounded-md border bg-card">
-                  <div className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground border-b bg-muted/40">
-                    <span className="w-9 text-center text-primary">M</span>
+                  <div className="grid grid-cols-[2.25rem_minmax(0,1fr)_2.25rem] sm:grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-x-2 sm:gap-x-3 px-2 sm:px-4 py-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground border-b bg-muted/40">
+                    <span className="text-center text-primary">M</span>
                     <span>Pernyataan</span>
-                    <span className="w-9 text-center text-destructive">L</span>
+                    <span className="text-center text-destructive">L</span>
                   </div>
                   <div className="divide-y">
                     {(q.options ?? []).map((opt: any) => {
@@ -179,13 +179,13 @@ function TakeTest() {
                       return (
                         <div
                           key={opt.key}
-                          className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 px-4 py-3"
+                          className="grid grid-cols-[2.25rem_minmax(0,1fr)_2.25rem] sm:grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-x-2 sm:gap-x-3 px-2 sm:px-4 py-3"
                         >
                           <button
                             type="button"
                             onClick={() => setDisc(q.id, "most", opt.key)}
                             aria-label={`Paling menggambarkan: ${opt.label}`}
-                            className={`h-9 w-9 rounded-md border text-xs font-bold transition ${
+                            className={`h-9 w-9 shrink-0 justify-self-center rounded-md border text-xs font-bold transition ${
                               isMost
                                 ? "border-primary bg-primary text-primary-foreground shadow-sm"
                                 : "border-input bg-background text-muted-foreground hover:border-primary/40 hover:text-primary"
@@ -193,17 +193,17 @@ function TakeTest() {
                           >
                             M
                           </button>
-                          <div className="flex min-w-0 items-center gap-3">
-                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+                            <div className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] sm:text-xs font-bold text-muted-foreground">
                               {opt.key.toUpperCase()}
                             </div>
-                            <div className="min-w-0 flex-1 text-sm leading-snug">{opt.label}</div>
+                            <div className="min-w-0 flex-1 break-words text-[13px] sm:text-sm leading-snug">{opt.label}</div>
                           </div>
                           <button
                             type="button"
                             onClick={() => setDisc(q.id, "least", opt.key)}
                             aria-label={`Paling tidak menggambarkan: ${opt.label}`}
-                            className={`h-9 w-9 rounded-md border text-xs font-bold transition ${
+                            className={`h-9 w-9 shrink-0 justify-self-center rounded-md border text-xs font-bold transition ${
                               isLeast
                                 ? "border-destructive bg-destructive text-destructive-foreground shadow-sm"
                                 : "border-input bg-background text-muted-foreground hover:border-destructive/40 hover:text-destructive"
@@ -215,11 +215,12 @@ function TakeTest() {
                       );
                     })}
                   </div>
-                  <div className="flex items-center justify-between gap-3 border-t bg-muted/40 px-4 py-2 text-[11px] text-muted-foreground">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 border-t bg-muted/40 px-3 sm:px-4 py-2 text-[10px] sm:text-[11px] text-muted-foreground">
                     <span><b className="text-primary">M</b> (kiri) = Paling menggambarkan diri Anda</span>
                     <span><b className="text-destructive">L</b> (kanan) = Paling tidak menggambarkan</span>
                   </div>
                 </div>
+
 
 
               ) : (
