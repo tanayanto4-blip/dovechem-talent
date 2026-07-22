@@ -80,6 +80,10 @@ function CandidateResult() {
 
       {a.result && isMbti && a.result.type && <MbtiSummary result={a.result} />}
 
+      {a.result && isEq && a.result.perDim && <EqSummary result={a.result} />}
+
+
+
 
       <div className="space-y-3">
         {data.questions.map((q: any, i: number) => {
