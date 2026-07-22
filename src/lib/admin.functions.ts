@@ -201,7 +201,8 @@ export const getFileSignedUrl = createServerFn({ method: "POST" })
 
 export const listTests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    await ensureStaff(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("tests")
@@ -214,7 +215,8 @@ export const listTests = createServerFn({ method: "GET" })
 export const getTestWithQuestions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ context, data }) => {
+    await ensureStaff(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [t, q] = await Promise.all([
       supabaseAdmin.from("tests").select("*").eq("id", data.id).single(),
@@ -227,7 +229,8 @@ export const getTestWithQuestions = createServerFn({ method: "POST" })
 export const getAttemptDetail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ context, data }) => {
+    await ensureStaff(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: attempt, error } = await supabaseAdmin
       .from("test_attempts")
