@@ -3,10 +3,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateGetProfile, candidateUploadFile } from "@/lib/candidate.functions";
 import { useCandidateSession } from "@/lib/candidate-session";
+import { computeChecklist } from "@/lib/document-checklist";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { CheckCircle2, Upload, FileText } from "lucide-react";
+import { CheckCircle2, Upload, FileText, XCircle } from "lucide-react";
 import { useRef, useState } from "react";
 
 const FILE_TYPES = [
