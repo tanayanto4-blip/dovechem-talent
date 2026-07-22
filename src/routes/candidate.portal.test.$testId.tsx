@@ -296,27 +296,75 @@ function TakeTest() {
               </div>
               {!isDisc && !isMbti && <div className="text-base font-medium">{q.question_text}</div>}
               {isMbti ? (
-                <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                  {(q.options ?? []).map((opt: any) => {
-                    const picked = answers[q.id] === opt.key;
-                    return (
-                      <button
-                        key={opt.key}
-                        type="button"
-                        onClick={() => pickMcq(q.id, opt.key)}
-                        className={`flex items-start gap-2 sm:gap-3 rounded-md border p-3 sm:p-4 text-left text-xs sm:text-sm transition ${
-                          picked
-                            ? "border-primary bg-primary/10 shadow-sm"
-                            : "border-input bg-background hover:border-primary/40 hover:bg-accent"
-                        }`}
-                      >
-                        <span className={`flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-bold ${picked ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                          {opt.key}
-                        </span>
-                        <span className="flex-1 leading-snug">{opt.label}</span>
-                      </button>
-                    );
-                  })}
+                <div className="rounded-md border bg-card">
+                  {q.question_text && (
+                    <div className="border-b bg-muted/40 px-3 sm:px-4 py-2 text-sm font-medium">
+                      {q.question_text}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-[1fr_3rem_3rem_1fr] items-stretch">
+                    {(() => {
+                      const opts = q.options ?? [];
+                      const a = opts[0];
+                      const b = opts[1];
+                      if (!a || !b) return null;
+                      const picked = answers[q.id];
+                      const setVal = (key: string, v: string) => {
+                        if (v.trim() === "1") pickMcq(q.id, key);
+                        else if (picked === key) {
+                          setAnswers((prev) => { const c = { ...prev }; delete c[q.id]; return c; });
+                          persist(q.id, "");
+                        }
+                      };
+                      const Cell = ({ opt, side }: { opt: any; side: "left" | "right" }) => {
+                        const isPicked = picked === opt.key;
+                        return (
+                          <>
+                            {side === "left" && (
+                              <button
+                                type="button"
+                                onClick={() => pickMcq(q.id, opt.key)}
+                                className={`flex-1 text-left px-3 sm:px-4 py-3 text-xs sm:text-sm transition border-r ${isPicked ? "bg-primary/10" : "hover:bg-accent"}`}
+                              >
+                                <span className="mr-2 font-bold text-primary">A.</span>
+                                {opt.label}
+                              </button>
+                            )}
+                            <div className={`flex items-center justify-center border-r ${isPicked ? "bg-primary/10" : ""}`}>
+                              <Input
+                                inputMode="numeric"
+                                maxLength={1}
+                                value={isPicked ? "1" : ""}
+                                onChange={(e) => setVal(opt.key, e.target.value)}
+                                placeholder="_"
+                                aria-label={`Isi 1 untuk ${side === "left" ? "A" : "B"}`}
+                                className="h-9 w-10 text-center font-bold"
+                              />
+                            </div>
+                            {side === "right" && (
+                              <button
+                                type="button"
+                                onClick={() => pickMcq(q.id, opt.key)}
+                                className={`flex-1 text-left px-3 sm:px-4 py-3 text-xs sm:text-sm transition ${isPicked ? "bg-primary/10" : "hover:bg-accent"}`}
+                              >
+                                <span className="mr-2 font-bold text-primary">B.</span>
+                                {opt.label}
+                              </button>
+                            )}
+                          </>
+                        );
+                      };
+                      return (
+                        <>
+                          <Cell opt={a} side="left" />
+                          <Cell opt={b} side="right" />
+                        </>
+                      );
+                    })()}
+                  </div>
+                  <div className="border-t bg-muted/40 px-3 sm:px-4 py-2 text-[11px] text-muted-foreground">
+                    Isi angka <b className="text-foreground">1</b> pada kolom A atau B — pilih salah satu yang paling menggambarkan diri Anda.
+                  </div>
                 </div>
               ) : isKraepelin ? (
                 <div className="mt-4 max-w-xs">
