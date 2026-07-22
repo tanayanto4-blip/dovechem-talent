@@ -1,18 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAdmin } from "@/lib/staff-middleware";
 import { z } from "zod";
 
-async function ensureAdmin(userId: string) {
+async function getAdminClient() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .maybeSingle();
-  if (!data) throw new Error("Forbidden: hanya admin yang boleh mengelola user.");
   return supabaseAdmin;
 }
+
 
 /** Public: check if any admin account already exists (for bootstrap UI). */
 export const bootstrapStatus = createServerFn({ method: "GET" }).handler(async () => {
