@@ -73,19 +73,25 @@ describe("candidate RLS — static scope checks", () => {
 
   for (const table of CANDIDATE_SCOPED_TABLES) {
     it(`every ${table} query in candidate.functions.ts filters by candidate_id`, () => {
-      const regex = new RegExp(`\\.from\\(["']${table}["']\\)([\\s\\S]*?)(?=;|\\}\\))`, "g");
-      const matches = [...candidateSrc.matchAll(regex)];
-      expect(matches.length, `expected at least one ${table} query`).toBeGreaterThan(0);
-      for (const m of matches) {
-        const chunk = m[0];
-        // Either scoped directly, OR scoped via attempt_id whose attempt
-        // was just verified belongs to cand.id in the same handler.
-        const scopedDirect = /\.eq\(["']candidate_id["'],\s*cand\.id/.test(chunk);
-        const scopedByVerifiedAttempt =
-          /\.eq\(["']attempt_id["'],\s*data\.attempt_id/.test(chunk);
+      // Walk each `.from("<table>")` occurrence and read only up to the
+      // NEXT `.from(` or end-of-statement, so multi-query Promise.all
+      // arrays don't have their scopes bleed into each other.
+      const openings = [...candidateSrc.matchAll(new RegExp(`\\.from\\(["']${table}["']\\)`, "g"))];
+      expect(openings.length, `expected at least one ${table} query`).toBeGreaterThan(0);
+      for (const m of openings) {
+        const start = m.index!;
+        const rest = candidateSrc.slice(start + m[0].length);
+        const nextFrom = rest.search(/\.from\(/);
+        const nextTerm = rest.search(/[;\n]\s*(?:const |let |return |await |sb\.|\}|\]|\))/);
+        const cut = [nextFrom, nextTerm].filter((n) => n >= 0).sort((a, b) => a - b)[0] ?? rest.length;
+        const chunk = rest.slice(0, cut);
+        const scopedDirect =
+          /\.eq\(["']candidate_id["'],\s*cand\.id/.test(chunk) ||
+          /\.eq\(["']candidate_id["'],[\s\S]*?\.data\?\.id/.test(chunk);
+        const scopedByVerifiedAttempt = /\.eq\(["']attempt_id["'],\s*data\.attempt_id/.test(chunk);
         expect(
           scopedDirect || scopedByVerifiedAttempt,
-          `unscoped ${table} query:\n${chunk}`,
+          `unscoped ${table} query near offset ${start}:\n${chunk}`,
         ).toBe(true);
       }
     });
