@@ -844,7 +844,7 @@ function MbtiAdmin() {
                     <Upload className="mr-1 h-3.5 w-3.5" /> Pilih file .csv
                     <input type="file" accept=".csv,text/csv" className="hidden" onChange={async (e) => {
                       const f = e.target.files?.[0]; if (!f) return;
-                      const text = await f.text(); setImportText(text); e.target.value = "";
+                      const text = await f.text(); setImportText(text); setImportPreview(null); e.target.value = "";
                     }} />
                   </label>
                 </Button>
@@ -853,7 +853,7 @@ function MbtiAdmin() {
                     <Upload className="mr-1 h-3.5 w-3.5" /> Pilih file .json
                     <input type="file" accept=".json,application/json" className="hidden" onChange={async (e) => {
                       const f = e.target.files?.[0]; if (!f) return;
-                      const text = await f.text(); setImportText(text); e.target.value = "";
+                      const text = await f.text(); setImportText(text); setImportPreview(null); e.target.value = "";
                     }} />
                   </label>
                 </Button>
