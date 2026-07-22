@@ -23,6 +23,8 @@ const WPT_IMAGES: Record<number, { url: string; caption: string }> = {
   38: { url: wptQ38.url, caption: "Bentuk geometris dengan titik-titik bernomor 1–14 — pilih dua angka yang bila dihubungkan garis lurus membagi bentuk menjadi dua bagian yang dapat disatukan menjadi bujur sangkar sempurna." },
   42: { url: wptQ42.url, caption: "Bentuk geometris dengan titik-titik bernomor 1–24 — pilih dua angka yang bila dihubungkan garis lurus membagi bentuk menjadi dua bagian yang dapat disatukan menjadi bujur sangkar sempurna." },
   49: { url: wptQ49.url, caption: "Lima bagian bentuk (1–5) — tentukan empat bagian yang dapat digabung menjadi sebuah segitiga." },
+};
+
 
 function WptImageFigure({ url, caption, number }: { url: string; caption: string; number: number }) {
   const [zoom, setZoom] = useState(1);
