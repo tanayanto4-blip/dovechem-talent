@@ -2,10 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getCandidateDetail, getFileSignedUrl } from "@/lib/admin.functions";
+import { computeChecklist } from "@/lib/document-checklist";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Download, XCircle } from "lucide-react";
 
 export const Route = createFileRoute("/admin/candidates/$id")({ component: CandidateDetail });
 
@@ -56,8 +57,32 @@ function CandidateDetail() {
       </Card>
 
       <Card className="shadow-card">
-        <CardHeader><CardTitle>Berkas Upload</CardTitle></CardHeader>
-        <CardContent>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between gap-3">
+            <span>Berkas Upload</span>
+            {(() => {
+              const cl = computeChecklist(c.candidate_files);
+              return cl.complete
+                ? <Badge className="bg-success">Dokumen wajib lengkap</Badge>
+                : <Badge variant="secondary">Dokumen wajib: {cl.done}/{cl.total}</Badge>;
+            })()}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Checklist Kelengkapan</div>
+            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-5">
+              {computeChecklist(c.candidate_files).items.map((i) => (
+                <div
+                  key={i.key}
+                  className={`flex items-center gap-2 rounded-md border p-2 text-sm ${i.uploaded ? "border-success/40 bg-success/5" : "border-muted"}`}
+                >
+                  {i.uploaded ? <CheckCircle2 className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
+                  <span className={i.uploaded ? "font-medium" : "text-muted-foreground"}>{i.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
           {(c.candidate_files ?? []).length === 0 ? (
             <div className="py-6 text-center text-sm text-muted-foreground">Belum ada berkas.</div>
           ) : (

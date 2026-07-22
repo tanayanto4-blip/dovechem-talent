@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateGetProfile } from "@/lib/candidate.functions";
 import { useCandidateSession } from "@/lib/candidate-session";
+import { computeChecklist } from "@/lib/document-checklist";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Circle, User, Upload, ClipboardList, ArrowRight } from "lucide-react";
+import { CheckCircle2, Circle, User, Upload, ClipboardList, ArrowRight, XCircle } from "lucide-react";
 
 export const Route = createFileRoute("/candidate/portal/")({
   component: PortalHome,
@@ -26,9 +27,8 @@ function PortalHome() {
   if (isLoading) return <div className="text-muted-foreground">Memuat...</div>;
 
   const dataDone = data?.candidate?.data_completed;
-  const requiredFiles = ["ktp", "kk", "cv", "ijazah", "transkrip"];
-  const uploadedTypes = new Set((data?.files ?? []).map((f: any) => f.file_type));
-  const filesDone = requiredFiles.every((t) => uploadedTypes.has(t));
+  const checklist = computeChecklist(data?.files);
+  const filesDone = checklist.complete;
   const totalTests = data?.tests?.length ?? 0;
   const finishedTests = (data?.attempts ?? []).filter((a: any) => a.status === "finished").length;
   const testsDone = totalTests > 0 && finishedTests === totalTests;
@@ -56,9 +56,33 @@ function PortalHome() {
 
       <div className="grid gap-4 md:grid-cols-3">
         <StepCard title="Data Diri" desc="Isi biodata lengkap Anda." icon={User} done={!!dataDone} to="/candidate/portal/data" />
-        <StepCard title="Upload Berkas" desc={`${uploadedTypes.size}/${requiredFiles.length} dokumen diunggah`} icon={Upload} done={filesDone} to="/candidate/portal/berkas" />
+        <StepCard title="Upload Berkas" desc={`${checklist.done}/${checklist.total} dokumen wajib diunggah`} icon={Upload} done={filesDone} to="/candidate/portal/berkas" />
         <StepCard title="Psikotest" desc={`${finishedTests}/${totalTests} test selesai`} icon={ClipboardList} done={testsDone} to="/candidate/portal/tests" />
       </div>
+
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between gap-3">
+            <span>Checklist Dokumen Wajib</span>
+            {checklist.complete
+              ? <Badge className="bg-success">Lengkap</Badge>
+              : <Badge variant="secondary">{checklist.done}/{checklist.total}</Badge>}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-5">
+            {checklist.items.map((i) => (
+              <div
+                key={i.key}
+                className={`flex items-center gap-2 rounded-md border p-2 text-sm ${i.uploaded ? "border-success/40 bg-success/5" : "border-muted"}`}
+              >
+                {i.uploaded ? <CheckCircle2 className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
+                <span className={i.uploaded ? "font-medium" : "text-muted-foreground"}>{i.label}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {(data?.attempts?.length ?? 0) > 0 && (
         <Card>

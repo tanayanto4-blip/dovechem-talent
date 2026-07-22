@@ -3,10 +3,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateGetProfile, candidateUploadFile } from "@/lib/candidate.functions";
 import { useCandidateSession } from "@/lib/candidate-session";
+import { computeChecklist } from "@/lib/document-checklist";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { CheckCircle2, Upload, FileText } from "lucide-react";
+import { CheckCircle2, Upload, FileText, XCircle } from "lucide-react";
 import { useRef, useState } from "react";
 
 const FILE_TYPES = [
@@ -31,7 +33,9 @@ function BerkasPage() {
     queryFn: () => getProfile({ data: { code: session!.code } }),
     enabled: !!session,
   });
-  const uploaded = new Map((data?.files ?? []).map((f: any) => [f.file_type, f]));
+  const files = (data?.files ?? []) as any[];
+  const uploaded = new Map(files.map((f: any) => [f.file_type, f]));
+  const checklist = computeChecklist(files);
 
   async function handleFile(type: string, file: File) {
     if (file.size > 10 * 1024 * 1024) { toast.error("Ukuran maksimal 10MB"); return; }
@@ -52,17 +56,43 @@ function BerkasPage() {
   }
 
   return (
-    <Card className="shadow-card">
-      <CardHeader>
-        <CardTitle className="font-display">Upload Berkas</CardTitle>
-        <p className="text-sm text-muted-foreground">Format: PDF/JPG/PNG. Maksimal 10 MB per file.</p>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {FILE_TYPES.map((ft) => (
-          <FileRow key={ft.key} ft={ft} existing={uploaded.get(ft.key)} onFile={(f: File) => handleFile(ft.key, f)} />
-        ))}
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between gap-3">
+            <span>Checklist Dokumen Wajib</span>
+            {checklist.complete
+              ? <Badge className="bg-success">Lengkap</Badge>
+              : <Badge variant="secondary">{checklist.done}/{checklist.total}</Badge>}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-5">
+            {checklist.items.map((i) => (
+              <div
+                key={i.key}
+                className={`flex items-center gap-2 rounded-md border p-2 text-sm ${i.uploaded ? "border-success/40 bg-success/5" : "border-muted"}`}
+              >
+                {i.uploaded ? <CheckCircle2 className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
+                <span className={i.uploaded ? "font-medium" : "text-muted-foreground"}>{i.label}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle className="font-display">Upload Berkas</CardTitle>
+          <p className="text-sm text-muted-foreground">Format: PDF/JPG/PNG. Maksimal 10 MB per file.</p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {FILE_TYPES.map((ft) => (
+            <FileRow key={ft.key} ft={ft} existing={uploaded.get(ft.key)} onFile={(f: File) => handleFile(ft.key, f)} />
+          ))}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
