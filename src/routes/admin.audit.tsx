@@ -3,18 +3,35 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { listAuditLogs } from "@/lib/admin.functions";
+import { listAdminUsers } from "@/lib/users.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Download, RefreshCw, ShieldCheck, X } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  RefreshCw,
+  ShieldCheck,
+  X,
+} from "lucide-react";
 
 export const Route = createFileRoute("/admin/audit")({
   head: () => ({
     meta: [
       { title: "Audit Log — Admin PT Dover Chemical" },
-      { name: "description", content: "Jejak aktivitas admin/HR: aktivasi kode kandidat dan akses lembar jawaban." },
+      { name: "description", content: "Jejak aktivitas admin/HR: aktivasi kode kandidat, akses lembar jawaban, dan penolakan RBAC." },
     ],
   }),
   component: AuditPage,
@@ -41,10 +58,15 @@ const ACTION_LABEL: Record<string, string> = {
   "attempt.view": "Lihat lembar jawaban",
   "attempt.submit": "Kandidat submit tes",
   "admin.access": "Akses dashboard admin",
+  "admin.access.denied": "Akses ditolak (RBAC)",
 };
 
 const PAGE_SIZE = 50;
 const EXPORT_LIMIT = 500;
+
+function isDenied(r: Row) {
+  return r.action === "admin.access.denied";
+}
 
 function toCsv(rows: Row[]): string {
   const headers = ["waktu", "actor_type", "actor_name", "actor_id", "action", "action_label", "target_type", "target_id", "metadata"];
@@ -83,31 +105,65 @@ function downloadCsv(rows: Row[]) {
   URL.revokeObjectURL(url);
 }
 
-// Local datetime <input type="datetime-local"> value -> ISO string (or null).
 function localToIso(v: string): string | null {
   if (!v) return null;
   const d = new Date(v);
   return isNaN(d.getTime()) ? null : d.toISOString();
 }
 
+const ANY = "__any__";
+
 function AuditPage() {
   const fetchLogs = useServerFn(listAuditLogs);
+  const fetchUsers = useServerFn(listAdminUsers);
+
   const [action, setAction] = useState<string | null>(null);
+  const [onlyDenied, setOnlyDenied] = useState(false);
+  const [actorId, setActorId] = useState<string | null>(null);
+  const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "hr">("all");
   const [targetId, setTargetId] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [page, setPage] = useState(0);
 
+  const usersQ = useQuery({
+    queryKey: ["admin-users-picker"],
+    queryFn: () => fetchUsers(),
+    staleTime: 60_000,
+  });
+  const staffOptions = useMemo(() => {
+    const users = (usersQ.data?.users ?? []) as Array<{
+      id: string;
+      email: string | null;
+      roles: string[];
+      profile: { full_name: string | null; username: string | null } | null;
+    }>;
+    return users
+      .filter((u) => (roleFilter === "all" ? true : u.roles.includes(roleFilter)))
+      .map((u) => ({
+        id: u.id,
+        label:
+          u.profile?.full_name ||
+          u.profile?.username ||
+          u.email ||
+          u.id.slice(0, 8),
+        roles: u.roles,
+      }));
+  }, [usersQ.data, roleFilter]);
+
   const queryArgs = useMemo(
     () => ({
       limit: PAGE_SIZE,
       offset: page * PAGE_SIZE,
-      action,
+      action: onlyDenied ? null : action,
+      only_denied: onlyDenied || null,
+      actor_id: actorId,
+      actor_type: actorId ? "staff" : null,
       target_id: targetId.trim() || null,
       from: localToIso(from),
       to: localToIso(to),
     }),
-    [action, targetId, from, to, page],
+    [action, onlyDenied, actorId, targetId, from, to, page],
   );
 
   const q = useQuery({
@@ -120,9 +176,15 @@ function AuditPage() {
   const start = total === 0 ? 0 : page * PAGE_SIZE + 1;
   const end = Math.min(total, page * PAGE_SIZE + rows.length);
 
+  // Count of denied entries visible on this page (quick signal).
+  const deniedOnPage = rows.filter(isDenied).length;
+
   const resetPage = () => setPage(0);
   const clearAll = () => {
     setAction(null);
+    setOnlyDenied(false);
+    setActorId(null);
+    setRoleFilter("all");
     setTargetId("");
     setFrom("");
     setTo("");
@@ -142,16 +204,19 @@ function AuditPage() {
 
   async function exportAllMatching() {
     const res = await fetchLogs({
-      data: {
-        ...queryArgs,
-        limit: EXPORT_LIMIT,
-        offset: 0,
-      },
+      data: { ...queryArgs, limit: EXPORT_LIMIT, offset: 0 },
     });
     downloadCsv((res?.logs ?? []) as Row[]);
   }
 
-  const hasActiveFilter = action !== null || targetId.trim() !== "" || from !== "" || to !== "";
+  const hasActiveFilter =
+    action !== null ||
+    onlyDenied ||
+    actorId !== null ||
+    roleFilter !== "all" ||
+    targetId.trim() !== "" ||
+    from !== "" ||
+    to !== "";
 
   return (
     <div className="space-y-4">
@@ -177,6 +242,54 @@ function AuditPage() {
         </div>
       </div>
 
+      <Card
+        className={
+          onlyDenied
+            ? "border-destructive/40 bg-destructive/5"
+            : deniedOnPage > 0
+              ? "border-amber-400/40 bg-amber-50/60 dark:bg-amber-950/20"
+              : ""
+        }
+      >
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
+          <div className="flex items-center gap-3">
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                deniedOnPage > 0 || onlyDenied
+                  ? "bg-destructive/15 text-destructive"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold">Penolakan RBAC (admin.access.denied)</div>
+              <div className="text-xs text-muted-foreground">
+                {onlyDenied
+                  ? `Menampilkan hanya penolakan: ${total} entri cocok filter.`
+                  : deniedOnPage > 0
+                    ? `${deniedOnPage} penolakan pada halaman ini — periksa siapa yang mencoba mengakses.`
+                    : "Tidak ada penolakan pada halaman ini."}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="only-denied" className="text-xs">
+              Hanya penolakan
+            </Label>
+            <Switch
+              id="only-denied"
+              checked={onlyDenied}
+              onCheckedChange={(v) => {
+                setOnlyDenied(v);
+                if (v) setAction(null);
+                resetPage();
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardContent className="space-y-4 pt-6">
           <div className="flex flex-wrap gap-2">
@@ -184,7 +297,8 @@ function AuditPage() {
               <Button
                 key={f.label}
                 size="sm"
-                variant={action === f.key ? "default" : "outline"}
+                variant={!onlyDenied && action === f.key ? "default" : "outline"}
+                disabled={onlyDenied}
                 onClick={() => {
                   setAction(f.key);
                   resetPage();
@@ -196,18 +310,53 @@ function AuditPage() {
           </div>
 
           <div className="grid gap-3 md:grid-cols-4">
-            <div className="space-y-1 md:col-span-2">
-              <Label htmlFor="audit-target">Target ID (kandidat / kode / attempt)</Label>
-              <Input
-                id="audit-target"
-                placeholder="Cocokkan sebagian UUID…"
-                value={targetId}
-                onChange={(e) => {
-                  setTargetId(e.target.value);
+            <div className="space-y-1">
+              <Label>Role staf</Label>
+              <Select
+                value={roleFilter}
+                onValueChange={(v) => {
+                  setRoleFilter(v as "all" | "admin" | "hr");
+                  // Reset chosen actor if it no longer matches role
+                  setActorId(null);
                   resetPage();
                 }}
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua role</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="hr">HR</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+
+            <div className="space-y-1">
+              <Label>Staf / Admin</Label>
+              <Select
+                value={actorId ?? ANY}
+                onValueChange={(v) => {
+                  setActorId(v === ANY ? null : v);
+                  resetPage();
+                }}
+                disabled={usersQ.isLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Semua staf" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ANY}>Semua staf</SelectItem>
+                  {staffOptions.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.label}
+                      {u.roles.includes("admin") ? " · admin" : u.roles.includes("hr") ? " · hr" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-1">
               <Label htmlFor="audit-from">Dari</Label>
               <Input
@@ -228,6 +377,19 @@ function AuditPage() {
                 value={to}
                 onChange={(e) => {
                   setTo(e.target.value);
+                  resetPage();
+                }}
+              />
+            </div>
+
+            <div className="space-y-1 md:col-span-4">
+              <Label htmlFor="audit-target">Target ID (kandidat / kode / attempt)</Label>
+              <Input
+                id="audit-target"
+                placeholder="Cocokkan sebagian UUID…"
+                value={targetId}
+                onChange={(e) => {
+                  setTargetId(e.target.value);
                   resetPage();
                 }}
               />
@@ -298,6 +460,7 @@ function AuditPage() {
                   </tr>
                 ) : null}
                 {rows.map((r) => {
+                  const denied = isDenied(r);
                   const meta = r.metadata ?? {};
                   const details: string[] = [];
                   for (const [k, v] of Object.entries(meta)) {
@@ -305,7 +468,14 @@ function AuditPage() {
                     details.push(`${k}: ${typeof v === "object" ? JSON.stringify(v) : String(v)}`);
                   }
                   return (
-                    <tr key={r.id} className="border-t">
+                    <tr
+                      key={r.id}
+                      className={`border-t ${
+                        denied
+                          ? "bg-destructive/10 border-l-4 border-l-destructive"
+                          : ""
+                      }`}
+                    >
                       <td className="whitespace-nowrap px-4 py-2 font-mono text-xs">
                         {new Date(r.created_at).toLocaleString("id-ID")}
                       </td>
@@ -322,9 +492,32 @@ function AuditPage() {
                               ? `${r.actor_id.slice(0, 8)}…`
                               : r.actor_type}
                         </div>
+                        {r.actor_id ? (
+                          <button
+                            type="button"
+                            className="mt-1 text-[10px] text-primary underline-offset-2 hover:underline"
+                            onClick={() => {
+                              setActorId(r.actor_id!);
+                              resetPage();
+                            }}
+                            title="Filter berdasarkan staf ini"
+                          >
+                            filter staf ini
+                          </button>
+                        ) : null}
                       </td>
                       <td className="px-4 py-2">
-                        <Badge variant={r.action.startsWith("code.deactivate") ? "destructive" : "secondary"}>
+                        <Badge
+                          variant={
+                            denied
+                              ? "destructive"
+                              : r.action.startsWith("code.deactivate")
+                                ? "destructive"
+                                : "secondary"
+                          }
+                          className={denied ? "gap-1" : ""}
+                        >
+                          {denied ? <AlertTriangle className="h-3 w-3" /> : null}
                           {ACTION_LABEL[r.action] ?? r.action}
                         </Badge>
                       </td>
