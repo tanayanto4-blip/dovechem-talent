@@ -441,6 +441,16 @@ function MbtiAdmin() {
                 {bulkRunning === "off" ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <EyeOff className="mr-1 h-3.5 w-3.5" />}
                 Unpublish terpilih
               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-destructive hover:text-destructive"
+                disabled={selected.size === 0 || !!bulkRunning}
+                onClick={() => setConfirmBulkDelete(true)}
+              >
+                {bulkRunning === "delete" ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <Trash2 className="mr-1 h-3.5 w-3.5" />}
+                Hapus terpilih
+              </Button>
               {selected.size > 0 && (
                 <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())} disabled={!!bulkRunning}>Bersihkan</Button>
               )}
