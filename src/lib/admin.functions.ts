@@ -295,20 +295,29 @@ export const getAttemptDetail = createServerFn({ method: "POST" })
 
 const AuditListInput = z.object({
   limit: z.number().int().min(1).max(500).optional(),
+  offset: z.number().int().min(0).max(100000).optional(),
   action: z.string().max(64).optional().nullable(),
+  target_id: z.string().trim().max(120).optional().nullable(),
+  from: z.string().datetime().optional().nullable(),
+  to: z.string().datetime().optional().nullable(),
 });
 
 export const listAuditLogs = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .inputValidator((d) => AuditListInput.parse(d ?? {}))
   .handler(async ({ context, data }) => {
+    const limit = data.limit ?? 50;
+    const offset = data.offset ?? 0;
     let q = context.supabase
       .from("audit_logs")
-      .select("id, actor_id, actor_type, actor_label, action, target_type, target_id, metadata, created_at")
+      .select("id, actor_id, actor_type, actor_label, action, target_type, target_id, metadata, created_at", { count: "exact" })
       .order("created_at", { ascending: false })
-      .limit(data.limit ?? 100);
+      .range(offset, offset + limit - 1);
     if (data.action) q = q.eq("action", data.action);
-    const { data: rows, error } = await q;
+    if (data.target_id) q = q.ilike("target_id", `%${data.target_id}%`);
+    if (data.from) q = q.gte("created_at", data.from);
+    if (data.to) q = q.lte("created_at", data.to);
+    const { data: rows, error, count } = await q;
     if (error) throw new Error(error.message);
     // Resolve actor display names from profiles (best-effort).
     const ids = Array.from(new Set((rows ?? []).map((r: any) => r.actor_id).filter(Boolean)));
@@ -320,7 +329,12 @@ export const listAuditLogs = createServerFn({ method: "POST" })
         .in("id", ids);
       for (const p of profs ?? []) actors[(p as any).id] = { full_name: (p as any).full_name, username: (p as any).username };
     }
-    return { logs: (rows ?? []).map((r: any) => ({ ...r, actor: actors[r.actor_id] ?? null })) };
+    return {
+      logs: (rows ?? []).map((r: any) => ({ ...r, actor: actors[r.actor_id] ?? null })),
+      total: count ?? 0,
+      offset,
+      limit,
+    };
   });
 
 
