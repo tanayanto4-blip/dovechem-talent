@@ -759,18 +759,18 @@ function MbtiAdmin() {
 
       <Dialog open={importOpen} onOpenChange={(o) => { if (!importRunning) { setImportOpen(o); if (!o) { setImportText(""); setImportLog(null); } } }}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Impor Soal MBTI dari CSV</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Impor Soal MBTI dari CSV / JSON</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div className="rounded-md border bg-muted/40 p-3 text-xs">
-              <div className="font-semibold">Format kolom (baris pertama header):</div>
-              <code className="mt-1 block font-mono">number, question_text, a_label, a_dim, b_label, b_dim</code>
-              <ul className="mt-2 list-disc pl-4 text-muted-foreground">
+              <div className="font-semibold">Dua format didukung:</div>
+              <ul className="mt-1 list-disc pl-4 text-muted-foreground">
+                <li><b>CSV</b> — kolom: <code className="font-mono">number, question_text, a_label, a_dim, b_label, b_dim</code></li>
+                <li><b>JSON</b> — hasil <b>Ekspor JSON</b> dari halaman ini (format <code className="font-mono">mbti-bank-soal</code>). Status <b>publish/draft</b> ikut dipulihkan.</li>
                 <li>Dimensi valid: E, I, S, N, T, F, J, P — pasangan A/B harus berbeda.</li>
-                <li>Kosongkan <b>number</b> untuk penomoran otomatis lanjutan.</li>
-                <li>Baris dengan nomor yang sudah ada akan menimpa soal tersebut.</li>
+                <li>Nomor kosong → penomoran otomatis. Nomor yang sama akan menimpa soal yang ada.</li>
               </ul>
-              <div className="mt-2 flex gap-2">
-                <Button size="sm" variant="outline" onClick={downloadTemplate}><Download className="mr-1 h-3.5 w-3.5" /> Unduh template</Button>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={downloadTemplate}><Download className="mr-1 h-3.5 w-3.5" /> Unduh template CSV</Button>
                 <Button size="sm" variant="outline" asChild>
                   <label className="cursor-pointer">
                     <Upload className="mr-1 h-3.5 w-3.5" /> Pilih file .csv
@@ -780,16 +780,25 @@ function MbtiAdmin() {
                     }} />
                   </label>
                 </Button>
+                <Button size="sm" variant="outline" asChild>
+                  <label className="cursor-pointer">
+                    <Upload className="mr-1 h-3.5 w-3.5" /> Pilih file .json
+                    <input type="file" accept=".json,application/json" className="hidden" onChange={async (e) => {
+                      const f = e.target.files?.[0]; if (!f) return;
+                      const text = await f.text(); setImportText(text); e.target.value = "";
+                    }} />
+                  </label>
+                </Button>
               </div>
             </div>
             <div>
-              <Label className="text-xs">Isi CSV</Label>
+              <Label className="text-xs">Isi CSV atau JSON</Label>
               <textarea
                 value={importText}
                 onChange={(e) => setImportText(e.target.value)}
                 rows={10}
                 className="mt-1 w-full rounded-md border bg-background p-2 font-mono text-xs"
-                placeholder="number,question_text,a_label,a_dim,b_label,b_dim&#10;1,,Saya suka keramaian,E,Saya suka menyendiri,I"
+                placeholder={'CSV: number,question_text,a_label,a_dim,b_label,b_dim\natau JSON: { "format": "mbti-bank-soal", "questions": [ ... ] }'}
               />
             </div>
             {importLog && (
