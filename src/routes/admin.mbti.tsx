@@ -11,6 +11,7 @@ import {
   deleteMbtiQuestions,
   setMbtiQuestionsActive,
   reorderMbtiQuestions,
+  logMbtiExport,
 } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +55,7 @@ function MbtiAdmin() {
   const toggleFn = useServerFn(setTestActive);
   const upsertFn = useServerFn(upsertMbtiQuestion);
   const deleteFn = useServerFn(deleteMbtiQuestion);
+  const logExportFn = useServerFn(logMbtiExport);
 
   const { data: testsData, isLoading: loadingTests } = useQuery({ queryKey: ["admin-tests"], queryFn: () => listFn({ data: {} as never }) });
   const mbtiTests = useMemo(() => ((testsData?.tests ?? []) as any[]).filter((t) => t.test_type === "mbti"), [testsData]);
@@ -539,11 +541,18 @@ function MbtiAdmin() {
     }
     const stamp = new Date().toISOString().slice(0, 10);
     const scope = selected.size > 0 ? `terpilih-${rows.length}` : `all-${rows.length}`;
+    const filename = `mbti-bank-soal-${scope}-${stamp}.csv`;
     triggerDownload(
       new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8" }),
-      `mbti-bank-soal-${scope}-${stamp}.csv`,
+      filename,
     );
     toast.success(`Diekspor ${rows.length} soal ke CSV.`);
+    if (activeTestId) {
+      const published_count = rows.filter((q) => q.active !== false).length;
+      const draft_count = rows.length - published_count;
+      logExportFn({ data: { test_id: activeTestId, format: "csv", count: rows.length, published_count, draft_count, filename } })
+        .catch((e) => console.error("audit_log_mbti_export_failed", e));
+    }
   }
   function exportJson() {
     const rows = exportRows();
@@ -574,11 +583,18 @@ function MbtiAdmin() {
     };
     const stamp = new Date().toISOString().slice(0, 10);
     const scope = selected.size > 0 ? `terpilih-${rows.length}` : `all-${rows.length}`;
+    const filename = `mbti-bank-soal-${scope}-${stamp}.json`;
     triggerDownload(
       new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" }),
-      `mbti-bank-soal-${scope}-${stamp}.json`,
+      filename,
     );
     toast.success(`Diekspor ${rows.length} soal ke JSON.`);
+    if (activeTestId) {
+      const published_count = rows.filter((q) => q.active !== false).length;
+      const draft_count = rows.length - published_count;
+      logExportFn({ data: { test_id: activeTestId, format: "json", count: rows.length, published_count, draft_count, filename } })
+        .catch((e) => console.error("audit_log_mbti_export_failed", e));
+    }
   }
 
 
