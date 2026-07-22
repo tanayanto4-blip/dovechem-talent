@@ -14,6 +14,7 @@ async function logAudit(
   try {
     await ctx.supabase.from("audit_logs").insert({
       actor_id: ctx.userId,
+      actor_type: "staff",
       action,
       target_type,
       target_id,
@@ -24,6 +25,15 @@ async function logAudit(
     console.error("audit_log_insert_failed", { action, target_type, target_id, error: (e as Error).message });
   }
 }
+
+/** Records that a staff member opened an admin surface (dashboard/candidates/etc.). */
+export const logStaffAccess = createServerFn({ method: "POST" })
+  .middleware([requireStaff])
+  .inputValidator((d) => z.object({ area: z.string().trim().min(1).max(64) }).parse(d))
+  .handler(async ({ context, data }) => {
+    await logAudit(context, "admin.access", "area", null, { area: data.area });
+    return { ok: true };
+  });
 
 
 
