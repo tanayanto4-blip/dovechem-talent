@@ -252,3 +252,24 @@ export const dashboardStats = createServerFn({ method: "GET" })
       })(),
     };
   });
+
+export const setCodeExpiry = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid(), expires_at: z.string().datetime().nullable() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase.from("candidate_codes").update({ expires_at: data.expires_at }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const bulkSetCodesExpiry = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ expires_at: z.string().datetime().nullable() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { error, count } = await context.supabase
+      .from("candidate_codes")
+      .update({ expires_at: data.expires_at }, { count: "exact" })
+      .not("id", "is", null);
+    if (error) throw new Error(error.message);
+    return { updated: count ?? 0 };
+  });
