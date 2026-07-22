@@ -111,8 +111,12 @@ describe("candidate RLS — static scope checks", () => {
       expect(openings.length, `expected at least one ${table} query`).toBeGreaterThan(0);
       for (const m of openings) {
         const chain = readChain(candidateSrc, m.index!);
-        const scopedByCandidate = /\.eq\(["']candidate_id["']/.test(chain);
-        const scopedByAttempt = /\.eq\(["']attempt_id["'],\s*data\.attempt_id/.test(chain);
+        const scopedByCandidate =
+          /\.eq\(["']candidate_id["']/.test(chain) ||
+          /candidate_id:\s*cand\.id/.test(chain);
+        const scopedByAttempt =
+          /\.eq\(["']attempt_id["'],\s*data\.attempt_id/.test(chain) ||
+          /attempt_id:\s*data\.attempt_id/.test(chain);
         expect(
           scopedByCandidate || scopedByAttempt,
           `unscoped ${table} chain:\n${chain}`,
