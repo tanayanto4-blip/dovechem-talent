@@ -9,7 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, FileText, FolderOpen, Search } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Download, ExternalLink, Eye, FileText, FolderOpen, Search } from "lucide-react";
+
+function mimeKind(name: string, mime?: string | null): "image" | "pdf" | "other" {
+  const m = (mime ?? "").toLowerCase();
+  if (m.startsWith("image/")) return "image";
+  if (m === "application/pdf") return "pdf";
+  const ext = name.split(".").pop()?.toLowerCase() ?? "";
+  if (["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"].includes(ext)) return "image";
+  if (ext === "pdf") return "pdf";
+  return "other";
+}
 
 export const Route = createFileRoute("/admin/documents")({
   component: DocumentsBank,
