@@ -1,5 +1,24 @@
 import { createMiddleware } from "@tanstack/react-start";
+import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+/** Extract best-effort client IP and User-Agent from the incoming request. */
+function getRequestClientInfo(): { ip: string | null; user_agent: string | null } {
+  let ip: string | null = null;
+  let user_agent: string | null = null;
+  try {
+    ip = getRequestIP({ xForwardedFor: true }) ?? null;
+  } catch {
+    ip = null;
+  }
+  try {
+    user_agent = getRequestHeader("user-agent") ?? null;
+    if (user_agent && user_agent.length > 512) user_agent = user_agent.slice(0, 512);
+  } catch {
+    user_agent = null;
+  }
+  return { ip, user_agent };
+}
 
 /**
  * Emit a 403 response and record a denied-access entry into public.audit_logs
@@ -12,6 +31,7 @@ async function denyAndAudit(params: {
   required: "staff" | "admin";
   roles?: string[];
 }): Promise<never> {
+  const { ip, user_agent } = getRequestClientInfo();
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("audit_logs").insert({
@@ -24,6 +44,8 @@ async function denyAndAudit(params: {
         reason: params.reason,
         required: params.required,
         roles: params.roles ?? [],
+        ip,
+        user_agent,
       },
     });
   } catch (e) {
