@@ -83,6 +83,10 @@ function MbtiAdmin() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<QRow | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importRunning, setImportRunning] = useState(false);
+  const [importLog, setImportLog] = useState<{ ok: number; fail: number; errors: string[] } | null>(null);
 
   function openCreate() { setDraft(emptyDraft(nextNumber)); }
   function openEdit(q: QRow) {
