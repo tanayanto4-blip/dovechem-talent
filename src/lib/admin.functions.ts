@@ -27,6 +27,7 @@ const CreateCodeInput = z.object({
   candidate_email: z.string().email().max(200).optional().nullable().or(z.literal("")),
   position_applied: z.string().max(120).optional().nullable(),
   code: z.string().trim().min(4).max(32).optional().nullable(),
+  expires_at: z.string().datetime().optional().nullable(),
 });
 
 function randomCode() {
@@ -48,6 +49,7 @@ export const createCandidateCode = createServerFn({ method: "POST" })
         candidate_name: data.candidate_name,
         candidate_email: data.candidate_email || null,
         position_applied: data.position_applied || null,
+        expires_at: data.expires_at || null,
         created_by: context.userId,
       })
       .select()
@@ -62,6 +64,7 @@ const BulkInput = z.object({
   position_applied: z.string().max(120).optional().nullable(),
   name_prefix: z.string().trim().max(60).optional().nullable(),
   start_number: z.number().int().min(1).max(100000).optional().nullable(),
+  expires_at: z.string().datetime().optional().nullable(),
 });
 
 export const bulkCreateCandidateCodes = createServerFn({ method: "POST" })
@@ -88,6 +91,7 @@ export const bulkCreateCandidateCodes = createServerFn({ method: "POST" })
         candidate_name: `${namePrefix} ${String(start + i).padStart(3, "0")}`,
         position_applied: data.position_applied || null,
         active: true,
+        expires_at: data.expires_at || null,
         created_by: context.userId,
       });
     }
@@ -247,4 +251,25 @@ export const dashboardStats = createServerFn({ method: "GET" })
         return Math.round(done.reduce((s, a) => s + Number(a.score), 0) / done.length);
       })(),
     };
+  });
+
+export const setCodeExpiry = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid(), expires_at: z.string().datetime().nullable() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase.from("candidate_codes").update({ expires_at: data.expires_at }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const bulkSetCodesExpiry = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ expires_at: z.string().datetime().nullable() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { error, count } = await context.supabase
+      .from("candidate_codes")
+      .update({ expires_at: data.expires_at }, { count: "exact" })
+      .not("id", "is", null);
+    if (error) throw new Error(error.message);
+    return { updated: count ?? 0 };
   });

@@ -22,6 +22,7 @@ export type Database = {
           code: string
           created_at: string
           created_by: string | null
+          expires_at: string | null
           id: string
           position_applied: string | null
           used_at: string | null
@@ -33,6 +34,7 @@ export type Database = {
           code: string
           created_at?: string
           created_by?: string | null
+          expires_at?: string | null
           id?: string
           position_applied?: string | null
           used_at?: string | null
@@ -44,6 +46,7 @@ export type Database = {
           code?: string
           created_at?: string
           created_by?: string | null
+          expires_at?: string | null
           id?: string
           position_applied?: string | null
           used_at?: string | null

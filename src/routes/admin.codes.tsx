@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { bulkCreateCandidateCodes, bulkSetCodesActive, createCandidateCode, deleteCode, listCandidateCodes, toggleCode } from "@/lib/admin.functions";
+import { bulkCreateCandidateCodes, bulkSetCodesActive, bulkSetCodesExpiry, createCandidateCode, deleteCode, listCandidateCodes, setCodeExpiry, toggleCode } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Copy, Trash2, Layers, Power, PowerOff, Zap } from "lucide-react";
+import { Plus, Copy, Trash2, Layers, Power, PowerOff, Zap, CalendarClock } from "lucide-react";
 
 export const Route = createFileRoute("/admin/codes")({ component: CodesPage });
 
@@ -22,25 +22,35 @@ function CodesPage() {
   const create = useServerFn(createCandidateCode);
   const bulkCreate = useServerFn(bulkCreateCandidateCodes);
   const bulkActive = useServerFn(bulkSetCodesActive);
+  const bulkExpiry = useServerFn(bulkSetCodesExpiry);
+  const setExpiry = useServerFn(setCodeExpiry);
   const toggle = useServerFn(toggleCode);
   const del = useServerFn(deleteCode);
   const { data } = useQuery({ queryKey: ["codes"], queryFn: () => list({ data: {} as never }) });
   const [open, setOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
-  const [form, setForm] = useState({ candidate_name: "", candidate_email: "", position_applied: "", code: "" });
-  const [bulkForm, setBulkForm] = useState({ count: 300, prefix: "DOV", name_prefix: "Kandidat", position_applied: "", start_number: 1 });
+  const [form, setForm] = useState({ candidate_name: "", candidate_email: "", position_applied: "", code: "", expires_at: "" });
+  const [bulkForm, setBulkForm] = useState({ count: 300, prefix: "DOV", name_prefix: "Kandidat", position_applied: "", start_number: 1, expires_at: "" });
   const [saving, setSaving] = useState(false);
   const [bulkSaving, setBulkSaving] = useState(false);
   const [autoSaving, setAutoSaving] = useState(false);
 
+  function toIso(local: string): string | null {
+    if (!local) return null;
+    const d = new Date(local);
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  }
+
   async function onAuto() {
     const n = Number(prompt("Berapa kode akses yang dibuat otomatis?", "300")) || 0;
     if (n <= 0) return;
+    const expiryLocal = prompt("Masa berlaku (YYYY-MM-DD HH:mm) — kosongkan jika tanpa batas:", "") || "";
+    const expires_at = expiryLocal ? toIso(expiryLocal.replace(" ", "T")) : null;
     setAutoSaving(true);
     try {
       const res = await bulkCreate({ data: {
         count: n, prefix: "DOV", name_prefix: "Kandidat",
-        position_applied: null, start_number: 1,
+        position_applied: null, start_number: 1, expires_at,
       }});
       toast.success(`${res.created} kode otomatis dibuat & aktif — siap login`);
       qc.invalidateQueries({ queryKey: ["codes"] });
@@ -52,11 +62,12 @@ function CodesPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await create({ data: form });
+      const { expires_at, ...rest } = form;
+      const res = await create({ data: { ...rest, expires_at: toIso(expires_at) } });
       toast.success(`Kode dibuat: ${res.code.code}`);
       qc.invalidateQueries({ queryKey: ["codes"] });
       setOpen(false);
-      setForm({ candidate_name: "", candidate_email: "", position_applied: "", code: "" });
+      setForm({ candidate_name: "", candidate_email: "", position_applied: "", code: "", expires_at: "" });
     } catch (e: any) { toast.error(e.message); }
     finally { setSaving(false); }
   }
@@ -71,12 +82,38 @@ function CodesPage() {
         name_prefix: bulkForm.name_prefix || null,
         position_applied: bulkForm.position_applied || null,
         start_number: Number(bulkForm.start_number) || 1,
+        expires_at: toIso(bulkForm.expires_at),
       }});
       toast.success(`${res.created} kode dibuat & aktif`);
       qc.invalidateQueries({ queryKey: ["codes"] });
       setBulkOpen(false);
     } catch (e: any) { toast.error(e.message); }
     finally { setBulkSaving(false); }
+  }
+
+  async function onBulkExpiry() {
+    const v = prompt("Set masa berlaku SEMUA kode (YYYY-MM-DDTHH:mm). Kosongkan lalu OK untuk hapus batas:", "");
+    if (v === null) return;
+    const iso = v ? toIso(v) : null;
+    if (v && !iso) { toast.error("Format tanggal tidak valid"); return; }
+    try {
+      const res = await bulkExpiry({ data: { expires_at: iso } });
+      toast.success(`${res.updated} kode diperbarui`);
+      qc.invalidateQueries({ queryKey: ["codes"] });
+    } catch (e: any) { toast.error(e.message); }
+  }
+
+  async function onEditExpiry(id: string, current: string | null) {
+    const cur = current ? new Date(current).toISOString().slice(0, 16) : "";
+    const v = prompt("Masa berlaku (YYYY-MM-DDTHH:mm). Kosongkan lalu OK untuk hapus batas:", cur);
+    if (v === null) return;
+    const iso = v ? toIso(v) : null;
+    if (v && !iso) { toast.error("Format tanggal tidak valid"); return; }
+    try {
+      await setExpiry({ data: { id, expires_at: iso } });
+      qc.invalidateQueries({ queryKey: ["codes"] });
+      toast.success("Masa berlaku diperbarui");
+    } catch (e: any) { toast.error(e.message); }
   }
 
   async function onBulkActive(active: boolean) {
@@ -101,6 +138,7 @@ function CodesPage() {
           </Button>
           <Button variant="outline" onClick={() => onBulkActive(true)}><Power className="mr-2 h-4 w-4" /> Aktifkan Semua</Button>
           <Button variant="outline" onClick={() => onBulkActive(false)}><PowerOff className="mr-2 h-4 w-4" /> Nonaktifkan Semua</Button>
+          <Button variant="outline" onClick={onBulkExpiry}><CalendarClock className="mr-2 h-4 w-4" /> Set Masa Berlaku Semua</Button>
           <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
             <DialogTrigger asChild><Button variant="secondary"><Layers className="mr-2 h-4 w-4" /> Buat Massal</Button></DialogTrigger>
             <DialogContent>
@@ -113,6 +151,7 @@ function CodesPage() {
                 <div className="space-y-2"><Label>Prefix Kode</Label><Input value={bulkForm.prefix} onChange={(e) => setBulkForm({ ...bulkForm, prefix: e.target.value.toUpperCase() })} placeholder="DOV" /></div>
                 <div className="space-y-2"><Label>Prefix Nama Kandidat</Label><Input value={bulkForm.name_prefix} onChange={(e) => setBulkForm({ ...bulkForm, name_prefix: e.target.value })} placeholder="Kandidat" /></div>
                 <div className="space-y-2"><Label>Posisi Dilamar</Label><Input value={bulkForm.position_applied} onChange={(e) => setBulkForm({ ...bulkForm, position_applied: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Masa Berlaku (opsional)</Label><Input type="datetime-local" value={bulkForm.expires_at} onChange={(e) => setBulkForm({ ...bulkForm, expires_at: e.target.value })} /><p className="text-[11px] text-muted-foreground">Kosongkan jika tanpa batas waktu.</p></div>
                 <p className="text-xs text-muted-foreground">Semua kode dibuat dalam status <b>aktif</b> dan langsung bisa dipakai kandidat login.</p>
                 <DialogFooter><Button type="submit" disabled={bulkSaving}>{bulkSaving ? "Membuat..." : `Buat ${bulkForm.count} Kode`}</Button></DialogFooter>
               </form>
@@ -127,6 +166,7 @@ function CodesPage() {
                 <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.candidate_email} onChange={(e) => setForm({ ...form, candidate_email: e.target.value })} /></div>
                 <div className="space-y-2"><Label>Posisi Dilamar</Label><Input value={form.position_applied} onChange={(e) => setForm({ ...form, position_applied: e.target.value })} /></div>
                 <div className="space-y-2"><Label>Kode Custom (opsional)</Label><Input placeholder="Kosongkan untuk auto-generate" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} /></div>
+                <div className="space-y-2"><Label>Masa Berlaku (opsional)</Label><Input type="datetime-local" value={form.expires_at} onChange={(e) => setForm({ ...form, expires_at: e.target.value })} /></div>
                 <DialogFooter><Button type="submit" disabled={saving}>{saving ? "Membuat..." : "Buat"}</Button></DialogFooter>
               </form>
             </DialogContent>
@@ -146,6 +186,7 @@ function CodesPage() {
                   <TableHead>Posisi</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Digunakan</TableHead>
+                  <TableHead>Masa Berlaku</TableHead>
                   <TableHead>Aktif</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
@@ -169,6 +210,16 @@ function CodesPage() {
                     </TableCell>
                     <TableCell>{c.used_at ? new Date(c.used_at).toLocaleDateString("id-ID") : "-"}</TableCell>
                     <TableCell>
+                      <button onClick={() => onEditExpiry(c.id, c.expires_at)} className="text-left text-sm hover:underline">
+                        {c.expires_at ? (
+                          <span className={new Date(c.expires_at).getTime() < Date.now() ? "text-destructive" : ""}>
+                            {new Date(c.expires_at).toLocaleString("id-ID", { dateStyle: "short", timeStyle: "short" })}
+                            {new Date(c.expires_at).getTime() < Date.now() ? " (kedaluwarsa)" : ""}
+                          </span>
+                        ) : <span className="text-muted-foreground">Tanpa batas</span>}
+                      </button>
+                    </TableCell>
+                    <TableCell>
                       <Switch checked={c.active} onCheckedChange={async (v) => { await toggle({ data: { id: c.id, active: v } }); qc.invalidateQueries({ queryKey: ["codes"] }); }} />
                     </TableCell>
                     <TableCell>
@@ -184,7 +235,7 @@ function CodesPage() {
                   </TableRow>
                 ))}
                 {(data?.codes ?? []).length === 0 && (
-                  <TableRow><TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Belum ada kode. Klik "Buat Kode" untuk mulai.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8} className="py-8 text-center text-muted-foreground">Belum ada kode. Klik "Buat Kode" untuk mulai.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
