@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Timer, CloudCheck, CloudUpload, CloudOff } from "lucide-react";
+import { Timer, Check, Loader2, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/candidate/portal/test/$testId")({ component: TakeTest });
 
