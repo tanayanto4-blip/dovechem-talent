@@ -28,7 +28,40 @@ const WPT_IMAGES: Record<number, { url: string; caption: string }> = {
 
 function WptImageFigure({ url, caption, number }: { url: string; caption: string; number: number }) {
   const [zoom, setZoom] = useState(1);
+  const [failed, setFailed] = useState(false);
+  const [dialogFailed, setDialogFailed] = useState(false);
   const alt = `Ilustrasi soal WPT nomor ${number}`;
+
+  if (failed) {
+    return (
+      <figure
+        role="img"
+        aria-label={`${alt} gagal dimuat`}
+        className="mt-3 w-full rounded-md border border-dashed border-amber-300 bg-amber-50 p-4 text-amber-900"
+      >
+        <div className="flex items-start gap-3">
+          <span aria-hidden className="mt-0.5 inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-amber-100 text-base font-semibold">!</span>
+          <div className="flex-1 text-xs sm:text-sm">
+            <p className="font-medium">Ilustrasi soal nomor {number} gagal dimuat.</p>
+            <p className="mt-1 leading-snug text-amber-800">
+              Anda tetap dapat mengisi dan mengirim jawaban. Coba muat ulang gambar; jika masih gagal, lanjutkan mengerjakan berdasarkan deskripsi berikut.
+            </p>
+            <p className="mt-1 leading-snug italic text-amber-700">{caption}</p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="mt-2 border-amber-300 bg-white text-amber-900 hover:bg-amber-100"
+              onClick={() => { setFailed(false); setDialogFailed(false); }}
+            >
+              Muat ulang gambar
+            </Button>
+          </div>
+        </div>
+      </figure>
+    );
+  }
+
   return (
     <figure className="mt-3 w-full overflow-hidden rounded-md border bg-white p-2 sm:p-3">
       <Dialog onOpenChange={(o) => { if (!o) setZoom(1); }}>
@@ -43,6 +76,7 @@ function WptImageFigure({ url, caption, number }: { url: string; caption: string
               alt={alt}
               className="mx-auto block h-auto w-full max-w-full object-contain sm:max-h-[60vh] sm:w-auto"
               loading="lazy"
+              onError={() => setFailed(true)}
             />
             <span className="pointer-events-none absolute right-2 top-2 inline-flex items-center gap-1 rounded-md bg-black/70 px-2 py-1 text-[11px] font-medium text-white opacity-90 shadow group-hover:opacity-100">
               <Maximize2 className="h-3.5 w-3.5" /> Perbesar
@@ -53,24 +87,41 @@ function WptImageFigure({ url, caption, number }: { url: string; caption: string
           <DialogTitle className="text-sm">Ilustrasi Soal WPT No. {number}</DialogTitle>
           <DialogDescription className="text-xs leading-snug">{caption}</DialogDescription>
           <div className="mt-2 flex items-center justify-center gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))} disabled={zoom <= 0.5}>
+            <Button type="button" size="sm" variant="outline" onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))} disabled={zoom <= 0.5 || dialogFailed}>
               <ZoomOut className="h-4 w-4" />
             </Button>
             <span className="min-w-[3rem] text-center text-xs tabular-nums text-muted-foreground">{Math.round(zoom * 100)}%</span>
-            <Button type="button" size="sm" variant="outline" onClick={() => setZoom((z) => Math.min(4, +(z + 0.25).toFixed(2)))} disabled={zoom >= 4}>
+            <Button type="button" size="sm" variant="outline" onClick={() => setZoom((z) => Math.min(4, +(z + 0.25).toFixed(2)))} disabled={zoom >= 4 || dialogFailed}>
               <ZoomIn className="h-4 w-4" />
             </Button>
-            <Button type="button" size="sm" variant="ghost" onClick={() => setZoom(1)}>Reset</Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setZoom(1)} disabled={dialogFailed}>Reset</Button>
           </div>
           <div className="mt-2 max-h-[75vh] w-full overflow-auto rounded-md border bg-white">
             <div className="flex min-h-full min-w-full items-center justify-center p-3">
-              <img
-                src={url}
-                alt={alt}
-                style={{ transform: `scale(${zoom})`, transformOrigin: "center center" }}
-                className="block h-auto max-w-none select-none transition-transform"
-                draggable={false}
-              />
+              {dialogFailed ? (
+                <div className="w-full max-w-md rounded-md border border-dashed border-amber-300 bg-amber-50 p-4 text-center text-xs text-amber-900 sm:text-sm">
+                  <p className="font-medium">Gambar tidak dapat dimuat.</p>
+                  <p className="mt-1 leading-snug">Periksa koneksi internet Anda, lalu coba lagi. Jawaban Anda tetap bisa diisi dan dikirim.</p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="mt-2 border-amber-300 bg-white text-amber-900 hover:bg-amber-100"
+                    onClick={() => setDialogFailed(false)}
+                  >
+                    Coba lagi
+                  </Button>
+                </div>
+              ) : (
+                <img
+                  src={url}
+                  alt={alt}
+                  style={{ transform: `scale(${zoom})`, transformOrigin: "center center" }}
+                  className="block h-auto max-w-none select-none transition-transform"
+                  draggable={false}
+                  onError={() => setDialogFailed(true)}
+                />
+              )}
             </div>
           </div>
         </DialogContent>
@@ -80,6 +131,7 @@ function WptImageFigure({ url, caption, number }: { url: string; caption: string
       </figcaption>
     </figure>
   );
+
 }
 
 
