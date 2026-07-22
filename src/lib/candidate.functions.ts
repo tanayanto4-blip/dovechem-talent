@@ -178,11 +178,44 @@ export const candidateStartTest = createServerFn({ method: "POST" })
       if (ins.error) throw new Error(ins.error.message);
       attempt = ins.data;
     }
-    const [test, questions] = await Promise.all([
+    const [test, questions, answers] = await Promise.all([
       sb.from("tests").select("*").eq("id", data.test_id).single(),
       sb.from("test_questions").select("id, question_number, question_text, options, dimension").eq("test_id", data.test_id).order("question_number"),
+      sb.from("test_answers").select("question_id, answer").eq("attempt_id", (attempt as any).id),
     ]);
-    return { attempt, test: test.data, questions: questions.data ?? [] };
+    return { attempt, test: test.data, questions: questions.data ?? [], answers: answers.data ?? [] };
+  });
+
+const SaveAnswerInput = z.object({
+  code: z.string().min(3),
+  attempt_id: z.string().uuid(),
+  question_id: z.string().uuid(),
+  answer: z.string().max(500),
+});
+/** Autosave a single answer. Rejects if the attempt is already finished. */
+export const candidateSaveAnswer = createServerFn({ method: "POST" })
+  .inputValidator((d) => SaveAnswerInput.parse(d))
+  .handler(async ({ data }) => {
+    const sb = await admin();
+    const codeRow = await resolveActiveCode(sb, data.code);
+    const { data: cand } = await sb.from("candidates").select("id").eq("code_id", codeRow.id).single();
+    if (!cand) throw new Error("Kandidat tidak ditemukan.");
+    const { data: attempt } = await sb
+      .from("test_attempts")
+      .select("id, status")
+      .eq("id", data.attempt_id)
+      .eq("candidate_id", cand.id)
+      .single();
+    if (!attempt) throw new Error("Attempt tidak valid.");
+    if ((attempt as any).status === "finished") throw new Error("Attempt sudah selesai.");
+    const { error } = await sb
+      .from("test_answers")
+      .upsert(
+        { attempt_id: data.attempt_id, question_id: data.question_id, answer: data.answer },
+        { onConflict: "attempt_id,question_id" },
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 const AttemptInput = z.object({ code: z.string().min(3), attempt_id: z.string().uuid() });
