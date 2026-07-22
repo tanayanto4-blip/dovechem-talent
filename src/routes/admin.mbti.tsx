@@ -358,6 +358,106 @@ function MbtiAdmin() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={importOpen} onOpenChange={(o) => { if (!importRunning) { setImportOpen(o); if (!o) { setImportText(""); setImportLog(null); } } }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Impor Soal MBTI dari CSV</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="rounded-md border bg-muted/40 p-3 text-xs">
+              <div className="font-semibold">Format kolom (baris pertama header):</div>
+              <code className="mt-1 block font-mono">number, question_text, a_label, a_dim, b_label, b_dim</code>
+              <ul className="mt-2 list-disc pl-4 text-muted-foreground">
+                <li>Dimensi valid: E, I, S, N, T, F, J, P — pasangan A/B harus berbeda.</li>
+                <li>Kosongkan <b>number</b> untuk penomoran otomatis lanjutan.</li>
+                <li>Baris dengan nomor yang sudah ada akan menimpa soal tersebut.</li>
+              </ul>
+              <div className="mt-2 flex gap-2">
+                <Button size="sm" variant="outline" onClick={downloadTemplate}><Download className="mr-1 h-3.5 w-3.5" /> Unduh template</Button>
+                <Button size="sm" variant="outline" asChild>
+                  <label className="cursor-pointer">
+                    <Upload className="mr-1 h-3.5 w-3.5" /> Pilih file .csv
+                    <input type="file" accept=".csv,text/csv" className="hidden" onChange={async (e) => {
+                      const f = e.target.files?.[0]; if (!f) return;
+                      const text = await f.text(); setImportText(text); e.target.value = "";
+                    }} />
+                  </label>
+                </Button>
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Isi CSV</Label>
+              <textarea
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                rows={10}
+                className="mt-1 w-full rounded-md border bg-background p-2 font-mono text-xs"
+                placeholder="number,question_text,a_label,a_dim,b_label,b_dim&#10;1,,Saya suka keramaian,E,Saya suka menyendiri,I"
+              />
+            </div>
+            {importLog && (
+              <div className="rounded-md border p-3 text-sm">
+                <div><b className="text-success">Sukses:</b> {importLog.ok} · <b className="text-destructive">Gagal:</b> {importLog.fail}</div>
+                {importLog.errors.length > 0 && (
+                  <ul className="mt-2 max-h-40 overflow-auto list-disc pl-5 text-xs text-destructive">
+                    {importLog.errors.map((er, i) => <li key={i}>{er}</li>)}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImportOpen(false)} disabled={importRunning}>Tutup</Button>
+            <Button onClick={handleImport} disabled={importRunning || !importText.trim()}>
+              {importRunning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />} Impor
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
+}
+
+function parseCsv(text: string): Array<{ number?: string; question_text?: string; a_label?: string; a_dim?: string; b_label?: string; b_dim?: string }> {
+  const rows: string[][] = [];
+  let cur: string[] = [];
+  let field = "";
+  let inQuotes = false;
+  const src = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (src[i + 1] === '"') { field += '"'; i++; } else { inQuotes = false; }
+      } else field += ch;
+    } else {
+      if (ch === '"') inQuotes = true;
+      else if (ch === ",") { cur.push(field); field = ""; }
+      else if (ch === "\n") { cur.push(field); rows.push(cur); cur = []; field = ""; }
+      else field += ch;
+    }
+  }
+  if (field.length || cur.length) { cur.push(field); rows.push(cur); }
+  const cleaned = rows.filter((r) => r.some((c) => c.trim() !== ""));
+  if (!cleaned.length) return [];
+  const header = cleaned[0].map((h) => h.trim().toLowerCase());
+  const hasHeader = header.includes("a_label") || header.includes("a_dim") || header.includes("number");
+  const dataRows = hasHeader ? cleaned.slice(1) : cleaned;
+  const idx = (name: string, fallback: number) => {
+    if (!hasHeader) return fallback;
+    const i = header.indexOf(name); return i >= 0 ? i : fallback;
+  };
+  const iNum = idx("number", 0);
+  const iQ = idx("question_text", 1);
+  const iAL = idx("a_label", 2);
+  const iAD = idx("a_dim", 3);
+  const iBL = idx("b_label", 4);
+  const iBD = idx("b_dim", 5);
+  return dataRows.map((r) => ({
+    number: r[iNum]?.trim(),
+    question_text: r[iQ]?.trim(),
+    a_label: r[iAL]?.trim(),
+    a_dim: r[iAD]?.trim(),
+    b_label: r[iBL]?.trim(),
+    b_dim: r[iBD]?.trim(),
+  }));
 }
