@@ -65,6 +65,9 @@ const STAR_SELECT_EXEMPT_FNS = new Set([
   "listAdminUsers",
   "createAdminUser",
   "createBootstrapAdmin",
+  // Staff-only review of the full question bank including correct_answer.
+  "getTestWithQuestions",
+  "getAttemptDetail",
 ]);
 const NO_STAR_SELECT_TABLES = ["test_questions", "user_roles"];
 
