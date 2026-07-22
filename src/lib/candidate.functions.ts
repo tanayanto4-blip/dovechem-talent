@@ -180,7 +180,7 @@ export const candidateStartTest = createServerFn({ method: "POST" })
     }
     const [test, questions, answers] = await Promise.all([
       sb.from("tests").select("*").eq("id", data.test_id).single(),
-      sb.from("test_questions").select("id, question_number, question_text, options, dimension").eq("test_id", data.test_id).order("question_number"),
+      sb.from("test_questions").select("id, question_number, question_text, options, dimension").eq("test_id", data.test_id).eq("active", true).order("question_number"),
       sb.from("test_answers").select("question_id, answer").eq("attempt_id", (attempt as any).id),
     ]);
     return { attempt, test: test.data, questions: questions.data ?? [], answers: answers.data ?? [] };
