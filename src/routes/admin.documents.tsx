@@ -296,8 +296,9 @@ function DocumentsBank() {
                     return rows.map((r, idx) => {
                       const isOpen = expanded.has(r.id);
                       return (
-                        <>
-                          <TableRow key={r.id}>
+                        <FragmentWithKey key={r.id}>
+                          <TableRow>
+
                             <TableCell className="text-center font-mono text-xs text-muted-foreground">{idx + 1}</TableCell>
                             <TableCell>
                               <Link
