@@ -39,6 +39,7 @@ function AdminLayout() {
     { to: "/admin/codes", label: "Kode Kandidat", icon: KeyRound },
     { to: "/admin/candidates", label: "Kandidat", icon: Users },
     { to: "/admin/tests", label: "Bank Soal", icon: ClipboardList },
+    { to: "/admin/mbti", label: "Bank MBTI", icon: ClipboardList },
     { to: "/admin/users", label: "User Admin/HR", icon: UserCog },
     { to: "/admin/audit", label: "Audit Log", icon: ShieldCheck },
   ];
