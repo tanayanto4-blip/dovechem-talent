@@ -296,7 +296,7 @@ function TakeTest() {
               </div>
               {!isDisc && !isMbti && <div className="text-base font-medium">{q.question_text}</div>}
               {isMbti ? (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   {(q.options ?? []).map((opt: any) => {
                     const picked = answers[q.id] === opt.key;
                     return (
@@ -304,13 +304,13 @@ function TakeTest() {
                         key={opt.key}
                         type="button"
                         onClick={() => pickMcq(q.id, opt.key)}
-                        className={`flex items-start gap-3 rounded-md border p-4 text-left text-sm transition ${
+                        className={`flex items-start gap-2 sm:gap-3 rounded-md border p-3 sm:p-4 text-left text-xs sm:text-sm transition ${
                           picked
                             ? "border-primary bg-primary/10 shadow-sm"
                             : "border-input bg-background hover:border-primary/40 hover:bg-accent"
                         }`}
                       >
-                        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${picked ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                        <span className={`flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-bold ${picked ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                           {opt.key}
                         </span>
                         <span className="flex-1 leading-snug">{opt.label}</span>
