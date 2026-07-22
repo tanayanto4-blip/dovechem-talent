@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { bulkCreateCandidateCodes, bulkSetCodesActive, createCandidateCode, deleteCode, listCandidateCodes, toggleCode } from "@/lib/admin.functions";
+import { bulkCreateCandidateCodes, bulkSetCodesActive, bulkSetCodesExpiry, createCandidateCode, deleteCode, listCandidateCodes, setCodeExpiry, toggleCode } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Copy, Trash2, Layers, Power, PowerOff, Zap } from "lucide-react";
+import { Plus, Copy, Trash2, Layers, Power, PowerOff, Zap, CalendarClock } from "lucide-react";
 
 export const Route = createFileRoute("/admin/codes")({ component: CodesPage });
 
