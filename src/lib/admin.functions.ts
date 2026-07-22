@@ -56,6 +56,70 @@ export const createCandidateCode = createServerFn({ method: "POST" })
     return { code: row };
   });
 
+const BulkInput = z.object({
+  count: z.number().int().min(1).max(1000),
+  prefix: z.string().trim().max(16).optional().nullable(),
+  position_applied: z.string().max(120).optional().nullable(),
+  name_prefix: z.string().trim().max(60).optional().nullable(),
+  start_number: z.number().int().min(1).max(100000).optional().nullable(),
+});
+
+export const bulkCreateCandidateCodes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => BulkInput.parse(d))
+  .handler(async ({ context, data }) => {
+    const alpha = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const prefix = (data.prefix?.trim() || "DOV").toUpperCase().replace(/[^A-Z0-9]/g, "") || "DOV";
+    const namePrefix = data.name_prefix?.trim() || "Kandidat";
+    const start = data.start_number ?? 1;
+    const seen = new Set<string>();
+    function gen() {
+      let s = "";
+      for (let i = 0; i < 6; i++) s += alpha[Math.floor(Math.random() * alpha.length)];
+      return `${prefix}-${s}`;
+    }
+    const rows: any[] = [];
+    for (let i = 0; i < data.count; i++) {
+      let c = gen();
+      while (seen.has(c)) c = gen();
+      seen.add(c);
+      rows.push({
+        code: c,
+        candidate_name: `${namePrefix} ${String(start + i).padStart(3, "0")}`,
+        position_applied: data.position_applied || null,
+        active: true,
+        created_by: context.userId,
+      });
+    }
+    // insert in chunks; on unique collision, regenerate that row
+    const inserted: any[] = [];
+    for (let i = 0; i < rows.length; i += 100) {
+      const chunk = rows.slice(i, i + 100);
+      let attempt = 0;
+      while (attempt < 5) {
+        const { data: ok, error } = await context.supabase.from("candidate_codes").insert(chunk).select();
+        if (!error) { inserted.push(...(ok ?? [])); break; }
+        // collision on unique(code): regenerate all in chunk and retry
+        for (const r of chunk) r.code = gen();
+        attempt++;
+        if (attempt === 5) throw new Error(error.message);
+      }
+    }
+    return { created: inserted.length };
+  });
+
+export const bulkSetCodesActive = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ active: z.boolean() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { error, count } = await context.supabase
+      .from("candidate_codes")
+      .update({ active: data.active }, { count: "exact" })
+      .not("id", "is", null);
+    if (error) throw new Error(error.message);
+    return { updated: count ?? 0 };
+  });
+
 export const listCandidateCodes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

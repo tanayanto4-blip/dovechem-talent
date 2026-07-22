@@ -115,3 +115,13 @@
 @utility bg-subtle { background-image: var(--gradient-subtle); }
 @utility shadow-elegant { box-shadow: var(--shadow-elegant); }
 @utility shadow-card { box-shadow: var(--shadow-card); }
+
+@media print {
+  body { background: white !important; }
+  .no-print, .no-print * { display: none !important; }
+  aside, nav, header { display: none !important; }
+  .print-area { padding: 0 !important; }
+  .shadow-card, .shadow-elegant { box-shadow: none !important; }
+  main, [role="main"] { padding: 0 !important; }
+  @page { margin: 14mm; }
+}
