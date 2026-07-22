@@ -265,9 +265,10 @@ function DocumentsBank() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">No.</TableHead>
                     <TableHead>Kandidat</TableHead>
                     <TableHead>Kode</TableHead>
-                    <TableHead>Berkas</TableHead>
+                    <TableHead>Folder Berkas</TableHead>
                     <TableHead>Total Ukuran</TableHead>
                     <TableHead>Terakhir Unggah</TableHead>
                     <TableHead className="text-right">Aksi</TableHead>
@@ -290,56 +291,88 @@ function DocumentsBank() {
                       }, 0);
                       return { id, c, items, totalSize, last };
                     }).sort((a, b) => (a.c?.full_name ?? "").localeCompare(b.c?.full_name ?? ""));
-                    return rows.map((r) => (
-                      <TableRow key={r.id}>
-                        <TableCell>
-                          <Link
-                            to="/admin/candidates/$id"
-                            params={{ id: r.id }}
-                            className="font-medium text-primary hover:underline"
-                          >
-                            {r.c?.full_name ?? "(tanpa nama)"}
-                          </Link>
-                          <div className="text-xs text-muted-foreground">
-                            {r.c?.position_applied ?? "-"}
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">{r.c?.candidate_codes?.code ?? "-"}</TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {r.items.map((f) => (
-                              <button
-                                key={f.id}
-                                onClick={() => preview(f)}
-                                disabled={previewLoading === f.id}
-                                className="inline-flex items-center gap-1 rounded border bg-muted/40 px-2 py-0.5 text-[11px] hover:bg-muted"
-                                title={`${f.file_name} · ${humanSize(f.file_size)}`}
+                    return rows.map((r, idx) => {
+                      const isOpen = expanded.has(r.id);
+                      return (
+                        <>
+                          <TableRow key={r.id}>
+                            <TableCell className="text-center font-mono text-xs text-muted-foreground">{idx + 1}</TableCell>
+                            <TableCell>
+                              <Link
+                                to="/admin/candidates/$id"
+                                params={{ id: r.id }}
+                                className="font-medium text-primary hover:underline"
                               >
-                                <Badge variant="outline" className="h-4 px-1 text-[9px] uppercase">{f.file_type}</Badge>
-                                <span className="max-w-[140px] truncate">{f.file_name}</span>
+                                {r.c?.full_name ?? "(tanpa nama)"}
+                              </Link>
+                              <div className="text-xs text-muted-foreground">
+                                {r.c?.position_applied ?? "-"}
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-mono text-xs">{r.c?.candidate_codes?.code ?? "-"}</TableCell>
+                            <TableCell>
+                              <button
+                                onClick={() => {
+                                  const n = new Set(expanded);
+                                  n.has(r.id) ? n.delete(r.id) : n.add(r.id);
+                                  setExpanded(n);
+                                }}
+                                className="inline-flex items-center gap-2 rounded-md border bg-muted/40 px-2 py-1 text-xs hover:bg-muted"
+                              >
+                                <FolderOpen className="h-3.5 w-3.5 text-primary" />
+                                <span className="font-medium">{safeName(r.c?.full_name ?? "kandidat")}/</span>
+                                <Badge variant="secondary" className="h-4 px-1 text-[10px]">{r.items.length} berkas</Badge>
+                                <span className="text-muted-foreground">{isOpen ? "▾" : "▸"}</span>
                               </button>
-                            ))}
-                          </div>
-                          <div className="mt-1 text-[11px] text-muted-foreground">{r.items.length} berkas</div>
-                        </TableCell>
-                        <TableCell className="text-xs">{humanSize(r.totalSize)}</TableCell>
-                        <TableCell className="text-xs">{r.last ? new Date(r.last).toLocaleString("id-ID") : "-"}</TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => downloadCandidateZip(r.id)}
-                            disabled={zippingCandidate === r.id}
-                          >
-                            <FileArchive className="mr-2 h-3.5 w-3.5" />
-                            {zippingCandidate === r.id ? "Mengemas..." : "Unduh ZIP"}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ));
+                            </TableCell>
+                            <TableCell className="text-xs">{humanSize(r.totalSize)}</TableCell>
+                            <TableCell className="text-xs">{r.last ? new Date(r.last).toLocaleString("id-ID") : "-"}</TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => downloadCandidateZip(r.id)}
+                                disabled={zippingCandidate === r.id}
+                              >
+                                <FileArchive className="mr-2 h-3.5 w-3.5" />
+                                {zippingCandidate === r.id ? "Mengemas..." : "Unduh ZIP"}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                          {isOpen && (
+                            <TableRow key={r.id + "-files"} className="bg-muted/20 hover:bg-muted/20">
+                              <TableCell></TableCell>
+                              <TableCell colSpan={6}>
+                                <div className="ml-2 space-y-1 border-l-2 border-primary/30 pl-4 py-2">
+                                  {r.items.map((f) => (
+                                    <div key={f.id} className="flex items-center justify-between gap-3 rounded px-2 py-1 hover:bg-background">
+                                      <div className="flex min-w-0 items-center gap-2">
+                                        <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                                        <Badge variant="outline" className="h-5 px-1.5 text-[10px] uppercase">{f.file_type}</Badge>
+                                        <span className="truncate text-xs font-medium" title={f.file_name}>{f.file_name}</span>
+                                        <span className="shrink-0 text-[11px] text-muted-foreground">{humanSize(f.file_size)}</span>
+                                      </div>
+                                      <div className="flex shrink-0 gap-1">
+                                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => preview(f)} disabled={previewLoading === f.id}>
+                                          <Eye className="mr-1 h-3 w-3" />{previewLoading === f.id ? "..." : "Preview"}
+                                        </Button>
+                                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => open(f.file_path)}>
+                                          <Download className="mr-1 h-3 w-3" />Buka
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </>
+                      );
+                    });
                   })()}
                 </TableBody>
               </Table>
+
             </div>
 
           )}
