@@ -99,9 +99,47 @@ function DocumentsBank() {
 
   const [zipping, setZipping] = useState(false);
   const [zipProgress, setZipProgress] = useState(0);
+  const [zippingCandidate, setZippingCandidate] = useState<string | null>(null);
 
   function safeName(s: string) {
     return (s || "unknown").replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_").slice(0, 80);
+  }
+
+  async function buildZip(items: any[], zipName: string, onProgress?: (p: number) => void) {
+    const JSZip = (await import("jszip")).default;
+    const zip = new JSZip();
+    const used = new Set<string>();
+    let done = 0;
+    for (const f of items) {
+      try {
+        const { url } = await signed({ data: { path: f.file_path } });
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const buf = await res.arrayBuffer();
+        const folder = safeName(f.candidates?.full_name ?? "tanpa-nama");
+        const name = `${safeName(f.file_type || "file")}__${safeName(f.file_name)}`;
+        let path = `${folder}/${name}`;
+        let i = 1;
+        while (used.has(path)) { path = `${folder}/${i++}_${name}`; }
+        used.add(path);
+        zip.file(path, buf);
+      } catch (e) {
+        console.warn("Gagal mengunduh:", f.file_name, e);
+      } finally {
+        done += 1;
+        onProgress?.(Math.round((done / items.length) * 100));
+      }
+    }
+    const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
+    const a = document.createElement("a");
+    const href = URL.createObjectURL(blob);
+    a.href = href;
+    a.download = zipName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(href);
+    return used.size;
   }
 
   async function downloadZip() {
@@ -109,45 +147,36 @@ function DocumentsBank() {
     setZipping(true);
     setZipProgress(0);
     try {
-      const JSZip = (await import("jszip")).default;
-      const zip = new JSZip();
-      const used = new Set<string>();
-      let done = 0;
-      for (const f of filtered) {
-        try {
-          const { url } = await signed({ data: { path: f.file_path } });
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const buf = await res.arrayBuffer();
-          const folder = safeName(f.candidates?.full_name ?? "tanpa-nama");
-          let name = `${safeName(f.file_type || "file")}__${safeName(f.file_name)}`;
-          let path = `${folder}/${name}`;
-          let i = 1;
-          while (used.has(path)) { path = `${folder}/${i++}_${name}`; }
-          used.add(path);
-          zip.file(path, buf);
-        } catch (e) {
-          console.warn("Gagal mengunduh:", f.file_name, e);
-        } finally {
-          done += 1;
-          setZipProgress(Math.round((done / filtered.length) * 100));
-        }
-      }
-      const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
-      const a = document.createElement("a");
-      const href = URL.createObjectURL(blob);
-      a.href = href;
-      a.download = `bank-dokumen-kandidat_${new Date().toISOString().slice(0, 10)}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(href);
-      toast.success(`ZIP siap · ${used.size} berkas`);
+      const count = await buildZip(
+        filtered,
+        `bank-dokumen-kandidat_${new Date().toISOString().slice(0, 10)}.zip`,
+        setZipProgress,
+      );
+      toast.success(`ZIP siap · ${count} berkas`);
     } catch (e: any) {
       toast.error(`Gagal membuat ZIP: ${e?.message ?? e}`);
     } finally {
       setZipping(false);
       setZipProgress(0);
+    }
+  }
+
+  async function downloadCandidateZip(candidateId: string) {
+    if (zippingCandidate) return;
+    const items = files.filter((f) => f.candidate_id === candidateId);
+    if (!items.length) return;
+    const candidateName = items[0]?.candidates?.full_name ?? "kandidat";
+    setZippingCandidate(candidateId);
+    try {
+      const count = await buildZip(
+        items,
+        `${safeName(candidateName)}_${new Date().toISOString().slice(0, 10)}.zip`,
+      );
+      toast.success(`ZIP ${candidateName} siap · ${count} berkas`);
+    } catch (e: any) {
+      toast.error(`Gagal membuat ZIP: ${e?.message ?? e}`);
+    } finally {
+      setZippingCandidate(null);
     }
   }
 
