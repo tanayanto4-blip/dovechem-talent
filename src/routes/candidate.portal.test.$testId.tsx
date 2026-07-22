@@ -165,39 +165,60 @@ function TakeTest() {
                   <Input inputMode="numeric" value={answers[q.id] ?? ""} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} className="mt-1" />
                 </div>
               ) : isDisc ? (
-                <div className="overflow-hidden rounded-md border">
-                  <div className="grid grid-cols-[1fr_56px_56px] bg-muted/60 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    <div className="px-3 py-2 text-left">Pernyataan</div>
-                    <div className="border-l py-2">M</div>
-                    <div className="border-l py-2">L</div>
+                <div className="rounded-md border bg-card">
+                  <div className="grid grid-cols-1 md:grid-cols-2">
+                    {(q.options ?? []).map((opt: any, idx: number) => {
+                      const pick = discPicks[q.id] ?? {};
+                      const isMost = pick.most === opt.key;
+                      const isLeast = pick.least === opt.key;
+                      // Border: right border on left column (idx 0,2), bottom border on top row (idx 0,1)
+                      const isLeftCol = idx % 2 === 0;
+                      const isTopRow = idx < 2;
+                      return (
+                        <div
+                          key={opt.key}
+                          className={`flex items-center gap-3 p-4 ${isLeftCol ? "md:border-r" : ""} ${isTopRow ? "border-b" : ""} ${!isTopRow && !isLeftCol ? "" : ""}`}
+                        >
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                            {opt.key.toUpperCase()}
+                          </div>
+                          <div className="min-w-0 flex-1 text-sm leading-snug">{opt.label}</div>
+                          <div className="flex shrink-0 gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setDisc(q.id, "most", opt.key)}
+                              aria-label={`Paling menggambarkan: ${opt.label}`}
+                              className={`h-9 w-9 rounded-md border text-xs font-bold transition ${
+                                isMost
+                                  ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                                  : "border-input bg-background text-muted-foreground hover:border-primary/40 hover:text-primary"
+                              }`}
+                            >
+                              M
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDisc(q.id, "least", opt.key)}
+                              aria-label={`Paling tidak menggambarkan: ${opt.label}`}
+                              className={`h-9 w-9 rounded-md border text-xs font-bold transition ${
+                                isLeast
+                                  ? "border-destructive bg-destructive text-destructive-foreground shadow-sm"
+                                  : "border-input bg-background text-muted-foreground hover:border-destructive/40 hover:text-destructive"
+                              }`}
+                            >
+                              L
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  {(q.options ?? []).map((opt: any) => {
-                    const pick = discPicks[q.id] ?? {};
-                    const isMost = pick.most === opt.key;
-                    const isLeast = pick.least === opt.key;
-                    return (
-                      <div key={opt.key} className="grid grid-cols-[1fr_56px_56px] items-center border-t text-sm">
-                        <div className="px-3 py-3">{opt.label}</div>
-                        <button
-                          type="button"
-                          onClick={() => setDisc(q.id, "most", opt.key)}
-                          className={`h-full border-l py-3 transition ${isMost ? "bg-primary text-primary-foreground font-semibold" : "hover:bg-accent"}`}
-                          aria-label={`Paling menggambarkan: ${opt.label}`}
-                        >
-                          {isMost ? "M" : "○"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDisc(q.id, "least", opt.key)}
-                          className={`h-full border-l py-3 transition ${isLeast ? "bg-destructive text-destructive-foreground font-semibold" : "hover:bg-accent"}`}
-                          aria-label={`Paling tidak menggambarkan: ${opt.label}`}
-                        >
-                          {isLeast ? "L" : "○"}
-                        </button>
-                      </div>
-                    );
-                  })}
+                  <div className="flex items-center justify-between gap-3 border-t bg-muted/40 px-4 py-2 text-[11px] text-muted-foreground">
+                    <span><b className="text-primary">M</b> = Paling menggambarkan diri Anda</span>
+                    <span><b className="text-destructive">L</b> = Paling tidak menggambarkan</span>
+                  </div>
                 </div>
+
               ) : (
                 <RadioGroup className="mt-4 space-y-2" value={answers[q.id] ?? ""} onValueChange={(v) => setAnswers({ ...answers, [q.id]: v })}>
                   {(q.options ?? []).map((opt: any) => (
