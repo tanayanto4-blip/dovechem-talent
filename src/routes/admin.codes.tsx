@@ -185,6 +185,39 @@ function CodesPage() {
         </div>
       </div>
 
+      <Dialog open={autoOpen} onOpenChange={setAutoOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Otomatis Buat Kode</DialogTitle></DialogHeader>
+          <form onSubmit={onAuto} className="space-y-4">
+            <div className="space-y-2"><Label>Jumlah Kode *</Label><Input type="number" min={1} max={1000} required value={autoForm.count} onChange={(e) => setAutoForm({ ...autoForm, count: Number(e.target.value) })} /></div>
+            <div className="space-y-2"><Label>Masa Berlaku (opsional)</Label><Input type="datetime-local" value={autoForm.expires_at} onChange={(e) => setAutoForm({ ...autoForm, expires_at: e.target.value })} /><p className="text-[11px] text-muted-foreground">Kosongkan untuk tanpa batas waktu.</p></div>
+            <p className="text-xs text-muted-foreground">Kode akan dibuat dengan prefix <b>DOV</b>, nama <b>Kandidat 001..</b>, dan langsung aktif.</p>
+            <DialogFooter><Button type="submit" disabled={autoSaving}>{autoSaving ? "Membuat..." : `Buat ${autoForm.count} Kode`}</Button></DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={expiryOpen} onOpenChange={setExpiryOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Set Masa Berlaku Semua Kode</DialogTitle></DialogHeader>
+          <form onSubmit={submitBulkExpiry} className="space-y-4">
+            <div className="space-y-2"><Label>Masa Berlaku</Label><Input type="datetime-local" value={expiryValue} onChange={(e) => setExpiryValue(e.target.value)} /><p className="text-[11px] text-muted-foreground">Kosongkan untuk menghapus batas waktu semua kode.</p></div>
+            <DialogFooter><Button type="submit">Simpan</Button></DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editExpiry} onOpenChange={(v) => !v && setEditExpiry(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Ubah Masa Berlaku Kode</DialogTitle></DialogHeader>
+          <form onSubmit={submitEditExpiry} className="space-y-4">
+            <div className="space-y-2"><Label>Masa Berlaku</Label><Input type="datetime-local" value={editExpiry?.value ?? ""} onChange={(e) => setEditExpiry((s) => s ? { ...s, value: e.target.value } : s)} /><p className="text-[11px] text-muted-foreground">Kosongkan untuk menghapus batas.</p></div>
+            <DialogFooter><Button type="submit">Simpan</Button></DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+
       <Card className="shadow-card">
         <CardHeader><CardTitle>Daftar Kode</CardTitle></CardHeader>
         <CardContent>
