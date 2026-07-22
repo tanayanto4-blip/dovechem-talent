@@ -201,6 +201,56 @@ function DocumentsBank() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!previewing} onOpenChange={(o) => !o && setPreviewing(null)}>
+        <DialogContent className="max-w-5xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between gap-3 pr-6">
+              <span className="truncate">
+                {previewing?.file?.file_name ?? "Preview"}
+                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  {previewing?.file?.candidates?.full_name ? `· ${previewing.file.candidates.full_name}` : ""}
+                </span>
+              </span>
+              {previewing && (
+                <a
+                  href={previewing.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" /> Buka di tab baru
+                </a>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          {previewing && (
+            <div className="h-[75vh] w-full overflow-auto rounded-md bg-muted/30">
+              {previewing.kind === "image" ? (
+                <img
+                  src={previewing.url}
+                  alt={previewing.file.file_name}
+                  className="mx-auto h-full w-auto object-contain"
+                />
+              ) : previewing.kind === "pdf" ? (
+                <iframe
+                  src={previewing.url}
+                  title={previewing.file.file_name}
+                  className="h-full w-full"
+                />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-sm text-muted-foreground">
+                  <FileText className="h-8 w-8 opacity-50" />
+                  Format berkas ini tidak dapat ditampilkan langsung.
+                  <a href={previewing.url} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                    Unduh / buka di tab baru
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
