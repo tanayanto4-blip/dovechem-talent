@@ -387,3 +387,70 @@ export const bulkSetCodesExpiry = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { updated: count ?? 0 };
   });
+
+/** Toggle a test's publish/active status. */
+export const setTestActive = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) => z.object({ id: z.string().uuid(), active: z.boolean() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("tests").update({ active: data.active }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await logAudit(context, data.active ? "test.publish" : "test.unpublish", "test", data.id, { active: data.active });
+    return { ok: true };
+  });
+
+const MbtiOption = z.object({
+  key: z.enum(["A", "B"]),
+  label: z.string().trim().min(1).max(500),
+  dimension: z.enum(["E", "I", "S", "N", "T", "F", "J", "P"]),
+});
+const MbtiUpsertInput = z.object({
+  test_id: z.string().uuid(),
+  question_id: z.string().uuid().optional().nullable(),
+  question_number: z.number().int().min(1).max(200),
+  question_text: z.string().trim().min(1).max(500),
+  options: z.tuple([MbtiOption, MbtiOption]),
+});
+
+/** Create or update an MBTI question (A/B forced-choice). */
+export const upsertMbtiQuestion = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) => MbtiUpsertInput.parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const t = await supabaseAdmin.from("tests").select("test_type").eq("id", data.test_id).single();
+    if (t.error || (t.data as any)?.test_type !== "mbti") throw new Error("Test bukan MBTI.");
+    const [a, b] = data.options;
+    if (a.key === b.key) throw new Error("Kunci A dan B harus berbeda.");
+    const dimension = `${a.dimension}/${b.dimension}`;
+    const payload = {
+      test_id: data.test_id,
+      question_number: data.question_number,
+      question_text: data.question_text,
+      options: data.options,
+      dimension,
+    };
+    if (data.question_id) {
+      const { error } = await supabaseAdmin.from("test_questions").update(payload).eq("id", data.question_id);
+      if (error) throw new Error(error.message);
+      await logAudit(context, "mbti.question.update", "test_question", data.question_id, { question_number: data.question_number });
+      return { ok: true, id: data.question_id };
+    }
+    const { data: ins, error } = await supabaseAdmin.from("test_questions").insert(payload).select("id").single();
+    if (error) throw new Error(error.message);
+    await logAudit(context, "mbti.question.create", "test_question", (ins as any).id, { question_number: data.question_number });
+    return { ok: true, id: (ins as any).id };
+  });
+
+/** Delete an MBTI question. */
+export const deleteMbtiQuestion = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("test_questions").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await logAudit(context, "mbti.question.delete", "test_question", data.id, {});
+    return { ok: true };
+  });
