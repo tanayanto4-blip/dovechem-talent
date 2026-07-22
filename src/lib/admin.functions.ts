@@ -2,6 +2,19 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
+async function ensureStaff(supabase: any, userId: string) {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .in("role", ["admin", "hr"]);
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error("Forbidden: hanya staff (admin/hr) yang boleh mengakses.");
+  }
+}
+
+
 /** Bootstrap: if no admin exists, promote current user to admin. */
 export const claimFirstAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -188,7 +201,8 @@ export const getFileSignedUrl = createServerFn({ method: "POST" })
 
 export const listTests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    await ensureStaff(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("tests")
@@ -201,7 +215,8 @@ export const listTests = createServerFn({ method: "GET" })
 export const getTestWithQuestions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ context, data }) => {
+    await ensureStaff(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [t, q] = await Promise.all([
       supabaseAdmin.from("tests").select("*").eq("id", data.id).single(),
@@ -214,7 +229,8 @@ export const getTestWithQuestions = createServerFn({ method: "POST" })
 export const getAttemptDetail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ context, data }) => {
+    await ensureStaff(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: attempt, error } = await supabaseAdmin
       .from("test_attempts")

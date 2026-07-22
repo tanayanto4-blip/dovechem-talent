@@ -180,7 +180,7 @@ export const candidateGetAttempt = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const { data: questions } = await sb
       .from("test_questions")
-      .select("*")
+      .select("id, question_number, question_text, options, dimension")
       .eq("test_id", (attempt as any).test_id)
       .order("question_number");
     return { attempt, questions: questions ?? [] };
