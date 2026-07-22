@@ -100,6 +100,8 @@ function DocumentsBank() {
   const [zipping, setZipping] = useState(false);
   const [zipProgress, setZipProgress] = useState(0);
   const [zippingCandidate, setZippingCandidate] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
 
   function safeName(s: string) {
     return (s || "unknown").replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_").slice(0, 80);
