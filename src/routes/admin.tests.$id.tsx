@@ -21,7 +21,7 @@ function TestDetail() {
     return (
       <div className="space-y-4">
         <Button asChild variant="ghost" size="sm"><Link to="/admin/tests"><ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Bank Soal</Link></Button>
-        <MbtiAdmin />
+        <MbtiAdmin initialTestId={id} />
       </div>
     );
   }
