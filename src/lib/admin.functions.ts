@@ -1,7 +1,31 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { requireStaff } from "@/lib/staff-middleware";
+import { requireStaff, requireAdmin } from "@/lib/staff-middleware";
 import { z } from "zod";
+
+type AuditCtx = { supabase: any; userId: string };
+async function logAudit(
+  ctx: AuditCtx,
+  action: string,
+  target_type: string,
+  target_id: string | null,
+  metadata: Record<string, unknown> = {},
+) {
+  try {
+    await ctx.supabase.from("audit_logs").insert({
+      actor_id: ctx.userId,
+      action,
+      target_type,
+      target_id,
+      metadata,
+    });
+  } catch (e) {
+    // Do not block the primary action on audit-log failure; surface in server logs.
+    console.error("audit_log_insert_failed", { action, target_type, target_id, error: (e as Error).message });
+  }
+}
+
+
 
 
 
