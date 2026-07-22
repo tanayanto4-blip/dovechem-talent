@@ -235,7 +235,7 @@ function CodesPage() {
                   </TableRow>
                 ))}
                 {(data?.codes ?? []).length === 0 && (
-                  <TableRow><TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Belum ada kode. Klik "Buat Kode" untuk mulai.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8} className="py-8 text-center text-muted-foreground">Belum ada kode. Klik "Buat Kode" untuk mulai.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
