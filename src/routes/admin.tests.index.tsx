@@ -41,7 +41,11 @@ function TestsList() {
                   <span>{t.question_count} soal</span>
                 </div>
                 <Button asChild className="mt-5 w-full">
-                  <Link to="/admin/tests/$id" params={{ id: t.id }}>Lihat Soal <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                  {t.test_type === "mbti" ? (
+                    <Link to="/admin/mbti">Kelola Soal MBTI <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                  ) : (
+                    <Link to="/admin/tests/$id" params={{ id: t.id }}>Lihat Soal <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                  )}
                 </Button>
               </CardContent>
             </Card>
