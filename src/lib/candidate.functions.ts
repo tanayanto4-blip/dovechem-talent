@@ -407,6 +407,12 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       score = dimsWithData > 0 ? Math.round(totalPct / dimsWithData) : 0;
       const dominant = (Object.entries(perDim).sort((a, b) => b[1].percent - a[1].percent)[0] ?? ["SA", { percent: 0 }])[0];
       result = { perDim, dominant, sums, counts };
+    } else if (test.test_type === "wpt") {
+      // WPT: jawaban bebas — tidak ada auto-scoring; menunggu review manual HR.
+      const answered = data.answers.filter((a) => (a.answer ?? "").trim() !== "").length;
+      const total = (qs.data ?? []).length || 50;
+      score = 0;
+      result = { requires_manual_review: true, answered, total, unanswered: total - answered };
     }
 
     const finishedAt = new Date().toISOString();
