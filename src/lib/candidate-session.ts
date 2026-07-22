@@ -11,11 +11,17 @@ export type CandidateSession = {
 const listeners = new Set<() => void>();
 function emit() { listeners.forEach((l) => l()); }
 
+let cachedRaw: string | null = null;
+let cachedValue: CandidateSession | null = null;
+
 export function getCandidateSession(): CandidateSession | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.sessionStorage.getItem(KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (raw === cachedRaw) return cachedValue;
+    cachedRaw = raw;
+    cachedValue = raw ? (JSON.parse(raw) as CandidateSession) : null;
+    return cachedValue;
   } catch { return null; }
 }
 
@@ -23,6 +29,7 @@ export function setCandidateSession(s: CandidateSession | null) {
   if (typeof window === "undefined") return;
   if (s) window.sessionStorage.setItem(KEY, JSON.stringify(s));
   else window.sessionStorage.removeItem(KEY);
+  cachedRaw = null; // force refresh on next read
   emit();
 }
 
