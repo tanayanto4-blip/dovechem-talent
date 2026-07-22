@@ -33,7 +33,7 @@ function MbtiPreview() {
   const detailFn = useServerFn(getTestWithQuestions);
   const { data: testsData, isLoading: loadingTests } = useQuery({
     queryKey: ["admin-tests"],
-    queryFn: () => listFn({ data: {} as never }),
+    queryFn: () => listFn(),
   });
 
   const mbtiTests = useMemo(
