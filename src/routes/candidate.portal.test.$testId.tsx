@@ -515,6 +515,22 @@ function TakeTest() {
                     })}
                   </div>
                 </div>
+              ) : isWpt ? (
+                <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+                  <span className="text-xs text-muted-foreground">Tulis jawaban di sini</span>
+                  <div className="flex items-center gap-1 font-mono text-lg">
+                    <span className="text-muted-foreground">(</span>
+                    <Input
+                      value={answers[q.id] ?? ""}
+                      onChange={(e) => { const v = e.target.value; setAnswers({ ...answers, [q.id]: v }); persistDebounced(q.id, v); }}
+                      placeholder="_____"
+                      maxLength={60}
+                      className="h-9 w-40 text-center font-mono"
+                      aria-label={`Jawaban soal ${i + 1}`}
+                    />
+                    <span className="text-muted-foreground">)</span>
+                  </div>
+                </div>
               ) : (
                 <RadioGroup className="mt-4 space-y-2" value={answers[q.id] ?? ""} onValueChange={(v) => pickMcq(q.id, v)}>
                   {(q.options ?? []).map((opt: any) => (
