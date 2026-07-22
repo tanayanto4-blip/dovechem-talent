@@ -149,6 +149,13 @@ export const bulkSetCodesActive = createServerFn({ method: "POST" })
       .update({ active: data.active }, { count: "exact" })
       .not("id", "is", null);
     if (error) throw new Error(error.message);
+    await logAudit(
+      context,
+      data.active ? "code.activate_bulk" : "code.deactivate_bulk",
+      "candidate_code",
+      null,
+      { updated: count ?? 0 },
+    );
     return { updated: count ?? 0 };
   });
 
@@ -167,10 +174,23 @@ export const toggleCode = createServerFn({ method: "POST" })
   .middleware([requireStaff])
   .inputValidator((d) => z.object({ id: z.string().uuid(), active: z.boolean() }).parse(d))
   .handler(async ({ context, data }) => {
+    const { data: existing } = await context.supabase
+      .from("candidate_codes")
+      .select("code")
+      .eq("id", data.id)
+      .maybeSingle();
     const { error } = await context.supabase.from("candidate_codes").update({ active: data.active }).eq("id", data.id);
     if (error) throw new Error(error.message);
+    await logAudit(
+      context,
+      data.active ? "code.activate" : "code.deactivate",
+      "candidate_code",
+      data.id,
+      { code: existing?.code ?? null },
+    );
     return { ok: true };
   });
+
 
 export const deleteCode = createServerFn({ method: "POST" })
   .middleware([requireStaff])
