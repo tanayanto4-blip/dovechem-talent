@@ -284,6 +284,16 @@ function DocumentsBank() {
                           <Button size="sm" variant="outline" onClick={() => open(f.file_path)}>
                             <Download className="mr-2 h-3.5 w-3.5" /> Buka
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => downloadCandidateZip(f.candidate_id)}
+                            disabled={zippingCandidate === f.candidate_id}
+                            title={`Unduh semua berkas ${f.candidates?.full_name ?? "kandidat"} dalam satu ZIP`}
+                          >
+                            <FileArchive className="mr-2 h-3.5 w-3.5" />
+                            {zippingCandidate === f.candidate_id ? "Mengemas..." : "ZIP Kandidat"}
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
