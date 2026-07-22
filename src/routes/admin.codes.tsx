@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Copy, Trash2, Layers, Power, PowerOff } from "lucide-react";
+import { Plus, Copy, Trash2, Layers, Power, PowerOff, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/admin/codes")({ component: CodesPage });
 
