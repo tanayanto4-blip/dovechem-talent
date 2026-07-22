@@ -8,6 +8,22 @@ async function admin() {
   return supabaseAdmin;
 }
 
+/** Look up a candidate code and enforce active + not-expired. Returns {id}. */
+async function resolveActiveCode(sb: any, code: string) {
+  const { data: row, error } = await sb
+    .from("candidate_codes")
+    .select("id, active, expires_at")
+    .eq("code", code.toUpperCase())
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!row) throw new Error("Kode akses tidak ditemukan.");
+  if (!row.active) throw new Error("Kode akses sudah dinonaktifkan.");
+  if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) {
+    throw new Error("Kode akses sudah melewati masa berlaku.");
+  }
+  return row as { id: string; active: boolean; expires_at: string | null };
+}
+
 /** Candidate logs in with an access code. Returns candidate id + basic info. */
 export const candidateLogin = createServerFn({ method: "POST" })
   .inputValidator((d) => CodeInput.parse(d))
