@@ -369,7 +369,7 @@ function DocumentsBank() {
                               </TableCell>
                             </TableRow>
                           )}
-                        </>
+                        </FragmentWithKey>
                       );
                     });
                   })()}
