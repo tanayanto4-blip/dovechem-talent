@@ -138,6 +138,7 @@ function CodesPage() {
           </Button>
           <Button variant="outline" onClick={() => onBulkActive(true)}><Power className="mr-2 h-4 w-4" /> Aktifkan Semua</Button>
           <Button variant="outline" onClick={() => onBulkActive(false)}><PowerOff className="mr-2 h-4 w-4" /> Nonaktifkan Semua</Button>
+          <Button variant="outline" onClick={onBulkExpiry}><CalendarClock className="mr-2 h-4 w-4" /> Set Masa Berlaku Semua</Button>
           <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
             <DialogTrigger asChild><Button variant="secondary"><Layers className="mr-2 h-4 w-4" /> Buat Massal</Button></DialogTrigger>
             <DialogContent>
