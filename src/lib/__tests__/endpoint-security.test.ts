@@ -138,7 +138,7 @@ describe("endpoint security — no sensitive-field leaks", () => {
         if (STAR_SELECT_EXEMPT_FNS.has(fnName)) continue;
         for (const table of NO_STAR_SELECT_TABLES) {
           const re = new RegExp(
-            `\\.from\\(\\s*["\`']${table}["\`']\\s*\\)[\\s\\S]{0,200}?\\.select\\(\\s*["\`']\\*["\`']`,
+            `\\.from\\(\\s*["\`']${table}["\`']\\s*\\)[\\s\\S]{0,200}?\\.select\\(\\s*["\`']\\*["\`']\\s*\\)`,
             "g",
           );
           expect(
