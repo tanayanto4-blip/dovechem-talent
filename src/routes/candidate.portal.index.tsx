@@ -56,9 +56,33 @@ function PortalHome() {
 
       <div className="grid gap-4 md:grid-cols-3">
         <StepCard title="Data Diri" desc="Isi biodata lengkap Anda." icon={User} done={!!dataDone} to="/candidate/portal/data" />
-        <StepCard title="Upload Berkas" desc={`${uploadedTypes.size}/${requiredFiles.length} dokumen diunggah`} icon={Upload} done={filesDone} to="/candidate/portal/berkas" />
+        <StepCard title="Upload Berkas" desc={`${checklist.done}/${checklist.total} dokumen wajib diunggah`} icon={Upload} done={filesDone} to="/candidate/portal/berkas" />
         <StepCard title="Psikotest" desc={`${finishedTests}/${totalTests} test selesai`} icon={ClipboardList} done={testsDone} to="/candidate/portal/tests" />
       </div>
+
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between gap-3">
+            <span>Checklist Dokumen Wajib</span>
+            {checklist.complete
+              ? <Badge className="bg-success">Lengkap</Badge>
+              : <Badge variant="secondary">{checklist.done}/{checklist.total}</Badge>}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-5">
+            {checklist.items.map((i) => (
+              <div
+                key={i.key}
+                className={`flex items-center gap-2 rounded-md border p-2 text-sm ${i.uploaded ? "border-success/40 bg-success/5" : "border-muted"}`}
+              >
+                {i.uploaded ? <CheckCircle2 className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
+                <span className={i.uploaded ? "font-medium" : "text-muted-foreground"}>{i.label}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {(data?.attempts?.length ?? 0) > 0 && (
         <Card>
