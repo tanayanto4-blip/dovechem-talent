@@ -8,6 +8,7 @@ import {
   setTestActive,
   upsertMbtiQuestion,
   deleteMbtiQuestion,
+  deleteMbtiQuestions,
   setMbtiQuestionsActive,
   reorderMbtiQuestions,
 } from "@/lib/admin.functions";
