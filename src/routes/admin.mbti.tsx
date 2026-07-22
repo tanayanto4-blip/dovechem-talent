@@ -48,7 +48,7 @@ function emptyDraft(nextNumber: number): Draft {
   return { question_id: null, question_number: nextNumber, question_text: "Pilih pernyataan yang paling menggambarkan diri Anda.", a_label: "", a_dim: "E", b_label: "", b_dim: "I" };
 }
 
-export function MbtiAdmin() {
+export function MbtiAdmin({ initialTestId }: { initialTestId?: string } = {}) {
   const qc = useQueryClient();
   const listFn = useServerFn(listTests);
   const detailFn = useServerFn(getTestWithQuestions);
@@ -59,8 +59,8 @@ export function MbtiAdmin() {
 
   const { data: testsData, isLoading: loadingTests } = useQuery({ queryKey: ["admin-tests"], queryFn: () => listFn({ data: {} as never }) });
   const mbtiTests = useMemo(() => ((testsData?.tests ?? []) as any[]).filter((t) => t.test_type === "mbti"), [testsData]);
-  const [testId, setTestId] = useState<string | null>(null);
-  const activeTestId = testId ?? mbtiTests[0]?.id ?? null;
+  const [testId, setTestId] = useState<string | null>(initialTestId ?? null);
+  const activeTestId = testId ?? initialTestId ?? mbtiTests[0]?.id ?? null;
   const activeTest = mbtiTests.find((t) => t.id === activeTestId);
 
   const { data: detail, isLoading: loadingDetail } = useQuery({
