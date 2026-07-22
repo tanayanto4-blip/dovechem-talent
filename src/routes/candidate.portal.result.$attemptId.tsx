@@ -28,6 +28,7 @@ function CandidateResult() {
   const answerMap = new Map<string, any>((a.test_answers ?? []).map((x: any) => [x.question_id, x]));
   const isDisc = t?.test_type === "disc";
   const isMbti = t?.test_type === "mbti";
+  const isEq = t?.test_type === "eq";
 
   return (
     <div className="space-y-6 print-area">
@@ -78,6 +79,10 @@ function CandidateResult() {
       )}
 
       {a.result && isMbti && a.result.type && <MbtiSummary result={a.result} />}
+
+      {a.result && isEq && a.result.perDim && <EqSummary result={a.result} />}
+
+
 
 
       <div className="space-y-3">
@@ -260,6 +265,79 @@ function MbtiSummary({ result }: { result: any }) {
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
             Catatan: MBTI menggambarkan preferensi, bukan kemampuan. Semakin rendah persentase kejelasan, semakin fleksibel individu menggunakan kedua kutub dimensi tersebut.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+const EQ_DIM_INFO: Record<string, { name: string; desc: string; rec: string }> = {
+  SA: { name: "Kesadaran Diri", desc: "Kemampuan mengenali emosi, kekuatan, dan keterbatasan diri.", rec: "Latih refleksi harian dan minta umpan balik jujur dari rekan kerja." },
+  ME: { name: "Pengelolaan Emosi", desc: "Kemampuan mengendalikan reaksi emosi terutama pada situasi menekan.", rec: "Terapkan teknik jeda 6 detik dan reframing sebelum merespons konflik." },
+  MO: { name: "Motivasi Diri", desc: "Dorongan berprestasi dan gigih menyelesaikan tugas sulit.", rec: "Pecah target besar menjadi milestone kecil dan rayakan setiap progres." },
+  EM: { name: "Empati", desc: "Kemampuan memahami perasaan dan sudut pandang orang lain.", rec: "Latih active listening: parafrase, tanya klarifikasi, tunda penilaian." },
+  SS: { name: "Keterampilan Sosial", desc: "Kemampuan membangun hubungan, kolaborasi, dan pengaruh positif.", rec: "Perluas jejaring lintas fungsi dan latih penyampaian umpan balik konstruktif." },
+};
+
+function eqLevel(pct: number) {
+  if (pct >= 80) return { text: "Sangat Baik", cls: "bg-success text-success-foreground" };
+  if (pct >= 65) return { text: "Baik", cls: "bg-primary/15 text-primary" };
+  if (pct >= 50) return { text: "Cukup", cls: "bg-muted text-foreground" };
+  return { text: "Perlu Pengembangan", cls: "bg-destructive/15 text-destructive" };
+}
+
+function EqSummary({ result }: { result: any }) {
+  const dims = ["SA", "ME", "MO", "EM", "SS"] as const;
+  const dominant: string = result.dominant ?? "SA";
+  return (
+    <div className="space-y-4">
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle>
+            Profil EQ — Dimensi Terkuat: <span className="text-primary">{EQ_DIM_INFO[dominant]?.name ?? dominant}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {dims.map((d) => {
+              const info = EQ_DIM_INFO[d];
+              const pd = result.perDim?.[d] ?? { raw: 0, max: 0, percent: 0 };
+              const lv = eqLevel(pd.percent);
+              return (
+                <div key={d} className="rounded border bg-muted/40 p-3 text-center">
+                  <div className="text-[11px] uppercase text-muted-foreground">{d}</div>
+                  <div className="text-sm font-semibold text-foreground">{info.name}</div>
+                  <div className="mt-1 text-2xl font-bold text-primary">{pd.percent}</div>
+                  <div className="text-[11px] text-muted-foreground">Skor {pd.raw}/{pd.max}</div>
+                  <div className={`mt-1 inline-block rounded px-2 py-0.5 text-[11px] ${lv.cls}`}>{lv.text}</div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="shadow-card">
+        <CardHeader><CardTitle className="text-base">Rekomendasi Pengembangan</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {dims.map((d) => {
+              const info = EQ_DIM_INFO[d];
+              const pd = result.perDim?.[d] ?? { percent: 0 };
+              return (
+                <div key={d} className="rounded-md border p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs uppercase text-muted-foreground">{d} · {info.name}</div>
+                    <Badge variant="outline">{pd.percent}%</Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{info.desc}</p>
+                  <div className="mt-2 text-sm">{info.rec}</div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Catatan: EQ dapat ditingkatkan melalui latihan sadar. Skor rendah pada satu dimensi bukan vonis, melainkan area prioritas untuk dikembangkan.
           </p>
         </CardContent>
       </Card>

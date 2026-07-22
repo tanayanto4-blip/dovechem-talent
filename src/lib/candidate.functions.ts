@@ -380,6 +380,33 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       };
       score = Math.round((clarityByPair.EI + clarityByPair.SN + clarityByPair.TF + clarityByPair.JP) / 4);
       result = { type, counts, pairs, clarity: clarityByPair };
+    } else if (test.test_type === "eq") {
+      // Likert 1..5 per item; group by dimension (SA/ME/MO/EM/SS).
+      const dims = ["SA", "ME", "MO", "EM", "SS"] as const;
+      const sums: Record<string, number> = { SA: 0, ME: 0, MO: 0, EM: 0, SS: 0 };
+      const counts: Record<string, number> = { SA: 0, ME: 0, MO: 0, EM: 0, SS: 0 };
+      const qMap = new Map((qs.data ?? []).map((q: any) => [q.id, q]));
+      for (const a of data.answers) {
+        const q: any = qMap.get(a.question_id);
+        const dim = q?.dimension;
+        const val = parseInt(a.answer, 10);
+        if (dim && sums[dim] !== undefined && !Number.isNaN(val) && val >= 1 && val <= 5) {
+          sums[dim] += val;
+          counts[dim] += 1;
+        }
+      }
+      // Per-dimension score normalized to 0-100 (max = count * 5)
+      const perDim: Record<string, { raw: number; max: number; percent: number }> = {} as any;
+      let totalPct = 0; let dimsWithData = 0;
+      for (const d of dims) {
+        const max = counts[d] * 5;
+        const pct = max > 0 ? Math.round((sums[d] / max) * 100) : 0;
+        perDim[d] = { raw: sums[d], max, percent: pct };
+        if (max > 0) { totalPct += pct; dimsWithData++; }
+      }
+      score = dimsWithData > 0 ? Math.round(totalPct / dimsWithData) : 0;
+      const dominant = (Object.entries(perDim).sort((a, b) => b[1].percent - a[1].percent)[0] ?? ["SA", { percent: 0 }])[0];
+      result = { perDim, dominant, sums, counts };
     }
 
     const finishedAt = new Date().toISOString();
