@@ -210,6 +210,16 @@ function CodesPage() {
                     </TableCell>
                     <TableCell>{c.used_at ? new Date(c.used_at).toLocaleDateString("id-ID") : "-"}</TableCell>
                     <TableCell>
+                      <button onClick={() => onEditExpiry(c.id, c.expires_at)} className="text-left text-sm hover:underline">
+                        {c.expires_at ? (
+                          <span className={new Date(c.expires_at).getTime() < Date.now() ? "text-destructive" : ""}>
+                            {new Date(c.expires_at).toLocaleString("id-ID", { dateStyle: "short", timeStyle: "short" })}
+                            {new Date(c.expires_at).getTime() < Date.now() ? " (kedaluwarsa)" : ""}
+                          </span>
+                        ) : <span className="text-muted-foreground">Tanpa batas</span>}
+                      </button>
+                    </TableCell>
+                    <TableCell>
                       <Switch checked={c.active} onCheckedChange={async (v) => { await toggle({ data: { id: c.id, active: v } }); qc.invalidateQueries({ queryKey: ["codes"] }); }} />
                     </TableCell>
                     <TableCell>
