@@ -152,7 +152,7 @@ function MbtiAdmin() {
   }
 
   const [validationIssues, setValidationIssues] = useState<Issue[] | null>(null);
-  const [pendingBulkOff, setPendingBulkOff] = useState(false);
+
 
   async function runBulkPublish(active: boolean) {
     const ids = Array.from(selected);
