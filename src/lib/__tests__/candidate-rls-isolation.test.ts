@@ -71,26 +71,51 @@ describe("candidate RLS — static scope checks", () => {
     }
   });
 
+  /**
+   * Return the substring of the chained method call starting at `startIdx`
+   * (which points at `.from(`). Walks forward with a paren-depth counter so
+   * we consume the full `sb.from(...).select(...).eq(...)` chain even when
+   * nested `.from(...)` sub-expressions or multi-line arguments appear.
+   */
+  function readChain(src: string, startIdx: number): string {
+    let i = startIdx;
+    let depth = 0;
+    let seenOpen = false;
+    while (i < src.length) {
+      const c = src[i];
+      if (c === "(") {
+        depth++;
+        seenOpen = true;
+      } else if (c === ")") {
+        depth--;
+        if (seenOpen && depth === 0) {
+          // Consume any further `.method(...)` chained onto this expression.
+          let j = i + 1;
+          while (j < src.length && /\s/.test(src[j]!)) j++;
+          if (src[j] === ".") {
+            i = j;
+            seenOpen = false;
+            continue;
+          }
+          return src.slice(startIdx, i + 1);
+        }
+      }
+      i++;
+    }
+    return src.slice(startIdx);
+  }
+
   for (const table of CANDIDATE_SCOPED_TABLES) {
     it(`every ${table} query in candidate.functions.ts filters by candidate_id`, () => {
-      // Walk each `.from("<table>")` occurrence and read only up to the
-      // NEXT `.from(` or end-of-statement, so multi-query Promise.all
-      // arrays don't have their scopes bleed into each other.
       const openings = [...candidateSrc.matchAll(new RegExp(`\\.from\\(["']${table}["']\\)`, "g"))];
       expect(openings.length, `expected at least one ${table} query`).toBeGreaterThan(0);
       for (const m of openings) {
-        const start = m.index!;
-        const rest = candidateSrc.slice(start + m[0].length);
-        const nextFrom = rest.search(/\.from\(/);
-        const cut = nextFrom >= 0 ? nextFrom : Math.min(rest.length, 600);
-        const chunk = rest.slice(0, cut);
-        const scopedDirect =
-          /\.eq\(["']candidate_id["'],\s*cand\.id/.test(chunk) ||
-          /\.eq\(["']candidate_id["'],[\s\S]*?\.data\?\.id/.test(chunk);
-        const scopedByVerifiedAttempt = /\.eq\(["']attempt_id["'],\s*data\.attempt_id/.test(chunk);
+        const chain = readChain(candidateSrc, m.index!);
+        const scopedByCandidate = /\.eq\(["']candidate_id["']/.test(chain);
+        const scopedByAttempt = /\.eq\(["']attempt_id["'],\s*data\.attempt_id/.test(chain);
         expect(
-          scopedDirect || scopedByVerifiedAttempt,
-          `unscoped ${table} query near offset ${start}:\n${chunk}`,
+          scopedByCandidate || scopedByAttempt,
+          `unscoped ${table} chain:\n${chain}`,
         ).toBe(true);
       }
     });
