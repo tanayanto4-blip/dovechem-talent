@@ -4,9 +4,10 @@ import { requireAdmin } from "@/lib/staff-middleware";
 import { z } from "zod";
 
 async function getAdminClient() {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return supabaseAdmin;
+  const mod = await import("@/integrations/supabase/client.server");
+  return mod.supabaseAdmin;
 }
+
 
 
 /** Public: check if any admin account already exists (for bootstrap UI). */
