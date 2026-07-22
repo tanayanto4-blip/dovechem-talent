@@ -29,8 +29,13 @@ function CodesPage() {
   const { data } = useQuery({ queryKey: ["codes"], queryFn: () => list({ data: {} as never }) });
   const [open, setOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [autoOpen, setAutoOpen] = useState(false);
+  const [expiryOpen, setExpiryOpen] = useState(false);
+  const [expiryValue, setExpiryValue] = useState("");
+  const [editExpiry, setEditExpiry] = useState<{ id: string; value: string } | null>(null);
   const [form, setForm] = useState({ candidate_name: "", candidate_email: "", position_applied: "", code: "", expires_at: "" });
   const [bulkForm, setBulkForm] = useState({ count: 300, prefix: "DOV", name_prefix: "Kandidat", position_applied: "", start_number: 1, expires_at: "" });
+  const [autoForm, setAutoForm] = useState({ count: 300, expires_at: "" });
   const [saving, setSaving] = useState(false);
   const [bulkSaving, setBulkSaving] = useState(false);
   const [autoSaving, setAutoSaving] = useState(false);
@@ -41,19 +46,20 @@ function CodesPage() {
     return isNaN(d.getTime()) ? null : d.toISOString();
   }
 
-  async function onAuto() {
-    const n = Number(prompt("Berapa kode akses yang dibuat otomatis?", "300")) || 0;
-    if (n <= 0) return;
-    const expiryLocal = prompt("Masa berlaku (YYYY-MM-DD HH:mm) — kosongkan jika tanpa batas:", "") || "";
-    const expires_at = expiryLocal ? toIso(expiryLocal.replace(" ", "T")) : null;
+  async function onAuto(e: React.FormEvent) {
+    e.preventDefault();
+    const n = Number(autoForm.count) || 0;
+    if (n <= 0) { toast.error("Jumlah harus lebih dari 0"); return; }
     setAutoSaving(true);
     try {
       const res = await bulkCreate({ data: {
         count: n, prefix: "DOV", name_prefix: "Kandidat",
-        position_applied: null, start_number: 1, expires_at,
+        position_applied: null, start_number: 1,
+        expires_at: toIso(autoForm.expires_at),
       }});
       toast.success(`${res.created} kode otomatis dibuat & aktif — siap login`);
       qc.invalidateQueries({ queryKey: ["codes"] });
+      setAutoOpen(false);
     } catch (e: any) { toast.error(e.message); }
     finally { setAutoSaving(false); }
   }
@@ -91,28 +97,33 @@ function CodesPage() {
     finally { setBulkSaving(false); }
   }
 
-  async function onBulkExpiry() {
-    const v = prompt("Set masa berlaku SEMUA kode (YYYY-MM-DDTHH:mm). Kosongkan lalu OK untuk hapus batas:", "");
-    if (v === null) return;
-    const iso = v ? toIso(v) : null;
-    if (v && !iso) { toast.error("Format tanggal tidak valid"); return; }
+  async function submitBulkExpiry(e: React.FormEvent) {
+    e.preventDefault();
+    const iso = expiryValue ? toIso(expiryValue) : null;
+    if (expiryValue && !iso) { toast.error("Format tanggal tidak valid"); return; }
     try {
       const res = await bulkExpiry({ data: { expires_at: iso } });
       toast.success(`${res.updated} kode diperbarui`);
       qc.invalidateQueries({ queryKey: ["codes"] });
+      setExpiryOpen(false);
     } catch (e: any) { toast.error(e.message); }
   }
 
-  async function onEditExpiry(id: string, current: string | null) {
-    const cur = current ? new Date(current).toISOString().slice(0, 16) : "";
-    const v = prompt("Masa berlaku (YYYY-MM-DDTHH:mm). Kosongkan lalu OK untuk hapus batas:", cur);
-    if (v === null) return;
-    const iso = v ? toIso(v) : null;
-    if (v && !iso) { toast.error("Format tanggal tidak valid"); return; }
+  function onEditExpiry(id: string, current: string | null) {
+    const cur = current ? new Date(new Date(current).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
+    setEditExpiry({ id, value: cur });
+  }
+
+  async function submitEditExpiry(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editExpiry) return;
+    const iso = editExpiry.value ? toIso(editExpiry.value) : null;
+    if (editExpiry.value && !iso) { toast.error("Format tanggal tidak valid"); return; }
     try {
-      await setExpiry({ data: { id, expires_at: iso } });
+      await setExpiry({ data: { id: editExpiry.id, expires_at: iso } });
       qc.invalidateQueries({ queryKey: ["codes"] });
       toast.success("Masa berlaku diperbarui");
+      setEditExpiry(null);
     } catch (e: any) { toast.error(e.message); }
   }
 
@@ -133,12 +144,12 @@ function CodesPage() {
           <p className="text-muted-foreground">Buat kode akses untuk kandidat login ke portal test.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={onAuto} disabled={autoSaving} className="bg-gradient-to-r from-primary to-primary-glow">
+          <Button onClick={() => setAutoOpen(true)} disabled={autoSaving} className="bg-gradient-to-r from-primary to-primary-glow">
             <Zap className="mr-2 h-4 w-4" /> {autoSaving ? "Membuat..." : "Otomatis Buat Kode"}
           </Button>
           <Button variant="outline" onClick={() => onBulkActive(true)}><Power className="mr-2 h-4 w-4" /> Aktifkan Semua</Button>
           <Button variant="outline" onClick={() => onBulkActive(false)}><PowerOff className="mr-2 h-4 w-4" /> Nonaktifkan Semua</Button>
-          <Button variant="outline" onClick={onBulkExpiry}><CalendarClock className="mr-2 h-4 w-4" /> Set Masa Berlaku Semua</Button>
+          <Button variant="outline" onClick={() => { setExpiryValue(""); setExpiryOpen(true); }}><CalendarClock className="mr-2 h-4 w-4" /> Set Masa Berlaku Semua</Button>
           <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
             <DialogTrigger asChild><Button variant="secondary"><Layers className="mr-2 h-4 w-4" /> Buat Massal</Button></DialogTrigger>
             <DialogContent>
@@ -173,6 +184,39 @@ function CodesPage() {
           </Dialog>
         </div>
       </div>
+
+      <Dialog open={autoOpen} onOpenChange={setAutoOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Otomatis Buat Kode</DialogTitle></DialogHeader>
+          <form onSubmit={onAuto} className="space-y-4">
+            <div className="space-y-2"><Label>Jumlah Kode *</Label><Input type="number" min={1} max={1000} required value={autoForm.count} onChange={(e) => setAutoForm({ ...autoForm, count: Number(e.target.value) })} /></div>
+            <div className="space-y-2"><Label>Masa Berlaku (opsional)</Label><Input type="datetime-local" value={autoForm.expires_at} onChange={(e) => setAutoForm({ ...autoForm, expires_at: e.target.value })} /><p className="text-[11px] text-muted-foreground">Kosongkan untuk tanpa batas waktu.</p></div>
+            <p className="text-xs text-muted-foreground">Kode akan dibuat dengan prefix <b>DOV</b>, nama <b>Kandidat 001..</b>, dan langsung aktif.</p>
+            <DialogFooter><Button type="submit" disabled={autoSaving}>{autoSaving ? "Membuat..." : `Buat ${autoForm.count} Kode`}</Button></DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={expiryOpen} onOpenChange={setExpiryOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Set Masa Berlaku Semua Kode</DialogTitle></DialogHeader>
+          <form onSubmit={submitBulkExpiry} className="space-y-4">
+            <div className="space-y-2"><Label>Masa Berlaku</Label><Input type="datetime-local" value={expiryValue} onChange={(e) => setExpiryValue(e.target.value)} /><p className="text-[11px] text-muted-foreground">Kosongkan untuk menghapus batas waktu semua kode.</p></div>
+            <DialogFooter><Button type="submit">Simpan</Button></DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editExpiry} onOpenChange={(v) => !v && setEditExpiry(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Ubah Masa Berlaku Kode</DialogTitle></DialogHeader>
+          <form onSubmit={submitEditExpiry} className="space-y-4">
+            <div className="space-y-2"><Label>Masa Berlaku</Label><Input type="datetime-local" value={editExpiry?.value ?? ""} onChange={(e) => setEditExpiry((s) => s ? { ...s, value: e.target.value } : s)} /><p className="text-[11px] text-muted-foreground">Kosongkan untuk menghapus batas.</p></div>
+            <DialogFooter><Button type="submit">Simpan</Button></DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
 
       <Card className="shadow-card">
         <CardHeader><CardTitle>Daftar Kode</CardTitle></CardHeader>
