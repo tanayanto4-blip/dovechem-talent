@@ -394,9 +394,20 @@ export const setTestActive = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ id: z.string().uuid(), active: z.boolean() }).parse(d))
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const before = await supabaseAdmin.from("tests").select("name, code, test_type, active").eq("id", data.id).single();
     const { error } = await supabaseAdmin.from("tests").update({ active: data.active }).eq("id", data.id);
     if (error) throw new Error(error.message);
-    await logAudit(context, data.active ? "test.publish" : "test.unpublish", "test", data.id, { active: data.active });
+    const t: any = before.data ?? {};
+    const isMbti = t.test_type === "mbti";
+    await logAudit(
+      context,
+      isMbti
+        ? (data.active ? "mbti.test.publish" : "mbti.test.unpublish")
+        : (data.active ? "test.publish" : "test.unpublish"),
+      "test",
+      data.id,
+      { active: data.active, previous_active: t.active ?? null, test_name: t.name ?? null, test_code: t.code ?? null, test_type: t.test_type ?? null },
+    );
     return { ok: true };
   });
 
