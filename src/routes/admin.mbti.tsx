@@ -147,6 +147,60 @@ function MbtiAdmin() {
     finally { setDeletingId(null); }
   }
 
+  async function handleImport() {
+    if (!activeTestId) return;
+    const rows = parseCsv(importText);
+    if (!rows.length) { toast.error("CSV kosong atau format tidak dikenali"); return; }
+    setImportRunning(true);
+    setImportLog(null);
+    const usedNums = new Set(questions.map((q) => q.question_number));
+    let auto = nextNumber;
+    let ok = 0, fail = 0;
+    const errors: string[] = [];
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      try {
+        let num = Number(r.number);
+        if (!Number.isFinite(num) || num < 1) { while (usedNums.has(auto)) auto++; num = auto; }
+        usedNums.add(num); if (num >= auto) auto = num + 1;
+        const aDim = r.a_dim?.toUpperCase() as Dim;
+        const bDim = r.b_dim?.toUpperCase() as Dim;
+        if (!DIM_LIST.includes(aDim) || !DIM_LIST.includes(bDim)) throw new Error(`Dimensi tidak valid (${r.a_dim}/${r.b_dim})`);
+        if (aDim === bDim) throw new Error("Dimensi A dan B harus berbeda");
+        if (!r.a_label?.trim() || !r.b_label?.trim()) throw new Error("Pernyataan A/B kosong");
+        await upsertFn({ data: {
+          test_id: activeTestId,
+          question_number: num,
+          question_text: (r.question_text?.trim() || "Pilih pernyataan yang paling menggambarkan diri Anda."),
+          options: [
+            { key: "A", label: r.a_label.trim(), dimension: aDim },
+            { key: "B", label: r.b_label.trim(), dimension: bDim },
+          ],
+        }});
+        ok++;
+      } catch (e: any) {
+        fail++;
+        errors.push(`Baris ${i + 1}: ${e?.message ?? "gagal"}`);
+      }
+    }
+    setImportRunning(false);
+    setImportLog({ ok, fail, errors });
+    if (ok) toast.success(`${ok} soal diimpor`);
+    if (fail) toast.error(`${fail} baris gagal`);
+    qc.invalidateQueries({ queryKey: ["admin-mbti", activeTestId] });
+  }
+
+  function downloadTemplate() {
+    const csv = "number,question_text,a_label,a_dim,b_label,b_dim\n" +
+      "1,Pilih pernyataan yang paling menggambarkan diri Anda.,\"Saya suka bekerja dalam kelompok besar\",E,\"Saya lebih nyaman bekerja sendiri\",I\n" +
+      "2,Pilih pernyataan yang paling menggambarkan diri Anda.,\"Saya fokus pada detail konkret\",S,\"Saya suka melihat pola dan kemungkinan\",N\n";
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "template-mbti.csv"; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+
   if (loadingTests) return <div className="text-muted-foreground">Memuat...</div>;
   if (!mbtiTests.length) return <div className="rounded-md border bg-muted/40 p-6 text-sm text-muted-foreground">Belum ada test bertipe MBTI.</div>;
 
