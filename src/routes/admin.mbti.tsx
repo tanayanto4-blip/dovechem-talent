@@ -8,6 +8,7 @@ import {
   setTestActive,
   upsertMbtiQuestion,
   deleteMbtiQuestion,
+  setMbtiQuestionsActive,
 } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
