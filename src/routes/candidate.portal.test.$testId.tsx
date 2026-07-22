@@ -221,10 +221,46 @@ function TakeTest() {
     finally { setSubmitting(false); }
   }
 
-  if (isLoading || !data || !data.test) return <div className="text-muted-foreground">Memuat test...</div>;
+  if (!session) {
+    return (
+      <Card>
+        <CardContent className="space-y-3 py-8 text-center">
+          <p className="text-sm text-muted-foreground">Sesi kandidat tidak ditemukan. Silakan login kembali menggunakan kode akses Anda.</p>
+          <Button onClick={() => nav({ to: "/candidate/login" })}>Login Kandidat</Button>
+        </CardContent>
+      </Card>
+    );
+  }
+  if (isLoading || isFetching && !data) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center gap-2 py-10 text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> Memuat test...
+        </CardContent>
+      </Card>
+    );
+  }
+  if (error || !data || !data.test || !data.attempt) {
+    const msg = (error as any)?.message || "Test tidak dapat dimuat. Periksa koneksi Anda atau hubungi admin.";
+    return (
+      <Card className="border-destructive/40">
+        <CardContent className="space-y-3 py-8 text-center">
+          <AlertCircle className="mx-auto h-8 w-8 text-destructive" />
+          <div className="font-medium text-destructive">Gagal memuat test</div>
+          <p className="text-sm text-muted-foreground">{msg}</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button variant="outline" onClick={() => refetch()}>Coba lagi</Button>
+            <Button onClick={() => nav({ to: "/candidate/portal/tests" })}>Kembali ke daftar test</Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   if (data.attempt.status === "finished") {
     return <Card><CardContent className="py-8 text-center">Test sudah selesai. Skor: <b>{data.attempt.score}</b></CardContent></Card>;
   }
+
+
 
   const mins = Math.floor(remaining / 60).toString().padStart(2, "0");
   const secs = (remaining % 60).toString().padStart(2, "0");
