@@ -44,11 +44,13 @@ function CodesPage() {
   async function onAuto() {
     const n = Number(prompt("Berapa kode akses yang dibuat otomatis?", "300")) || 0;
     if (n <= 0) return;
+    const expiryLocal = prompt("Masa berlaku (YYYY-MM-DD HH:mm) — kosongkan jika tanpa batas:", "") || "";
+    const expires_at = expiryLocal ? toIso(expiryLocal.replace(" ", "T")) : null;
     setAutoSaving(true);
     try {
       const res = await bulkCreate({ data: {
         count: n, prefix: "DOV", name_prefix: "Kandidat",
-        position_applied: null, start_number: 1,
+        position_applied: null, start_number: 1, expires_at,
       }});
       toast.success(`${res.created} kode otomatis dibuat & aktif — siap login`);
       qc.invalidateQueries({ queryKey: ["codes"] });
@@ -60,11 +62,12 @@ function CodesPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await create({ data: form });
+      const { expires_at, ...rest } = form;
+      const res = await create({ data: { ...rest, expires_at: toIso(expires_at) } });
       toast.success(`Kode dibuat: ${res.code.code}`);
       qc.invalidateQueries({ queryKey: ["codes"] });
       setOpen(false);
-      setForm({ candidate_name: "", candidate_email: "", position_applied: "", code: "" });
+      setForm({ candidate_name: "", candidate_email: "", position_applied: "", code: "", expires_at: "" });
     } catch (e: any) { toast.error(e.message); }
     finally { setSaving(false); }
   }
@@ -79,12 +82,38 @@ function CodesPage() {
         name_prefix: bulkForm.name_prefix || null,
         position_applied: bulkForm.position_applied || null,
         start_number: Number(bulkForm.start_number) || 1,
+        expires_at: toIso(bulkForm.expires_at),
       }});
       toast.success(`${res.created} kode dibuat & aktif`);
       qc.invalidateQueries({ queryKey: ["codes"] });
       setBulkOpen(false);
     } catch (e: any) { toast.error(e.message); }
     finally { setBulkSaving(false); }
+  }
+
+  async function onBulkExpiry() {
+    const v = prompt("Set masa berlaku SEMUA kode (YYYY-MM-DDTHH:mm). Kosongkan lalu OK untuk hapus batas:", "");
+    if (v === null) return;
+    const iso = v ? toIso(v) : null;
+    if (v && !iso) { toast.error("Format tanggal tidak valid"); return; }
+    try {
+      const res = await bulkExpiry({ data: { expires_at: iso } });
+      toast.success(`${res.updated} kode diperbarui`);
+      qc.invalidateQueries({ queryKey: ["codes"] });
+    } catch (e: any) { toast.error(e.message); }
+  }
+
+  async function onEditExpiry(id: string, current: string | null) {
+    const cur = current ? new Date(current).toISOString().slice(0, 16) : "";
+    const v = prompt("Masa berlaku (YYYY-MM-DDTHH:mm). Kosongkan lalu OK untuk hapus batas:", cur);
+    if (v === null) return;
+    const iso = v ? toIso(v) : null;
+    if (v && !iso) { toast.error("Format tanggal tidak valid"); return; }
+    try {
+      await setExpiry({ data: { id, expires_at: iso } });
+      qc.invalidateQueries({ queryKey: ["codes"] });
+      toast.success("Masa berlaku diperbarui");
+    } catch (e: any) { toast.error(e.message); }
   }
 
   async function onBulkActive(active: boolean) {
