@@ -365,6 +365,10 @@ function MbtiAdmin() {
               {selected.size > 0 && (
                 <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())} disabled={!!bulkRunning}>Bersihkan</Button>
               )}
+              <Button size="sm" variant="outline" onClick={normalizeNumbers} disabled={reordering || sortedAll.length === 0} title="Rapikan nomor urut menjadi 1..N sesuai urutan sekarang">
+                {reordering ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <ListOrdered className="mr-1 h-3.5 w-3.5" />}
+                Rapikan nomor
+              </Button>
             </div>
           </div>
         </CardHeader>
