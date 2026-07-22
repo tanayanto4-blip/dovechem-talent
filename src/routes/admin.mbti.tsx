@@ -38,7 +38,7 @@ type Dim = "E" | "I" | "S" | "N" | "T" | "F" | "J" | "P";
 const DIM_LIST: Dim[] = ["E", "I", "S", "N", "T", "F", "J", "P"];
 
 type OptRow = { key: "A" | "B"; label: string; dimension: Dim };
-type QRow = { id: string; question_number: number; question_text: string; options: OptRow[]; dimension: string | null };
+type QRow = { id: string; question_number: number; question_text: string; options: OptRow[]; dimension: string | null; active?: boolean };
 type Draft = { question_id: string | null; question_number: number; question_text: string; a_label: string; a_dim: Dim; b_label: string; b_dim: Dim };
 
 function emptyDraft(nextNumber: number): Draft {
