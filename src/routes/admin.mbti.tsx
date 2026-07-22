@@ -361,15 +361,23 @@ function MbtiAdmin() {
     const seenInFile = new Map<number, number>(); // num -> first rowIdx
     const aggregate: ImportIssue[] = [];
     const parsedNums: (number | null)[] = [];
+    const conflict = importOpts.conflict;
 
-    // First pass — assign numbers (auto for missing), detect in-file duplicates
+    // First pass — assign numbers.
+    // resequence: ignore file numbers, give every row the next free number.
+    // overwrite/skip: honor file numbers; auto-assign only if missing.
     let auto = nextNumber;
     const takenAuto = new Set(existingNums);
     for (let i = 0; i < rows.length; i++) {
-      const raw = Number(rows[i].number);
       let num: number | null = null;
-      if (Number.isFinite(raw) && raw >= 1) num = raw;
-      else { while (takenAuto.has(auto)) auto++; num = auto; takenAuto.add(auto); auto++; }
+      if (conflict === "resequence") {
+        while (takenAuto.has(auto)) auto++;
+        num = auto; takenAuto.add(auto); auto++;
+      } else {
+        const raw = Number(rows[i].number);
+        if (Number.isFinite(raw) && raw >= 1) num = raw;
+        else { while (takenAuto.has(auto)) auto++; num = auto; takenAuto.add(auto); auto++; }
+      }
       parsedNums.push(num);
     }
 
@@ -381,9 +389,11 @@ function MbtiAdmin() {
         issues.push(iss); aggregate.push(iss);
       };
 
-      // Nomor kosong (info) — hanya jika input asli tidak berupa angka valid
+      // Nomor kosong / resequence info
       const rawNum = Number(r.number);
-      if (!Number.isFinite(rawNum) || rawNum < 1) {
+      if (conflict === "resequence" && Number.isFinite(rawNum) && rawNum >= 1 && rawNum !== num) {
+        push("resequenced", "warning", `Baris ${i + 1}: nomor #${rawNum} diubah menjadi #${num} (resequence)`);
+      } else if (!Number.isFinite(rawNum) || rawNum < 1) {
         push("missing_number", "warning", `Baris ${i + 1}: nomor kosong → otomatis diberi #${num}`);
       }
       // Duplikat di dalam file
@@ -408,7 +418,14 @@ function MbtiAdmin() {
       }
 
       const overwrite = num != null && existingNums.has(num);
-      if (overwrite) push("overwrite", "warning", `Baris ${i + 1} (#${num}): akan menimpa soal yang sudah ada`);
+      if (overwrite) {
+        if (conflict === "skip") {
+          push("skipped_conflict", "error", `Baris ${i + 1} (#${num}): dilewati — nomor sudah ada (mode Skip)`);
+        } else if (conflict === "overwrite") {
+          push("overwrite", "warning", `Baris ${i + 1} (#${num}): akan menimpa soal yang sudah ada`);
+        }
+        // resequence never conflicts (numbers assigned fresh)
+      }
 
       const valid = !issues.some((x) => x.severity === "error");
       return { rowIdx: i, number: num, row: r, valid, overwrite, issues };
