@@ -9,7 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, FileText, FolderOpen, Search } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Download, ExternalLink, Eye, FileText, FolderOpen, Search } from "lucide-react";
+
+function mimeKind(name: string, mime?: string | null): "image" | "pdf" | "other" {
+  const m = (mime ?? "").toLowerCase();
+  if (m.startsWith("image/")) return "image";
+  if (m === "application/pdf") return "pdf";
+  const ext = name.split(".").pop()?.toLowerCase() ?? "";
+  if (["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"].includes(ext)) return "image";
+  if (ext === "pdf") return "pdf";
+  return "other";
+}
 
 export const Route = createFileRoute("/admin/documents")({
   component: DocumentsBank,
@@ -69,6 +80,20 @@ function DocumentsBank() {
   async function open(path: string) {
     const { url } = await signed({ data: { path } });
     window.open(url, "_blank");
+  }
+
+  const [previewing, setPreviewing] = useState<null | { file: any; url: string; kind: "image" | "pdf" | "other" }>(null);
+  const [previewLoading, setPreviewLoading] = useState<string | null>(null);
+
+  async function preview(f: any) {
+    const kind = mimeKind(f.file_name, f.mime_type);
+    setPreviewLoading(f.id);
+    try {
+      const { url } = await signed({ data: { path: f.file_path } });
+      setPreviewing({ file: f, url, kind });
+    } finally {
+      setPreviewLoading(null);
+    }
   }
 
   const totalSize = filtered.reduce((s, f) => s + (f.file_size ?? 0), 0);
@@ -153,9 +178,20 @@ function DocumentsBank() {
                       <TableCell className="text-xs">{humanSize(f.file_size)}</TableCell>
                       <TableCell className="text-xs">{new Date(f.uploaded_at).toLocaleString("id-ID")}</TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" variant="outline" onClick={() => open(f.file_path)}>
-                          <Download className="mr-2 h-3.5 w-3.5" /> Buka
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => preview(f)}
+                            disabled={previewLoading === f.id}
+                          >
+                            <Eye className="mr-2 h-3.5 w-3.5" />
+                            {previewLoading === f.id ? "Memuat..." : "Preview"}
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => open(f.file_path)}>
+                            <Download className="mr-2 h-3.5 w-3.5" /> Buka
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -165,6 +201,56 @@ function DocumentsBank() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!previewing} onOpenChange={(o) => !o && setPreviewing(null)}>
+        <DialogContent className="max-w-5xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between gap-3 pr-6">
+              <span className="truncate">
+                {previewing?.file?.file_name ?? "Preview"}
+                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  {previewing?.file?.candidates?.full_name ? `· ${previewing.file.candidates.full_name}` : ""}
+                </span>
+              </span>
+              {previewing && (
+                <a
+                  href={previewing.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" /> Buka di tab baru
+                </a>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          {previewing && (
+            <div className="h-[75vh] w-full overflow-auto rounded-md bg-muted/30">
+              {previewing.kind === "image" ? (
+                <img
+                  src={previewing.url}
+                  alt={previewing.file.file_name}
+                  className="mx-auto h-full w-auto object-contain"
+                />
+              ) : previewing.kind === "pdf" ? (
+                <iframe
+                  src={previewing.url}
+                  title={previewing.file.file_name}
+                  className="h-full w-full"
+                />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-sm text-muted-foreground">
+                  <FileText className="h-8 w-8 opacity-50" />
+                  Format berkas ini tidak dapat ditampilkan langsung.
+                  <a href={previewing.url} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                    Unduh / buka di tab baru
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
