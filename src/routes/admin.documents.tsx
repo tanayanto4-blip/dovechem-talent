@@ -109,27 +109,51 @@ function DocumentsBank() {
     const JSZip = (await import("jszip")).default;
     const zip = new JSZip();
     const used = new Set<string>();
+    const manifestRows: Array<Record<string, string>> = [];
     let done = 0;
     for (const f of items) {
+      const folder = safeName(f.candidates?.full_name ?? "tanpa-nama");
+      const name = `${safeName(f.file_type || "file")}__${safeName(f.file_name)}`;
+      let path = `${folder}/${name}`;
+      let i = 1;
+      while (used.has(path)) { path = `${folder}/${i++}_${name}`; }
+      let status = "ok";
       try {
         const { url } = await signed({ data: { path: f.file_path } });
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const buf = await res.arrayBuffer();
-        const folder = safeName(f.candidates?.full_name ?? "tanpa-nama");
-        const name = `${safeName(f.file_type || "file")}__${safeName(f.file_name)}`;
-        let path = `${folder}/${name}`;
-        let i = 1;
-        while (used.has(path)) { path = `${folder}/${i++}_${name}`; }
         used.add(path);
         zip.file(path, buf);
-      } catch (e) {
+      } catch (e: any) {
+        status = `failed: ${e?.message ?? e}`;
         console.warn("Gagal mengunduh:", f.file_name, e);
       } finally {
+        manifestRows.push({
+          candidate_name: f.candidates?.full_name ?? "",
+          candidate_nik: f.candidates?.nik ?? "",
+          candidate_code: f.candidates?.candidate_codes?.code ?? "",
+          position: f.candidates?.position_applied ?? "",
+          file_type: f.file_type ?? "",
+          file_name: f.file_name ?? "",
+          zip_path: status === "ok" ? path : "",
+          size_bytes: String(f.file_size ?? ""),
+          mime_type: f.mime_type ?? "",
+          uploaded_at: f.uploaded_at ?? "",
+          status,
+        });
         done += 1;
         onProgress?.(Math.round((done / items.length) * 100));
       }
     }
+    const headers = Object.keys(manifestRows[0] ?? {
+      candidate_name: "", candidate_nik: "", candidate_code: "", position: "",
+      file_type: "", file_name: "", zip_path: "", size_bytes: "", mime_type: "", uploaded_at: "", status: "",
+    });
+    const escape = (v: string) => /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+    const csv = [headers.join(","), ...manifestRows.map((r) => headers.map((h) => escape(String(r[h] ?? ""))).join(","))].join("\r\n");
+    zip.file("manifest.csv", "\uFEFF" + csv);
+
     const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
     const a = document.createElement("a");
     const href = URL.createObjectURL(blob);
