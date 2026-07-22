@@ -259,6 +259,21 @@ export const listAllCandidateFiles = createServerFn({ method: "GET" })
     return { files: data ?? [] };
   });
 
+export const listCandidateFileVersions = createServerFn({ method: "POST" })
+  .middleware([requireStaff])
+  .inputValidator((d) => z.object({ candidate_id: z.string().uuid(), file_type: z.string().optional() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let q = supabaseAdmin
+      .from("candidate_file_versions")
+      .select("*")
+      .eq("candidate_id", data.candidate_id)
+      .order("uploaded_at", { ascending: false });
+    if (data.file_type) q = q.eq("file_type", data.file_type);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return { versions: rows ?? [] };
+  });
 export const listTests = createServerFn({ method: "GET" })
   .middleware([requireStaff])
   .handler(async ({ context }) => {
