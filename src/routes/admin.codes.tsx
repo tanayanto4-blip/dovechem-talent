@@ -151,6 +151,7 @@ function CodesPage() {
                 <div className="space-y-2"><Label>Prefix Kode</Label><Input value={bulkForm.prefix} onChange={(e) => setBulkForm({ ...bulkForm, prefix: e.target.value.toUpperCase() })} placeholder="DOV" /></div>
                 <div className="space-y-2"><Label>Prefix Nama Kandidat</Label><Input value={bulkForm.name_prefix} onChange={(e) => setBulkForm({ ...bulkForm, name_prefix: e.target.value })} placeholder="Kandidat" /></div>
                 <div className="space-y-2"><Label>Posisi Dilamar</Label><Input value={bulkForm.position_applied} onChange={(e) => setBulkForm({ ...bulkForm, position_applied: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Masa Berlaku (opsional)</Label><Input type="datetime-local" value={bulkForm.expires_at} onChange={(e) => setBulkForm({ ...bulkForm, expires_at: e.target.value })} /><p className="text-[11px] text-muted-foreground">Kosongkan jika tanpa batas waktu.</p></div>
                 <p className="text-xs text-muted-foreground">Semua kode dibuat dalam status <b>aktif</b> dan langsung bisa dipakai kandidat login.</p>
                 <DialogFooter><Button type="submit" disabled={bulkSaving}>{bulkSaving ? "Membuat..." : `Buat ${bulkForm.count} Kode`}</Button></DialogFooter>
               </form>
