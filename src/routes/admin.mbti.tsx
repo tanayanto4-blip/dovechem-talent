@@ -460,8 +460,16 @@ function MbtiAdmin() {
             { key: "B", label: r.b_label!.trim(), dimension: String(r.b_dim).toUpperCase() as Dim },
           ],
         }});
-        if (isJson && r.active === false) toDraft.push(num);
-        else if (isJson && r.active === true) toPublish.push(num);
+        const statusMode = importOpts.status;
+        let effectiveActive: boolean | null = null;
+        if (statusMode === "all_draft") effectiveActive = false;
+        else if (statusMode === "all_published") effectiveActive = true;
+        else if (statusMode === "keep_existing") effectiveActive = d.overwrite ? null : true;
+        else if (isJson && r.active === false) effectiveActive = false;
+        else if (isJson && r.active === true) effectiveActive = true;
+        else effectiveActive = null; // CSV & from_file with no info → leave as-is
+        if (effectiveActive === false) toDraft.push(num);
+        else if (effectiveActive === true) toPublish.push(num);
         ok++;
       } catch (e: any) {
         fail++;
