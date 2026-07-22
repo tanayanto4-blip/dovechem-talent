@@ -321,7 +321,7 @@ function TakeTest() {
               ) : isKraepelin ? (
                 <div className="mt-4 max-w-xs">
                   <Label className="text-xs text-muted-foreground">Jawaban Anda</Label>
-                  <Input inputMode="numeric" value={answers[q.id] ?? ""} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} className="mt-1" />
+                  <Input inputMode="numeric" value={answers[q.id] ?? ""} onChange={(e) => { const v = e.target.value; setAnswers({ ...answers, [q.id]: v }); persistDebounced(q.id, v); }} className="mt-1" />
                 </div>
               ) : isDisc ? (
                 <div className="rounded-md border bg-card">
