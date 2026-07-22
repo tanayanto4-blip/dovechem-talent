@@ -16,6 +16,7 @@ import { Route as CandidatePortalRouteImport } from './routes/candidate.portal'
 import { Route as CandidateLoginRouteImport } from './routes/candidate.login'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminMbtiRouteImport } from './routes/admin.mbti'
+import { Route as AdminDocumentsRouteImport } from './routes/admin.documents'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminCodesRouteImport } from './routes/admin.codes'
 import { Route as AdminCandidatesRouteImport } from './routes/admin.candidates'
@@ -65,6 +66,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
 const AdminMbtiRoute = AdminMbtiRouteImport.update({
   id: '/mbti',
   path: '/mbti',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDocumentsRoute = AdminDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/admin/candidates': typeof AdminCandidatesRouteWithChildren
   '/admin/codes': typeof AdminCodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/documents': typeof AdminDocumentsRoute
   '/admin/mbti': typeof AdminMbtiRouteWithChildren
   '/admin/users': typeof AdminUsersRoute
   '/candidate/login': typeof CandidateLoginRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByTo {
   '/admin/candidates': typeof AdminCandidatesRouteWithChildren
   '/admin/codes': typeof AdminCodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/documents': typeof AdminDocumentsRoute
   '/admin/mbti': typeof AdminMbtiRouteWithChildren
   '/admin/users': typeof AdminUsersRoute
   '/candidate/login': typeof CandidateLoginRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/admin/candidates': typeof AdminCandidatesRouteWithChildren
   '/admin/codes': typeof AdminCodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/documents': typeof AdminDocumentsRoute
   '/admin/mbti': typeof AdminMbtiRouteWithChildren
   '/admin/users': typeof AdminUsersRoute
   '/candidate/login': typeof CandidateLoginRoute
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/admin/candidates'
     | '/admin/codes'
     | '/admin/dashboard'
+    | '/admin/documents'
     | '/admin/mbti'
     | '/admin/users'
     | '/candidate/login'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/admin/candidates'
     | '/admin/codes'
     | '/admin/dashboard'
+    | '/admin/documents'
     | '/admin/mbti'
     | '/admin/users'
     | '/candidate/login'
@@ -274,6 +285,7 @@ export interface FileRouteTypes {
     | '/admin/candidates'
     | '/admin/codes'
     | '/admin/dashboard'
+    | '/admin/documents'
     | '/admin/mbti'
     | '/admin/users'
     | '/candidate/login'
@@ -348,6 +360,13 @@ declare module '@tanstack/react-router' {
       path: '/mbti'
       fullPath: '/admin/mbti'
       preLoaderRoute: typeof AdminMbtiRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/documents': {
+      id: '/admin/documents'
+      path: '/documents'
+      fullPath: '/admin/documents'
+      preLoaderRoute: typeof AdminDocumentsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/dashboard': {
@@ -487,6 +506,7 @@ interface AdminRouteChildren {
   AdminCandidatesRoute: typeof AdminCandidatesRouteWithChildren
   AdminCodesRoute: typeof AdminCodesRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminDocumentsRoute: typeof AdminDocumentsRoute
   AdminMbtiRoute: typeof AdminMbtiRouteWithChildren
   AdminUsersRoute: typeof AdminUsersRoute
   AdminAttemptsIdRoute: typeof AdminAttemptsIdRoute
@@ -499,6 +519,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCandidatesRoute: AdminCandidatesRouteWithChildren,
   AdminCodesRoute: AdminCodesRoute,
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminDocumentsRoute: AdminDocumentsRoute,
   AdminMbtiRoute: AdminMbtiRouteWithChildren,
   AdminUsersRoute: AdminUsersRoute,
   AdminAttemptsIdRoute: AdminAttemptsIdRoute,

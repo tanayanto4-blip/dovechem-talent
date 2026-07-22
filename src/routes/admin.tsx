@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef } from "react";
 import { getMyRoles, logStaffAccess } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
-import { Beaker, LayoutDashboard, KeyRound, Users, LogOut, UserCog, ClipboardList, ShieldCheck } from "lucide-react";
+import { Beaker, LayoutDashboard, KeyRound, Users, LogOut, UserCog, ClipboardList, ShieldCheck, FolderOpen } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
