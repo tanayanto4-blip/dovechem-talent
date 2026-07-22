@@ -29,8 +29,13 @@ function CodesPage() {
   const { data } = useQuery({ queryKey: ["codes"], queryFn: () => list({ data: {} as never }) });
   const [open, setOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [autoOpen, setAutoOpen] = useState(false);
+  const [expiryOpen, setExpiryOpen] = useState(false);
+  const [expiryValue, setExpiryValue] = useState("");
+  const [editExpiry, setEditExpiry] = useState<{ id: string; value: string } | null>(null);
   const [form, setForm] = useState({ candidate_name: "", candidate_email: "", position_applied: "", code: "", expires_at: "" });
   const [bulkForm, setBulkForm] = useState({ count: 300, prefix: "DOV", name_prefix: "Kandidat", position_applied: "", start_number: 1, expires_at: "" });
+  const [autoForm, setAutoForm] = useState({ count: 300, expires_at: "" });
   const [saving, setSaving] = useState(false);
   const [bulkSaving, setBulkSaving] = useState(false);
   const [autoSaving, setAutoSaving] = useState(false);
