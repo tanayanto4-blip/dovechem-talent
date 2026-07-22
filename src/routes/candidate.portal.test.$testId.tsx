@@ -166,58 +166,61 @@ function TakeTest() {
                 </div>
               ) : isDisc ? (
                 <div className="rounded-md border bg-card">
-                  <div className="grid grid-cols-1 md:grid-cols-2">
-                    {(q.options ?? []).map((opt: any, idx: number) => {
+                  <div className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground border-b bg-muted/40">
+                    <span className="w-9 text-center text-primary">M</span>
+                    <span>Pernyataan</span>
+                    <span className="w-9 text-center text-destructive">L</span>
+                  </div>
+                  <div className="divide-y">
+                    {(q.options ?? []).map((opt: any) => {
                       const pick = discPicks[q.id] ?? {};
                       const isMost = pick.most === opt.key;
                       const isLeast = pick.least === opt.key;
-                      // Border: right border on left column (idx 0,2), bottom border on top row (idx 0,1)
-                      const isLeftCol = idx % 2 === 0;
-                      const isTopRow = idx < 2;
                       return (
                         <div
                           key={opt.key}
-                          className={`flex items-center gap-3 p-4 ${isLeftCol ? "md:border-r" : ""} ${isTopRow ? "border-b" : ""} ${!isTopRow && !isLeftCol ? "" : ""}`}
+                          className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 px-4 py-3"
                         >
-                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                            {opt.key.toUpperCase()}
+                          <button
+                            type="button"
+                            onClick={() => setDisc(q.id, "most", opt.key)}
+                            aria-label={`Paling menggambarkan: ${opt.label}`}
+                            className={`h-9 w-9 rounded-md border text-xs font-bold transition ${
+                              isMost
+                                ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                                : "border-input bg-background text-muted-foreground hover:border-primary/40 hover:text-primary"
+                            }`}
+                          >
+                            M
+                          </button>
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                              {opt.key.toUpperCase()}
+                            </div>
+                            <div className="min-w-0 flex-1 text-sm leading-snug">{opt.label}</div>
                           </div>
-                          <div className="min-w-0 flex-1 text-sm leading-snug">{opt.label}</div>
-                          <div className="flex shrink-0 gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => setDisc(q.id, "most", opt.key)}
-                              aria-label={`Paling menggambarkan: ${opt.label}`}
-                              className={`h-9 w-9 rounded-md border text-xs font-bold transition ${
-                                isMost
-                                  ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                  : "border-input bg-background text-muted-foreground hover:border-primary/40 hover:text-primary"
-                              }`}
-                            >
-                              M
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setDisc(q.id, "least", opt.key)}
-                              aria-label={`Paling tidak menggambarkan: ${opt.label}`}
-                              className={`h-9 w-9 rounded-md border text-xs font-bold transition ${
-                                isLeast
-                                  ? "border-destructive bg-destructive text-destructive-foreground shadow-sm"
-                                  : "border-input bg-background text-muted-foreground hover:border-destructive/40 hover:text-destructive"
-                              }`}
-                            >
-                              L
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setDisc(q.id, "least", opt.key)}
+                            aria-label={`Paling tidak menggambarkan: ${opt.label}`}
+                            className={`h-9 w-9 rounded-md border text-xs font-bold transition ${
+                              isLeast
+                                ? "border-destructive bg-destructive text-destructive-foreground shadow-sm"
+                                : "border-input bg-background text-muted-foreground hover:border-destructive/40 hover:text-destructive"
+                            }`}
+                          >
+                            L
+                          </button>
                         </div>
                       );
                     })}
                   </div>
                   <div className="flex items-center justify-between gap-3 border-t bg-muted/40 px-4 py-2 text-[11px] text-muted-foreground">
-                    <span><b className="text-primary">M</b> = Paling menggambarkan diri Anda</span>
-                    <span><b className="text-destructive">L</b> = Paling tidak menggambarkan</span>
+                    <span><b className="text-primary">M</b> (kiri) = Paling menggambarkan diri Anda</span>
+                    <span><b className="text-destructive">L</b> (kanan) = Paling tidak menggambarkan</span>
                   </div>
                 </div>
+
 
               ) : (
                 <RadioGroup className="mt-4 space-y-2" value={answers[q.id] ?? ""} onValueChange={(v) => setAnswers({ ...answers, [q.id]: v })}>
