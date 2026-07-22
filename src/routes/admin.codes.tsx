@@ -31,6 +31,22 @@ function CodesPage() {
   const [bulkForm, setBulkForm] = useState({ count: 300, prefix: "DOV", name_prefix: "Kandidat", position_applied: "", start_number: 1 });
   const [saving, setSaving] = useState(false);
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [autoSaving, setAutoSaving] = useState(false);
+
+  async function onAuto() {
+    const n = Number(prompt("Berapa kode akses yang dibuat otomatis?", "300")) || 0;
+    if (n <= 0) return;
+    setAutoSaving(true);
+    try {
+      const res = await bulkCreate({ data: {
+        count: n, prefix: "DOV", name_prefix: "Kandidat",
+        position_applied: null, start_number: 1,
+      }});
+      toast.success(`${res.created} kode otomatis dibuat & aktif — siap login`);
+      qc.invalidateQueries({ queryKey: ["codes"] });
+    } catch (e: any) { toast.error(e.message); }
+    finally { setAutoSaving(false); }
+  }
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
