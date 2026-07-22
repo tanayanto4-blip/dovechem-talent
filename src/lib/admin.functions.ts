@@ -64,6 +64,7 @@ const BulkInput = z.object({
   position_applied: z.string().max(120).optional().nullable(),
   name_prefix: z.string().trim().max(60).optional().nullable(),
   start_number: z.number().int().min(1).max(100000).optional().nullable(),
+  expires_at: z.string().datetime().optional().nullable(),
 });
 
 export const bulkCreateCandidateCodes = createServerFn({ method: "POST" })
