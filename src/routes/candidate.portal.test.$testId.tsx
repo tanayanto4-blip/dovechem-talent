@@ -80,6 +80,7 @@ function TakeTest() {
   const total = data.questions.length;
   const isKraepelin = data.test.test_type === "kraepelin";
   const isDisc = data.test.test_type === "disc";
+  const isMbti = data.test.test_type === "mbti";
   const answered = isDisc
     ? Object.values(discPicks).filter((p) => p.most && p.least && p.most !== p.least).length
     : Object.keys(answers).length;
