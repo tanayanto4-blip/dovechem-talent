@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { candidateStartTest, candidateSubmitTest } from "@/lib/candidate.functions";
+import { candidateStartTest, candidateSubmitTest, candidateSaveAnswer } from "@/lib/candidate.functions";
 import { useCandidateSession } from "@/lib/candidate-session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Timer } from "lucide-react";
+import { Timer, Check, Loader2, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/candidate/portal/test/$testId")({ component: TakeTest });
 
@@ -22,6 +22,7 @@ function TakeTest() {
   const qc = useQueryClient();
   const start = useServerFn(candidateStartTest);
   const submit = useServerFn(candidateSubmitTest);
+  const saveAnswer = useServerFn(candidateSaveAnswer);
 
   const { data, isLoading } = useQuery({
     queryKey: ["start-test", testId, session?.code],
@@ -34,6 +35,30 @@ function TakeTest() {
   const [discPicks, setDiscPicks] = useState<Record<string, { most?: string; least?: string }>>({});
   const [remaining, setRemaining] = useState<number>(0);
   const [submitting, setSubmitting] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const hydratedRef = useRef(false);
+
+  // Hydrate saved answers on first load so the candidate can resume.
+  useEffect(() => {
+    if (hydratedRef.current || !data?.attempt) return;
+    hydratedRef.current = true;
+    const restored: Record<string, string> = {};
+    const restoredDisc: Record<string, { most?: string; least?: string }> = {};
+    for (const row of (data.answers ?? []) as Array<{ question_id: string; answer: string }>) {
+      restored[row.question_id] = row.answer;
+      try {
+        const parsed = JSON.parse(row.answer);
+        if (parsed && (parsed.most || parsed.least)) {
+          restoredDisc[row.question_id] = { most: parsed.most, least: parsed.least };
+        }
+      } catch { /* not JSON, regular answer */ }
+    }
+    if (Object.keys(restored).length > 0) {
+      setAnswers(restored);
+      if (Object.keys(restoredDisc).length > 0) setDiscPicks(restoredDisc);
+      setSaveState("saved");
+    }
+  }, [data]);
 
   useEffect(() => {
     if (!data?.test || !data?.attempt) return;
@@ -85,6 +110,31 @@ function TakeTest() {
     ? Object.values(discPicks).filter((p) => p.most && p.least && p.most !== p.least).length
     : Object.keys(answers).length;
 
+  const inflight = useRef(0);
+  const timers = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
+  async function persist(qid: string, answer: string) {
+    if (!data?.attempt || !session) return;
+    inflight.current += 1;
+    setSaveState("saving");
+    try {
+      await saveAnswer({ data: { code: session.code, attempt_id: data.attempt.id, question_id: qid, answer } });
+      inflight.current -= 1;
+      if (inflight.current <= 0) { inflight.current = 0; setSaveState("saved"); }
+    } catch (e) {
+      inflight.current = Math.max(0, inflight.current - 1);
+      setSaveState("error");
+    }
+  }
+  function persistDebounced(qid: string, answer: string, delay = 500) {
+    if (timers.current[qid]) clearTimeout(timers.current[qid]);
+    setSaveState("saving");
+    timers.current[qid] = setTimeout(() => { persist(qid, answer); }, delay);
+  }
+  function pickMcq(qid: string, key: string) {
+    setAnswers((a) => ({ ...a, [qid]: key }));
+    persist(qid, key);
+  }
+
   function setDisc(qid: string, kind: "most" | "least", key: string) {
     setDiscPicks((prev) => {
       const cur = { ...(prev[qid] ?? {}) };
@@ -96,9 +146,11 @@ function TakeTest() {
         if (cur[other] === key) delete cur[other];
       }
       const next = { ...prev, [qid]: cur };
-      // sync to answers as JSON when both chosen
+      // sync to answers as JSON when both chosen; autosave that JSON
       if (cur.most && cur.least && cur.most !== cur.least) {
-        setAnswers((a) => ({ ...a, [qid]: JSON.stringify({ most: cur.most, least: cur.least }) }));
+        const payload = JSON.stringify({ most: cur.most, least: cur.least });
+        setAnswers((a) => ({ ...a, [qid]: payload }));
+        persist(qid, payload);
       } else {
         setAnswers((a) => { const c = { ...a }; delete c[qid]; return c; });
       }
@@ -115,12 +167,25 @@ function TakeTest() {
               <CardTitle className="font-display text-2xl text-primary">{data.test.name}</CardTitle>
               <p className="text-sm text-muted-foreground">{data.test.description}</p>
             </div>
-            <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
-              <div className="flex items-center gap-2"><Timer className="h-4 w-4" /> <span className="font-mono text-lg">{mins}:{secs}</span></div>
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
+                <div className="flex items-center gap-2"><Timer className="h-4 w-4" /> <span className="font-mono text-lg">{mins}:{secs}</span></div>
+              </div>
             </div>
           </div>
           <div className="mt-4 space-y-2">
-            <div className="flex justify-between text-xs text-muted-foreground"><span>Progress</span><span>{answered}/{total} soal</span></div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex items-center gap-3">
+                <span>Progress</span>
+                <span className="inline-flex items-center gap-1 rounded-full border bg-background px-2 py-0.5">
+                  {saveState === "saving" && (<><Loader2 className="h-3 w-3 animate-spin" /> Menyimpan...</>)}
+                  {saveState === "saved" && (<><Check className="h-3 w-3 text-success" /> Tersimpan otomatis</>)}
+                  {saveState === "error" && (<><AlertCircle className="h-3 w-3 text-destructive" /> Gagal menyimpan</>)}
+                  {saveState === "idle" && (<><Check className="h-3 w-3 opacity-40" /> Autosave aktif</>)}
+                </span>
+              </div>
+              <span>{answered}/{total} soal</span>
+            </div>
             <Progress value={(answered / total) * 100} className="h-2" />
           </div>
         </CardHeader>
@@ -238,7 +303,7 @@ function TakeTest() {
                       <button
                         key={opt.key}
                         type="button"
-                        onClick={() => setAnswers({ ...answers, [q.id]: opt.key })}
+                        onClick={() => pickMcq(q.id, opt.key)}
                         className={`flex items-start gap-3 rounded-md border p-4 text-left text-sm transition ${
                           picked
                             ? "border-primary bg-primary/10 shadow-sm"
@@ -256,7 +321,7 @@ function TakeTest() {
               ) : isKraepelin ? (
                 <div className="mt-4 max-w-xs">
                   <Label className="text-xs text-muted-foreground">Jawaban Anda</Label>
-                  <Input inputMode="numeric" value={answers[q.id] ?? ""} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} className="mt-1" />
+                  <Input inputMode="numeric" value={answers[q.id] ?? ""} onChange={(e) => { const v = e.target.value; setAnswers({ ...answers, [q.id]: v }); persistDebounced(q.id, v); }} className="mt-1" />
                 </div>
               ) : isDisc ? (
                 <div className="rounded-md border bg-card">
@@ -318,7 +383,7 @@ function TakeTest() {
 
 
               ) : (
-                <RadioGroup className="mt-4 space-y-2" value={answers[q.id] ?? ""} onValueChange={(v) => setAnswers({ ...answers, [q.id]: v })}>
+                <RadioGroup className="mt-4 space-y-2" value={answers[q.id] ?? ""} onValueChange={(v) => pickMcq(q.id, v)}>
                   {(q.options ?? []).map((opt: any) => (
                     <label key={opt.key} className="flex cursor-pointer items-center gap-3 rounded-md border p-3 hover:bg-accent">
                       <RadioGroupItem value={opt.key} id={`${q.id}-${opt.key}`} />
