@@ -623,6 +623,7 @@ export const reorderMbtiQuestions = createServerFn({ method: "POST" })
       after,
     });
     return { ok: true, count: finalOrder.length };
+  });
 
 /** Audit trail for MBTI question-bank exports (CSV/JSON) initiated from the admin UI. */
 export const logMbtiExport = createServerFn({ method: "POST" })
