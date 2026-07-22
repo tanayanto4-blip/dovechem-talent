@@ -110,6 +110,31 @@ function TakeTest() {
     ? Object.values(discPicks).filter((p) => p.most && p.least && p.most !== p.least).length
     : Object.keys(answers).length;
 
+  const inflight = useRef(0);
+  const timers = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
+  async function persist(qid: string, answer: string) {
+    if (!data?.attempt || !session) return;
+    inflight.current += 1;
+    setSaveState("saving");
+    try {
+      await saveAnswer({ data: { code: session.code, attempt_id: data.attempt.id, question_id: qid, answer } });
+      inflight.current -= 1;
+      if (inflight.current <= 0) { inflight.current = 0; setSaveState("saved"); }
+    } catch (e) {
+      inflight.current = Math.max(0, inflight.current - 1);
+      setSaveState("error");
+    }
+  }
+  function persistDebounced(qid: string, answer: string, delay = 500) {
+    if (timers.current[qid]) clearTimeout(timers.current[qid]);
+    setSaveState("saving");
+    timers.current[qid] = setTimeout(() => { persist(qid, answer); }, delay);
+  }
+  function pickMcq(qid: string, key: string) {
+    setAnswers((a) => ({ ...a, [qid]: key }));
+    persist(qid, key);
+  }
+
   function setDisc(qid: string, kind: "most" | "least", key: string) {
     setDiscPicks((prev) => {
       const cur = { ...(prev[qid] ?? {}) };
@@ -121,9 +146,11 @@ function TakeTest() {
         if (cur[other] === key) delete cur[other];
       }
       const next = { ...prev, [qid]: cur };
-      // sync to answers as JSON when both chosen
+      // sync to answers as JSON when both chosen; autosave that JSON
       if (cur.most && cur.least && cur.most !== cur.least) {
-        setAnswers((a) => ({ ...a, [qid]: JSON.stringify({ most: cur.most, least: cur.least }) }));
+        const payload = JSON.stringify({ most: cur.most, least: cur.least });
+        setAnswers((a) => ({ ...a, [qid]: payload }));
+        persist(qid, payload);
       } else {
         setAnswers((a) => { const c = { ...a }; delete c[qid]; return c; });
       }
