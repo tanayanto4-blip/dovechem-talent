@@ -5,7 +5,8 @@ import { getAttemptDetail } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft, Printer, FileDown } from "lucide-react";
+import { exportMbtiPdf } from "@/lib/mbti-pdf";
 
 export const Route = createFileRoute("/admin/attempts/$id")({ component: AttemptDetail });
 
@@ -19,15 +20,30 @@ function AttemptDetail() {
   const t = a.tests;
   const answerMap = new Map<string, any>((a.test_answers ?? []).map((x: any) => [x.question_id, x]));
   const isDisc = t?.test_type === "disc";
+  const isMbti = t?.test_type === "mbti";
   const candId = a.candidates?.id;
 
   return (
     <div className="space-y-6 print-area">
-      <div className="no-print flex items-center justify-between">
+      <div className="no-print flex flex-wrap items-center justify-between gap-2">
         <Button asChild variant="ghost" size="sm">
           <Link to="/admin/candidates/$id" params={{ id: candId }}><ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke kandidat</Link>
         </Button>
-        <Button size="sm" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Ekspor PDF</Button>
+        <div className="flex gap-2">
+          {isMbti && a.result?.type && (
+            <Button size="sm" variant="secondary" onClick={() => exportMbtiPdf(a.result, {
+              candidateName: a.candidates?.full_name,
+              candidateCode: a.candidates?.candidate_codes?.code,
+              position: a.candidates?.position ?? undefined,
+              attemptId: a.id,
+              finishedAt: a.finished_at,
+              score: a.score,
+            })}>
+              <FileDown className="mr-2 h-4 w-4" /> Unduh PDF MBTI
+            </Button>
+          )}
+          <Button size="sm" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Cetak</Button>
+        </div>
       </div>
       <div>
         <h1 className="font-display text-3xl font-bold text-primary">Lembar Jawaban — {t?.name}</h1>

@@ -6,7 +6,8 @@ import { useCandidateSession } from "@/lib/candidate-session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft, Printer, FileDown } from "lucide-react";
+import { exportMbtiPdf } from "@/lib/mbti-pdf";
 
 export const Route = createFileRoute("/candidate/portal/result/$attemptId")({ component: CandidateResult });
 
@@ -30,9 +31,23 @@ function CandidateResult() {
 
   return (
     <div className="space-y-6 print-area">
-      <div className="no-print flex items-center justify-between">
+      <div className="no-print flex flex-wrap items-center justify-between gap-2">
         <Button asChild variant="ghost" size="sm"><Link to="/candidate/portal/tests"><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Link></Button>
-        <Button size="sm" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Ekspor PDF</Button>
+        <div className="flex gap-2">
+          {isMbti && a.result?.type && (
+            <Button size="sm" variant="secondary" onClick={() => exportMbtiPdf(a.result, {
+              candidateName: session.candidate_name ?? a.candidates?.full_name,
+              candidateCode: session.code,
+              position: a.candidates?.position ?? undefined,
+              attemptId: a.id,
+              finishedAt: a.finished_at,
+              score: a.score,
+            })}>
+              <FileDown className="mr-2 h-4 w-4" /> Unduh PDF MBTI
+            </Button>
+          )}
+          <Button size="sm" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Cetak</Button>
+        </div>
       </div>
       <div>
         <h1 className="font-display text-2xl font-bold text-primary">Hasil — {t?.name}</h1>
