@@ -65,8 +65,7 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
   .inputValidator((d) => CodeInput.parse(d))
   .handler(async ({ data }) => {
     const sb = await admin();
-    const { data: codeRow } = await sb.from("candidate_codes").select("id").eq("code", data.code.toUpperCase()).maybeSingle();
-    if (!codeRow) throw new Error("Kode tidak valid.");
+    const codeRow = await resolveActiveCode(sb, data.code);
     const [candQ, filesQ, testsQ, attemptsQ] = await Promise.all([
       sb.from("candidates").select("*").eq("code_id", codeRow.id).single(),
       sb.from("candidate_files").select("*").eq("candidate_id", (await sb.from("candidates").select("id").eq("code_id", codeRow.id).single()).data?.id ?? ""),
@@ -95,8 +94,7 @@ export const candidateSaveProfile = createServerFn({ method: "POST" })
   .inputValidator((d) => ProfileInput.parse(d))
   .handler(async ({ data }) => {
     const sb = await admin();
-    const { data: codeRow } = await sb.from("candidate_codes").select("id").eq("code", data.code.toUpperCase()).maybeSingle();
-    if (!codeRow) throw new Error("Kode tidak valid.");
+    const codeRow = await resolveActiveCode(sb, data.code);
     const { code: _c, ...rest } = data;
     const { error } = await sb.from("candidates").update({ ...rest, data_completed: true }).eq("code_id", codeRow.id);
     if (error) throw new Error(error.message);
@@ -117,8 +115,7 @@ export const candidateUploadFile = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     if (data.file_size > 10 * 1024 * 1024) throw new Error("Ukuran file maksimal 10MB.");
     const sb = await admin();
-    const { data: codeRow } = await sb.from("candidate_codes").select("id").eq("code", data.code.toUpperCase()).maybeSingle();
-    if (!codeRow) throw new Error("Kode tidak valid.");
+    const codeRow = await resolveActiveCode(sb, data.code);
     const { data: cand } = await sb.from("candidates").select("id").eq("code_id", codeRow.id).single();
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const buf = Buffer.from(data.base64, "base64");
@@ -148,8 +145,7 @@ export const candidateStartTest = createServerFn({ method: "POST" })
   .inputValidator((d) => StartTestInput.parse(d))
   .handler(async ({ data }) => {
     const sb = await admin();
-    const { data: codeRow } = await sb.from("candidate_codes").select("id").eq("code", data.code.toUpperCase()).maybeSingle();
-    if (!codeRow) throw new Error("Kode tidak valid.");
+    const codeRow = await resolveActiveCode(sb, data.code);
     const { data: cand } = await sb.from("candidates").select("id, data_completed").eq("code_id", codeRow.id).single();
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     if (!cand.data_completed) throw new Error("Lengkapi data diri terlebih dahulu.");
@@ -172,8 +168,7 @@ export const candidateGetAttempt = createServerFn({ method: "POST" })
   .inputValidator((d) => AttemptInput.parse(d))
   .handler(async ({ data }) => {
     const sb = await admin();
-    const { data: codeRow } = await sb.from("candidate_codes").select("id").eq("code", data.code.toUpperCase()).maybeSingle();
-    if (!codeRow) throw new Error("Kode tidak valid.");
+    const codeRow = await resolveActiveCode(sb, data.code);
     const { data: cand } = await sb.from("candidates").select("id").eq("code_id", codeRow.id).single();
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: attempt, error } = await sb
@@ -200,8 +195,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
   .inputValidator((d) => SubmitTestInput.parse(d))
   .handler(async ({ data }) => {
     const sb = await admin();
-    const { data: codeRow } = await sb.from("candidate_codes").select("id").eq("code", data.code.toUpperCase()).maybeSingle();
-    if (!codeRow) throw new Error("Kode tidak valid.");
+    const codeRow = await resolveActiveCode(sb, data.code);
     const { data: cand } = await sb.from("candidates").select("id").eq("code_id", codeRow.id).single();
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: attempt } = await sb.from("test_attempts").select("*, tests(*)").eq("id", data.attempt_id).eq("candidate_id", cand.id).single();
