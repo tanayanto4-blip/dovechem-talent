@@ -31,6 +31,15 @@ const CANDIDATE_RPC_FNS = [
   "candidateSubmitTest",
 ];
 
+/** Slice `src` from `export const <name>` up to the next `export const` (or EOF). */
+function extractHandlerBody(src: string, name: string): string {
+  const start = src.indexOf(`export const ${name}`);
+  if (start < 0) throw new Error(`missing export const ${name}`);
+  const nextExport = src.indexOf("export const ", start + 1);
+  return src.slice(start, nextExport === -1 ? undefined : nextExport);
+}
+
+
 describe("candidate endpoints never expose correct_answer", () => {
   it("exports the candidate-facing server functions we expect to audit", () => {
     for (const name of CANDIDATE_RPC_FNS) {
