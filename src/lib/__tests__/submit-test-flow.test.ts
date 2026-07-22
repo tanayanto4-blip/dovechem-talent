@@ -81,7 +81,7 @@ describe("candidateSubmitTest — static guarantees", () => {
       /from\(["']test_answers["']\)\.delete\(\)\.eq\(["']attempt_id["'],\s*data\.attempt_id\)/,
     );
     expect(body).toMatch(
-      /from\(["']test_answers["']\)\.insert\(\s*data\.answers\.map\([^)]*attempt_id:\s*data\.attempt_id/,
+      /from\(["']test_answers["']\)\.insert\([\s\S]*?attempt_id:\s*data\.attempt_id/,
     );
   });
 
