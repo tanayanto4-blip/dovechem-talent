@@ -91,6 +91,9 @@ function MbtiAdmin() {
   const [importText, setImportText] = useState("");
   const [importRunning, setImportRunning] = useState(false);
   const [importLog, setImportLog] = useState<{ ok: number; fail: number; errors: string[] } | null>(null);
+  type ImportIssue = { rowIdx: number; number: number | null; kind: string; severity: "error" | "warning"; message: string };
+  type ImportPreview = { rows: Array<{ rowIdx: number; number: number | null; row: ImportRow; valid: boolean; overwrite: boolean; issues: ImportIssue[] }>; issues: ImportIssue[]; validCount: number; overwriteCount: number; source: "csv" | "json" };
+  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkRunning, setBulkRunning] = useState<null | "on" | "off" | "delete">(null);
   const bulkFn = useServerFn(setMbtiQuestionsActive);
@@ -334,44 +337,107 @@ function MbtiAdmin() {
     });
   }
 
-  async function handleImport() {
+  const MBTI_PAIRS: Record<string, string> = { E: "I", I: "E", S: "N", N: "S", T: "F", F: "T", J: "P", P: "J" };
+
+  function runPreview() {
     if (!activeTestId) return;
     const trimmed = importText.trim();
-    let rows: ImportRow[] = [];
+    if (!trimmed) { toast.error("Isi CSV atau JSON dulu"); return; }
     const isJson = trimmed.startsWith("{") || trimmed.startsWith("[");
+    let rows: ImportRow[] = [];
     try {
       rows = isJson ? parseJsonImport(trimmed) : parseCsv(importText);
     } catch (e: any) {
       toast.error(`Gagal membaca ${isJson ? "JSON" : "CSV"}: ${e?.message ?? "format tidak valid"}`);
+      setImportPreview(null);
       return;
     }
-    if (!rows.length) { toast.error(`${isJson ? "JSON" : "CSV"} kosong atau format tidak dikenali`); return; }
+    if (!rows.length) { toast.error(`${isJson ? "JSON" : "CSV"} kosong atau format tidak dikenali`); setImportPreview(null); return; }
+
+    const existingNums = new Set(questions.map((q) => q.question_number));
+    const seenInFile = new Map<number, number>(); // num -> first rowIdx
+    const aggregate: ImportIssue[] = [];
+    const parsedNums: (number | null)[] = [];
+
+    // First pass — assign numbers (auto for missing), detect in-file duplicates
+    let auto = nextNumber;
+    const takenAuto = new Set(existingNums);
+    for (let i = 0; i < rows.length; i++) {
+      const raw = Number(rows[i].number);
+      let num: number | null = null;
+      if (Number.isFinite(raw) && raw >= 1) num = raw;
+      else { while (takenAuto.has(auto)) auto++; num = auto; takenAuto.add(auto); auto++; }
+      parsedNums.push(num);
+    }
+
+    const detailed = rows.map((r, i) => {
+      const issues: ImportIssue[] = [];
+      const num = parsedNums[i];
+      const push = (kind: string, severity: "error" | "warning", message: string) => {
+        const iss: ImportIssue = { rowIdx: i, number: num, kind, severity, message };
+        issues.push(iss); aggregate.push(iss);
+      };
+
+      // Nomor kosong (info) — hanya jika input asli tidak berupa angka valid
+      const rawNum = Number(r.number);
+      if (!Number.isFinite(rawNum) || rawNum < 1) {
+        push("missing_number", "warning", `Baris ${i + 1}: nomor kosong → otomatis diberi #${num}`);
+      }
+      // Duplikat di dalam file
+      if (num != null) {
+        const first = seenInFile.get(num);
+        if (first !== undefined) push("duplicate_number", "error", `Baris ${i + 1}: nomor #${num} duplikat (juga di baris ${first + 1})`);
+        else seenInFile.set(num, i);
+      }
+      // Pernyataan kosong
+      if (!r.a_label?.trim()) push("empty_statement", "error", `Baris ${i + 1} (#${num}): pernyataan A kosong`);
+      if (!r.b_label?.trim()) push("empty_statement", "error", `Baris ${i + 1} (#${num}): pernyataan B kosong`);
+      // Dimensi valid & pasangan MBTI
+      const aDim = String(r.a_dim ?? "").toUpperCase();
+      const bDim = String(r.b_dim ?? "").toUpperCase();
+      const aOk = DIM_LIST.includes(aDim as Dim);
+      const bOk = DIM_LIST.includes(bDim as Dim);
+      if (!aOk) push("invalid_dimension", "error", `Baris ${i + 1} (#${num}): dimensi A "${r.a_dim ?? ""}" tidak valid`);
+      if (!bOk) push("invalid_dimension", "error", `Baris ${i + 1} (#${num}): dimensi B "${r.b_dim ?? ""}" tidak valid`);
+      if (aOk && bOk) {
+        if (aDim === bDim) push("invalid_pair", "error", `Baris ${i + 1} (#${num}): A dan B pada dimensi yang sama (${aDim})`);
+        else if (MBTI_PAIRS[aDim] !== bDim) push("invalid_pair", "error", `Baris ${i + 1} (#${num}): pasangan ${aDim}/${bDim} bukan pasangan MBTI (harus E/I · S/N · T/F · J/P)`);
+      }
+
+      const overwrite = num != null && existingNums.has(num);
+      if (overwrite) push("overwrite", "warning", `Baris ${i + 1} (#${num}): akan menimpa soal yang sudah ada`);
+
+      const valid = !issues.some((x) => x.severity === "error");
+      return { rowIdx: i, number: num, row: r, valid, overwrite, issues };
+    });
+
+    const validCount = detailed.filter((d) => d.valid).length;
+    const overwriteCount = detailed.filter((d) => d.overwrite && d.valid).length;
+    setImportPreview({ rows: detailed, issues: aggregate, validCount, overwriteCount, source: isJson ? "json" : "csv" });
+    setImportLog(null);
+  }
+
+  async function handleImport() {
+    if (!activeTestId || !importPreview) return;
+    const isJson = importPreview.source === "json";
+    const valid = importPreview.rows.filter((d) => d.valid && d.number != null);
+    if (!valid.length) { toast.error("Tidak ada baris valid untuk diimpor"); return; }
     setImportRunning(true);
     setImportLog(null);
-    const usedNums = new Set(questions.map((q) => q.question_number));
-    let auto = nextNumber;
     let ok = 0, fail = 0;
     const errors: string[] = [];
     const toDraft: number[] = [];
     const toPublish: number[] = [];
-    for (let i = 0; i < rows.length; i++) {
-      const r = rows[i];
+    for (const d of valid) {
+      const r = d.row; const num = d.number!;
       try {
-        let num = Number(r.number);
-        if (!Number.isFinite(num) || num < 1) { while (usedNums.has(auto)) auto++; num = auto; }
-        usedNums.add(num); if (num >= auto) auto = num + 1;
-        const aDim = String(r.a_dim ?? "").toUpperCase() as Dim;
-        const bDim = String(r.b_dim ?? "").toUpperCase() as Dim;
-        if (!DIM_LIST.includes(aDim) || !DIM_LIST.includes(bDim)) throw new Error(`Dimensi tidak valid (${r.a_dim}/${r.b_dim})`);
-        if (aDim === bDim) throw new Error("Dimensi A dan B harus berbeda");
-        if (!r.a_label?.trim() || !r.b_label?.trim()) throw new Error("Pernyataan A/B kosong");
         await upsertFn({ data: {
           test_id: activeTestId,
           question_number: num,
           question_text: (r.question_text?.trim() || "Pilih pernyataan yang paling menggambarkan diri Anda."),
           options: [
-            { key: "A", label: r.a_label.trim(), dimension: aDim },
-            { key: "B", label: r.b_label.trim(), dimension: bDim },
+            { key: "A", label: r.a_label!.trim(), dimension: String(r.a_dim).toUpperCase() as Dim },
+            { key: "B", label: r.b_label!.trim(), dimension: String(r.b_dim).toUpperCase() as Dim },
           ],
         }});
         if (isJson && r.active === false) toDraft.push(num);
@@ -379,10 +445,9 @@ function MbtiAdmin() {
         ok++;
       } catch (e: any) {
         fail++;
-        errors.push(`Baris ${i + 1}: ${e?.message ?? "gagal"}`);
+        errors.push(`Baris ${d.rowIdx + 1} (#${num}): ${e?.message ?? "gagal"}`);
       }
     }
-    // Apply publish/draft status carried by JSON export
     if (isJson && (toDraft.length || toPublish.length)) {
       try {
         const refetched = await detailFn({ data: { id: activeTestId } });
@@ -395,11 +460,14 @@ function MbtiAdmin() {
         errors.push(`Gagal menerapkan status publish/draft: ${e?.message ?? ""}`);
       }
     }
+    const skipped = importPreview.rows.length - valid.length;
+    if (skipped > 0) errors.unshift(`${skipped} baris dilewati karena tidak valid (lihat preview).`);
     setImportRunning(false);
     setImportLog({ ok, fail, errors });
-    if (ok) toast.success(`${ok} soal diimpor${isJson ? " (JSON)" : ""}`);
+    if (ok) toast.success(`${ok} soal diimpor${isJson ? " (JSON)" : ""}${skipped ? `, ${skipped} dilewati` : ""}`);
     if (fail) toast.error(`${fail} baris gagal`);
     qc.invalidateQueries({ queryKey: ["admin-mbti", activeTestId] });
+    setImportPreview(null);
   }
 
   function downloadTemplate() {
@@ -757,7 +825,7 @@ function MbtiAdmin() {
       </Dialog>
 
 
-      <Dialog open={importOpen} onOpenChange={(o) => { if (!importRunning) { setImportOpen(o); if (!o) { setImportText(""); setImportLog(null); } } }}>
+      <Dialog open={importOpen} onOpenChange={(o) => { if (!importRunning) { setImportOpen(o); if (!o) { setImportText(""); setImportLog(null); setImportPreview(null); } } }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle>Impor Soal MBTI dari CSV / JSON</DialogTitle></DialogHeader>
           <div className="space-y-3">
@@ -776,7 +844,7 @@ function MbtiAdmin() {
                     <Upload className="mr-1 h-3.5 w-3.5" /> Pilih file .csv
                     <input type="file" accept=".csv,text/csv" className="hidden" onChange={async (e) => {
                       const f = e.target.files?.[0]; if (!f) return;
-                      const text = await f.text(); setImportText(text); e.target.value = "";
+                      const text = await f.text(); setImportText(text); setImportPreview(null); e.target.value = "";
                     }} />
                   </label>
                 </Button>
@@ -785,7 +853,7 @@ function MbtiAdmin() {
                     <Upload className="mr-1 h-3.5 w-3.5" /> Pilih file .json
                     <input type="file" accept=".json,application/json" className="hidden" onChange={async (e) => {
                       const f = e.target.files?.[0]; if (!f) return;
-                      const text = await f.text(); setImportText(text); e.target.value = "";
+                      const text = await f.text(); setImportText(text); setImportPreview(null); e.target.value = "";
                     }} />
                   </label>
                 </Button>
@@ -795,12 +863,47 @@ function MbtiAdmin() {
               <Label className="text-xs">Isi CSV atau JSON</Label>
               <textarea
                 value={importText}
-                onChange={(e) => setImportText(e.target.value)}
-                rows={10}
+                onChange={(e) => { setImportText(e.target.value); setImportPreview(null); }}
+                rows={8}
                 className="mt-1 w-full rounded-md border bg-background p-2 font-mono text-xs"
                 placeholder={'CSV: number,question_text,a_label,a_dim,b_label,b_dim\natau JSON: { "format": "mbti-bank-soal", "questions": [ ... ] }'}
               />
             </div>
+
+            {importPreview && (
+              <div className="rounded-md border p-3 text-sm">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">Total: {importPreview.rows.length}</Badge>
+                  <Badge className="bg-success text-success-foreground">Valid: {importPreview.validCount}</Badge>
+                  <Badge variant="destructive">Bermasalah: {importPreview.rows.length - importPreview.validCount}</Badge>
+                  {importPreview.overwriteCount > 0 && (
+                    <Badge variant="secondary">Akan menimpa: {importPreview.overwriteCount}</Badge>
+                  )}
+                  <Badge variant="outline" className="uppercase">{importPreview.source}</Badge>
+                </div>
+                {importPreview.issues.length === 0 ? (
+                  <div className="flex items-center gap-2 text-success"><CheckCircle2 className="h-4 w-4" /> Tidak ada masalah — siap diimpor.</div>
+                ) : (
+                  <>
+                    <div className="mb-1 text-xs text-muted-foreground">
+                      Baris yang bermasalah <b>tidak akan diimpor</b>. Perbaiki lalu klik <b>Cek ulang</b>.
+                    </div>
+                    <ul className="max-h-52 overflow-auto divide-y rounded border">
+                      {importPreview.issues.map((iss, i) => (
+                        <li key={i} className="flex items-start gap-2 p-2 text-xs">
+                          <Badge
+                            variant={iss.severity === "error" ? "destructive" : "secondary"}
+                            className="mt-0.5 shrink-0 text-[10px] uppercase"
+                          >{iss.kind.replace(/_/g, " ")}</Badge>
+                          <span className="flex-1">{iss.message}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            )}
+
             {importLog && (
               <div className="rounded-md border p-3 text-sm">
                 <div><b className="text-success">Sukses:</b> {importLog.ok} · <b className="text-destructive">Gagal:</b> {importLog.fail}</div>
@@ -814,8 +917,16 @@ function MbtiAdmin() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setImportOpen(false)} disabled={importRunning}>Tutup</Button>
-            <Button onClick={handleImport} disabled={importRunning || !importText.trim()}>
-              {importRunning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />} Impor
+            <Button variant="outline" onClick={runPreview} disabled={importRunning || !importText.trim()}>
+              <Search className="mr-2 h-4 w-4" /> {importPreview ? "Cek ulang" : "Cek & Preview"}
+            </Button>
+            <Button
+              onClick={handleImport}
+              disabled={importRunning || !importPreview || importPreview.validCount === 0}
+              title={!importPreview ? "Klik Cek & Preview lebih dulu" : undefined}
+            >
+              {importRunning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+              Impor {importPreview ? `${importPreview.validCount} valid` : ""}
             </Button>
           </DialogFooter>
         </DialogContent>
