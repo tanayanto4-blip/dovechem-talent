@@ -82,6 +82,20 @@ function DocumentsBank() {
     window.open(url, "_blank");
   }
 
+  const [previewing, setPreviewing] = useState<null | { file: any; url: string; kind: "image" | "pdf" | "other" }>(null);
+  const [previewLoading, setPreviewLoading] = useState<string | null>(null);
+
+  async function preview(f: any) {
+    const kind = mimeKind(f.file_name, f.mime_type);
+    setPreviewLoading(f.id);
+    try {
+      const { url } = await signed({ data: { path: f.file_path } });
+      setPreviewing({ file: f, url, kind });
+    } finally {
+      setPreviewLoading(null);
+    }
+  }
+
   const totalSize = filtered.reduce((s, f) => s + (f.file_size ?? 0), 0);
 
   return (
