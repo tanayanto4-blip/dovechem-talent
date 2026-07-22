@@ -353,7 +353,7 @@ function TakeTest() {
                   </div>
                 )}
               </div>
-              {!isDisc && !isMbti && <div className="text-base font-medium">{q.question_text}</div>}
+              {!isDisc && !isMbti && <QuestionText text={q.question_text} />}
               {isMbti ? (
                 <div className="rounded-md border bg-card">
                   {q.question_text && (
