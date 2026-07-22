@@ -6,7 +6,8 @@ import { useCandidateSession } from "@/lib/candidate-session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft, Printer, FileDown } from "lucide-react";
+import { exportMbtiPdf } from "@/lib/mbti-pdf";
 
 export const Route = createFileRoute("/candidate/portal/result/$attemptId")({ component: CandidateResult });
 
