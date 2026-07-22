@@ -49,6 +49,7 @@ export const createCandidateCode = createServerFn({ method: "POST" })
         candidate_name: data.candidate_name,
         candidate_email: data.candidate_email || null,
         position_applied: data.position_applied || null,
+        expires_at: data.expires_at || null,
         created_by: context.userId,
       })
       .select()
