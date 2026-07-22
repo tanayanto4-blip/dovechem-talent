@@ -238,8 +238,6 @@ function TakeTest() {
     ? Object.values(discPicks).filter((p) => p.most && p.least && p.most !== p.least).length
     : Object.keys(answers).filter((k) => (answers[k] ?? "").trim() !== "").length;
 
-  const inflight = useRef(0);
-  const timers = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
   async function persist(qid: string, answer: string) {
     if (!data?.attempt || !session) return;
     inflight.current += 1;
