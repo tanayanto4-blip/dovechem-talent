@@ -361,6 +361,80 @@ function MbtiAdmin() {
     URL.revokeObjectURL(url);
   }
 
+  function csvEscape(v: unknown): string {
+    const s = v == null ? "" : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  function exportRows(): QRow[] {
+    const src = selected.size > 0 ? questions.filter((q) => selected.has(q.id)) : questions;
+    return [...src].sort((a, b) => a.question_number - b.question_number);
+  }
+  function triggerDownload(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+  function exportCsv() {
+    const rows = exportRows();
+    if (!rows.length) { toast.error("Tidak ada soal untuk diekspor."); return; }
+    const header = ["number", "question_text", "a_label", "a_dim", "b_label", "b_dim", "active", "dimension"];
+    const lines = [header.join(",")];
+    for (const q of rows) {
+      const a = q.options?.find((o) => o.key === "A");
+      const b = q.options?.find((o) => o.key === "B");
+      lines.push([
+        q.question_number, q.question_text ?? "",
+        a?.label ?? "", a?.dimension ?? "",
+        b?.label ?? "", b?.dimension ?? "",
+        q.active === false ? "draft" : "published",
+        q.dimension ?? "",
+      ].map(csvEscape).join(","));
+    }
+    const stamp = new Date().toISOString().slice(0, 10);
+    const scope = selected.size > 0 ? `terpilih-${rows.length}` : `all-${rows.length}`;
+    triggerDownload(
+      new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8" }),
+      `mbti-bank-soal-${scope}-${stamp}.csv`,
+    );
+    toast.success(`Diekspor ${rows.length} soal ke CSV.`);
+  }
+  function exportJson() {
+    const rows = exportRows();
+    if (!rows.length) { toast.error("Tidak ada soal untuk diekspor."); return; }
+    const payload = {
+      format: "mbti-bank-soal",
+      version: 1,
+      exported_at: new Date().toISOString(),
+      test_id: activeTestId,
+      test_name: activeTest?.name ?? null,
+      count: rows.length,
+      scope: selected.size > 0 ? "selected" : "all",
+      questions: rows.map((q) => {
+        const a = q.options?.find((o) => o.key === "A");
+        const b = q.options?.find((o) => o.key === "B");
+        return {
+          number: q.question_number,
+          question_text: q.question_text ?? "",
+          dimension: q.dimension ?? null,
+          status: q.active === false ? "draft" : "published",
+          active: q.active !== false,
+          options: {
+            A: { label: a?.label ?? "", dimension: a?.dimension ?? null },
+            B: { label: b?.label ?? "", dimension: b?.dimension ?? null },
+          },
+        };
+      }),
+    };
+    const stamp = new Date().toISOString().slice(0, 10);
+    const scope = selected.size > 0 ? `terpilih-${rows.length}` : `all-${rows.length}`;
+    triggerDownload(
+      new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" }),
+      `mbti-bank-soal-${scope}-${stamp}.json`,
+    );
+    toast.success(`Diekspor ${rows.length} soal ke JSON.`);
+  }
+
+
 
   if (loadingTests) return <div className="text-muted-foreground">Memuat...</div>;
   if (!mbtiTests.length) return <div className="rounded-md border bg-muted/40 p-6 text-sm text-muted-foreground">Belum ada test bertipe MBTI.</div>;
