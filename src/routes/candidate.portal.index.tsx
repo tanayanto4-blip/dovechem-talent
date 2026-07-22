@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateGetProfile } from "@/lib/candidate.functions";
 import { useCandidateSession } from "@/lib/candidate-session";
+import { computeChecklist } from "@/lib/document-checklist";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Circle, User, Upload, ClipboardList, ArrowRight } from "lucide-react";
+import { CheckCircle2, Circle, User, Upload, ClipboardList, ArrowRight, XCircle } from "lucide-react";
 
 export const Route = createFileRoute("/candidate/portal/")({
   component: PortalHome,
