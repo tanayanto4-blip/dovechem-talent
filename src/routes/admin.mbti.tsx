@@ -22,7 +22,7 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, Pencil, Plus, Trash2, Search, Upload, Download } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2, Search, Upload, Download, Eye } from "lucide-react";
 
 export const Route = createFileRoute("/admin/mbti")({
   head: () => ({ meta: [
