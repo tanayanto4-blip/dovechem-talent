@@ -22,16 +22,24 @@ function CodesPage() {
   const create = useServerFn(createCandidateCode);
   const bulkCreate = useServerFn(bulkCreateCandidateCodes);
   const bulkActive = useServerFn(bulkSetCodesActive);
+  const bulkExpiry = useServerFn(bulkSetCodesExpiry);
+  const setExpiry = useServerFn(setCodeExpiry);
   const toggle = useServerFn(toggleCode);
   const del = useServerFn(deleteCode);
   const { data } = useQuery({ queryKey: ["codes"], queryFn: () => list({ data: {} as never }) });
   const [open, setOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
-  const [form, setForm] = useState({ candidate_name: "", candidate_email: "", position_applied: "", code: "" });
-  const [bulkForm, setBulkForm] = useState({ count: 300, prefix: "DOV", name_prefix: "Kandidat", position_applied: "", start_number: 1 });
+  const [form, setForm] = useState({ candidate_name: "", candidate_email: "", position_applied: "", code: "", expires_at: "" });
+  const [bulkForm, setBulkForm] = useState({ count: 300, prefix: "DOV", name_prefix: "Kandidat", position_applied: "", start_number: 1, expires_at: "" });
   const [saving, setSaving] = useState(false);
   const [bulkSaving, setBulkSaving] = useState(false);
   const [autoSaving, setAutoSaving] = useState(false);
+
+  function toIso(local: string): string | null {
+    if (!local) return null;
+    const d = new Date(local);
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  }
 
   async function onAuto() {
     const n = Number(prompt("Berapa kode akses yang dibuat otomatis?", "300")) || 0;
