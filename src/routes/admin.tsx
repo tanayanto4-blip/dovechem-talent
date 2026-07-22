@@ -2,7 +2,8 @@ import { createFileRoute, Link, Outlet, redirect, useNavigate, useRouterState } 
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getMyRoles } from "@/lib/admin.functions";
+import { useEffect, useRef } from "react";
+import { getMyRoles, logStaffAccess } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Beaker, LayoutDashboard, KeyRound, Users, LogOut, UserCog, ClipboardList, ShieldCheck } from "lucide-react";
 
