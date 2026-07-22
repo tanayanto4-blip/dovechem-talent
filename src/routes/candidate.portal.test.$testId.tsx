@@ -367,17 +367,11 @@ function TakeTest() {
               </div>
               {!isDisc && !isMbti && <div className="text-base font-medium">{q.question_text}</div>}
               {isWpt && WPT_IMAGES[q.question_number] && (
-                <figure className="mt-3 w-full overflow-hidden rounded-md border bg-white p-2 sm:p-3">
-                  <img
-                    src={WPT_IMAGES[q.question_number].url}
-                    alt={`Ilustrasi soal WPT nomor ${q.question_number}`}
-                    className="mx-auto block h-auto w-full max-w-full object-contain sm:max-h-[60vh] sm:w-auto"
-                    loading="lazy"
-                  />
-                  <figcaption className="mt-2 text-center text-[11px] leading-snug text-muted-foreground sm:text-xs">
-                    {WPT_IMAGES[q.question_number].caption}
-                  </figcaption>
-                </figure>
+                <WptImageFigure
+                  url={WPT_IMAGES[q.question_number].url}
+                  caption={WPT_IMAGES[q.question_number].caption}
+                  number={q.question_number}
+                />
               )}
               {isMbti ? (
                 <div className="rounded-md border bg-card">
