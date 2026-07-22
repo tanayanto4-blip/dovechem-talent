@@ -26,6 +26,7 @@ function CandidateResult() {
   const t = a.tests;
   const answerMap = new Map<string, any>((a.test_answers ?? []).map((x: any) => [x.question_id, x]));
   const isDisc = t?.test_type === "disc";
+  const isMbti = t?.test_type === "mbti";
 
   return (
     <div className="space-y-6 print-area">
