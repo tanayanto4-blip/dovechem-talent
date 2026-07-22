@@ -1,12 +1,50 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { listAuditLogs } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, RefreshCw, ShieldCheck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ChevronLeft, ChevronRight, Download, RefreshCw, ShieldCheck, X } from "lucide-react";
+
+export const Route = createFileRoute("/admin/audit")({
+  head: () => ({
+    meta: [
+      { title: "Audit Log — Admin PT Dover Chemical" },
+      { name: "description", content: "Jejak aktivitas admin/HR: aktivasi kode kandidat dan akses lembar jawaban." },
+    ],
+  }),
+  component: AuditPage,
+});
+
+type Row = {
+  id: string;
+  actor_id: string | null;
+  actor_type: "staff" | "candidate" | "system" | string;
+  actor_label: string | null;
+  action: string;
+  target_type: string;
+  target_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  actor: { full_name: string | null; username: string | null } | null;
+};
+
+const ACTION_LABEL: Record<string, string> = {
+  "code.activate": "Aktivasi kode",
+  "code.deactivate": "Nonaktifkan kode",
+  "code.activate_bulk": "Aktivasi kode (bulk)",
+  "code.deactivate_bulk": "Nonaktifkan kode (bulk)",
+  "attempt.view": "Lihat lembar jawaban",
+  "attempt.submit": "Kandidat submit tes",
+  "admin.access": "Akses dashboard admin",
+};
+
+const PAGE_SIZE = 50;
+const EXPORT_LIMIT = 500;
 
 function toCsv(rows: Row[]): string {
   const headers = ["waktu", "actor_type", "actor_name", "actor_id", "action", "action_label", "target_type", "target_id", "metadata"];
@@ -45,49 +83,53 @@ function downloadCsv(rows: Row[]) {
   URL.revokeObjectURL(url);
 }
 
-export const Route = createFileRoute("/admin/audit")({
-  head: () => ({
-    meta: [
-      { title: "Audit Log — Admin PT Dover Chemical" },
-      { name: "description", content: "Jejak aktivitas admin/HR: aktivasi kode kandidat dan akses lembar jawaban." },
-    ],
-  }),
-  component: AuditPage,
-});
-
-type Row = {
-  id: string;
-  actor_id: string | null;
-  actor_type: "staff" | "candidate" | "system" | string;
-  actor_label: string | null;
-  action: string;
-  target_type: string;
-  target_id: string | null;
-  metadata: Record<string, unknown> | null;
-  created_at: string;
-  actor: { full_name: string | null; username: string | null } | null;
-};
-
-const ACTION_LABEL: Record<string, string> = {
-  "code.activate": "Aktivasi kode",
-  "code.deactivate": "Nonaktifkan kode",
-  "code.activate_bulk": "Aktivasi kode (bulk)",
-  "code.deactivate_bulk": "Nonaktifkan kode (bulk)",
-  "attempt.view": "Lihat lembar jawaban",
-  "attempt.submit": "Kandidat submit tes",
-  "admin.access": "Akses dashboard admin",
-};
+// Local datetime <input type="datetime-local"> value -> ISO string (or null).
+function localToIso(v: string): string | null {
+  if (!v) return null;
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
 
 function AuditPage() {
   const fetchLogs = useServerFn(listAuditLogs);
-  const [filter, setFilter] = useState<string | null>(null);
+  const [action, setAction] = useState<string | null>(null);
+  const [targetId, setTargetId] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [page, setPage] = useState(0);
+
+  const queryArgs = useMemo(
+    () => ({
+      limit: PAGE_SIZE,
+      offset: page * PAGE_SIZE,
+      action,
+      target_id: targetId.trim() || null,
+      from: localToIso(from),
+      to: localToIso(to),
+    }),
+    [action, targetId, from, to, page],
+  );
+
   const q = useQuery({
-    queryKey: ["audit-logs", filter],
-    queryFn: () => fetchLogs({ data: { limit: 200, action: filter } }),
+    queryKey: ["audit-logs", queryArgs],
+    queryFn: () => fetchLogs({ data: queryArgs }),
   });
   const rows: Row[] = (q.data?.logs ?? []) as Row[];
+  const total = q.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const start = total === 0 ? 0 : page * PAGE_SIZE + 1;
+  const end = Math.min(total, page * PAGE_SIZE + rows.length);
 
-  const filters: Array<{ key: string | null; label: string }> = [
+  const resetPage = () => setPage(0);
+  const clearAll = () => {
+    setAction(null);
+    setTargetId("");
+    setFrom("");
+    setTo("");
+    setPage(0);
+  };
+
+  const actionFilters: Array<{ key: string | null; label: string }> = [
     { key: null, label: "Semua" },
     { key: "admin.access", label: "Akses Admin" },
     { key: "code.activate", label: "Aktivasi" },
@@ -97,6 +139,19 @@ function AuditPage() {
     { key: "attempt.view", label: "Lihat Jawaban" },
     { key: "attempt.submit", label: "Submit Tes" },
   ];
+
+  async function exportAllMatching() {
+    const res = await fetchLogs({
+      data: {
+        ...queryArgs,
+        limit: EXPORT_LIMIT,
+        offset: 0,
+      },
+    });
+    downloadCsv((res?.logs ?? []) as Row[]);
+  }
+
+  const hasActiveFilter = action !== null || targetId.trim() !== "" || from !== "" || to !== "";
 
   return (
     <div className="space-y-4">
@@ -111,7 +166,10 @@ function AuditPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => downloadCsv(rows)} disabled={rows.length === 0}>
-            <Download className="mr-2 h-4 w-4" /> Ekspor CSV
+            <Download className="mr-2 h-4 w-4" /> CSV halaman
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportAllMatching} disabled={total === 0}>
+            <Download className="mr-2 h-4 w-4" /> CSV semua (maks {EXPORT_LIMIT})
           </Button>
           <Button variant="outline" size="sm" onClick={() => q.refetch()} disabled={q.isFetching}>
             <RefreshCw className={`mr-2 h-4 w-4 ${q.isFetching ? "animate-spin" : ""}`} /> Refresh
@@ -119,24 +177,105 @@ function AuditPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {filters.map((f) => (
-          <Button
-            key={f.label}
-            size="sm"
-            variant={filter === f.key ? "default" : "outline"}
-            onClick={() => setFilter(f.key)}
-          >
-            {f.label}
-          </Button>
-        ))}
-      </div>
+      <Card>
+        <CardContent className="space-y-4 pt-6">
+          <div className="flex flex-wrap gap-2">
+            {actionFilters.map((f) => (
+              <Button
+                key={f.label}
+                size="sm"
+                variant={action === f.key ? "default" : "outline"}
+                onClick={() => {
+                  setAction(f.key);
+                  resetPage();
+                }}
+              >
+                {f.label}
+              </Button>
+            ))}
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-4">
+            <div className="space-y-1 md:col-span-2">
+              <Label htmlFor="audit-target">Target ID (kandidat / kode / attempt)</Label>
+              <Input
+                id="audit-target"
+                placeholder="Cocokkan sebagian UUID…"
+                value={targetId}
+                onChange={(e) => {
+                  setTargetId(e.target.value);
+                  resetPage();
+                }}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="audit-from">Dari</Label>
+              <Input
+                id="audit-from"
+                type="datetime-local"
+                value={from}
+                onChange={(e) => {
+                  setFrom(e.target.value);
+                  resetPage();
+                }}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="audit-to">Sampai</Label>
+              <Input
+                id="audit-to"
+                type="datetime-local"
+                value={to}
+                onChange={(e) => {
+                  setTo(e.target.value);
+                  resetPage();
+                }}
+              />
+            </div>
+          </div>
+
+          {hasActiveFilter ? (
+            <div>
+              <Button variant="ghost" size="sm" onClick={clearAll}>
+                <X className="mr-2 h-4 w-4" /> Reset filter
+              </Button>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
           <CardTitle className="text-base">
-            {q.isLoading ? "Memuat…" : `${rows.length} catatan terbaru`}
+            {q.isLoading
+              ? "Memuat…"
+              : total === 0
+                ? "Tidak ada catatan"
+                : `Menampilkan ${start}–${end} dari ${total}`}
           </CardTitle>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0 || q.isFetching}
+              aria-label="Halaman sebelumnya"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              {page + 1} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setPage((p) => (p + 1 < totalPages ? p + 1 : p))}
+              disabled={page + 1 >= totalPages || q.isFetching}
+              aria-label="Halaman berikutnya"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -192,9 +331,17 @@ function AuditPage() {
                       <td className="px-4 py-2">
                         <div className="text-xs">{r.target_type}</div>
                         {r.target_id ? (
-                          <div className="font-mono text-[10px] text-muted-foreground">
+                          <button
+                            type="button"
+                            className="font-mono text-[10px] text-muted-foreground underline-offset-2 hover:underline"
+                            onClick={() => {
+                              setTargetId(r.target_id!);
+                              resetPage();
+                            }}
+                            title="Filter berdasarkan target ini"
+                          >
                             {r.target_id.slice(0, 8)}…
-                          </div>
+                          </button>
                         ) : null}
                       </td>
                       <td className="px-4 py-2 text-xs text-muted-foreground">
