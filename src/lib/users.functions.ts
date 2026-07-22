@@ -59,10 +59,10 @@ const CreateUserInput = z.object({
 
 /** Admin: create a new HR / admin user. */
 export const createAdminUser = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator((d) => CreateUserInput.parse(d))
   .handler(async ({ context, data }) => {
-    const admin = await ensureAdmin(context.userId);
+    const admin = await getAdminClient();
     const { data: created, error } = await admin.auth.admin.createUser({
       email: data.email,
       password: data.password,
@@ -76,9 +76,9 @@ export const createAdminUser = createServerFn({ method: "POST" })
   });
 
 export const listAdminUsers = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .handler(async ({ context }) => {
-    const admin = await ensureAdmin(context.userId);
+    const admin = await getAdminClient();
     const { data: users, error } = await admin.auth.admin.listUsers({ perPage: 200 });
     if (error) throw new Error(error.message);
     const { data: roles } = await admin.from("user_roles").select("user_id, role");
@@ -105,11 +105,11 @@ export const listAdminUsers = createServerFn({ method: "GET" })
   });
 
 export const deleteAdminUser = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     if (data.id === context.userId) throw new Error("Tidak bisa menghapus akun sendiri.");
-    const admin = await ensureAdmin(context.userId);
+    const admin = await getAdminClient();
     await admin.from("user_roles").delete().eq("user_id", data.id);
     const { error } = await admin.auth.admin.deleteUser(data.id);
     if (error) throw new Error(error.message);
@@ -117,10 +117,10 @@ export const deleteAdminUser = createServerFn({ method: "POST" })
   });
 
 export const resetUserPassword = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator((d) => z.object({ id: z.string().uuid(), password: z.string().min(8).max(72) }).parse(d))
   .handler(async ({ context, data }) => {
-    const admin = await ensureAdmin(context.userId);
+    const admin = await getAdminClient();
     const { error } = await admin.auth.admin.updateUserById(data.id, { password: data.password });
     if (error) throw new Error(error.message);
     return { ok: true };
