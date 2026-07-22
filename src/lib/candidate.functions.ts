@@ -222,13 +222,38 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: attempt } = await sb.from("test_attempts").select("*, tests(*)").eq("id", data.attempt_id).eq("candidate_id", cand.id).single();
     if (!attempt) throw new Error("Attempt tidak valid.");
-    if (attempt.status === "finished") throw new Error("Test sudah selesai.");
+    // Idempotent: if already finished, return the persisted score/result without
+    // touching answers or re-running scoring. Repeat submits are a no-op.
+    if (attempt.status === "finished") {
+      return {
+        ok: true,
+        score: (attempt as any).score ?? 0,
+        result: (attempt as any).result ?? {},
+        idempotent: true,
+      };
+    }
 
-    // persist answers
-    await sb.from("test_answers").delete().eq("attempt_id", data.attempt_id);
-    if (data.answers.length > 0) {
-      const { error } = await sb.from("test_answers").insert(data.answers.map((a) => ({ attempt_id: data.attempt_id, ...a })));
+    // Persist answers idempotently. Upsert on (attempt_id, question_id) so a
+    // retried submit for the same attempt cannot create duplicate rows, and
+    // delete any prior rows whose questions are no longer in the payload.
+    const questionIds = data.answers.map((a) => a.question_id);
+    if (questionIds.length > 0) {
+      const del = await sb
+        .from("test_answers")
+        .delete()
+        .eq("attempt_id", data.attempt_id)
+        .not("question_id", "in", `(${questionIds.map((id) => `"${id}"`).join(",")})`);
+      if (del.error) throw new Error(del.error.message);
+      const { error } = await sb
+        .from("test_answers")
+        .upsert(
+          data.answers.map((a) => ({ attempt_id: data.attempt_id, ...a })),
+          { onConflict: "attempt_id,question_id" },
+        );
       if (error) throw new Error(error.message);
+    } else {
+      const del = await sb.from("test_answers").delete().eq("attempt_id", data.attempt_id);
+      if (del.error) throw new Error(del.error.message);
     }
 
     // scoring
