@@ -1,18 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStaff } from "@/lib/staff-middleware";
 import { z } from "zod";
 
-async function ensureStaff(supabase: any, userId: string) {
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .in("role", ["admin", "hr"]);
-  if (error) throw new Error(error.message);
-  if (!data || data.length === 0) {
-    throw new Error("Forbidden: hanya staff (admin/hr) yang boleh mengakses.");
-  }
-}
+
 
 
 /** Bootstrap: if no admin exists, promote current user to admin. */
@@ -51,7 +42,7 @@ function randomCode() {
 }
 
 export const createCandidateCode = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStaff])
   .inputValidator((d) => CreateCodeInput.parse(d))
   .handler(async ({ context, data }) => {
     const code = (data.code?.trim() || randomCode()).toUpperCase();
@@ -81,7 +72,7 @@ const BulkInput = z.object({
 });
 
 export const bulkCreateCandidateCodes = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStaff])
   .inputValidator((d) => BulkInput.parse(d))
   .handler(async ({ context, data }) => {
     const alpha = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -126,7 +117,7 @@ export const bulkCreateCandidateCodes = createServerFn({ method: "POST" })
   });
 
 export const bulkSetCodesActive = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStaff])
   .inputValidator((d) => z.object({ active: z.boolean() }).parse(d))
   .handler(async ({ context, data }) => {
     const { error, count } = await context.supabase
@@ -138,7 +129,7 @@ export const bulkSetCodesActive = createServerFn({ method: "POST" })
   });
 
 export const listCandidateCodes = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStaff])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("candidate_codes")
@@ -149,7 +140,7 @@ export const listCandidateCodes = createServerFn({ method: "GET" })
   });
 
 export const toggleCode = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStaff])
   .inputValidator((d) => z.object({ id: z.string().uuid(), active: z.boolean() }).parse(d))
   .handler(async ({ context, data }) => {
     const { error } = await context.supabase.from("candidate_codes").update({ active: data.active }).eq("id", data.id);
@@ -158,7 +149,7 @@ export const toggleCode = createServerFn({ method: "POST" })
   });
 
 export const deleteCode = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStaff])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     const { error } = await context.supabase.from("candidate_codes").delete().eq("id", data.id);
@@ -167,7 +158,7 @@ export const deleteCode = createServerFn({ method: "POST" })
   });
 
 export const listCandidates = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStaff])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("candidates")
@@ -178,7 +169,7 @@ export const listCandidates = createServerFn({ method: "GET" })
   });
 
 export const getCandidateDetail = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStaff])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     const { data: cand, error } = await context.supabase
@@ -191,7 +182,7 @@ export const getCandidateDetail = createServerFn({ method: "POST" })
   });
 
 export const getFileSignedUrl = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStaff])
   .inputValidator((d) => z.object({ path: z.string() }).parse(d))
   .handler(async ({ context, data }) => {
     const { data: signed, error } = await context.supabase.storage.from("candidate-files").createSignedUrl(data.path, 60 * 10);
@@ -200,9 +191,8 @@ export const getFileSignedUrl = createServerFn({ method: "POST" })
   });
 
 export const listTests = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStaff])
   .handler(async ({ context }) => {
-    await ensureStaff(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("tests")
@@ -213,10 +203,9 @@ export const listTests = createServerFn({ method: "GET" })
   });
 
 export const getTestWithQuestions = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStaff])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
-    await ensureStaff(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [t, q] = await Promise.all([
       supabaseAdmin.from("tests").select("*").eq("id", data.id).single(),
@@ -227,10 +216,9 @@ export const getTestWithQuestions = createServerFn({ method: "POST" })
   });
 
 export const getAttemptDetail = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStaff])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
-    await ensureStaff(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: attempt, error } = await supabaseAdmin
       .from("test_attempts")
@@ -247,7 +235,7 @@ export const getAttemptDetail = createServerFn({ method: "POST" })
   });
 
 export const dashboardStats = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStaff])
   .handler(async ({ context }) => {
     const [codes, cands, attempts] = await Promise.all([
       context.supabase.from("candidate_codes").select("id, active", { count: "exact" }),
@@ -270,7 +258,7 @@ export const dashboardStats = createServerFn({ method: "GET" })
   });
 
 export const setCodeExpiry = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStaff])
   .inputValidator((d) => z.object({ id: z.string().uuid(), expires_at: z.string().datetime().nullable() }).parse(d))
   .handler(async ({ context, data }) => {
     const { error } = await context.supabase.from("candidate_codes").update({ expires_at: data.expires_at }).eq("id", data.id);
@@ -279,7 +267,7 @@ export const setCodeExpiry = createServerFn({ method: "POST" })
   });
 
 export const bulkSetCodesExpiry = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireStaff])
   .inputValidator((d) => z.object({ expires_at: z.string().datetime().nullable() }).parse(d))
   .handler(async ({ context, data }) => {
     const { error, count } = await context.supabase
