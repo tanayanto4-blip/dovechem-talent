@@ -56,17 +56,43 @@ function BerkasPage() {
   }
 
   return (
-    <Card className="shadow-card">
-      <CardHeader>
-        <CardTitle className="font-display">Upload Berkas</CardTitle>
-        <p className="text-sm text-muted-foreground">Format: PDF/JPG/PNG. Maksimal 10 MB per file.</p>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {FILE_TYPES.map((ft) => (
-          <FileRow key={ft.key} ft={ft} existing={uploaded.get(ft.key)} onFile={(f: File) => handleFile(ft.key, f)} />
-        ))}
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between gap-3">
+            <span>Checklist Dokumen Wajib</span>
+            {checklist.complete
+              ? <Badge className="bg-success">Lengkap</Badge>
+              : <Badge variant="secondary">{checklist.done}/{checklist.total}</Badge>}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-5">
+            {checklist.items.map((i) => (
+              <div
+                key={i.key}
+                className={`flex items-center gap-2 rounded-md border p-2 text-sm ${i.uploaded ? "border-success/40 bg-success/5" : "border-muted"}`}
+              >
+                {i.uploaded ? <CheckCircle2 className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
+                <span className={i.uploaded ? "font-medium" : "text-muted-foreground"}>{i.label}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle className="font-display">Upload Berkas</CardTitle>
+          <p className="text-sm text-muted-foreground">Format: PDF/JPG/PNG. Maksimal 10 MB per file.</p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {FILE_TYPES.map((ft) => (
+            <FileRow key={ft.key} ft={ft} existing={uploaded.get(ft.key)} onFile={(f: File) => handleFile(ft.key, f)} />
+          ))}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
