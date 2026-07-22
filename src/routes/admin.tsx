@@ -29,7 +29,9 @@ function AdminLayout() {
     { to: "/admin/candidates", label: "Kandidat", icon: Users },
     { to: "/admin/tests", label: "Bank Soal", icon: ClipboardList },
     { to: "/admin/users", label: "User Admin/HR", icon: UserCog },
+    { to: "/admin/audit", label: "Audit Log", icon: ShieldCheck },
   ];
+
 
   async function signOut() {
     await qc.cancelQueries();
