@@ -217,9 +217,10 @@ function TakeTest() {
       toast.success(`Test selesai. Skor: ${res.score}`);
       qc.invalidateQueries({ queryKey: ["candidate-profile"] });
       nav({ to: "/candidate/portal/tests" });
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: any) { toast.error(e?.message || "Gagal mengirim jawaban. Coba lagi."); }
     finally { setSubmitting(false); }
   }
+
 
   if (!session) {
     return (
