@@ -8,7 +8,7 @@ import { z } from "zod";
 
 /** Bootstrap: if no admin exists, promote current user to admin. */
 export const claimFirstAdmin = createServerFn({ method: "POST" })
-  .middleware([requireStaff])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { count } = await supabaseAdmin.from("user_roles").select("*", { count: "exact", head: true }).eq("role", "admin");
@@ -20,7 +20,7 @@ export const claimFirstAdmin = createServerFn({ method: "POST" })
   });
 
 export const getMyRoles = createServerFn({ method: "GET" })
-  .middleware([requireStaff])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
     return { roles: (data ?? []).map((r) => r.role as string) };
