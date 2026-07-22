@@ -33,7 +33,9 @@ function BerkasPage() {
     queryFn: () => getProfile({ data: { code: session!.code } }),
     enabled: !!session,
   });
-  const uploaded = new Map((data?.files ?? []).map((f: any) => [f.file_type, f]));
+  const files = (data?.files ?? []) as any[];
+  const uploaded = new Map(files.map((f: any) => [f.file_type, f]));
+  const checklist = computeChecklist(files);
 
   async function handleFile(type: string, file: File) {
     if (file.size > 10 * 1024 * 1024) { toast.error("Ukuran maksimal 10MB"); return; }
