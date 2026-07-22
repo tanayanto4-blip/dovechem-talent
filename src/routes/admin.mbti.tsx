@@ -8,6 +8,7 @@ import {
   setTestActive,
   upsertMbtiQuestion,
   deleteMbtiQuestion,
+  deleteMbtiQuestions,
   setMbtiQuestionsActive,
   reorderMbtiQuestions,
 } from "@/lib/admin.functions";
@@ -91,8 +92,28 @@ function MbtiAdmin() {
   const [importRunning, setImportRunning] = useState(false);
   const [importLog, setImportLog] = useState<{ ok: number; fail: number; errors: string[] } | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [bulkRunning, setBulkRunning] = useState<null | "on" | "off">(null);
+  const [bulkRunning, setBulkRunning] = useState<null | "on" | "off" | "delete">(null);
   const bulkFn = useServerFn(setMbtiQuestionsActive);
+  const bulkDeleteFn = useServerFn(deleteMbtiQuestions);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+
+  async function handleBulkDelete() {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+    setBulkRunning("delete");
+    try {
+      const res: any = await bulkDeleteFn({ data: { ids } });
+      const skipped = res?.skipped ?? 0;
+      toast.success(`Menghapus ${res?.deleted ?? ids.length} soal${skipped ? ` (${skipped} dilewati)` : ""}.`);
+      setSelected(new Set());
+      setConfirmBulkDelete(false);
+      qc.invalidateQueries({ queryKey: ["admin-mbti", activeTestId] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal menghapus soal.");
+    } finally {
+      setBulkRunning(null);
+    }
+  }
 
   const filteredIds = useMemo(() => filtered.map((q) => q.id), [filtered]);
   const allSelected = filteredIds.length > 0 && filteredIds.every((id) => selected.has(id));
@@ -420,6 +441,16 @@ function MbtiAdmin() {
                 {bulkRunning === "off" ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <EyeOff className="mr-1 h-3.5 w-3.5" />}
                 Unpublish terpilih
               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-destructive hover:text-destructive"
+                disabled={selected.size === 0 || !!bulkRunning}
+                onClick={() => setConfirmBulkDelete(true)}
+              >
+                {bulkRunning === "delete" ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <Trash2 className="mr-1 h-3.5 w-3.5" />}
+                Hapus terpilih
+              </Button>
               {selected.size > 0 && (
                 <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())} disabled={!!bulkRunning}>Bersihkan</Button>
               )}
@@ -571,6 +602,32 @@ function MbtiAdmin() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={confirmBulkDelete} onOpenChange={(o) => { if (!o && bulkRunning !== "delete") setConfirmBulkDelete(false); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Hapus {selected.size} soal MBTI terpilih?</DialogTitle></DialogHeader>
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>Tindakan ini <b>permanen</b> dan menghapus soal beserta jawaban terkait dari attempt manapun.</p>
+            <div className="max-h-48 overflow-auto rounded border bg-muted/30 p-2 text-xs">
+              Nomor yang akan dihapus:{" "}
+              {questions
+                .filter((q) => selected.has(q.id))
+                .map((q) => q.question_number)
+                .sort((a, b) => a - b)
+                .join(", ") || "-"}
+            </div>
+            <p>Aksi ini tercatat pada Audit Log sebagai <code>mbti.question.bulk_delete</code>.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmBulkDelete(false)} disabled={bulkRunning === "delete"}>Batal</Button>
+            <Button variant="destructive" onClick={handleBulkDelete} disabled={bulkRunning === "delete" || selected.size === 0}>
+              {bulkRunning === "delete" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              Hapus {selected.size} soal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog open={importOpen} onOpenChange={(o) => { if (!importRunning) { setImportOpen(o); if (!o) { setImportText(""); setImportLog(null); } } }}>
         <DialogContent className="max-w-2xl">
