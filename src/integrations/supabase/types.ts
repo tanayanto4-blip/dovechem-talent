@@ -89,6 +89,59 @@ export type Database = {
         }
         Relationships: []
       }
+      candidate_file_versions: {
+        Row: {
+          candidate_id: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string
+          id: string
+          mime_type: string | null
+          uploaded_at: string
+          uploader_id: string | null
+          uploader_kind: string
+          uploader_label: string | null
+          version: number
+        }
+        Insert: {
+          candidate_id: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type: string
+          id?: string
+          mime_type?: string | null
+          uploaded_at?: string
+          uploader_id?: string | null
+          uploader_kind: string
+          uploader_label?: string | null
+          version: number
+        }
+        Update: {
+          candidate_id?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string
+          id?: string
+          mime_type?: string | null
+          uploaded_at?: string
+          uploader_id?: string | null
+          uploader_kind?: string
+          uploader_label?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_file_versions_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidate_files: {
         Row: {
           candidate_id: string
