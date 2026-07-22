@@ -97,6 +97,60 @@ function DocumentsBank() {
     }
   }
 
+  const [zipping, setZipping] = useState(false);
+  const [zipProgress, setZipProgress] = useState(0);
+
+  function safeName(s: string) {
+    return (s || "unknown").replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_").slice(0, 80);
+  }
+
+  async function downloadZip() {
+    if (filtered.length === 0 || zipping) return;
+    setZipping(true);
+    setZipProgress(0);
+    try {
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      const used = new Set<string>();
+      let done = 0;
+      for (const f of filtered) {
+        try {
+          const { url } = await signed({ data: { path: f.file_path } });
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const buf = await res.arrayBuffer();
+          const folder = safeName(f.candidates?.full_name ?? "tanpa-nama");
+          let name = `${safeName(f.file_type || "file")}__${safeName(f.file_name)}`;
+          let path = `${folder}/${name}`;
+          let i = 1;
+          while (used.has(path)) { path = `${folder}/${i++}_${name}`; }
+          used.add(path);
+          zip.file(path, buf);
+        } catch (e) {
+          console.warn("Gagal mengunduh:", f.file_name, e);
+        } finally {
+          done += 1;
+          setZipProgress(Math.round((done / filtered.length) * 100));
+        }
+      }
+      const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
+      const a = document.createElement("a");
+      const href = URL.createObjectURL(blob);
+      a.href = href;
+      a.download = `bank-dokumen-kandidat_${new Date().toISOString().slice(0, 10)}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(href);
+      toast.success(`ZIP siap · ${used.size} berkas`);
+    } catch (e: any) {
+      toast.error(`Gagal membuat ZIP: ${e?.message ?? e}`);
+    } finally {
+      setZipping(false);
+      setZipProgress(0);
+    }
+  }
+
   const totalSize = filtered.reduce((s, f) => s + (f.file_size ?? 0), 0);
 
   return (
