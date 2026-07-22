@@ -167,12 +167,25 @@ function TakeTest() {
               <CardTitle className="font-display text-2xl text-primary">{data.test.name}</CardTitle>
               <p className="text-sm text-muted-foreground">{data.test.description}</p>
             </div>
-            <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
-              <div className="flex items-center gap-2"><Timer className="h-4 w-4" /> <span className="font-mono text-lg">{mins}:{secs}</span></div>
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
+                <div className="flex items-center gap-2"><Timer className="h-4 w-4" /> <span className="font-mono text-lg">{mins}:{secs}</span></div>
+              </div>
             </div>
           </div>
           <div className="mt-4 space-y-2">
-            <div className="flex justify-between text-xs text-muted-foreground"><span>Progress</span><span>{answered}/{total} soal</span></div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex items-center gap-3">
+                <span>Progress</span>
+                <span className="inline-flex items-center gap-1 rounded-full border bg-background px-2 py-0.5">
+                  {saveState === "saving" && (<><Loader2 className="h-3 w-3 animate-spin" /> Menyimpan...</>)}
+                  {saveState === "saved" && (<><Check className="h-3 w-3 text-success" /> Tersimpan otomatis</>)}
+                  {saveState === "error" && (<><AlertCircle className="h-3 w-3 text-destructive" /> Gagal menyimpan</>)}
+                  {saveState === "idle" && (<><Check className="h-3 w-3 opacity-40" /> Autosave aktif</>)}
+                </span>
+              </div>
+              <span>{answered}/{total} soal</span>
+            </div>
             <Progress value={(answered / total) * 100} className="h-2" />
           </div>
         </CardHeader>
