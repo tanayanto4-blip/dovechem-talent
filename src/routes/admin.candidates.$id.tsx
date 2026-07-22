@@ -2,10 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getCandidateDetail, getFileSignedUrl } from "@/lib/admin.functions";
+import { computeChecklist } from "@/lib/document-checklist";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Download, XCircle } from "lucide-react";
 
 export const Route = createFileRoute("/admin/candidates/$id")({ component: CandidateDetail });
 
