@@ -383,7 +383,7 @@ function TakeTest() {
 
 
               ) : (
-                <RadioGroup className="mt-4 space-y-2" value={answers[q.id] ?? ""} onValueChange={(v) => setAnswers({ ...answers, [q.id]: v })}>
+                <RadioGroup className="mt-4 space-y-2" value={answers[q.id] ?? ""} onValueChange={(v) => pickMcq(q.id, v)}>
                   {(q.options ?? []).map((opt: any) => (
                     <label key={opt.key} className="flex cursor-pointer items-center gap-3 rounded-md border p-3 hover:bg-accent">
                       <RadioGroupItem value={opt.key} id={`${q.id}-${opt.key}`} />
