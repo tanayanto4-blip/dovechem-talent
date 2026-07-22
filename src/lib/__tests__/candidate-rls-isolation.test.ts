@@ -82,8 +82,7 @@ describe("candidate RLS — static scope checks", () => {
         const start = m.index!;
         const rest = candidateSrc.slice(start + m[0].length);
         const nextFrom = rest.search(/\.from\(/);
-        const nextTerm = rest.search(/[;\n]\s*(?:const |let |return |await |sb\.|\}|\]|\))/);
-        const cut = [nextFrom, nextTerm].filter((n) => n >= 0).sort((a, b) => a - b)[0] ?? rest.length;
+        const cut = nextFrom >= 0 ? nextFrom : Math.min(rest.length, 600);
         const chunk = rest.slice(0, cut);
         const scopedDirect =
           /\.eq\(["']candidate_id["'],\s*cand\.id/.test(chunk) ||
