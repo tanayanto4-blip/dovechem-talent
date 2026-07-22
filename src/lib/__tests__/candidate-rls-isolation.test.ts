@@ -106,7 +106,23 @@ describe("candidate RLS — static scope checks", () => {
   }
 
   for (const table of CANDIDATE_SCOPED_TABLES) {
-    it(`every ${table} query in candidate.functions.ts filters by candidate_id`, () => {
+    it(`every handler touching ${table} establishes candidate ownership`, () => {
+      const handlersTouching = HANDLERS.filter((h) =>
+        new RegExp(`\\.from\\(["']${table}["']\\)`).test(h.body),
+      );
+      expect(handlersTouching.length, `expected a handler that touches ${table}`).toBeGreaterThan(0);
+      for (const h of handlersTouching) {
+        const hasOwnershipCheck =
+          /\.eq\(["']candidate_id["'],\s*cand\.id/.test(h.body) ||
+          /candidate_id:\s*cand\.id/.test(h.body);
+        expect(
+          hasOwnershipCheck,
+          `${h.name} touches ${table} but never scopes by cand.id`,
+        ).toBe(true);
+      }
+    });
+
+    it(`every ${table} chain is either owner-scoped or targets an already-verified attempt/candidate`, () => {
       const openings = [...candidateSrc.matchAll(new RegExp(`\\.from\\(["']${table}["']\\)`, "g"))];
       expect(openings.length, `expected at least one ${table} query`).toBeGreaterThan(0);
       for (const m of openings) {
@@ -114,11 +130,14 @@ describe("candidate RLS — static scope checks", () => {
         const scopedByCandidate =
           /\.eq\(["']candidate_id["']/.test(chain) ||
           /candidate_id:\s*cand\.id/.test(chain);
-        const scopedByAttempt =
+        // `.update/.delete` chains may target by primary key when a
+        // preceding SELECT in the same handler already proved ownership.
+        const scopedByVerifiedId =
           /\.eq\(["']attempt_id["'],\s*data\.attempt_id/.test(chain) ||
-          /attempt_id:\s*data\.attempt_id/.test(chain);
+          /attempt_id:\s*data\.attempt_id/.test(chain) ||
+          /\.eq\(["']id["'],\s*data\.attempt_id/.test(chain);
         expect(
-          scopedByCandidate || scopedByAttempt,
+          scopedByCandidate || scopedByVerifiedId,
           `unscoped ${table} chain:\n${chain}`,
         ).toBe(true);
       }
