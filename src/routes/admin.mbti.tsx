@@ -308,24 +308,60 @@ function MbtiAdmin() {
     finally { setDeletingId(null); }
   }
 
+  type ImportRow = { number?: string | number; question_text?: string; a_label?: string; a_dim?: string; b_label?: string; b_dim?: string; active?: boolean };
+
+  function parseJsonImport(text: string): ImportRow[] {
+    const data = JSON.parse(text);
+    const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.questions) ? data.questions : [];
+    if (data && !Array.isArray(data) && data.format && data.format !== "mbti-bank-soal") {
+      throw new Error(`Format JSON tidak dikenal: ${data.format}`);
+    }
+    return list.map((q: any): ImportRow => {
+      const opts = Array.isArray(q?.options)
+        ? { A: q.options.find((o: any) => o?.key === "A"), B: q.options.find((o: any) => o?.key === "B") }
+        : (q?.options ?? {});
+      const a = opts?.A ?? {};
+      const b = opts?.B ?? {};
+      return {
+        number: q?.number ?? q?.question_number,
+        question_text: q?.question_text,
+        a_label: a?.label,
+        a_dim: a?.dimension,
+        b_label: b?.label,
+        b_dim: b?.dimension,
+        active: q?.active === false || q?.status === "draft" ? false : true,
+      };
+    });
+  }
+
   async function handleImport() {
     if (!activeTestId) return;
-    const rows = parseCsv(importText);
-    if (!rows.length) { toast.error("CSV kosong atau format tidak dikenali"); return; }
+    const trimmed = importText.trim();
+    let rows: ImportRow[] = [];
+    const isJson = trimmed.startsWith("{") || trimmed.startsWith("[");
+    try {
+      rows = isJson ? parseJsonImport(trimmed) : parseCsv(importText);
+    } catch (e: any) {
+      toast.error(`Gagal membaca ${isJson ? "JSON" : "CSV"}: ${e?.message ?? "format tidak valid"}`);
+      return;
+    }
+    if (!rows.length) { toast.error(`${isJson ? "JSON" : "CSV"} kosong atau format tidak dikenali`); return; }
     setImportRunning(true);
     setImportLog(null);
     const usedNums = new Set(questions.map((q) => q.question_number));
     let auto = nextNumber;
     let ok = 0, fail = 0;
     const errors: string[] = [];
+    const toDraft: number[] = [];
+    const toPublish: number[] = [];
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
       try {
         let num = Number(r.number);
         if (!Number.isFinite(num) || num < 1) { while (usedNums.has(auto)) auto++; num = auto; }
         usedNums.add(num); if (num >= auto) auto = num + 1;
-        const aDim = r.a_dim?.toUpperCase() as Dim;
-        const bDim = r.b_dim?.toUpperCase() as Dim;
+        const aDim = String(r.a_dim ?? "").toUpperCase() as Dim;
+        const bDim = String(r.b_dim ?? "").toUpperCase() as Dim;
         if (!DIM_LIST.includes(aDim) || !DIM_LIST.includes(bDim)) throw new Error(`Dimensi tidak valid (${r.a_dim}/${r.b_dim})`);
         if (aDim === bDim) throw new Error("Dimensi A dan B harus berbeda");
         if (!r.a_label?.trim() || !r.b_label?.trim()) throw new Error("Pernyataan A/B kosong");
@@ -338,15 +374,30 @@ function MbtiAdmin() {
             { key: "B", label: r.b_label.trim(), dimension: bDim },
           ],
         }});
+        if (isJson && r.active === false) toDraft.push(num);
+        else if (isJson && r.active === true) toPublish.push(num);
         ok++;
       } catch (e: any) {
         fail++;
         errors.push(`Baris ${i + 1}: ${e?.message ?? "gagal"}`);
       }
     }
+    // Apply publish/draft status carried by JSON export
+    if (isJson && (toDraft.length || toPublish.length)) {
+      try {
+        const refetched = await detailFn({ data: { id: activeTestId } });
+        const byNum = new Map<number, string>(((refetched?.questions ?? []) as any[]).map((q) => [q.question_number, q.id]));
+        const draftIds = toDraft.map((n) => byNum.get(n)).filter(Boolean) as string[];
+        const pubIds = toPublish.map((n) => byNum.get(n)).filter(Boolean) as string[];
+        if (draftIds.length) await bulkFn({ data: { ids: draftIds, active: false } });
+        if (pubIds.length) await bulkFn({ data: { ids: pubIds, active: true } });
+      } catch (e: any) {
+        errors.push(`Gagal menerapkan status publish/draft: ${e?.message ?? ""}`);
+      }
+    }
     setImportRunning(false);
     setImportLog({ ok, fail, errors });
-    if (ok) toast.success(`${ok} soal diimpor`);
+    if (ok) toast.success(`${ok} soal diimpor${isJson ? " (JSON)" : ""}`);
     if (fail) toast.error(`${fail} baris gagal`);
     qc.invalidateQueries({ queryKey: ["admin-mbti", activeTestId] });
   }
@@ -454,7 +505,7 @@ function MbtiAdmin() {
             </Select>
           )}
           <Button asChild variant="outline"><Link to="/admin/mbti/preview"><Eye className="mr-2 h-4 w-4" /> Preview</Link></Button>
-          <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-2 h-4 w-4" /> Impor CSV</Button>
+          <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-2 h-4 w-4" /> Impor CSV/JSON</Button>
           <Button variant="outline" onClick={exportCsv}><Download className="mr-2 h-4 w-4" /> Ekspor CSV</Button>
           <Button variant="outline" onClick={exportJson}><Download className="mr-2 h-4 w-4" /> Ekspor JSON</Button>
 
@@ -708,18 +759,18 @@ function MbtiAdmin() {
 
       <Dialog open={importOpen} onOpenChange={(o) => { if (!importRunning) { setImportOpen(o); if (!o) { setImportText(""); setImportLog(null); } } }}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Impor Soal MBTI dari CSV</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Impor Soal MBTI dari CSV / JSON</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div className="rounded-md border bg-muted/40 p-3 text-xs">
-              <div className="font-semibold">Format kolom (baris pertama header):</div>
-              <code className="mt-1 block font-mono">number, question_text, a_label, a_dim, b_label, b_dim</code>
-              <ul className="mt-2 list-disc pl-4 text-muted-foreground">
+              <div className="font-semibold">Dua format didukung:</div>
+              <ul className="mt-1 list-disc pl-4 text-muted-foreground">
+                <li><b>CSV</b> — kolom: <code className="font-mono">number, question_text, a_label, a_dim, b_label, b_dim</code></li>
+                <li><b>JSON</b> — hasil <b>Ekspor JSON</b> dari halaman ini (format <code className="font-mono">mbti-bank-soal</code>). Status <b>publish/draft</b> ikut dipulihkan.</li>
                 <li>Dimensi valid: E, I, S, N, T, F, J, P — pasangan A/B harus berbeda.</li>
-                <li>Kosongkan <b>number</b> untuk penomoran otomatis lanjutan.</li>
-                <li>Baris dengan nomor yang sudah ada akan menimpa soal tersebut.</li>
+                <li>Nomor kosong → penomoran otomatis. Nomor yang sama akan menimpa soal yang ada.</li>
               </ul>
-              <div className="mt-2 flex gap-2">
-                <Button size="sm" variant="outline" onClick={downloadTemplate}><Download className="mr-1 h-3.5 w-3.5" /> Unduh template</Button>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={downloadTemplate}><Download className="mr-1 h-3.5 w-3.5" /> Unduh template CSV</Button>
                 <Button size="sm" variant="outline" asChild>
                   <label className="cursor-pointer">
                     <Upload className="mr-1 h-3.5 w-3.5" /> Pilih file .csv
@@ -729,16 +780,25 @@ function MbtiAdmin() {
                     }} />
                   </label>
                 </Button>
+                <Button size="sm" variant="outline" asChild>
+                  <label className="cursor-pointer">
+                    <Upload className="mr-1 h-3.5 w-3.5" /> Pilih file .json
+                    <input type="file" accept=".json,application/json" className="hidden" onChange={async (e) => {
+                      const f = e.target.files?.[0]; if (!f) return;
+                      const text = await f.text(); setImportText(text); e.target.value = "";
+                    }} />
+                  </label>
+                </Button>
               </div>
             </div>
             <div>
-              <Label className="text-xs">Isi CSV</Label>
+              <Label className="text-xs">Isi CSV atau JSON</Label>
               <textarea
                 value={importText}
                 onChange={(e) => setImportText(e.target.value)}
                 rows={10}
                 className="mt-1 w-full rounded-md border bg-background p-2 font-mono text-xs"
-                placeholder="number,question_text,a_label,a_dim,b_label,b_dim&#10;1,,Saya suka keramaian,E,Saya suka menyendiri,I"
+                placeholder={'CSV: number,question_text,a_label,a_dim,b_label,b_dim\natau JSON: { "format": "mbti-bank-soal", "questions": [ ... ] }'}
               />
             </div>
             {importLog && (
