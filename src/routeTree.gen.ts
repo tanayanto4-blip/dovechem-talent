@@ -18,6 +18,7 @@ import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminCodesRouteImport } from './routes/admin.codes'
 import { Route as AdminCandidatesRouteImport } from './routes/admin.candidates'
+import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as CandidatePortalIndexRouteImport } from './routes/candidate.portal.index'
 import { Route as AdminTestsIndexRouteImport } from './routes/admin.tests.index'
 import { Route as CandidatePortalTestsRouteImport } from './routes/candidate.portal.tests'
@@ -72,6 +73,11 @@ const AdminCodesRoute = AdminCodesRouteImport.update({
 const AdminCandidatesRoute = AdminCandidatesRouteImport.update({
   id: '/candidates',
   path: '/candidates',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAuditRoute = AdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
   getParentRoute: () => AdminRoute,
 } as any)
 const CandidatePortalIndexRoute = CandidatePortalIndexRouteImport.update({
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/admin/audit': typeof AdminAuditRoute
   '/admin/candidates': typeof AdminCandidatesRouteWithChildren
   '/admin/codes': typeof AdminCodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/admin/audit': typeof AdminAuditRoute
   '/admin/candidates': typeof AdminCandidatesRouteWithChildren
   '/admin/codes': typeof AdminCodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/admin/audit': typeof AdminAuditRoute
   '/admin/candidates': typeof AdminCandidatesRouteWithChildren
   '/admin/codes': typeof AdminCodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/admin/audit'
     | '/admin/candidates'
     | '/admin/codes'
     | '/admin/dashboard'
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/admin/audit'
     | '/admin/candidates'
     | '/admin/codes'
     | '/admin/dashboard'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/admin/audit'
     | '/admin/candidates'
     | '/admin/codes'
     | '/admin/dashboard'
@@ -328,6 +340,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCandidatesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/audit': {
+      id: '/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AdminAuditRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/candidate/portal/': {
       id: '/candidate/portal/'
       path: '/'
@@ -414,6 +433,7 @@ const AdminCandidatesRouteWithChildren = AdminCandidatesRoute._addFileChildren(
 )
 
 interface AdminRouteChildren {
+  AdminAuditRoute: typeof AdminAuditRoute
   AdminCandidatesRoute: typeof AdminCandidatesRouteWithChildren
   AdminCodesRoute: typeof AdminCodesRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
@@ -424,6 +444,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAuditRoute: AdminAuditRoute,
   AdminCandidatesRoute: AdminCandidatesRouteWithChildren,
   AdminCodesRoute: AdminCodesRoute,
   AdminDashboardRoute: AdminDashboardRoute,
