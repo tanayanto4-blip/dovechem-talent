@@ -111,7 +111,50 @@ function MbtiAdmin() {
       return next;
     });
   }
-  async function handleBulk(active: boolean) {
+  const PAIRS: Record<Dim, Dim> = { E: "I", I: "E", S: "N", N: "S", T: "F", F: "T", J: "P", P: "J" };
+  type Issue = { qid: string | null; number: number | null; kind: string; message: string };
+  function validateForPublish(items: QRow[]): Issue[] {
+    const issues: Issue[] = [];
+    // per-question checks
+    for (const q of items) {
+      const label = q.question_number;
+      if (!q.question_text || !q.question_text.trim()) {
+        issues.push({ qid: q.id, number: label, kind: "empty_text", message: `Soal #${label}: pernyataan induk kosong.` });
+      }
+      const a = q.options?.find((o) => o.key === "A");
+      const b = q.options?.find((o) => o.key === "B");
+      if (!a || !a.label?.trim()) issues.push({ qid: q.id, number: label, kind: "empty_option", message: `Soal #${label}: opsi A kosong.` });
+      if (!b || !b.label?.trim()) issues.push({ qid: q.id, number: label, kind: "empty_option", message: `Soal #${label}: opsi B kosong.` });
+      const aDim = a?.dimension as Dim | undefined;
+      const bDim = b?.dimension as Dim | undefined;
+      if (!aDim || !DIM_LIST.includes(aDim)) issues.push({ qid: q.id, number: label, kind: "bad_dim", message: `Soal #${label}: dimensi A tidak valid.` });
+      if (!bDim || !DIM_LIST.includes(bDim)) issues.push({ qid: q.id, number: label, kind: "bad_dim", message: `Soal #${label}: dimensi B tidak valid.` });
+      if (aDim && bDim && DIM_LIST.includes(aDim) && DIM_LIST.includes(bDim) && PAIRS[aDim] !== bDim) {
+        issues.push({ qid: q.id, number: label, kind: "invalid_pair", message: `Soal #${label}: pasangan dimensi A/B (${aDim}/${bDim}) tidak valid — harus salah satu dari E/I, S/N, T/F, J/P.` });
+      }
+    }
+    // duplicate & missing numbers across the selected set
+    const nums = items.map((q) => q.question_number).sort((x, y) => x - y);
+    const seen = new Set<number>();
+    const dup = new Set<number>();
+    for (const n of nums) { if (seen.has(n)) dup.add(n); else seen.add(n); }
+    dup.forEach((n) => issues.push({ qid: null, number: n, kind: "duplicate_number", message: `Nomor #${n} duplikat pada beberapa soal.` }));
+    if (nums.length >= 2) {
+      const min = nums[0], max = nums[nums.length - 1];
+      const missing: number[] = [];
+      for (let i = min; i <= max; i++) if (!seen.has(i)) missing.push(i);
+      if (missing.length) {
+        const preview = missing.slice(0, 10).join(", ") + (missing.length > 10 ? `, … (+${missing.length - 10})` : "");
+        issues.push({ qid: null, number: null, kind: "missing_numbers", message: `Nomor hilang dalam rentang ${min}–${max}: ${preview}.` });
+      }
+    }
+    return issues;
+  }
+
+  const [validationIssues, setValidationIssues] = useState<Issue[] | null>(null);
+
+
+  async function runBulkPublish(active: boolean) {
     const ids = Array.from(selected);
     if (!ids.length) return;
     setBulkRunning(active ? "on" : "off");
@@ -127,6 +170,21 @@ function MbtiAdmin() {
       setBulkRunning(null);
     }
   }
+  async function handleBulk(active: boolean) {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+    if (active) {
+      const picked = questions.filter((q) => selected.has(q.id));
+      const issues = validateForPublish(picked);
+      if (issues.length) {
+        setValidationIssues(issues);
+        toast.error(`Publikasi ditolak — ${issues.length} masalah kualitas ditemukan.`);
+        return;
+      }
+    }
+    await runBulkPublish(active);
+  }
+
 
   const reorderFn = useServerFn(reorderMbtiQuestions);
   const [reordering, setReordering] = useState(false);
@@ -568,7 +626,47 @@ function MbtiAdmin() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!validationIssues} onOpenChange={(o) => { if (!o) setValidationIssues(null); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Publikasi ditolak — cek kualitas gagal</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Ditemukan <b>{validationIssues?.length ?? 0}</b> masalah pada {selected.size} soal terpilih. Perbaiki lebih dulu, lalu ulangi publikasi.
+            </p>
+            <div className="max-h-[50vh] overflow-auto rounded border">
+              <ul className="divide-y text-sm">
+                {(validationIssues ?? []).map((iss, idx) => (
+                  <li key={idx} className="flex items-start gap-2 p-2">
+                    <Badge variant="destructive" className="mt-0.5 shrink-0 text-[10px] uppercase">{iss.kind.replace(/_/g, " ")}</Badge>
+                    <span className="flex-1">{iss.message}</span>
+                    {iss.qid && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          const q = questions.find((x) => x.id === iss.qid);
+                          if (q) { setValidationIssues(null); openEdit(q); }
+                        }}
+                      >Perbaiki</Button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-md border bg-muted/30 p-2 text-xs text-muted-foreground">
+              Cek meliputi: pernyataan kosong, opsi kosong, dimensi tidak valid, pasangan A/B di luar E/I · S/N · T/F · J/P, nomor duplikat, dan nomor hilang dalam rentang.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setValidationIssues(null)}>Tutup</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
 
