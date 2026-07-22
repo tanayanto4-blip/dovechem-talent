@@ -308,24 +308,60 @@ function MbtiAdmin() {
     finally { setDeletingId(null); }
   }
 
+  type ImportRow = { number?: string | number; question_text?: string; a_label?: string; a_dim?: string; b_label?: string; b_dim?: string; active?: boolean };
+
+  function parseJsonImport(text: string): ImportRow[] {
+    const data = JSON.parse(text);
+    const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.questions) ? data.questions : [];
+    if (data && !Array.isArray(data) && data.format && data.format !== "mbti-bank-soal") {
+      throw new Error(`Format JSON tidak dikenal: ${data.format}`);
+    }
+    return list.map((q: any): ImportRow => {
+      const opts = Array.isArray(q?.options)
+        ? { A: q.options.find((o: any) => o?.key === "A"), B: q.options.find((o: any) => o?.key === "B") }
+        : (q?.options ?? {});
+      const a = opts?.A ?? {};
+      const b = opts?.B ?? {};
+      return {
+        number: q?.number ?? q?.question_number,
+        question_text: q?.question_text,
+        a_label: a?.label,
+        a_dim: a?.dimension,
+        b_label: b?.label,
+        b_dim: b?.dimension,
+        active: q?.active === false || q?.status === "draft" ? false : true,
+      };
+    });
+  }
+
   async function handleImport() {
     if (!activeTestId) return;
-    const rows = parseCsv(importText);
-    if (!rows.length) { toast.error("CSV kosong atau format tidak dikenali"); return; }
+    const trimmed = importText.trim();
+    let rows: ImportRow[] = [];
+    const isJson = trimmed.startsWith("{") || trimmed.startsWith("[");
+    try {
+      rows = isJson ? parseJsonImport(trimmed) : parseCsv(importText);
+    } catch (e: any) {
+      toast.error(`Gagal membaca ${isJson ? "JSON" : "CSV"}: ${e?.message ?? "format tidak valid"}`);
+      return;
+    }
+    if (!rows.length) { toast.error(`${isJson ? "JSON" : "CSV"} kosong atau format tidak dikenali`); return; }
     setImportRunning(true);
     setImportLog(null);
     const usedNums = new Set(questions.map((q) => q.question_number));
     let auto = nextNumber;
     let ok = 0, fail = 0;
     const errors: string[] = [];
+    const toDraft: number[] = [];
+    const toPublish: number[] = [];
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
       try {
         let num = Number(r.number);
         if (!Number.isFinite(num) || num < 1) { while (usedNums.has(auto)) auto++; num = auto; }
         usedNums.add(num); if (num >= auto) auto = num + 1;
-        const aDim = r.a_dim?.toUpperCase() as Dim;
-        const bDim = r.b_dim?.toUpperCase() as Dim;
+        const aDim = String(r.a_dim ?? "").toUpperCase() as Dim;
+        const bDim = String(r.b_dim ?? "").toUpperCase() as Dim;
         if (!DIM_LIST.includes(aDim) || !DIM_LIST.includes(bDim)) throw new Error(`Dimensi tidak valid (${r.a_dim}/${r.b_dim})`);
         if (aDim === bDim) throw new Error("Dimensi A dan B harus berbeda");
         if (!r.a_label?.trim() || !r.b_label?.trim()) throw new Error("Pernyataan A/B kosong");
@@ -338,15 +374,30 @@ function MbtiAdmin() {
             { key: "B", label: r.b_label.trim(), dimension: bDim },
           ],
         }});
+        if (isJson && r.active === false) toDraft.push(num);
+        else if (isJson && r.active === true) toPublish.push(num);
         ok++;
       } catch (e: any) {
         fail++;
         errors.push(`Baris ${i + 1}: ${e?.message ?? "gagal"}`);
       }
     }
+    // Apply publish/draft status carried by JSON export
+    if (isJson && (toDraft.length || toPublish.length)) {
+      try {
+        const refetched = await detailFn({ data: { id: activeTestId } });
+        const byNum = new Map<number, string>(((refetched?.questions ?? []) as any[]).map((q) => [q.question_number, q.id]));
+        const draftIds = toDraft.map((n) => byNum.get(n)).filter(Boolean) as string[];
+        const pubIds = toPublish.map((n) => byNum.get(n)).filter(Boolean) as string[];
+        if (draftIds.length) await bulkFn({ data: { ids: draftIds, active: false } });
+        if (pubIds.length) await bulkFn({ data: { ids: pubIds, active: true } });
+      } catch (e: any) {
+        errors.push(`Gagal menerapkan status publish/draft: ${e?.message ?? ""}`);
+      }
+    }
     setImportRunning(false);
     setImportLog({ ok, fail, errors });
-    if (ok) toast.success(`${ok} soal diimpor`);
+    if (ok) toast.success(`${ok} soal diimpor${isJson ? " (JSON)" : ""}`);
     if (fail) toast.error(`${fail} baris gagal`);
     qc.invalidateQueries({ queryKey: ["admin-mbti", activeTestId] });
   }
