@@ -27,6 +27,7 @@ const CreateCodeInput = z.object({
   candidate_email: z.string().email().max(200).optional().nullable().or(z.literal("")),
   position_applied: z.string().max(120).optional().nullable(),
   code: z.string().trim().min(4).max(32).optional().nullable(),
+  expires_at: z.string().datetime().optional().nullable(),
 });
 
 function randomCode() {
