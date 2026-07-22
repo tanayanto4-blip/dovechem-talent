@@ -146,11 +146,12 @@ function TakeTest() {
   const submit = useServerFn(candidateSubmitTest);
   const saveAnswer = useServerFn(candidateSaveAnswer);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["start-test", testId, session?.code],
     queryFn: () => start({ data: { code: session!.code, test_id: testId } }),
     enabled: !!session,
     staleTime: Infinity,
+    retry: 1,
   });
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -159,6 +160,9 @@ function TakeTest() {
   const [submitting, setSubmitting] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const hydratedRef = useRef(false);
+  const inflight = useRef(0);
+  const timers = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
+
 
   // Hydrate saved answers on first load so the candidate can resume.
   useEffect(() => {
