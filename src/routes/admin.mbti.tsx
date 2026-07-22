@@ -9,6 +9,7 @@ import {
   upsertMbtiQuestion,
   deleteMbtiQuestion,
   setMbtiQuestionsActive,
+  reorderMbtiQuestions,
 } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, Pencil, Plus, Trash2, Search, Upload, Download, Eye, CheckCircle2, EyeOff } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2, Search, Upload, Download, Eye, CheckCircle2, EyeOff, ArrowUp, ArrowDown, ListOrdered } from "lucide-react";
 
 export const Route = createFileRoute("/admin/mbti")({
   head: () => ({ meta: [
@@ -125,6 +126,48 @@ function MbtiAdmin() {
     } finally {
       setBulkRunning(null);
     }
+  }
+
+  const reorderFn = useServerFn(reorderMbtiQuestions);
+  const [reordering, setReordering] = useState(false);
+  const sortedAll = useMemo(
+    () => [...questions].sort((a, b) => a.question_number - b.question_number),
+    [questions],
+  );
+  async function applyOrder(orderedIds: string[]) {
+    if (!activeTestId) return;
+    setReordering(true);
+    try {
+      await reorderFn({ data: { test_id: activeTestId, ordered_ids: orderedIds } });
+      qc.invalidateQueries({ queryKey: ["admin-mbti", activeTestId] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal mengubah urutan soal.");
+    } finally {
+      setReordering(false);
+    }
+  }
+  async function moveQuestion(id: string, dir: -1 | 1) {
+    const ids = sortedAll.map((q) => q.id);
+    const idx = ids.indexOf(id);
+    const target = idx + dir;
+    if (idx < 0 || target < 0 || target >= ids.length) return;
+    [ids[idx], ids[target]] = [ids[target], ids[idx]];
+    await applyOrder(ids);
+  }
+  async function moveToPosition(id: string, pos: number) {
+    const ids = sortedAll.map((q) => q.id);
+    const idx = ids.indexOf(id);
+    if (idx < 0) return;
+    const clamped = Math.max(1, Math.min(ids.length, Math.floor(pos)));
+    if (clamped - 1 === idx) return;
+    ids.splice(idx, 1);
+    ids.splice(clamped - 1, 0, id);
+    await applyOrder(ids);
+  }
+  async function normalizeNumbers() {
+    if (!sortedAll.length) return;
+    await applyOrder(sortedAll.map((q) => q.id));
+    toast.success("Nomor soal dirapikan menjadi 1..N.");
   }
 
   function openCreate() { setDraft(emptyDraft(nextNumber)); }
@@ -322,6 +365,10 @@ function MbtiAdmin() {
               {selected.size > 0 && (
                 <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())} disabled={!!bulkRunning}>Bersihkan</Button>
               )}
+              <Button size="sm" variant="outline" onClick={normalizeNumbers} disabled={reordering || sortedAll.length === 0} title="Rapikan nomor urut menjadi 1..N sesuai urutan sekarang">
+                {reordering ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <ListOrdered className="mr-1 h-3.5 w-3.5" />}
+                Rapikan nomor
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -337,12 +384,46 @@ function MbtiAdmin() {
                 const b = q.options?.find((o) => o.key === "B");
                 const isActive = q.active !== false;
                 const isChecked = selected.has(q.id);
+                const globalIdx = sortedAll.findIndex((s) => s.id === q.id);
+                const isFirst = globalIdx <= 0;
+                const isLast = globalIdx === sortedAll.length - 1;
+                const filterActive = search.trim().length > 0 || dimFilter !== "all";
                 return (
-                  <div key={q.id} className={`grid gap-3 p-4 md:grid-cols-[32px_56px_1fr_170px_120px] ${isChecked ? "bg-primary/5" : ""}`}>
+                  <div key={q.id} className={`grid gap-3 p-4 md:grid-cols-[32px_120px_1fr_170px_160px] ${isChecked ? "bg-primary/5" : ""}`}>
                     <div className="flex items-start pt-1">
                       <Checkbox checked={isChecked} onCheckedChange={(v) => toggleOne(q.id, v === true)} aria-label={`Pilih soal ${q.question_number}`} />
                     </div>
-                    <div className="text-sm font-mono font-semibold text-muted-foreground">#{q.question_number}</div>
+                    <div className="flex flex-col gap-1">
+                      <div className="text-sm font-mono font-semibold text-muted-foreground">#{q.question_number}</div>
+                      <div className="flex items-center gap-1">
+                        <Button size="icon" variant="outline" className="h-7 w-7" disabled={reordering || isFirst || filterActive} onClick={() => moveQuestion(q.id, -1)} title={filterActive ? "Bersihkan filter untuk memindahkan" : "Naik"} aria-label="Pindah ke atas">
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button size="icon" variant="outline" className="h-7 w-7" disabled={reordering || isLast || filterActive} onClick={() => moveQuestion(q.id, 1)} title={filterActive ? "Bersihkan filter untuk memindahkan" : "Turun"} aria-label="Pindah ke bawah">
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={sortedAll.length}
+                        defaultValue={q.question_number}
+                        key={q.question_number}
+                        disabled={reordering || filterActive}
+                        className="h-7 w-full px-2 text-xs"
+                        title={filterActive ? "Bersihkan filter untuk mengubah posisi" : "Ketik posisi baru lalu tekan Enter"}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            const v = Number((e.target as HTMLInputElement).value);
+                            if (Number.isFinite(v) && v >= 1) moveToPosition(q.id, v);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const v = Number(e.target.value);
+                          if (Number.isFinite(v) && v >= 1 && v !== q.question_number) moveToPosition(q.id, v);
+                        }}
+                      />
+                    </div>
                     <div className="min-w-0 space-y-2">
                       <div className="text-xs text-muted-foreground">{q.question_text}</div>
                       <div className="grid gap-2 sm:grid-cols-2">

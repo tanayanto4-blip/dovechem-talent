@@ -532,3 +532,64 @@ export const setMbtiQuestionsActive = createServerFn({ method: "POST" })
     return { ok: true, updated: count ?? ids.length, skipped: data.ids.length - ids.length };
   });
 
+/** Reassign question_number for MBTI questions to match the given ID order (1..N). */
+export const reorderMbtiQuestions = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) =>
+    z.object({
+      test_id: z.string().uuid(),
+      ordered_ids: z.array(z.string().uuid()).min(1).max(500),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const t = await supabaseAdmin.from("tests").select("test_type").eq("id", data.test_id).single();
+    if (t.error || (t.data as any)?.test_type !== "mbti") throw new Error("Test bukan MBTI.");
+    const cur = await supabaseAdmin
+      .from("test_questions")
+      .select("id, question_number")
+      .eq("test_id", data.test_id);
+    if (cur.error) throw new Error(cur.error.message);
+    const existing = new Map(((cur.data ?? []) as any[]).map((r) => [r.id, r.question_number]));
+    const before = ((cur.data ?? []) as any[])
+      .slice()
+      .sort((a, b) => a.question_number - b.question_number)
+      .map((r) => ({ id: r.id, question_number: r.question_number }));
+    const seen = new Set<string>();
+    const finalOrder: string[] = [];
+    for (const id of data.ordered_ids) {
+      if (!existing.has(id) || seen.has(id)) continue;
+      seen.add(id);
+      finalOrder.push(id);
+    }
+    // Append any missing IDs at the end, preserving their prior order.
+    for (const r of before) if (!seen.has(r.id)) finalOrder.push(r.id);
+
+    // Two-phase update guards against any (test_id, question_number) unique index
+    // by parking everyone in a negative range first, then assigning 1..N.
+    for (let i = 0; i < finalOrder.length; i++) {
+      const { error } = await supabaseAdmin
+        .from("test_questions")
+        .update({ question_number: -(i + 1) })
+        .eq("id", finalOrder[i]);
+      if (error) throw new Error(error.message);
+    }
+    for (let i = 0; i < finalOrder.length; i++) {
+      const { error } = await supabaseAdmin
+        .from("test_questions")
+        .update({ question_number: i + 1 })
+        .eq("id", finalOrder[i]);
+      if (error) throw new Error(error.message);
+    }
+
+    const after = finalOrder.map((id, i) => ({ id, question_number: i + 1 }));
+    await logAudit(context, "mbti.question.reorder", "test", data.test_id, {
+      test_id: data.test_id,
+      count: finalOrder.length,
+      before,
+      after,
+    });
+    return { ok: true, count: finalOrder.length };
+  });
+
+
