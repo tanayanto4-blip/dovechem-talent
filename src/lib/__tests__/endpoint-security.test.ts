@@ -53,7 +53,19 @@ const SENSITIVE_TOKENS = [
   "SUPABASE_DB_URL",
 ];
 
-/** Tables where `.select("*")` would leak an answer key or auth material. */
+/**
+ * Handlers that legitimately `.select("*")` a sensitive table server-side
+ * and DO NOT return those rows to the browser. `candidateSubmitTest` reads
+ * `test_questions.*` to score against `correct_answer` but only returns an
+ * aggregate `{score, result}`. `listAdminUsers` / `createAdminUser` read
+ * `user_roles.*` under `requireAdmin` and return only whitelisted fields.
+ */
+const STAR_SELECT_EXEMPT_FNS = new Set([
+  "candidateSubmitTest",
+  "listAdminUsers",
+  "createAdminUser",
+  "createBootstrapAdmin",
+]);
 const NO_STAR_SELECT_TABLES = ["test_questions", "user_roles"];
 
 describe("endpoint security — role enforcement", () => {
