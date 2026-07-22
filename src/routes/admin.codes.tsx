@@ -186,6 +186,7 @@ function CodesPage() {
                   <TableHead>Posisi</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Digunakan</TableHead>
+                  <TableHead>Masa Berlaku</TableHead>
                   <TableHead>Aktif</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
