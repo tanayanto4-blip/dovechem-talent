@@ -178,9 +178,20 @@ function DocumentsBank() {
                       <TableCell className="text-xs">{humanSize(f.file_size)}</TableCell>
                       <TableCell className="text-xs">{new Date(f.uploaded_at).toLocaleString("id-ID")}</TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" variant="outline" onClick={() => open(f.file_path)}>
-                          <Download className="mr-2 h-3.5 w-3.5" /> Buka
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => preview(f)}
+                            disabled={previewLoading === f.id}
+                          >
+                            <Eye className="mr-2 h-3.5 w-3.5" />
+                            {previewLoading === f.id ? "Memuat..." : "Preview"}
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => open(f.file_path)}>
+                            <Download className="mr-2 h-3.5 w-3.5" /> Buka
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
