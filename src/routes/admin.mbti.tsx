@@ -128,6 +128,48 @@ function MbtiAdmin() {
     }
   }
 
+  const reorderFn = useServerFn(reorderMbtiQuestions);
+  const [reordering, setReordering] = useState(false);
+  const sortedAll = useMemo(
+    () => [...questions].sort((a, b) => a.question_number - b.question_number),
+    [questions],
+  );
+  async function applyOrder(orderedIds: string[]) {
+    if (!activeTestId) return;
+    setReordering(true);
+    try {
+      await reorderFn({ data: { test_id: activeTestId, ordered_ids: orderedIds } });
+      qc.invalidateQueries({ queryKey: ["admin-mbti", activeTestId] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal mengubah urutan soal.");
+    } finally {
+      setReordering(false);
+    }
+  }
+  async function moveQuestion(id: string, dir: -1 | 1) {
+    const ids = sortedAll.map((q) => q.id);
+    const idx = ids.indexOf(id);
+    const target = idx + dir;
+    if (idx < 0 || target < 0 || target >= ids.length) return;
+    [ids[idx], ids[target]] = [ids[target], ids[idx]];
+    await applyOrder(ids);
+  }
+  async function moveToPosition(id: string, pos: number) {
+    const ids = sortedAll.map((q) => q.id);
+    const idx = ids.indexOf(id);
+    if (idx < 0) return;
+    const clamped = Math.max(1, Math.min(ids.length, Math.floor(pos)));
+    if (clamped - 1 === idx) return;
+    ids.splice(idx, 1);
+    ids.splice(clamped - 1, 0, id);
+    await applyOrder(ids);
+  }
+  async function normalizeNumbers() {
+    if (!sortedAll.length) return;
+    await applyOrder(sortedAll.map((q) => q.id));
+    toast.success("Nomor soal dirapikan menjadi 1..N.");
+  }
+
   function openCreate() { setDraft(emptyDraft(nextNumber)); }
   function openEdit(q: QRow) {
     const a = q.options?.find((o) => o.key === "A");
