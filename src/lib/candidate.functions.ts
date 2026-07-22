@@ -29,14 +29,13 @@ export const candidateLogin = createServerFn({ method: "POST" })
   .inputValidator((d) => CodeInput.parse(d))
   .handler(async ({ data }) => {
     const sb = await admin();
+    await resolveActiveCode(sb, data.code);
     const { data: codeRow, error } = await sb
       .from("candidate_codes")
-      .select("id, code, candidate_name, candidate_email, position_applied, active")
+      .select("id, code, candidate_name, candidate_email, position_applied, active, expires_at")
       .eq("code", data.code.toUpperCase())
       .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!codeRow) throw new Error("Kode akses tidak ditemukan.");
-    if (!codeRow.active) throw new Error("Kode akses sudah dinonaktifkan.");
+    if (error || !codeRow) throw new Error("Kode akses tidak ditemukan.");
 
     // upsert candidate row
     let { data: cand } = await sb
