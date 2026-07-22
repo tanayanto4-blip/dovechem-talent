@@ -141,6 +141,76 @@ function TakeTest() {
         </Card>
       )}
 
+      {isMbti && (
+        <Card className="border-primary/30 bg-primary/5 shadow-card">
+          <CardContent className="space-y-4 p-6 text-sm">
+            <div>
+              <div className="font-semibold text-primary">Konsep MBTI</div>
+              <p className="mt-1 text-muted-foreground">
+                MBTI memetakan kecenderungan alami Anda pada 4 pasangan preferensi. Setiap nomor
+                berisi 2 pernyataan (A &amp; B) — pilih salah satu yang <b className="text-foreground">paling menggambarkan</b> diri Anda.
+                Tidak ada jawaban benar/salah; jawablah spontan sesuai diri Anda sehari-hari.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {[
+                {
+                  pair: "E vs I",
+                  title: "Sumber Energi",
+                  left: { k: "E", name: "Extraversion", desc: "Mendapat energi dari dunia luar: interaksi, aktivitas, berbicara." },
+                  right: { k: "I", name: "Introversion", desc: "Mendapat energi dari dunia dalam: refleksi, ide, ketenangan." },
+                },
+                {
+                  pair: "S vs N",
+                  title: "Cara Menyerap Informasi",
+                  left: { k: "S", name: "Sensing", desc: "Fokus pada fakta, detail, pengalaman nyata, dan hal praktis." },
+                  right: { k: "N", name: "Intuition", desc: "Fokus pada pola, kemungkinan, konsep, dan gambaran besar." },
+                },
+                {
+                  pair: "T vs F",
+                  title: "Cara Mengambil Keputusan",
+                  left: { k: "T", name: "Thinking", desc: "Menimbang secara logis, obyektif, berdasar sebab-akibat dan aturan." },
+                  right: { k: "F", name: "Feeling", desc: "Menimbang nilai personal, empati, dampak pada orang lain." },
+                },
+                {
+                  pair: "J vs P",
+                  title: "Gaya Hidup & Kerja",
+                  left: { k: "J", name: "Judging", desc: "Terencana, terstruktur, suka kepastian, jadwal, dan keputusan cepat." },
+                  right: { k: "P", name: "Perceiving", desc: "Fleksibel, spontan, terbuka pada pilihan baru, adaptif." },
+                },
+              ].map((row) => (
+                <div key={row.pair} className="rounded-md border bg-background p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-primary">{row.pair}</span>
+                    <span className="text-[11px] text-muted-foreground">{row.title}</span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded border bg-muted/40 p-2">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-bold">{row.left.k}</span>
+                        <b className="text-foreground">{row.left.name}</b>
+                      </div>
+                      <p className="mt-1 text-muted-foreground leading-snug">{row.left.desc}</p>
+                    </div>
+                    <div className="rounded border bg-muted/40 p-2">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-secondary-foreground text-[11px] font-bold">{row.right.k}</span>
+                        <b className="text-foreground">{row.right.name}</b>
+                      </div>
+                      <p className="mt-1 text-muted-foreground leading-snug">{row.right.desc}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-md border border-primary/20 bg-background p-3 text-xs text-muted-foreground">
+              Hasil akhir berupa <b className="text-foreground">4 huruf</b> (contoh: <b className="text-primary">INTJ</b>, <b className="text-primary">ESFP</b>) yang mewakili kombinasi preferensi Anda pada keempat pasangan di atas.
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
       <div className="space-y-4">
         {data.questions.map((q: any, i: number) => (
           <Card key={q.id} className="shadow-card">
