@@ -26,6 +26,7 @@ function CandidateResult() {
   const t = a.tests;
   const answerMap = new Map<string, any>((a.test_answers ?? []).map((x: any) => [x.question_id, x]));
   const isDisc = t?.test_type === "disc";
+  const isMbti = t?.test_type === "mbti";
 
   return (
     <div className="space-y-6 print-area">
@@ -60,6 +61,31 @@ function CandidateResult() {
           </CardContent>
         </Card>
       )}
+
+      {a.result && isMbti && a.result.type && (
+        <Card className="shadow-card">
+          <CardHeader><CardTitle>Tipe MBTI Anda: <span className="text-primary text-2xl font-bold">{a.result.type}</span></CardTitle></CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {(["EI","SN","TF","JP"] as const).map((pair) => {
+                const [x, y] = pair.split("") as [string, string];
+                const cx = a.result.counts?.[x] ?? 0;
+                const cy = a.result.counts?.[y] ?? 0;
+                const dominant = cx >= cy ? x : y;
+                return (
+                  <div key={pair} className="rounded border bg-muted/40 p-3 text-center">
+                    <div className="text-xs text-muted-foreground">{x} vs {y}</div>
+                    <div className="mt-1 text-2xl font-bold text-primary">{dominant}</div>
+                    <div className="text-xs">{x}: <b>{cx}</b> · {y}: <b>{cy}</b></div>
+                    <div className="mt-1 text-[11px] text-muted-foreground">Clarity: {a.result.clarity?.[pair] ?? 0}%</div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
 
       <div className="space-y-3">
         {data.questions.map((q: any, i: number) => {

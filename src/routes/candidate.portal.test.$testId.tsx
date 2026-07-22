@@ -80,6 +80,7 @@ function TakeTest() {
   const total = data.questions.length;
   const isKraepelin = data.test.test_type === "kraepelin";
   const isDisc = data.test.test_type === "disc";
+  const isMbti = data.test.test_type === "mbti";
   const answered = isDisc
     ? Object.values(discPicks).filter((p) => p.most && p.least && p.most !== p.least).length
     : Object.keys(answers).length;
@@ -158,8 +159,31 @@ function TakeTest() {
                   </div>
                 )}
               </div>
-              {!isDisc && <div className="text-base font-medium">{q.question_text}</div>}
-              {isKraepelin ? (
+              {!isDisc && !isMbti && <div className="text-base font-medium">{q.question_text}</div>}
+              {isMbti ? (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {(q.options ?? []).map((opt: any) => {
+                    const picked = answers[q.id] === opt.key;
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => setAnswers({ ...answers, [q.id]: opt.key })}
+                        className={`flex items-start gap-3 rounded-md border p-4 text-left text-sm transition ${
+                          picked
+                            ? "border-primary bg-primary/10 shadow-sm"
+                            : "border-input bg-background hover:border-primary/40 hover:bg-accent"
+                        }`}
+                      >
+                        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${picked ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                          {opt.key}
+                        </span>
+                        <span className="flex-1 leading-snug">{opt.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : isKraepelin ? (
                 <div className="mt-4 max-w-xs">
                   <Label className="text-xs text-muted-foreground">Jawaban Anda</Label>
                   <Input inputMode="numeric" value={answers[q.id] ?? ""} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} className="mt-1" />
