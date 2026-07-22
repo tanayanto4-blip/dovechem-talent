@@ -626,7 +626,47 @@ function MbtiAdmin() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!validationIssues} onOpenChange={(o) => { if (!o) setValidationIssues(null); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Publikasi ditolak — cek kualitas gagal</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Ditemukan <b>{validationIssues?.length ?? 0}</b> masalah pada {selected.size} soal terpilih. Perbaiki lebih dulu, lalu ulangi publikasi.
+            </p>
+            <div className="max-h-[50vh] overflow-auto rounded border">
+              <ul className="divide-y text-sm">
+                {(validationIssues ?? []).map((iss, idx) => (
+                  <li key={idx} className="flex items-start gap-2 p-2">
+                    <Badge variant="destructive" className="mt-0.5 shrink-0 text-[10px] uppercase">{iss.kind.replace(/_/g, " ")}</Badge>
+                    <span className="flex-1">{iss.message}</span>
+                    {iss.qid && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          const q = questions.find((x) => x.id === iss.qid);
+                          if (q) { setValidationIssues(null); openEdit(q); }
+                        }}
+                      >Perbaiki</Button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-md border bg-muted/30 p-2 text-xs text-muted-foreground">
+              Cek meliputi: pernyataan kosong, opsi kosong, dimensi tidak valid, pasangan A/B di luar E/I · S/N · T/F · J/P, nomor duplikat, dan nomor hilang dalam rentang.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setValidationIssues(null)}>Tutup</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
 
