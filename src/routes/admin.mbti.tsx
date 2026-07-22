@@ -505,7 +505,7 @@ function MbtiAdmin() {
             </Select>
           )}
           <Button asChild variant="outline"><Link to="/admin/mbti/preview"><Eye className="mr-2 h-4 w-4" /> Preview</Link></Button>
-          <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-2 h-4 w-4" /> Impor CSV</Button>
+          <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-2 h-4 w-4" /> Impor CSV/JSON</Button>
           <Button variant="outline" onClick={exportCsv}><Download className="mr-2 h-4 w-4" /> Ekspor CSV</Button>
           <Button variant="outline" onClick={exportJson}><Download className="mr-2 h-4 w-4" /> Ekspor JSON</Button>
 
