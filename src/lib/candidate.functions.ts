@@ -250,12 +250,44 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       result = { correct, total };
     }
 
+    const finishedAt = new Date().toISOString();
     const upd = await sb.from("test_attempts").update({
       status: "finished",
-      finished_at: new Date().toISOString(),
+      finished_at: finishedAt,
       score,
       result,
     }).eq("id", data.attempt_id);
     if (upd.error) throw new Error(upd.error.message);
+
+    // Audit: candidate submission (no auth user; use candidate context).
+    try {
+      const { data: candMeta } = await sb
+        .from("candidates")
+        .select("full_name, candidate_codes(code)")
+        .eq("id", cand.id)
+        .maybeSingle();
+      const label = (candMeta as any)?.candidate_codes?.code
+        ? `${(candMeta as any)?.full_name ?? "Kandidat"} (${(candMeta as any)?.candidate_codes?.code})`
+        : (candMeta as any)?.full_name ?? "Kandidat";
+      await sb.from("audit_logs").insert({
+        actor_id: null,
+        actor_type: "candidate",
+        actor_label: label,
+        action: "attempt.submit",
+        target_type: "test_attempt",
+        target_id: data.attempt_id,
+        metadata: {
+          candidate_id: cand.id,
+          test_id: test.id,
+          test_name: test.name,
+          test_type: test.test_type,
+          score,
+          finished_at: finishedAt,
+        },
+      });
+    } catch (e) {
+      console.error("audit_log_insert_failed", { action: "attempt.submit", error: (e as Error).message });
+    }
+
     return { ok: true, score, result };
   });

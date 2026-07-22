@@ -2,7 +2,8 @@ import { createFileRoute, Link, Outlet, redirect, useNavigate, useRouterState } 
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getMyRoles } from "@/lib/admin.functions";
+import { useEffect, useRef } from "react";
+import { getMyRoles, logStaffAccess } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Beaker, LayoutDashboard, KeyRound, Users, LogOut, UserCog, ClipboardList, ShieldCheck } from "lucide-react";
 
@@ -22,6 +23,16 @@ function AdminLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const rolesFn = useServerFn(getMyRoles);
   const { data: roles } = useQuery({ queryKey: ["my-roles"], queryFn: () => rolesFn({ data: {} as never }) });
+
+  // Audit staff dashboard access — one entry per area per session.
+  const logAccess = useServerFn(logStaffAccess);
+  const loggedAreas = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const seg = pathname.replace(/^\/admin\/?/, "").split("/")[0] || "dashboard";
+    if (loggedAreas.current.has(seg)) return;
+    loggedAreas.current.add(seg);
+    logAccess({ data: { area: seg } }).catch(() => {});
+  }, [pathname, logAccess]);
 
   const items = [
     { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },

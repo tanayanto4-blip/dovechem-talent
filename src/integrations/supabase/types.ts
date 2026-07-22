@@ -17,7 +17,9 @@ export type Database = {
       audit_logs: {
         Row: {
           action: string
-          actor_id: string
+          actor_id: string | null
+          actor_label: string | null
+          actor_type: string
           created_at: string
           id: string
           metadata: Json
@@ -26,7 +28,9 @@ export type Database = {
         }
         Insert: {
           action: string
-          actor_id: string
+          actor_id?: string | null
+          actor_label?: string | null
+          actor_type?: string
           created_at?: string
           id?: string
           metadata?: Json
@@ -35,7 +39,9 @@ export type Database = {
         }
         Update: {
           action?: string
-          actor_id?: string
+          actor_id?: string | null
+          actor_label?: string | null
+          actor_type?: string
           created_at?: string
           id?: string
           metadata?: Json

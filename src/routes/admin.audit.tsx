@@ -20,7 +20,9 @@ export const Route = createFileRoute("/admin/audit")({
 
 type Row = {
   id: string;
-  actor_id: string;
+  actor_id: string | null;
+  actor_type: "staff" | "candidate" | "system" | string;
+  actor_label: string | null;
   action: string;
   target_type: string;
   target_id: string | null;
@@ -35,6 +37,8 @@ const ACTION_LABEL: Record<string, string> = {
   "code.activate_bulk": "Aktivasi kode (bulk)",
   "code.deactivate_bulk": "Nonaktifkan kode (bulk)",
   "attempt.view": "Lihat lembar jawaban",
+  "attempt.submit": "Kandidat submit tes",
+  "admin.access": "Akses dashboard admin",
 };
 
 function AuditPage() {
@@ -48,11 +52,13 @@ function AuditPage() {
 
   const filters: Array<{ key: string | null; label: string }> = [
     { key: null, label: "Semua" },
+    { key: "admin.access", label: "Akses Admin" },
     { key: "code.activate", label: "Aktivasi" },
     { key: "code.deactivate", label: "Nonaktif" },
     { key: "code.activate_bulk", label: "Aktivasi Bulk" },
     { key: "code.deactivate_bulk", label: "Nonaktif Bulk" },
     { key: "attempt.view", label: "Lihat Jawaban" },
+    { key: "attempt.submit", label: "Submit Tes" },
   ];
 
   return (
@@ -124,10 +130,16 @@ function AuditPage() {
                       </td>
                       <td className="px-4 py-2">
                         <div className="font-medium">
-                          {r.actor?.full_name || r.actor?.username || "—"}
+                          {r.actor_type === "candidate"
+                            ? (r.actor_label || "Kandidat")
+                            : (r.actor?.full_name || r.actor?.username || r.actor_label || "—")}
                         </div>
                         <div className="font-mono text-[10px] text-muted-foreground">
-                          {r.actor_id.slice(0, 8)}…
+                          {r.actor_type === "candidate"
+                            ? "kandidat"
+                            : r.actor_id
+                              ? `${r.actor_id.slice(0, 8)}…`
+                              : r.actor_type}
                         </div>
                       </td>
                       <td className="px-4 py-2">
