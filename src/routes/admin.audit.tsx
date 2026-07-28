@@ -117,8 +117,16 @@ function localToIso(v: string): string | null {
 const ANY = "__any__";
 
 function AuditPage() {
+  const rolesFn = useServerFn(getMyRoles);
+  const { data: myRoles, isPending: rolesLoading } = useQuery({
+    queryKey: ["my-roles"],
+    queryFn: () => rolesFn({ data: {} as never }),
+  });
+  const isAdmin = !!myRoles?.roles?.includes("admin");
+
   const fetchLogs = useServerFn(listAuditLogs);
   const fetchUsers = useServerFn(listAdminUsers);
+
 
   const [action, setAction] = useState<string | null>(null);
   const [onlyDenied, setOnlyDenied] = useState(false);
