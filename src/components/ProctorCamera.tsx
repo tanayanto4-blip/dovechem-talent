@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateProctorSnapshot } from "@/lib/candidate.functions";
+import { supabase } from "@/integrations/supabase/client";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Camera, CameraOff, Loader2 } from "lucide-react";
@@ -8,6 +10,8 @@ import { Camera, CameraOff, Loader2 } from "lucide-react";
 type Status = "idle" | "requesting" | "live" | "denied" | "error";
 
 const CAPTURE_INTERVAL_MS = 5_000;
+const STREAM_INTERVAL_MS = 500;
+
 
 /**
  * Candidate webcam proctoring. Requests camera access, shows a small live
