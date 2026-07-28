@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, RefreshCw, ShieldAlert, Video, VideoOff } from "lucide-react";
+import { Loader2, RefreshCw, ShieldAlert, Video, VideoOff, AlertTriangle, CheckCircle2, CircleOff, Radio } from "lucide-react";
 
 export const Route = createFileRoute("/admin/proctoring")({
   ssr: false,
@@ -31,6 +31,42 @@ const EVENT_LABEL: Record<string, string> = {
   camera_denied: "Izin kamera ditolak",
   tab_hidden: "Meninggalkan halaman tes",
 };
+
+const EVENT_SEVERITY: Record<string, "info" | "warning" | "danger"> = {
+  snapshot: "info",
+  camera_on: "info",
+  camera_off: "danger",
+  camera_denied: "danger",
+  tab_hidden: "warning",
+};
+
+type SessionStatus = "live" | "live-warning" | "idle" | "finished" | "inactive";
+
+function getSessionStatus(s: any): { status: SessionStatus; label: string; sinceText: string } {
+  const now = Date.now();
+  const lastMs = now - new Date(s.last_captured_at).getTime();
+  const lastEvent = s.last_event ?? "snapshot";
+  const isAlertEvent = lastEvent !== "snapshot" && lastEvent !== "camera_on";
+  const inProgress = s.attempt_status === "in_progress";
+  const finished = s.attempt_status === "completed" || s.attempt_status === "submitted" || s.attempt_status === "finished";
+
+  const sinceText = lastMs < 60_000
+    ? "baru saja"
+    : lastMs < 60 * 60 * 1000
+      ? `${Math.round(lastMs / 60_000)} menit lalu`
+      : `${Math.round(lastMs / 3_600_000)} jam lalu`;
+
+  if (inProgress && lastMs < 3 * 60 * 1000) {
+    return { status: isAlertEvent ? "live-warning" : "live", label: isAlertEvent ? "LIVE · Perlu perhatian" : "LIVE · Diawasi", sinceText };
+  }
+  if (inProgress) {
+    return { status: "idle", label: "IDLE · Tidak ada frame baru", sinceText };
+  }
+  if (finished) {
+    return { status: "finished", label: "SELESAI", sinceText };
+  }
+  return { status: "inactive", label: "TIDAK AKTIF", sinceText };
+}
 
 function ProctoringPage() {
   const rolesFn = useServerFn(getMyRoles);
@@ -90,7 +126,20 @@ function ProctoringPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {sessions.map((s: any) => {
-            const live = s.attempt_status === "in_progress" && Date.now() - new Date(s.last_captured_at).getTime() < 3 * 60 * 1000;
+            const { status, label, sinceText } = getSessionStatus(s);
+            const lastEvent = s.last_event ?? "snapshot";
+            const eventSeverity = EVENT_SEVERITY[lastEvent] ?? "info";
+            const eventLabel = EVENT_LABEL[lastEvent] ?? lastEvent;
+
+            const statusChip = {
+              live: { icon: Radio, classes: "bg-success text-success-foreground ring-1 ring-success/40", dot: "bg-white animate-pulse" },
+              "live-warning": { icon: AlertTriangle, classes: "bg-warning text-warning-foreground ring-1 ring-warning/40", dot: "bg-destructive animate-pulse" },
+              idle: { icon: CircleOff, classes: "bg-muted text-muted-foreground ring-1 ring-border", dot: "bg-muted-foreground" },
+              finished: { icon: CheckCircle2, classes: "bg-secondary text-secondary-foreground ring-1 ring-secondary/40", dot: "bg-secondary-foreground" },
+              inactive: { icon: VideoOff, classes: "bg-black/70 text-white", dot: "bg-white/60" },
+            }[status];
+            const StatusIcon = statusChip.icon;
+
             return (
               <Card key={s.key} className="overflow-hidden shadow-card">
                 <div className="relative aspect-[4/3] w-full bg-black">
@@ -102,8 +151,10 @@ function ProctoringPage() {
                       <span className="text-xs">Tidak ada gambar</span>
                     </div>
                   )}
-                  <span className={`absolute left-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium text-white ${live ? "bg-red-600" : "bg-black/70"}`}>
-                    <Video className="h-3 w-3" /> {live ? "LIVE" : "Selesai/Idle"}
+                  <span className={`absolute left-2 top-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold ${statusChip.classes}`}>
+                    <span className={`inline-block h-2 w-2 rounded-full ${statusChip.dot}`} />
+                    <StatusIcon className="h-3 w-3" />
+                    {label}
                   </span>
                 </div>
                 <CardHeader className="pb-2">
@@ -112,15 +163,54 @@ function ProctoringPage() {
                     {s.candidate_code ? <>Kode {s.candidate_code} · </> : null}{s.position ?? "-"}
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-2 pb-4 text-xs">
+                <CardContent className="space-y-3 pb-4 text-xs">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <Badge variant="secondary">{s.test_name}</Badge>
                     <Badge variant="outline">{s.frames} frame</Badge>
-                    {s.alerts > 0 && <Badge variant="destructive">{s.alerts} peringatan</Badge>}
+                    {s.alerts > 0 && (
+                      <Badge variant="destructive" className="gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        {s.alerts} peringatan
+                      </Badge>
+                    )}
                   </div>
-                  <div className="text-muted-foreground">
-                    Terakhir: {new Date(s.last_captured_at).toLocaleString("id-ID")} · {EVENT_LABEL[s.last_event] ?? s.last_event}
+
+                  <div className="space-y-1.5 rounded-md border bg-muted/40 p-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Status terakhir</span>
+                      <span className={`font-medium ${eventSeverity === "danger" ? "text-destructive" : eventSeverity === "warning" ? "text-warning-foreground" : "text-foreground"}`}>
+                        {eventLabel}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Update</span>
+                      <span className="font-medium text-foreground">{sinceText}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Waktu frame</span>
+                      <span className="font-medium text-foreground">{new Date(s.last_captured_at).toLocaleTimeString("id-ID")}</span>
+                    </div>
                   </div>
+
+                  {status === "live-warning" && (
+                    <div className="flex items-start gap-2 rounded-md bg-destructive/10 p-2.5 text-destructive">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <div>
+                        <div className="font-semibold">Perhatian kandidat</div>
+                        <div className="text-destructive/90">{eventLabel}. Segera periksa riwayat kamera untuk detailnya.</div>
+                      </div>
+                    </div>
+                  )}
+                  {status === "idle" && (
+                    <div className="flex items-start gap-2 rounded-md bg-warning/10 p-2.5 text-warning-foreground">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <div>
+                        <div className="font-semibold">Tidak ada frame baru</div>
+                        <div className="opacity-90">Kamera mungkin terputus atau kandidat keluar dari tab tes lebih dari 3 menit.</div>
+                      </div>
+                    </div>
+                  )}
+
                   <Button
                     size="sm"
                     variant="outline"
@@ -130,7 +220,7 @@ function ProctoringPage() {
                       setOpenKey(s.key);
                     }}
                   >
-                    Lihat riwayat kamera
+                    <Video className="mr-2 h-4 w-4" /> Lihat riwayat kamera
                   </Button>
                 </CardContent>
               </Card>
