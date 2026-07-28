@@ -43,6 +43,27 @@ function CodesPage() {
   const [purgeOpen, setPurgeOpen] = useState(false);
   const [purgeText, setPurgeText] = useState("");
   const [purging, setPurging] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  async function onToggle(id: string, active: boolean) {
+    setTogglingId(id);
+    try {
+      await toggle({ data: { id, active } });
+      await qc.invalidateQueries({ queryKey: ["codes"] });
+      toast.success(active ? "Kode diaktifkan" : "Kode dinonaktifkan");
+    } catch {
+      toast.error("Gagal mengubah status kode");
+    } finally {
+      setTogglingId(null);
+    }
+  }
+
+  async function onDelete(id: string, code: string) {
+    if (!confirm(`Hapus kode ${code}? Data kandidat, dokumen, dan hasil tes tetap tersimpan.`)) return;
+    await del({ data: { id } });
+    qc.invalidateQueries({ queryKey: ["codes"] });
+    toast.success("Kode dihapus");
+  }
 
   function toIso(local: string): string | null {
     if (!local) return null;
