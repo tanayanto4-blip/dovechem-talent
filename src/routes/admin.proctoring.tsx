@@ -130,6 +130,44 @@ function ProctoringPage() {
     refetchInterval: 5_000,
   });
 
+  // Kandidat yang sedang membuka halaman tes (muncul seketika tanpa menunggu snapshot)
+  const [livePresence, setLivePresence] = useState<any[]>([]);
+  useEffect(() => {
+    if (!isAdmin) return;
+    const channel = supabase.channel("proctor-presence", { config: { presence: { key: "admin-viewer" } } });
+    const sync = () => {
+      const state = channel.presenceState() as Record<string, any[]>;
+      const rows = Object.values(state)
+        .flat()
+        .filter((p: any) => p?.attempt_id)
+        .map((p: any) => ({
+          key: `presence-${p.attempt_id}`,
+          attempt_id: p.attempt_id,
+          candidate_id: p.candidate_id ?? undefined,
+          candidate_name: p.candidate_name ?? "Kandidat",
+          candidate_code: p.candidate_code ?? null,
+          position: p.position ?? null,
+          test_name: p.test_name ?? "Psikotest",
+          frames: 0,
+          alerts: 0,
+          attempt_status: "in_progress",
+          last_event:
+            p.cam_status === "denied" ? "camera_denied" : p.cam_status === "error" ? "camera_off" : "camera_on",
+          last_captured_at: new Date(p.at ?? Date.now()).toISOString(),
+          latest_url: null,
+        }));
+      setLivePresence(rows);
+    };
+    channel
+      .on("presence", { event: "sync" }, sync)
+      .on("presence", { event: "join" }, sync)
+      .on("presence", { event: "leave" }, sync)
+      .subscribe((s) => { if (s === "SUBSCRIBED") channel.track({ viewer: true }).catch(() => {}); });
+    return () => { supabase.removeChannel(channel); };
+  }, [isAdmin]);
+
+
+
   if (roles && !isAdmin) {
     return (
       <Card className="border-destructive/40">
