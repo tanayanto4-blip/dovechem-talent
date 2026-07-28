@@ -206,10 +206,38 @@ export const deleteCode = createServerFn({ method: "POST" })
   .middleware([requireStaff])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
+    const { data: existing } = await context.supabase
+      .from("candidate_codes")
+      .select("code")
+      .eq("id", data.id)
+      .maybeSingle();
     const { error } = await context.supabase.from("candidate_codes").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
+    await logAudit(context, "code.delete", "candidate_code", data.id, { code: existing?.code ?? null });
     return { ok: true };
   });
+
+/**
+ * Delete every candidate access code at once. Candidate profiles, uploaded
+ * documents and test results are preserved: the FK is ON DELETE SET NULL and a
+ * DB trigger snapshots the code text onto the candidate row first.
+ */
+export const deleteAllCodes = createServerFn({ method: "POST" })
+  .middleware([requireStaff])
+  .inputValidator((d) => z.object({ confirm: z.literal("HAPUS SEMUA") }).parse(d))
+  .handler(async ({ context }) => {
+    const { count } = await context.supabase
+      .from("candidate_codes")
+      .select("id", { count: "exact", head: true });
+    const { error } = await context.supabase
+      .from("candidate_codes")
+      .delete()
+      .not("id", "is", null);
+    if (error) throw new Error(error.message);
+    await logAudit(context, "code.delete_all", "candidate_code", null, { deleted: count ?? 0 });
+    return { deleted: count ?? 0 };
+  });
+
 
 export const listCandidates = createServerFn({ method: "GET" })
   .middleware([requireStaff])
