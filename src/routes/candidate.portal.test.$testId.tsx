@@ -707,10 +707,10 @@ function TakeTest() {
                   <Input inputMode="numeric" value={answers[q.id] ?? ""} onChange={(e) => { const v = e.target.value; setAnswers({ ...answers, [q.id]: v }); persistDebounced(q.id, v); }} className="mt-1" />
                 </div>
               ) : isDisc ? (
-                <div className="rounded-md border bg-card">
-                  <div className="grid grid-cols-[2.25rem_minmax(0,1fr)_2.25rem] sm:grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-x-2 sm:gap-x-3 px-2 sm:px-4 py-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground border-b bg-muted/40">
-                    <span className="text-center text-primary">M</span>
+                <div className="overflow-hidden rounded-md border bg-card">
+                  <div className="grid grid-cols-[minmax(0,1fr)_3rem_3rem] sm:grid-cols-[minmax(0,1fr)_4rem_4rem] items-center border-b bg-muted/40 px-3 sm:px-4 py-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     <span>Pernyataan</span>
+                    <span className="text-center text-primary">M</span>
                     <span className="text-center text-destructive">L</span>
                   </div>
                   <div className="divide-y">
@@ -721,47 +721,45 @@ function TakeTest() {
                       return (
                         <div
                           key={opt.key}
-                          className="grid grid-cols-[2.25rem_minmax(0,1fr)_2.25rem] sm:grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-x-2 sm:gap-x-3 px-2 sm:px-4 py-3"
+                          className="grid grid-cols-[minmax(0,1fr)_3rem_3rem] sm:grid-cols-[minmax(0,1fr)_4rem_4rem] items-stretch"
                         >
+                          <div className="min-w-0 break-words px-3 sm:px-4 py-3 text-[13px] sm:text-sm leading-snug">
+                            {opt.label}
+                          </div>
                           <button
                             type="button"
                             onClick={() => setDisc(q.id, "most", opt.key)}
                             aria-label={`Paling menggambarkan: ${opt.label}`}
-                            className={`h-9 w-9 shrink-0 justify-self-center rounded-md border text-xs font-bold transition ${
+                            className={`border-l text-xs font-bold transition ${
                               isMost
-                                ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                : "border-input bg-background text-muted-foreground hover:border-primary/40 hover:text-primary"
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-background text-muted-foreground hover:bg-primary/10 hover:text-primary"
                             }`}
                           >
-                            M
+                            {isMost ? "M" : "·"}
                           </button>
-                          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-                            <div className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] sm:text-xs font-bold text-muted-foreground">
-                              {opt.key.toUpperCase()}
-                            </div>
-                            <div className="min-w-0 flex-1 break-words text-[13px] sm:text-sm leading-snug">{opt.label}</div>
-                          </div>
                           <button
                             type="button"
                             onClick={() => setDisc(q.id, "least", opt.key)}
                             aria-label={`Paling tidak menggambarkan: ${opt.label}`}
-                            className={`h-9 w-9 shrink-0 justify-self-center rounded-md border text-xs font-bold transition ${
+                            className={`border-l text-xs font-bold transition ${
                               isLeast
-                                ? "border-destructive bg-destructive text-destructive-foreground shadow-sm"
-                                : "border-input bg-background text-muted-foreground hover:border-destructive/40 hover:text-destructive"
+                                ? "bg-destructive text-destructive-foreground"
+                                : "bg-background text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                             }`}
                           >
-                            L
+                            {isLeast ? "L" : "·"}
                           </button>
                         </div>
                       );
                     })}
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 border-t bg-muted/40 px-3 sm:px-4 py-2 text-[10px] sm:text-[11px] text-muted-foreground">
-                    <span><b className="text-primary">M</b> (kiri) = Paling menggambarkan diri Anda</span>
-                    <span><b className="text-destructive">L</b> (kanan) = Paling tidak menggambarkan</span>
+                    <span><b className="text-primary">M</b> (kolom kiri) = Paling menggambarkan diri Anda</span>
+                    <span><b className="text-destructive">L</b> (kolom kanan) = Paling tidak menggambarkan</span>
                   </div>
                 </div>
+
 
 
 
