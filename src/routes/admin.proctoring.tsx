@@ -119,15 +119,12 @@ function ProctoringPage() {
     queryKey: ["proctor-sessions"],
     queryFn: () => listFn({ data: {} as never }),
     enabled: isAdmin,
-    refetchInterval: 4_000,
-    refetchIntervalInBackground: true,
   });
 
   const detail = useQuery({
     queryKey: ["proctor-session", openKey],
     queryFn: () => detailFn({ data: { attempt_id: openAttempt?.attempt_id, candidate_id: openAttempt?.attempt_id ? undefined : openAttempt?.candidate_id } }),
     enabled: !!openKey && isAdmin,
-    refetchInterval: 5_000,
   });
 
   // Kandidat yang sedang membuka halaman tes (muncul seketika tanpa menunggu snapshot)
@@ -194,7 +191,7 @@ function ProctoringPage() {
         <div>
           <h1 className="font-display text-2xl font-bold text-primary">Pantauan Kamera Kandidat</h1>
           <p className="text-sm text-muted-foreground">
-            Frame kamera diperbarui otomatis setiap 5 detik (tampilan near-live) selama kandidat mengerjakan psikotest (24 jam terakhir).
+            Pemantauan berbasis realtime — klik Segarkan untuk memperbarui daftar sesi secara manual.
           </p>
         </div>
         <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>
