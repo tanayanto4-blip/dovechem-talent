@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateStartTest, candidateSubmitTest, candidateSaveAnswer, candidateGetTestIntro } from "@/lib/candidate.functions";
 import { VoiceInstructionPlayer } from "@/components/voice-instruction";
+import { RotateCcw } from "lucide-react";
 import { useCandidateSession } from "@/lib/candidate-session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -276,6 +277,7 @@ function TakeTest() {
                   rate={Number(it.voice_rate)}
                   autoplay={!!it.voice_autoplay}
                   title="Instruksi Suara"
+                  replayRef={replayVoiceRef}
                 />
               ) : (
                 <div className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
@@ -291,6 +293,11 @@ function TakeTest() {
             <Button onClick={() => { try { window.speechSynthesis?.cancel(); } catch { /* noop */ } setStarted(true); }} disabled={intro.isLoading || !!intro.error}>
               Mulai Test
             </Button>
+            {it?.voice_enabled && it?.voice_instruction && (
+              <Button variant="secondary" onClick={() => replayVoiceRef.current?.()}>
+                <RotateCcw className="mr-1.5 h-4 w-4" /> Ulangi instruksi
+              </Button>
+            )}
             <Button variant="outline" onClick={() => nav({ to: "/candidate/portal/tests" })}>Kembali</Button>
           </div>
         </CardContent>
