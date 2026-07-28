@@ -26,7 +26,6 @@ import { Route as CandidatePortalIndexRouteImport } from './routes/candidate.por
 import { Route as AdminTestsIndexRouteImport } from './routes/admin.tests.index'
 import { Route as CandidatePortalTestsRouteImport } from './routes/candidate.portal.tests'
 import { Route as CandidatePortalDataRouteImport } from './routes/candidate.portal.data'
-import { Route as CandidatePortalBerkasRouteImport } from './routes/candidate.portal.berkas'
 import { Route as AdminTestsIdRouteImport } from './routes/admin.tests.$id'
 import { Route as AdminMbtiPreviewRouteImport } from './routes/admin.mbti.preview'
 import { Route as AdminCandidatesIdRouteImport } from './routes/admin.candidates.$id'
@@ -118,11 +117,6 @@ const CandidatePortalDataRoute = CandidatePortalDataRouteImport.update({
   path: '/data',
   getParentRoute: () => CandidatePortalRoute,
 } as any)
-const CandidatePortalBerkasRoute = CandidatePortalBerkasRouteImport.update({
-  id: '/berkas',
-  path: '/berkas',
-  getParentRoute: () => CandidatePortalRoute,
-} as any)
 const AdminTestsIdRoute = AdminTestsIdRouteImport.update({
   id: '/tests/$id',
   path: '/tests/$id',
@@ -168,7 +162,6 @@ export interface FileRoutesByFullPath {
   '/admin/candidates/$id': typeof AdminCandidatesIdRoute
   '/admin/mbti/preview': typeof AdminMbtiPreviewRoute
   '/admin/tests/$id': typeof AdminTestsIdRoute
-  '/candidate/portal/berkas': typeof CandidatePortalBerkasRoute
   '/candidate/portal/data': typeof CandidatePortalDataRoute
   '/candidate/portal/tests': typeof CandidatePortalTestsRoute
   '/admin/tests/': typeof AdminTestsIndexRoute
@@ -192,7 +185,6 @@ export interface FileRoutesByTo {
   '/admin/candidates/$id': typeof AdminCandidatesIdRoute
   '/admin/mbti/preview': typeof AdminMbtiPreviewRoute
   '/admin/tests/$id': typeof AdminTestsIdRoute
-  '/candidate/portal/berkas': typeof CandidatePortalBerkasRoute
   '/candidate/portal/data': typeof CandidatePortalDataRoute
   '/candidate/portal/tests': typeof CandidatePortalTestsRoute
   '/admin/tests': typeof AdminTestsIndexRoute
@@ -218,7 +210,6 @@ export interface FileRoutesById {
   '/admin/candidates/$id': typeof AdminCandidatesIdRoute
   '/admin/mbti/preview': typeof AdminMbtiPreviewRoute
   '/admin/tests/$id': typeof AdminTestsIdRoute
-  '/candidate/portal/berkas': typeof CandidatePortalBerkasRoute
   '/candidate/portal/data': typeof CandidatePortalDataRoute
   '/candidate/portal/tests': typeof CandidatePortalTestsRoute
   '/admin/tests/': typeof AdminTestsIndexRoute
@@ -245,7 +236,6 @@ export interface FileRouteTypes {
     | '/admin/candidates/$id'
     | '/admin/mbti/preview'
     | '/admin/tests/$id'
-    | '/candidate/portal/berkas'
     | '/candidate/portal/data'
     | '/candidate/portal/tests'
     | '/admin/tests/'
@@ -269,7 +259,6 @@ export interface FileRouteTypes {
     | '/admin/candidates/$id'
     | '/admin/mbti/preview'
     | '/admin/tests/$id'
-    | '/candidate/portal/berkas'
     | '/candidate/portal/data'
     | '/candidate/portal/tests'
     | '/admin/tests'
@@ -294,7 +283,6 @@ export interface FileRouteTypes {
     | '/admin/candidates/$id'
     | '/admin/mbti/preview'
     | '/admin/tests/$id'
-    | '/candidate/portal/berkas'
     | '/candidate/portal/data'
     | '/candidate/portal/tests'
     | '/admin/tests/'
@@ -431,13 +419,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CandidatePortalDataRouteImport
       parentRoute: typeof CandidatePortalRoute
     }
-    '/candidate/portal/berkas': {
-      id: '/candidate/portal/berkas'
-      path: '/berkas'
-      fullPath: '/candidate/portal/berkas'
-      preLoaderRoute: typeof CandidatePortalBerkasRouteImport
-      parentRoute: typeof CandidatePortalRoute
-    }
     '/admin/tests/$id': {
       id: '/admin/tests/$id'
       path: '/tests/$id'
@@ -531,7 +512,6 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface CandidatePortalRouteChildren {
-  CandidatePortalBerkasRoute: typeof CandidatePortalBerkasRoute
   CandidatePortalDataRoute: typeof CandidatePortalDataRoute
   CandidatePortalTestsRoute: typeof CandidatePortalTestsRoute
   CandidatePortalIndexRoute: typeof CandidatePortalIndexRoute
@@ -539,7 +519,6 @@ interface CandidatePortalRouteChildren {
 }
 
 const CandidatePortalRouteChildren: CandidatePortalRouteChildren = {
-  CandidatePortalBerkasRoute: CandidatePortalBerkasRoute,
   CandidatePortalDataRoute: CandidatePortalDataRoute,
   CandidatePortalTestsRoute: CandidatePortalTestsRoute,
   CandidatePortalIndexRoute: CandidatePortalIndexRoute,
