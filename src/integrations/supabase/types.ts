@@ -443,6 +443,11 @@ export type Database = {
           id: string
           name: string
           test_type: string
+          voice_autoplay: boolean
+          voice_enabled: boolean
+          voice_instruction: string | null
+          voice_lang: string
+          voice_rate: number
         }
         Insert: {
           active?: boolean
@@ -453,6 +458,11 @@ export type Database = {
           id?: string
           name: string
           test_type: string
+          voice_autoplay?: boolean
+          voice_enabled?: boolean
+          voice_instruction?: string | null
+          voice_lang?: string
+          voice_rate?: number
         }
         Update: {
           active?: boolean
@@ -463,6 +473,11 @@ export type Database = {
           id?: string
           name?: string
           test_type?: string
+          voice_autoplay?: boolean
+          voice_enabled?: boolean
+          voice_instruction?: string | null
+          voice_lang?: string
+          voice_rate?: number
         }
         Relationships: []
       }
