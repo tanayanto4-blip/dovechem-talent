@@ -70,7 +70,8 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
       sb.from("candidates").select("*").eq("code_id", codeRow.id).single(),
       sb.from("candidate_files").select("*").eq("candidate_id", (await sb.from("candidates").select("id").eq("code_id", codeRow.id).single()).data?.id ?? ""),
       sb.from("tests").select("*").eq("active", true).order("code"),
-      sb.from("test_attempts").select("*").eq("candidate_id", (await sb.from("candidates").select("id").eq("code_id", codeRow.id).single()).data?.id ?? ""),
+      // Scores/results are staff-only: expose progress fields only.
+      sb.from("test_attempts").select("id, test_id, status, started_at, finished_at").eq("candidate_id", (await sb.from("candidates").select("id").eq("code_id", codeRow.id).single()).data?.id ?? ""),
     ]);
     return { candidate: candQ.data, files: filesQ.data ?? [], tests: testsQ.data ?? [], attempts: attemptsQ.data ?? [] };
   });
@@ -243,6 +244,11 @@ export const candidateSaveAnswer = createServerFn({ method: "POST" })
   });
 
 const AttemptInput = z.object({ code: z.string().min(3), attempt_id: z.string().uuid() });
+/**
+ * Candidate-facing attempt view. Scoring output (score / result payload) is
+ * intentionally NEVER returned here: psikotest results are visible to HR/Admin
+ * only. Candidates may only confirm that their attempt is recorded.
+ */
 export const candidateGetAttempt = createServerFn({ method: "POST" })
   .inputValidator((d) => AttemptInput.parse(d))
   .handler(async ({ data }) => {
@@ -252,18 +258,14 @@ export const candidateGetAttempt = createServerFn({ method: "POST" })
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: attempt, error } = await sb
       .from("test_attempts")
-      .select("*, tests(*), test_answers(*)")
+      .select("id, candidate_id, test_id, status, started_at, finished_at, tests(id, code, name, test_type, duration_minutes)")
       .eq("id", data.attempt_id)
       .eq("candidate_id", cand.id)
       .single();
     if (error) throw new Error(error.message);
-    const { data: questions } = await sb
-      .from("test_questions")
-      .select("id, question_number, question_text, options, dimension")
-      .eq("test_id", (attempt as any).test_id)
-      .order("question_number");
-    return { attempt, questions: questions ?? [] };
+    return { attempt };
   });
+
 
 const SubmitTestInput = z.object({
   code: z.string().min(3),
@@ -279,16 +281,12 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: attempt } = await sb.from("test_attempts").select("*, tests(*)").eq("id", data.attempt_id).eq("candidate_id", cand.id).single();
     if (!attempt) throw new Error("Attempt tidak valid.");
-    // Idempotent: if already finished, return the persisted score/result without
-    // touching answers or re-running scoring. Repeat submits are a no-op.
+    // Idempotent: repeat submits are a no-op. Scoring output is never returned
+    // to the candidate — results are staff-only.
     if (attempt.status === "finished") {
-      return {
-        ok: true,
-        score: (attempt as any).score ?? 0,
-        result: (attempt as any).result ?? {},
-        idempotent: true,
-      };
+      return { ok: true, idempotent: true };
     }
+
 
     // Persist answers idempotently. Upsert on (attempt_id, question_id) so a
     // retried submit for the same attempt cannot create duplicate rows, and
@@ -454,5 +452,6 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       console.error("audit_log_insert_failed", { action: "attempt.submit", error: (e as Error).message });
     }
 
-    return { ok: true, score, result };
+    // Score/result stay server-side: only HR/Admin may view psikotest results.
+    return { ok: true };
   });

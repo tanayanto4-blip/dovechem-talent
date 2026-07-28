@@ -213,8 +213,8 @@ function TakeTest() {
     setSubmitting(true);
     try {
       const payload = Object.entries(answers).map(([question_id, answer]) => ({ question_id, answer }));
-      const res = await submit({ data: { code: session!.code, attempt_id: data.attempt.id, answers: payload } });
-      toast.success(`Test selesai. Skor: ${res.score}`);
+      await submit({ data: { code: session!.code, attempt_id: data.attempt.id, answers: payload } });
+      toast.success("Jawaban terkirim. Hasil penilaian akan diproses oleh tim HR.");
       qc.invalidateQueries({ queryKey: ["candidate-profile"] });
       nav({ to: "/candidate/portal/tests" });
     } catch (e: any) { toast.error(e?.message || "Gagal mengirim jawaban. Coba lagi."); }

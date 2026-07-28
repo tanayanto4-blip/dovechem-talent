@@ -683,3 +683,19 @@ export const logMbtiExport = createServerFn({ method: "POST" })
 
 
 
+
+/**
+ * Bank Data Hasil — staff-only listing of every psikotest attempt across all
+ * candidates. Scores/results are visible to admin & HR only.
+ */
+export const listAllAttempts = createServerFn({ method: "GET" })
+  .middleware([requireStaff])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("test_attempts")
+      .select("id, status, score, result, started_at, finished_at, test_id, candidate_id, tests(id, code, name, test_type), candidates(id, full_name, position_applied, candidate_codes(code))")
+      .order("finished_at", { ascending: false, nullsFirst: false })
+      .order("started_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return { attempts: data ?? [] };
+  });

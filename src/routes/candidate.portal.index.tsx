@@ -97,7 +97,7 @@ function PortalHome() {
                     <div className="text-xs text-muted-foreground">{a.status === "finished" ? "Selesai" : "Sedang berlangsung"}</div>
                   </div>
                   <Badge variant={a.status === "finished" ? "default" : "secondary"}>
-                    {a.status === "finished" ? `Skor: ${a.score ?? "-"}` : "In progress"}
+                    {a.status === "finished" ? "Selesai" : "In progress"}
                   </Badge>
                 </div>
               );

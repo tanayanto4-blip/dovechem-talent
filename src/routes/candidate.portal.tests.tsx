@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateGetProfile } from "@/lib/candidate.functions";
@@ -45,7 +45,7 @@ function TestsPage() {
                   <div className="grid h-10 w-10 place-items-center rounded-md bg-hero text-primary-foreground">
                     <ClipboardList className="h-5 w-5" />
                   </div>
-                  {done ? <Badge className="bg-success">Selesai — Skor {attempt.score}</Badge> : <Badge variant="secondary">Belum dikerjakan</Badge>}
+                  {done ? <Badge className="bg-success">Selesai</Badge> : <Badge variant="secondary">Belum dikerjakan</Badge>}
                 </div>
                 <h3 className="font-display text-lg font-bold text-primary">{t.name}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{t.description}</p>
@@ -54,11 +54,10 @@ function TestsPage() {
                   <span className="uppercase">{t.test_type}</span>
                 </div>
                 {done ? (
-                  <Button asChild className="mt-5 w-full" variant="outline">
-                    <Link to="/candidate/portal/result/$attemptId" params={{ attemptId: attempt.id }}>
-                      <CheckCircle2 className="mr-2 h-4 w-4" /> Lihat Hasil & Jawaban
-                    </Link>
-                  </Button>
+                  <div className="mt-5 rounded-md border bg-muted/40 p-3 text-center text-xs text-muted-foreground">
+                    <CheckCircle2 className="mr-1 inline h-3.5 w-3.5 text-success" />
+                    Jawaban Anda telah tersimpan. Hasil penilaian hanya dapat dilihat oleh tim HR &amp; Admin.
+                  </div>
                 ) : (
                   <Button
                     className="mt-5 w-full"

@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef } from "react";
 import { getMyRoles, logStaffAccess } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
-import { Beaker, LayoutDashboard, KeyRound, Users, LogOut, UserCog, ClipboardList, ShieldCheck, FolderOpen } from "lucide-react";
+import { Beaker, LayoutDashboard, KeyRound, Users, LogOut, UserCog, ClipboardList, ShieldCheck, FolderOpen, BarChart3 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
@@ -40,6 +40,7 @@ function AdminLayout() {
     { to: "/admin/candidates", label: "Kandidat", icon: Users },
     { to: "/admin/documents", label: "Bank Dokumen", icon: FolderOpen },
     { to: "/admin/tests", label: "Bank Soal", icon: ClipboardList },
+    { to: "/admin/results", label: "Bank Data Hasil", icon: BarChart3 },
     { to: "/admin/users", label: "User Admin/HR", icon: UserCog },
     { to: "/admin/audit", label: "Audit Log", icon: ShieldCheck },
   ];
