@@ -21,10 +21,18 @@ const STREAM_INTERVAL_MS = 500;
 export function ProctorCamera({
   code,
   attemptId,
+  candidateId,
+  candidateName,
+  testName,
+  position,
   onStatusChange,
 }: {
   code: string;
   attemptId: string;
+  candidateId?: string;
+  candidateName?: string;
+  testName?: string;
+  position?: string | null;
   onStatusChange?: (s: Status) => void;
 }) {
   const send = useServerFn(candidateProctorSnapshot);
@@ -35,6 +43,7 @@ export function ProctorCamera({
   const [frames, setFrames] = useState(0);
 
   const setS = useCallback((s: Status) => { setStatus(s); onStatusChange?.(s); }, [onStatusChange]);
+
 
   const report = useCallback(
     async (event: "snapshot" | "camera_on" | "camera_off" | "camera_denied" | "tab_hidden", base64?: string) => {
@@ -106,7 +115,36 @@ export function ProctorCamera({
     return () => clearInterval(t);
   }, [status, capture]);
 
+  // Announce the session to the Super Admin dashboard the moment the test opens,
+  // so a monitoring tile appears immediately (even before the first snapshot).
+  useEffect(() => {
+    const channel = supabase.channel("proctor-presence", {
+      config: { presence: { key: attemptId } },
+    });
+    const payload = {
+      attempt_id: attemptId,
+      candidate_id: candidateId ?? null,
+      candidate_name: candidateName ?? "Kandidat",
+      candidate_code: code,
+      test_name: testName ?? "Psikotest",
+      position: position ?? null,
+      cam_status: status,
+      at: Date.now(),
+    };
+    channel.subscribe((s) => {
+      if (s === "SUBSCRIBED") channel.track(payload).catch(() => {});
+    });
+    const t = setInterval(() => {
+      channel.track({ ...payload, cam_status: status, at: Date.now() }).catch(() => {});
+    }, 5_000);
+    return () => {
+      clearInterval(t);
+      supabase.removeChannel(channel);
+    };
+  }, [attemptId, candidateId, candidateName, code, testName, position, status]);
+
   // Realtime live stream to the Super Admin dashboard (~2 fps, not stored)
+
   useEffect(() => {
     if (status !== "live") return;
     let cancelled = false;

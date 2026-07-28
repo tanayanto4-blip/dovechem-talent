@@ -338,7 +338,15 @@ function TakeTest() {
 
   return (
     <div className="space-y-6">
-      <ProctorCamera code={session.code} attemptId={data.attempt.id} onStatusChange={setCamStatus} />
+      <ProctorCamera
+        code={session.code}
+        attemptId={data.attempt.id}
+        candidateId={session.candidate_id}
+        candidateName={session.candidate_name}
+        testName={data.test.name}
+        onStatusChange={setCamStatus}
+      />
+
       {!camReady ? null : (
       <>
       <Card className="shadow-card">
