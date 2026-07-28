@@ -44,6 +44,14 @@ export function ProctorCamera({
 
   const setS = useCallback((s: Status) => { setStatus(s); onStatusChange?.(s); }, [onStatusChange]);
 
+  const attachVideoRef = useCallback((node: HTMLVideoElement | null) => {
+    videoRef.current = node;
+    if (node && streamRef.current) {
+      node.srcObject = streamRef.current;
+      node.play().catch(() => {});
+    }
+  }, []);
+
 
   const report = useCallback(
     async (event: "snapshot" | "camera_on" | "camera_off" | "camera_denied" | "tab_hidden", base64?: string) => {
@@ -148,14 +156,14 @@ export function ProctorCamera({
   useEffect(() => {
     if (status !== "live") return;
     let cancelled = false;
+    let subscribed = false;
     const channel: RealtimeChannel = supabase.channel(`proctor-live-${attemptId}`, {
       config: { broadcast: { self: false } },
     });
-    channel.subscribe();
 
     const canvas = document.createElement("canvas");
-    const t = setInterval(() => {
-      if (cancelled) return;
+    const sendFrame = () => {
+      if (cancelled || !subscribed) return;
       const video = videoRef.current;
       if (!video || video.readyState < 2) return;
       const w = 320;
@@ -168,7 +176,14 @@ export function ProctorCamera({
       const b64 = canvas.toDataURL("image/jpeg", 0.5).split(",")[1];
       if (!b64) return;
       channel.send({ type: "broadcast", event: "frame", payload: { b64, at: Date.now() } }).catch(() => {});
-    }, STREAM_INTERVAL_MS);
+    };
+    channel.subscribe((s) => {
+      if (s === "SUBSCRIBED") {
+        subscribed = true;
+        sendFrame();
+      }
+    });
+    const t = setInterval(sendFrame, STREAM_INTERVAL_MS);
 
     return () => {
       cancelled = true;
@@ -213,14 +228,14 @@ export function ProctorCamera({
               <Camera className="mr-2 h-4 w-4" /> Aktifkan Kamera
             </Button>
           )}
-          <video ref={videoRef} playsInline muted className="hidden" />
+          <video ref={attachVideoRef} playsInline muted autoPlay aria-hidden className="pointer-events-none fixed h-px w-px opacity-0" />
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <video ref={videoRef} playsInline muted aria-hidden className="pointer-events-none fixed h-px w-px opacity-0" />
+    <video ref={attachVideoRef} playsInline muted autoPlay aria-hidden className="pointer-events-none fixed h-px w-px opacity-0" />
 
   );
 }
