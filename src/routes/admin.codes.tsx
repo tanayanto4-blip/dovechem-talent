@@ -136,6 +136,20 @@ function CodesPage() {
     } catch (e: any) { toast.error(e.message); }
   }
 
+  async function onDeleteAll(e: React.FormEvent) {
+    e.preventDefault();
+    if (purgeText.trim().toUpperCase() !== "HAPUS SEMUA") { toast.error('Ketik persis: HAPUS SEMUA'); return; }
+    setPurging(true);
+    try {
+      const res = await purgeAll({ data: { confirm: "HAPUS SEMUA" as const } });
+      toast.success(`${res.deleted} kode dihapus — dokumen & hasil tes tetap tersimpan`);
+      qc.invalidateQueries();
+      setPurgeOpen(false);
+      setPurgeText("");
+    } catch (e: any) { toast.error(e.message); }
+    finally { setPurging(false); }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -150,6 +164,28 @@ function CodesPage() {
           <Button variant="outline" onClick={() => onBulkActive(true)}><Power className="mr-2 h-4 w-4" /> Aktifkan Semua</Button>
           <Button variant="outline" onClick={() => onBulkActive(false)}><PowerOff className="mr-2 h-4 w-4" /> Nonaktifkan Semua</Button>
           <Button variant="outline" onClick={() => { setExpiryValue(""); setExpiryOpen(true); }}><CalendarClock className="mr-2 h-4 w-4" /> Set Masa Berlaku Semua</Button>
+          <Dialog open={purgeOpen} onOpenChange={(v) => { setPurgeOpen(v); if (!v) setPurgeText(""); }}>
+            <DialogTrigger asChild>
+              <Button variant="destructive"><Trash2 className="mr-2 h-4 w-4" /> Hapus Semua Kode</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Hapus Semua Kode Kandidat</DialogTitle></DialogHeader>
+              <form onSubmit={onDeleteAll} className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Seluruh kode akses ({data?.codes?.length ?? 0} kode) akan dihapus dan kandidat tidak bisa login lagi.
+                  <b className="text-foreground"> Data kandidat, berkas di Bank Dokumen, dan Bank Data Hasil tetap tersimpan</b> (kode lama disimpan sebagai arsip pada data kandidat).
+                </p>
+                <div className="space-y-2">
+                  <Label>Ketik <b>HAPUS SEMUA</b> untuk konfirmasi</Label>
+                  <Input value={purgeText} onChange={(e) => setPurgeText(e.target.value)} placeholder="HAPUS SEMUA" />
+                </div>
+                <DialogFooter>
+                  <Button type="submit" variant="destructive" disabled={purging}>{purging ? "Menghapus..." : "Hapus Semua Kode"}</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+
           <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
             <DialogTrigger asChild><Button variant="secondary"><Layers className="mr-2 h-4 w-4" /> Buat Massal</Button></DialogTrigger>
             <DialogContent>
