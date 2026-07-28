@@ -102,6 +102,33 @@ function AttemptDetail() {
               <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel EQ
             </Button>
           )}
+          {isWpt && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const rows = (data.questions as any[]).map((q) => ({
+                    question_number: q.question_number,
+                    answer: answerMap.get(q.id)?.answer,
+                  }));
+                  const { filled, total, iq, category } = await exportWptExcel(rows, {
+                    candidateName: a.candidates?.full_name,
+                    candidateCode: a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot,
+                    position: a.candidates?.position ?? null,
+                    finishedAt: a.finished_at,
+                  });
+                  toast.success(
+                    `Excel WPT diunduh — benar ${total}/50, IQ ${iq} (${category}), ${filled} jawaban terisi`,
+                  );
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Gagal membuat file Excel");
+                }
+              }}
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel WPT
+            </Button>
+          )}
           <Button size="sm" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Cetak</Button>
         </div>
       </div>
