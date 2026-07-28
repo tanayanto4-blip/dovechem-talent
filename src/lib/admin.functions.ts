@@ -799,3 +799,160 @@ export const saveVoiceInstruction = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+/* ---------------- Akses Test Kandidat: Buka / Tutup / Ulangi ---------------- */
+
+/** Staff-only: tests + attempt status + open/close access state for one candidate. */
+export const listCandidateTestAccess = createServerFn({ method: "POST" })
+  .middleware([requireStaff])
+  .inputValidator((d) => z.object({ candidate_id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const [testsQ, attemptsQ, accessQ] = await Promise.all([
+      context.supabase.from("tests").select("id, code, name, test_type, duration_minutes, active").order("code"),
+      context.supabase
+        .from("test_attempts")
+        .select("id, test_id, status, started_at, finished_at, score")
+        .eq("candidate_id", data.candidate_id),
+      context.supabase
+        .from("candidate_test_access")
+        .select("test_id, is_open, reason, retake_count, last_reopened_at, updated_at")
+        .eq("candidate_id", data.candidate_id),
+    ]);
+    return {
+      tests: testsQ.data ?? [],
+      attempts: attemptsQ.data ?? [],
+      access: accessQ.data ?? [],
+      isAdmin: context.isAdmin,
+    };
+  });
+
+const AccessInput = z.object({
+  candidate_id: z.string().uuid(),
+  test_id: z.string().uuid(),
+  is_open: z.boolean(),
+  reason: z.string().trim().max(300).optional().nullable(),
+});
+
+/** Admin-only: open or close a single test for a candidate. */
+export const setCandidateTestAccess = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) => AccessInput.parse(d))
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase.from("candidate_test_access").upsert(
+      {
+        candidate_id: data.candidate_id,
+        test_id: data.test_id,
+        is_open: data.is_open,
+        reason: data.reason?.length ? data.reason : null,
+        updated_by: context.userId,
+      },
+      { onConflict: "candidate_id,test_id" },
+    );
+    if (error) throw new Error(error.message);
+    await logAudit(context, data.is_open ? "test.access.open" : "test.access.close", "candidate", data.candidate_id, {
+      test_id: data.test_id,
+      reason: data.reason ?? null,
+    });
+    return { ok: true };
+  });
+
+/** Admin-only: open or close every active test for a candidate at once. */
+export const setAllCandidateTestAccess = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) =>
+    z.object({ candidate_id: z.string().uuid(), is_open: z.boolean(), reason: z.string().trim().max(300).optional().nullable() }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: tests } = await context.supabase.from("tests").select("id").eq("active", true);
+    const rows = (tests ?? []).map((t: any) => ({
+      candidate_id: data.candidate_id,
+      test_id: t.id,
+      is_open: data.is_open,
+      reason: data.reason?.length ? data.reason : null,
+      updated_by: context.userId,
+    }));
+    if (rows.length) {
+      const { error } = await context.supabase
+        .from("candidate_test_access")
+        .upsert(rows, { onConflict: "candidate_id,test_id" });
+      if (error) throw new Error(error.message);
+    }
+    await logAudit(context, data.is_open ? "test.access.open_all" : "test.access.close_all", "candidate", data.candidate_id, {
+      count: rows.length,
+      reason: data.reason ?? null,
+    });
+    return { ok: true, count: rows.length };
+  });
+
+const ReopenInput = z.object({
+  candidate_id: z.string().uuid(),
+  test_id: z.string().uuid(),
+  clear_answers: z.boolean().default(true),
+  reason: z.string().trim().max(300).optional().nullable(),
+});
+
+/**
+ * Admin-only: ask a candidate to redo a test. The existing attempt is reset to
+ * `in_progress` (previous score/result snapshotted into the audit trail) and
+ * the test is re-opened for the candidate.
+ */
+export const reopenCandidateTest = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) => ReopenInput.parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: attempt } = await context.supabase
+      .from("test_attempts")
+      .select("id, status, score, result, started_at, finished_at")
+      .eq("candidate_id", data.candidate_id)
+      .eq("test_id", data.test_id)
+      .maybeSingle();
+
+    if (attempt) {
+      if (data.clear_answers) {
+        const del = await context.supabase.from("test_answers").delete().eq("attempt_id", attempt.id);
+        if (del.error) throw new Error(del.error.message);
+      }
+      const upd = await context.supabase
+        .from("test_attempts")
+        .update({
+          status: "in_progress",
+          finished_at: null,
+          score: null,
+          result: null,
+          started_at: new Date().toISOString(),
+        })
+        .eq("id", attempt.id);
+      if (upd.error) throw new Error(upd.error.message);
+    }
+
+    const { data: prev } = await context.supabase
+      .from("candidate_test_access")
+      .select("retake_count")
+      .eq("candidate_id", data.candidate_id)
+      .eq("test_id", data.test_id)
+      .maybeSingle();
+
+    const { error } = await context.supabase.from("candidate_test_access").upsert(
+      {
+        candidate_id: data.candidate_id,
+        test_id: data.test_id,
+        is_open: true,
+        reason: data.reason?.length ? data.reason : null,
+        retake_count: ((prev?.retake_count as number) ?? 0) + 1,
+        last_reopened_at: new Date().toISOString(),
+        updated_by: context.userId,
+      },
+      { onConflict: "candidate_id,test_id" },
+    );
+    if (error) throw new Error(error.message);
+
+    await logAudit(context, "test.attempt.reopen", "candidate", data.candidate_id, {
+      test_id: data.test_id,
+      attempt_id: attempt?.id ?? null,
+      cleared_answers: data.clear_answers,
+      previous_status: attempt?.status ?? null,
+      previous_score: attempt?.score ?? null,
+      reason: data.reason ?? null,
+    });
+    return { ok: true, reset: !!attempt };
+  });

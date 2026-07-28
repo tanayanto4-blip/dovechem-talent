@@ -183,6 +183,60 @@ export type Database = {
           },
         ]
       }
+      candidate_test_access: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          id: string
+          is_open: boolean
+          last_reopened_at: string | null
+          reason: string | null
+          retake_count: number
+          test_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          id?: string
+          is_open?: boolean
+          last_reopened_at?: string | null
+          reason?: string | null
+          retake_count?: number
+          test_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          id?: string
+          is_open?: boolean
+          last_reopened_at?: string | null
+          reason?: string | null
+          retake_count?: number
+          test_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_test_access_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_test_access_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidates: {
         Row: {
           address: string | null

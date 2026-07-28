@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getCandidateDetail, getFileSignedUrl, listCandidateFileVersions } from "@/lib/admin.functions";
 import { computeChecklist } from "@/lib/document-checklist";
+import { TestAccessControl } from "@/components/test-access-control";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,8 @@ function CandidateDetail() {
           </div>
         </div>
       </div>
+
+      <TestAccessControl candidateId={id} />
 
       <Card className="shadow-card">
         <CardHeader><CardTitle>Data Diri</CardTitle></CardHeader>

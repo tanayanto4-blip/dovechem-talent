@@ -6,7 +6,7 @@ import { useCandidateSession } from "@/lib/candidate-session";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Timer, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ClipboardList, Timer, ArrowRight, CheckCircle2, Lock, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/candidate/portal/tests")({ component: TestsPage });
 
@@ -20,6 +20,7 @@ function TestsPage() {
     enabled: !!session,
   });
   const attempts = new Map((data?.attempts ?? []).map((a: any) => [a.test_id, a]));
+  const access = new Map(((data as any)?.access ?? []).map((a: any) => [a.test_id, a]));
 
   return (
     <div className="space-y-6">
@@ -37,6 +38,9 @@ function TestsPage() {
       <div className="grid gap-4 md:grid-cols-2">
         {(data?.tests ?? []).map((t: any) => {
           const attempt = attempts.get(t.id) as any;
+          const acc = access.get(t.id) as any;
+          const closed = acc?.is_open === false;
+          const retake = !!acc?.retake_count && attempt?.status !== "finished";
           const done = attempt?.status === "finished";
           return (
             <Card key={t.id} className="shadow-card">
@@ -45,7 +49,15 @@ function TestsPage() {
                   <div className="grid h-10 w-10 place-items-center rounded-md bg-hero text-primary-foreground">
                     <ClipboardList className="h-5 w-5" />
                   </div>
-                  {done ? <Badge className="bg-success">Selesai</Badge> : <Badge variant="secondary">Belum dikerjakan</Badge>}
+                  {closed ? (
+                    <Badge variant="destructive"><Lock className="mr-1 h-3 w-3" /> Ditutup</Badge>
+                  ) : done ? (
+                    <Badge className="bg-success">Selesai</Badge>
+                  ) : retake ? (
+                    <Badge className="bg-warning text-warning-foreground"><RotateCcw className="mr-1 h-3 w-3" /> Ulangi test</Badge>
+                  ) : (
+                    <Badge variant="secondary">Belum dikerjakan</Badge>
+                  )}
                 </div>
                 <h3 className="font-display text-lg font-bold text-primary">{t.name}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{t.description}</p>
@@ -53,7 +65,12 @@ function TestsPage() {
                   <span className="inline-flex items-center gap-1"><Timer className="h-3.5 w-3.5" /> {t.duration_minutes} menit</span>
                   <span className="uppercase">{t.test_type}</span>
                 </div>
-                {done ? (
+                {closed ? (
+                  <div className="mt-5 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-center text-xs text-destructive">
+                    <Lock className="mr-1 inline h-3.5 w-3.5" />
+                    Akses test ini ditutup oleh admin{acc?.reason ? `: ${acc.reason}` : "."}
+                  </div>
+                ) : done ? (
                   <div className="mt-5 rounded-md border bg-muted/40 p-3 text-center text-xs text-muted-foreground">
                     <CheckCircle2 className="mr-1 inline h-3.5 w-3.5 text-success" />
                     Jawaban Anda telah tersimpan. Hasil penilaian hanya dapat dilihat oleh tim HR &amp; Admin.
@@ -64,7 +81,7 @@ function TestsPage() {
                     disabled={!data?.candidate?.data_completed}
                     onClick={() => nav({ to: "/candidate/portal/test/$testId", params: { testId: t.id } })}
                   >
-                    Mulai Test <ArrowRight className="ml-2 h-4 w-4" />
+                    {retake ? "Ulangi Test" : "Mulai Test"} <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 )}
               </CardContent>
