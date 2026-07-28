@@ -32,6 +32,42 @@ const EVENT_LABEL: Record<string, string> = {
   tab_hidden: "Meninggalkan halaman tes",
 };
 
+const EVENT_SEVERITY: Record<string, "info" | "warning" | "danger"> = {
+  snapshot: "info",
+  camera_on: "info",
+  camera_off: "danger",
+  camera_denied: "danger",
+  tab_hidden: "warning",
+};
+
+type SessionStatus = "live" | "live-warning" | "idle" | "finished" | "inactive";
+
+function getSessionStatus(s: any): { status: SessionStatus; label: string; sinceText: string } {
+  const now = Date.now();
+  const lastMs = now - new Date(s.last_captured_at).getTime();
+  const lastEvent = s.last_event ?? "snapshot";
+  const isAlertEvent = lastEvent !== "snapshot" && lastEvent !== "camera_on";
+  const inProgress = s.attempt_status === "in_progress";
+  const finished = s.attempt_status === "completed" || s.attempt_status === "submitted" || s.attempt_status === "finished";
+
+  const sinceText = lastMs < 60_000
+    ? "baru saja"
+    : lastMs < 60 * 60 * 1000
+      ? `${Math.round(lastMs / 60_000)} menit lalu`
+      : `${Math.round(lastMs / 3_600_000)} jam lalu`;
+
+  if (inProgress && lastMs < 3 * 60 * 1000) {
+    return { status: isAlertEvent ? "live-warning" : "live", label: isAlertEvent ? "LIVE · Perlu perhatian" : "LIVE · Diawasi", sinceText };
+  }
+  if (inProgress) {
+    return { status: "idle", label: "IDLE · Tidak ada frame baru", sinceText };
+  }
+  if (finished) {
+    return { status: "finished", label: "SELESAI", sinceText };
+  }
+  return { status: "inactive", label: "TIDAK AKTIF", sinceText };
+}
+
 function ProctoringPage() {
   const rolesFn = useServerFn(getMyRoles);
   const listFn = useServerFn(listProctorSessions);
