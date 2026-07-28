@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.snapshot_candidate_code() FROM PUBLIC, anon, authenticated;
