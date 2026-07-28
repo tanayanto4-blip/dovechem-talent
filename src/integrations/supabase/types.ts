@@ -188,7 +188,8 @@ export type Database = {
           address: string | null
           birth_date: string | null
           birth_place: string | null
-          code_id: string
+          code_id: string | null
+          code_snapshot: string | null
           created_at: string
           data_completed: boolean
           education: string | null
@@ -206,7 +207,8 @@ export type Database = {
           address?: string | null
           birth_date?: string | null
           birth_place?: string | null
-          code_id: string
+          code_id?: string | null
+          code_snapshot?: string | null
           created_at?: string
           data_completed?: boolean
           education?: string | null
@@ -224,7 +226,8 @@ export type Database = {
           address?: string | null
           birth_date?: string | null
           birth_place?: string | null
-          code_id?: string
+          code_id?: string | null
+          code_snapshot?: string | null
           created_at?: string
           data_completed?: boolean
           education?: string | null
