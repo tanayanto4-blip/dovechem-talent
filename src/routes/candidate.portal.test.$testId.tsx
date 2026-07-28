@@ -159,7 +159,6 @@ function TakeTest() {
   const [remaining, setRemaining] = useState<number>(0);
   const [submitting, setSubmitting] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [camStatus, setCamStatus] = useState<"idle" | "requesting" | "live" | "denied" | "error">("idle");
   const hydratedRef = useRef(false);
   const inflight = useRef(0);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
