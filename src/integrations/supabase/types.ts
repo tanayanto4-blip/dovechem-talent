@@ -248,6 +248,36 @@ export type Database = {
           },
         ]
       }
+      proctor_snapshots: {
+        Row: {
+          attempt_id: string | null
+          candidate_id: string
+          captured_at: string
+          event: string
+          id: string
+          image_path: string
+          test_id: string | null
+        }
+        Insert: {
+          attempt_id?: string | null
+          candidate_id: string
+          captured_at?: string
+          event?: string
+          id?: string
+          image_path: string
+          test_id?: string | null
+        }
+        Update: {
+          attempt_id?: string | null
+          candidate_id?: string
+          captured_at?: string
+          event?: string
+          id?: string
+          image_path?: string
+          test_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
