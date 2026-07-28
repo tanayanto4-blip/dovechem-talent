@@ -29,9 +29,11 @@ function CandidatesList() {
                 <TableRow>
                   <TableHead>Nama</TableHead>
                   <TableHead>Kode</TableHead>
+                  <TableHead>NIK</TableHead>
+                  <TableHead>No. HP</TableHead>
+                  <TableHead>Pendidikan</TableHead>
                   <TableHead>Posisi</TableHead>
-                  <TableHead>Data Diri</TableHead>
-                  <TableHead>Berkas Wajib</TableHead>
+                  <TableHead>Biodata</TableHead>
                   <TableHead>Test</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
@@ -39,7 +41,6 @@ function CandidatesList() {
               <TableBody>
                 {(data?.candidates ?? []).map((c: any) => {
                   const finished = (c.test_attempts ?? []).filter((a: any) => a.status === "finished").length;
-                  const cl = computeChecklist(c.candidate_files);
                   return (
                     <TableRow key={c.id}>
                       <TableCell>
@@ -47,28 +48,11 @@ function CandidatesList() {
                         <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
                       </TableCell>
                       <TableCell className="font-mono">{c.candidate_codes?.code ?? c.code_snapshot ?? "-"}</TableCell>
+                      <TableCell className="font-mono text-xs">{c.nik ?? "-"}</TableCell>
+                      <TableCell className="text-sm">{c.phone ?? "-"}</TableCell>
+                      <TableCell className="text-sm">{c.education ?? "-"}</TableCell>
                       <TableCell>{c.position_applied ?? "-"}</TableCell>
                       <TableCell>{c.data_completed ? <Badge className="bg-success">Lengkap</Badge> : <Badge variant="secondary">Belum</Badge>}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {cl.complete ? (
-                            <Badge className="bg-success">Lengkap</Badge>
-                          ) : (
-                            <Badge variant="secondary">{cl.done}/{cl.total}</Badge>
-                          )}
-                          <div className="flex flex-wrap gap-1">
-                            {cl.items.map((i) => (
-                              <span
-                                key={i.key}
-                                title={`${i.label}: ${i.uploaded ? "sudah" : "belum"}`}
-                                className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${i.uploaded ? "bg-success/15 text-success" : "bg-muted text-muted-foreground line-through"}`}
-                              >
-                                {i.label}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </TableCell>
                       <TableCell>{finished} selesai</TableCell>
                       <TableCell>
                         <Button asChild size="sm" variant="outline"><Link to="/admin/candidates/$id" params={{ id: c.id }}>Detail</Link></Button>
@@ -76,6 +60,7 @@ function CandidatesList() {
                     </TableRow>
                   );
                 })}
+
                 {(data?.candidates ?? []).length === 0 && (
                   <TableRow><TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Belum ada kandidat yang login.</TableCell></TableRow>
                 )}
