@@ -70,7 +70,8 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
       sb.from("candidates").select("*").eq("code_id", codeRow.id).single(),
       sb.from("candidate_files").select("*").eq("candidate_id", (await sb.from("candidates").select("id").eq("code_id", codeRow.id).single()).data?.id ?? ""),
       sb.from("tests").select("*").eq("active", true).order("code"),
-      sb.from("test_attempts").select("*").eq("candidate_id", (await sb.from("candidates").select("id").eq("code_id", codeRow.id).single()).data?.id ?? ""),
+      // Scores/results are staff-only: expose progress fields only.
+      sb.from("test_attempts").select("id, test_id, status, started_at, finished_at").eq("candidate_id", (await sb.from("candidates").select("id").eq("code_id", codeRow.id).single()).data?.id ?? ""),
     ]);
     return { candidate: candQ.data, files: filesQ.data ?? [], tests: testsQ.data ?? [], attempts: attemptsQ.data ?? [] };
   });
