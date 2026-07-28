@@ -37,7 +37,7 @@ function AttemptDetail() {
           {isMbti && a.result?.type && (
             <Button size="sm" variant="secondary" onClick={() => exportMbtiPdf(a.result, {
               candidateName: a.candidates?.full_name,
-              candidateCode: a.candidates?.candidate_codes?.code,
+              candidateCode: a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot,
               position: a.candidates?.position ?? undefined,
               attemptId: a.id,
               finishedAt: a.finished_at,
@@ -58,7 +58,7 @@ function AttemptDetail() {
                   }));
                   const { filled, type, valid } = await exportMbtiExcel(rows, {
                     candidateName: a.candidates?.full_name,
-                    candidateCode: a.candidates?.candidate_codes?.code,
+                    candidateCode: a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot,
                     position: a.candidates?.position ?? null,
                     finishedAt: a.finished_at,
                   });
@@ -85,7 +85,7 @@ function AttemptDetail() {
                   }));
                   const { filled, strongest, summary } = await exportEqExcel(rows, {
                     candidateName: a.candidates?.full_name,
-                    candidateCode: a.candidates?.candidate_codes?.code,
+                    candidateCode: a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot,
                     position: a.candidates?.position ?? null,
                     finishedAt: a.finished_at,
                   });
@@ -107,7 +107,7 @@ function AttemptDetail() {
         <h1 className="font-display text-3xl font-bold text-primary">Lembar Jawaban — {t?.name}</h1>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <span>{a.candidates?.full_name}</span>
-          <span className="font-mono">{a.candidates?.candidate_codes?.code}</span>
+          <span className="font-mono">{a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot ?? "-"}</span>
           <Badge variant="outline" className="uppercase">{t?.test_type}</Badge>
           <Badge className={a.status === "finished" ? "bg-success" : ""} variant={a.status === "finished" ? "default" : "secondary"}>
             {a.status === "finished" ? `Skor: ${a.score}` : "Belum selesai"}

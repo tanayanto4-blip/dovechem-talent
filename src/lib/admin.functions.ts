@@ -280,7 +280,7 @@ export const listAllCandidateFiles = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("candidate_files")
-      .select("id, file_type, file_name, file_path, file_size, mime_type, uploaded_at, candidate_id, candidates(id, full_name, nik, position_applied, candidate_codes(code))")
+      .select("id, file_type, file_name, file_path, file_size, mime_type, uploaded_at, candidate_id, candidates(id, full_name, nik, position_applied, code_snapshot, candidate_codes(code))")
       .order("uploaded_at", { ascending: false });
     if (error) throw new Error(error.message);
     await logAudit(context, "candidate.files.list", "area", null, { count: data?.length ?? 0 });
@@ -334,7 +334,7 @@ export const getAttemptDetail = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: attempt, error } = await supabaseAdmin
       .from("test_attempts")
-      .select("*, tests(*), candidates(id, full_name, candidate_codes(code)), test_answers(*)")
+      .select("*, tests(*), candidates(id, full_name, code_snapshot, candidate_codes(code)), test_answers(*)")
       .eq("id", data.id)
       .single();
     if (error) throw new Error(error.message);
@@ -721,7 +721,7 @@ export const listAllAttempts = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("test_attempts")
-      .select("id, status, score, result, started_at, finished_at, test_id, candidate_id, tests(id, code, name, test_type), candidates(id, full_name, position_applied, candidate_codes(code))")
+      .select("id, status, score, result, started_at, finished_at, test_id, candidate_id, tests(id, code, name, test_type), candidates(id, full_name, position_applied, code_snapshot, candidate_codes(code))")
       .order("finished_at", { ascending: false, nullsFirst: false })
       .order("started_at", { ascending: false });
     if (error) throw new Error(error.message);

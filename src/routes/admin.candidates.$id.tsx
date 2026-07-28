@@ -45,7 +45,7 @@ function CandidateDetail() {
         <div>
           <h1 className="font-display text-3xl font-bold text-primary">{c.full_name ?? "Kandidat"}</h1>
           <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-            <span className="font-mono">{c.candidate_codes?.code}</span>
+            <span className="font-mono">{c.candidate_codes?.code ?? c.code_snapshot ?? "-"}</span>
             {c.data_completed ? <Badge className="bg-success">Data lengkap</Badge> : <Badge variant="secondary">Belum lengkap</Badge>}
           </div>
         </div>
