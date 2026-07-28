@@ -54,13 +54,15 @@ function AttemptDetail() {
                     question_number: q.question_number,
                     answer: answerMap.get(q.id)?.answer,
                   }));
-                  const { filled } = await exportMbtiExcel(rows, {
+                  const { filled, type, valid } = await exportMbtiExcel(rows, {
                     candidateName: a.candidates?.full_name,
                     candidateCode: a.candidates?.candidate_codes?.code,
                     position: a.candidates?.position ?? null,
                     finishedAt: a.finished_at,
                   });
-                  toast.success(`Excel MBTI diunduh (${filled}/60 jawaban terisi)`);
+                  toast.success(
+                    `Excel MBTI diunduh — tipe ${type} (${filled}/60 jawaban${valid ? "" : ", cek ulang isian"})`,
+                  );
                 } catch (e: any) {
                   toast.error(e?.message ?? "Gagal membuat file Excel");
                 }
