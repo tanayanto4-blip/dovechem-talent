@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CandidatePortalRouteImport } from './routes/candidate.portal'
 import { Route as CandidateLoginRouteImport } from './routes/candidate.login'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminResultsRouteImport } from './routes/admin.results'
 import { Route as AdminMbtiRouteImport } from './routes/admin.mbti'
 import { Route as AdminDocumentsRouteImport } from './routes/admin.documents'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
@@ -60,6 +61,11 @@ const CandidateLoginRoute = CandidateLoginRouteImport.update({
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminResultsRoute = AdminResultsRouteImport.update({
+  id: '/results',
+  path: '/results',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminMbtiRoute = AdminMbtiRouteImport.update({
@@ -154,6 +160,7 @@ export interface FileRoutesByFullPath {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/documents': typeof AdminDocumentsRoute
   '/admin/mbti': typeof AdminMbtiRouteWithChildren
+  '/admin/results': typeof AdminResultsRoute
   '/admin/users': typeof AdminUsersRoute
   '/candidate/login': typeof CandidateLoginRoute
   '/candidate/portal': typeof CandidatePortalRouteWithChildren
@@ -178,6 +185,7 @@ export interface FileRoutesByTo {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/documents': typeof AdminDocumentsRoute
   '/admin/mbti': typeof AdminMbtiRouteWithChildren
+  '/admin/results': typeof AdminResultsRoute
   '/admin/users': typeof AdminUsersRoute
   '/candidate/login': typeof CandidateLoginRoute
   '/admin/attempts/$id': typeof AdminAttemptsIdRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/documents': typeof AdminDocumentsRoute
   '/admin/mbti': typeof AdminMbtiRouteWithChildren
+  '/admin/results': typeof AdminResultsRoute
   '/admin/users': typeof AdminUsersRoute
   '/candidate/login': typeof CandidateLoginRoute
   '/candidate/portal': typeof CandidatePortalRouteWithChildren
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/documents'
     | '/admin/mbti'
+    | '/admin/results'
     | '/admin/users'
     | '/candidate/login'
     | '/candidate/portal'
@@ -252,6 +262,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/documents'
     | '/admin/mbti'
+    | '/admin/results'
     | '/admin/users'
     | '/candidate/login'
     | '/admin/attempts/$id'
@@ -275,6 +286,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/documents'
     | '/admin/mbti'
+    | '/admin/results'
     | '/admin/users'
     | '/candidate/login'
     | '/candidate/portal'
@@ -340,6 +352,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/results': {
+      id: '/admin/results'
+      path: '/results'
+      fullPath: '/admin/results'
+      preLoaderRoute: typeof AdminResultsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/mbti': {
@@ -488,6 +507,7 @@ interface AdminRouteChildren {
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminDocumentsRoute: typeof AdminDocumentsRoute
   AdminMbtiRoute: typeof AdminMbtiRouteWithChildren
+  AdminResultsRoute: typeof AdminResultsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminAttemptsIdRoute: typeof AdminAttemptsIdRoute
   AdminTestsIdRoute: typeof AdminTestsIdRoute
@@ -501,6 +521,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDashboardRoute: AdminDashboardRoute,
   AdminDocumentsRoute: AdminDocumentsRoute,
   AdminMbtiRoute: AdminMbtiRouteWithChildren,
+  AdminResultsRoute: AdminResultsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminAttemptsIdRoute: AdminAttemptsIdRoute,
   AdminTestsIdRoute: AdminTestsIdRoute,
