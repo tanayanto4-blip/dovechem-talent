@@ -330,6 +330,24 @@ function ProctoringPage() {
           <DialogDescription className="text-xs">
             Seluruh frame dan peristiwa kamera selama sesi psikotest. Tautan gambar bersifat sementara.
           </DialogDescription>
+          <div>
+            <Button
+              size="sm"
+              disabled={!openKey || downloading === openKey}
+              onClick={() =>
+                openKey &&
+                handleDownload(openKey, { attempt_id: openAttempt?.attempt_id, candidate_id: openAttempt?.candidate_id })
+              }
+            >
+              {downloading === openKey ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              Unduh bukti proctoring (ZIP + video)
+            </Button>
+          </div>
+
           {detail.isLoading ? (
             <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Memuat...</div>
           ) : (
