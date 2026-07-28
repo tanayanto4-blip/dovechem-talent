@@ -73,6 +73,33 @@ function AttemptDetail() {
               <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel MBTI
             </Button>
           )}
+          {isEq && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const rows = (data.questions as any[]).map((q) => ({
+                    question_number: q.question_number,
+                    answer: answerMap.get(q.id)?.answer,
+                  }));
+                  const { filled, strongest, summary } = await exportEqExcel(rows, {
+                    candidateName: a.candidates?.full_name,
+                    candidateCode: a.candidates?.candidate_codes?.code,
+                    position: a.candidates?.position ?? null,
+                    finishedAt: a.finished_at,
+                  });
+                  toast.success(
+                    `Excel EQ diunduh — terkuat ${summary[strongest].label} (${filled}/50 jawaban)`,
+                  );
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Gagal membuat file Excel");
+                }
+              }}
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel EQ
+            </Button>
+          )}
           <Button size="sm" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Cetak</Button>
         </div>
       </div>
