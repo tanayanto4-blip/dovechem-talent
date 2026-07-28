@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listAllAttempts } from "@/lib/admin.functions";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileDown, Eye, BarChart3 } from "lucide-react";
+import { FileDown, Eye, BarChart3, FolderOpen, ChevronDown, ChevronRight, Users } from "lucide-react";
 
 export const Route = createFileRoute("/admin/results")({
   component: ResultsBank,
@@ -27,12 +27,34 @@ function fmt(d?: string | null) {
   return d ? new Date(d).toLocaleString("id-ID") : "-";
 }
 
+function summarize(r: any) {
+  const res = r.result ?? {};
+  const t = r.tests?.test_type;
+  if (t === "mbti" && res.type) return `Tipe ${res.type}`;
+  if (t === "disc" && res.dominant) return `Dominan ${res.dominant}`;
+  if (t === "eq" && res.dominant) return `Terkuat ${res.dominant}`;
+  if (res.requires_manual_review) return "Perlu penilaian manual";
+  return "-";
+}
+
+type Group = {
+  key: string;
+  name: string;
+  code: string;
+  position: string;
+  attempts: any[];
+  finished: number;
+  first?: string | null;
+  last?: string | null;
+};
+
 function ResultsBank() {
   const fn = useServerFn(listAllAttempts);
   const { data, isLoading } = useQuery({ queryKey: ["admin-all-attempts"], queryFn: () => fn({ data: {} as never }) });
   const [q, setQ] = useState("");
   const [type, setType] = useState("all");
   const [status, setStatus] = useState("all");
+  const [open, setOpen] = useState<Record<string, boolean>>({});
 
   const rows = useMemo(() => {
     const all = (data?.attempts ?? []) as any[];
@@ -47,6 +69,37 @@ function ResultsBank() {
     });
   }, [data, q, type, status]);
 
+  // Kelompokkan per nama kandidat, urut test dari awal sampai akhir
+  const groups = useMemo<Group[]>(() => {
+    const map = new Map<string, Group>();
+    rows.forEach((r) => {
+      const c = r.candidates ?? {};
+      const key = String(c.id ?? c.full_name ?? r.candidate_id ?? "tanpa-nama");
+      let g = map.get(key);
+      if (!g) {
+        g = {
+          key,
+          name: c.full_name ?? "(Tanpa Nama)",
+          code: c.candidate_codes?.code ?? "-",
+          position: c.position_applied ?? "-",
+          attempts: [],
+          finished: 0,
+        };
+        map.set(key, g);
+      }
+      g.attempts.push(r);
+    });
+    const list = Array.from(map.values());
+    list.forEach((g) => {
+      g.attempts.sort((a, b) => new Date(a.started_at ?? 0).getTime() - new Date(b.started_at ?? 0).getTime());
+      g.finished = g.attempts.filter((a) => a.status === "finished").length;
+      g.first = g.attempts[0]?.started_at ?? null;
+      g.last = g.attempts[g.attempts.length - 1]?.finished_at ?? g.attempts[g.attempts.length - 1]?.started_at ?? null;
+    });
+    list.sort((a, b) => a.name.localeCompare(b.name, "id"));
+    return list;
+  }, [rows]);
+
   const types = useMemo(
     () => Array.from(new Set(((data?.attempts ?? []) as any[]).map((a) => a.tests?.test_type).filter(Boolean))),
     [data],
@@ -59,22 +112,25 @@ function ResultsBank() {
 
   function exportCsv() {
     const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const header = ["No", "Kandidat", "Kode", "Posisi", "Test", "Tipe", "Status", "Skor", "Ringkasan", "Mulai", "Selesai"];
+    const header = ["No", "Kandidat", "Kode", "Posisi", "Urutan Test", "Test", "Tipe", "Status", "Skor", "Ringkasan", "Mulai", "Selesai"];
     const lines = [header.map(esc).join(",")];
-    rows.forEach((r, i) => {
-      lines.push([
-        i + 1,
-        r.candidates?.full_name ?? "-",
-        r.candidates?.candidate_codes?.code ?? "-",
-        r.candidates?.position_applied ?? "-",
-        r.tests?.name ?? "-",
-        r.tests?.test_type ?? "-",
-        r.status,
-        r.status === "finished" ? (r.score ?? "") : "",
-        summarize(r),
-        fmt(r.started_at),
-        fmt(r.finished_at),
-      ].map(esc).join(","));
+    groups.forEach((g, gi) => {
+      g.attempts.forEach((r, ai) => {
+        lines.push([
+          gi + 1,
+          g.name,
+          g.code,
+          g.position,
+          ai + 1,
+          r.tests?.name ?? "-",
+          r.tests?.test_type ?? "-",
+          r.status,
+          r.status === "finished" ? (r.score ?? "") : "",
+          summarize(r),
+          fmt(r.started_at),
+          fmt(r.finished_at),
+        ].map(esc).join(","));
+      });
     });
     const blob = new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -91,19 +147,20 @@ function ResultsBank() {
         <div>
           <h1 className="font-display text-3xl font-bold text-primary">Bank Data Hasil</h1>
           <p className="text-sm text-muted-foreground">
-            Seluruh hasil psikotest kandidat. Hanya dapat diakses oleh Admin &amp; HR — kandidat tidak dapat melihat skor.
+            Tersimpan per nama kandidat — seluruh riwayat test dari awal sampai akhir. Hanya Admin &amp; HR yang dapat melihat skor.
           </p>
         </div>
-        <Button size="sm" variant="secondary" onClick={exportCsv} disabled={!rows.length}>
+        <Button size="sm" variant="secondary" onClick={exportCsv} disabled={!groups.length}>
           <FileDown className="mr-2 h-4 w-4" /> Ekspor CSV
         </Button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-4">
         {[
-          { label: "Total Attempt", value: rows.length },
-          { label: "Selesai", value: finished.length },
-          { label: "Rata-rata Skor", value: avg },
+          { label: "Kandidat", value: groups.length, icon: Users },
+          { label: "Total Attempt", value: rows.length, icon: BarChart3 },
+          { label: "Selesai", value: finished.length, icon: BarChart3 },
+          { label: "Rata-rata Skor", value: avg, icon: BarChart3 },
         ].map((c) => (
           <Card key={c.label} className="shadow-card">
             <CardContent className="flex items-center justify-between p-5">
@@ -111,7 +168,7 @@ function ResultsBank() {
                 <div className="text-sm text-muted-foreground">{c.label}</div>
                 <div className="mt-1 font-display text-2xl font-bold text-primary">{c.value}</div>
               </div>
-              <BarChart3 className="h-5 w-5 text-muted-foreground" />
+              <c.icon className="h-5 w-5 text-muted-foreground" />
             </CardContent>
           </Card>
         ))}
@@ -119,7 +176,7 @@ function ResultsBank() {
 
       <Card className="shadow-card">
         <CardHeader className="gap-3">
-          <CardTitle className="text-base">Rekap Hasil Psikotest</CardTitle>
+          <CardTitle className="text-base">Rekap Hasil Psikotest per Kandidat</CardTitle>
           <div className="flex flex-wrap gap-2">
             <Input
               className="max-w-xs"
@@ -138,69 +195,100 @@ function ResultsBank() {
               <option value="finished">Selesai</option>
               <option value="in_progress">Berjalan</option>
             </select>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                setOpen((o) => {
+                  const allOpen = groups.every((g) => o[g.key]);
+                  return allOpen ? {} : Object.fromEntries(groups.map((g) => [g.key, true]));
+                })
+              }
+              disabled={!groups.length}
+            >
+              {groups.every((g) => open[g.key]) && groups.length ? "Tutup semua" : "Buka semua"}
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           {isLoading ? (
             <div className="py-8 text-center text-sm text-muted-foreground">Memuat...</div>
-          ) : !rows.length ? (
+          ) : !groups.length ? (
             <div className="py-8 text-center text-sm text-muted-foreground">Belum ada hasil psikotest.</div>
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-xs uppercase text-muted-foreground">
-                  <th className="py-2 pr-2">No</th>
-                  <th className="py-2 pr-2">Kandidat</th>
-                  <th className="py-2 pr-2">Kode</th>
-                  <th className="py-2 pr-2">Test</th>
-                  <th className="py-2 pr-2">Status</th>
-                  <th className="py-2 pr-2">Skor</th>
-                  <th className="py-2 pr-2">Ringkasan</th>
-                  <th className="py-2 pr-2">Selesai</th>
-                  <th className="py-2" />
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r, i) => (
-                  <tr key={r.id} className="border-b last:border-0">
-                    <td className="py-2 pr-2 text-muted-foreground">{i + 1}</td>
-                    <td className="py-2 pr-2 font-medium">
-                      {r.candidates?.full_name ?? "-"}
-                      <div className="text-xs text-muted-foreground">{r.candidates?.position_applied ?? "-"}</div>
-                    </td>
-                    <td className="py-2 pr-2 font-mono text-xs">{r.candidates?.candidate_codes?.code ?? "-"}</td>
-                    <td className="py-2 pr-2">
-                      {r.tests?.name ?? "-"}
-                      <div><Badge variant="outline" className="mt-1 uppercase">{r.tests?.test_type}</Badge></div>
-                    </td>
-                    <td className="py-2 pr-2">
-                      {r.status === "finished" ? <Badge className="bg-success">Selesai</Badge> : <Badge variant="secondary">Berjalan</Badge>}
-                    </td>
-                    <td className="py-2 pr-2 font-semibold text-primary">{r.status === "finished" ? (r.score ?? "-") : "-"}</td>
-                    <td className="py-2 pr-2 text-xs text-muted-foreground">{summarize(r)}</td>
-                    <td className="py-2 pr-2 text-xs text-muted-foreground">{fmt(r.finished_at)}</td>
-                    <td className="py-2">
-                      <Button asChild size="sm" variant="outline">
-                        <Link to="/admin/attempts/$id" params={{ id: r.id }}><Eye className="mr-1 h-3.5 w-3.5" /> Detail</Link>
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="space-y-3">
+              {groups.map((g, gi) => {
+                const isOpen = !!open[g.key];
+                return (
+                  <div key={g.key} className="rounded-lg border">
+                    <button
+                      type="button"
+                      onClick={() => setOpen((o) => ({ ...o, [g.key]: !o[g.key] }))}
+                      className="flex w-full flex-wrap items-center gap-3 px-4 py-3 text-left hover:bg-muted/50"
+                    >
+                      {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                      <span className="w-6 text-sm text-muted-foreground">{gi + 1}.</span>
+                      <FolderOpen className="h-4 w-4 text-primary" />
+                      <span className="font-semibold">{g.name}</span>
+                      <span className="font-mono text-xs text-muted-foreground">{g.code}</span>
+                      <span className="text-xs text-muted-foreground">{g.position}</span>
+                      <span className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+                        <Badge variant="outline">{g.attempts.length} test</Badge>
+                        <Badge className="bg-success">{g.finished} selesai</Badge>
+                        <span className="hidden sm:inline">Awal: {fmt(g.first)} → Akhir: {fmt(g.last)}</span>
+                      </span>
+                    </button>
+
+                    {isOpen && (
+                      <div className="overflow-x-auto border-t px-4 py-3">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b text-left text-xs uppercase text-muted-foreground">
+                              <th className="py-2 pr-2">Urutan</th>
+                              <th className="py-2 pr-2">Test</th>
+                              <th className="py-2 pr-2">Status</th>
+                              <th className="py-2 pr-2">Skor</th>
+                              <th className="py-2 pr-2">Ringkasan</th>
+                              <th className="py-2 pr-2">Mulai</th>
+                              <th className="py-2 pr-2">Selesai</th>
+                              <th className="py-2" />
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {g.attempts.map((r, ai) => (
+                              <Fragment key={r.id}>
+                                <tr className="border-b last:border-0">
+                                  <td className="py-2 pr-2 text-muted-foreground">{ai + 1}</td>
+                                  <td className="py-2 pr-2">
+                                    {r.tests?.name ?? "-"}
+                                    <div><Badge variant="outline" className="mt-1 uppercase">{r.tests?.test_type}</Badge></div>
+                                  </td>
+                                  <td className="py-2 pr-2">
+                                    {r.status === "finished" ? <Badge className="bg-success">Selesai</Badge> : <Badge variant="secondary">Berjalan</Badge>}
+                                  </td>
+                                  <td className="py-2 pr-2 font-semibold text-primary">{r.status === "finished" ? (r.score ?? "-") : "-"}</td>
+                                  <td className="py-2 pr-2 text-xs text-muted-foreground">{summarize(r)}</td>
+                                  <td className="py-2 pr-2 text-xs text-muted-foreground">{fmt(r.started_at)}</td>
+                                  <td className="py-2 pr-2 text-xs text-muted-foreground">{fmt(r.finished_at)}</td>
+                                  <td className="py-2">
+                                    <Button asChild size="sm" variant="outline">
+                                      <Link to="/admin/attempts/$id" params={{ id: r.id }}><Eye className="mr-1 h-3.5 w-3.5" /> Detail</Link>
+                                    </Button>
+                                  </td>
+                                </tr>
+                              </Fragment>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </CardContent>
       </Card>
     </div>
   );
-}
-
-function summarize(r: any) {
-  const res = r.result ?? {};
-  const t = r.tests?.test_type;
-  if (t === "mbti" && res.type) return `Tipe ${res.type}`;
-  if (t === "disc" && res.dominant) return `Dominan ${res.dominant}`;
-  if (t === "eq" && res.dominant) return `Terkuat ${res.dominant}`;
-  if (res.requires_manual_review) return "Perlu penilaian manual";
-  return "-";
 }
