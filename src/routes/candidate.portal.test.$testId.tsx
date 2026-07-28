@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateStartTest, candidateSubmitTest, candidateSaveAnswer, candidateGetTestIntro } from "@/lib/candidate.functions";
 import { VoiceInstructionPlayer } from "@/components/voice-instruction";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, Volume2 } from "lucide-react";
 import { useCandidateSession } from "@/lib/candidate-session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -176,6 +176,7 @@ function TakeTest() {
   const inflight = useRef(0);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
   const replayVoiceRef = useRef<(() => void) | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
 
   // Hydrate saved answers on first load so the candidate can resume.
@@ -271,7 +272,27 @@ function TakeTest() {
                 {intro.data?.resumed && <span className="rounded bg-accent px-2 py-0.5 text-xs">Melanjutkan pengerjaan</span>}
               </div>
               {it.description && <p className="text-sm text-muted-foreground">{it.description}</p>}
-              {it.voice_enabled && it.voice_instruction ? (
+              {it.voice_enabled && it.voice_mode === "audio" && it.voice_audio_url ? (
+                <div className="space-y-2 rounded-lg border bg-accent/40 p-4">
+                  <span className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                    <Volume2 className="h-4 w-4" /> Instruksi Suara
+                  </span>
+                  <audio
+                    controls
+                    autoPlay={!!it.voice_autoplay}
+                    src={it.voice_audio_url}
+                    ref={audioRef}
+                    className="w-full"
+                  />
+                  <Button type="button" size="sm" variant="secondary"
+                    onClick={() => { const a = audioRef.current; if (a) { a.currentTime = 0; void a.play(); } }}>
+                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Ulangi instruksi
+                  </Button>
+                  {it.voice_instruction && (
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">{it.voice_instruction}</p>
+                  )}
+                </div>
+              ) : it.voice_enabled && it.voice_instruction ? (
                 <VoiceInstructionPlayer
                   text={it.voice_instruction}
                   lang={it.voice_lang}
@@ -291,10 +312,10 @@ function TakeTest() {
             </>
           )}
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => { try { window.speechSynthesis?.cancel(); } catch { /* noop */ } setStarted(true); }} disabled={intro.isLoading || !!intro.error}>
+            <Button onClick={() => { try { window.speechSynthesis?.cancel(); audioRef.current?.pause(); } catch { /* noop */ } setStarted(true); }} disabled={intro.isLoading || !!intro.error}>
               Mulai Test
             </Button>
-            {it?.voice_enabled && it?.voice_instruction && (
+            {it?.voice_enabled && it?.voice_instruction && it?.voice_mode !== "audio" && (
               <Button variant="secondary" onClick={() => replayVoiceRef.current?.()}>
                 <RotateCcw className="mr-1.5 h-4 w-4" /> Ulangi instruksi
               </Button>
