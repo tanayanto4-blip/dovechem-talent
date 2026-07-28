@@ -24,6 +24,26 @@ async function resolveActiveCode(sb: any, code: string) {
   return row as { id: string; active: boolean; expires_at: string | null };
 }
 
+/**
+ * Staff can close a specific test for a candidate (or re-open it for a retake).
+ * Missing row = open by default. Throws when the test is closed.
+ */
+async function assertTestOpen(sb: any, candidateId: string, testId: string) {
+  const { data } = await sb
+    .from("candidate_test_access")
+    .select("is_open, reason")
+    .eq("candidate_id", candidateId)
+    .eq("test_id", testId)
+    .maybeSingle();
+  if (data && data.is_open === false) {
+    throw new Error(
+      data.reason
+        ? `Akses test ini ditutup oleh admin: ${data.reason}`
+        : "Akses test ini sedang ditutup oleh admin.",
+    );
+  }
+}
+
 /** Candidate logs in with an access code. Returns candidate id + basic info. */
 export const candidateLogin = createServerFn({ method: "POST" })
   .inputValidator((d) => CodeInput.parse(d))
@@ -73,7 +93,18 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
       // Scores/results are staff-only: expose progress fields only.
       sb.from("test_attempts").select("id, test_id, status, started_at, finished_at").eq("candidate_id", (await sb.from("candidates").select("id").eq("code_id", codeRow.id).single()).data?.id ?? ""),
     ]);
-    return { candidate: candQ.data, files: filesQ.data ?? [], tests: testsQ.data ?? [], attempts: attemptsQ.data ?? [] };
+    const candId = candQ.data?.id ?? "";
+    const { data: access } = await sb
+      .from("candidate_test_access")
+      .select("test_id, is_open, reason, retake_count, last_reopened_at")
+      .eq("candidate_id", candId);
+    return {
+      candidate: candQ.data,
+      files: filesQ.data ?? [],
+      tests: testsQ.data ?? [],
+      attempts: attemptsQ.data ?? [],
+      access: access ?? [],
+    };
   });
 
 const ProfileInput = z.object({
@@ -196,6 +227,7 @@ export const candidateStartTest = createServerFn({ method: "POST" })
     const { data: cand } = await sb.from("candidates").select("id, data_completed").eq("code_id", codeRow.id).single();
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     if (!cand.data_completed) throw new Error("Lengkapi data diri terlebih dahulu.");
+    await assertTestOpen(sb, cand.id, data.test_id);
 
     let { data: attempt } = await sb.from("test_attempts").select("*").eq("candidate_id", cand.id).eq("test_id", data.test_id).maybeSingle();
     if (!attempt) {
@@ -227,12 +259,13 @@ export const candidateSaveAnswer = createServerFn({ method: "POST" })
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: attempt } = await sb
       .from("test_attempts")
-      .select("id, status")
+      .select("id, status, test_id")
       .eq("id", data.attempt_id)
       .eq("candidate_id", cand.id)
       .single();
     if (!attempt) throw new Error("Attempt tidak valid.");
     if ((attempt as any).status === "finished") throw new Error("Attempt sudah selesai.");
+    await assertTestOpen(sb, cand.id, (attempt as any).test_id);
     const { error } = await sb
       .from("test_answers")
       .upsert(
@@ -281,6 +314,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: attempt } = await sb.from("test_attempts").select("*, tests(*)").eq("id", data.attempt_id).eq("candidate_id", cand.id).single();
     if (!attempt) throw new Error("Attempt tidak valid.");
+    await assertTestOpen(sb, cand.id, (attempt as any).test_id);
     // Idempotent: repeat submits are a no-op. Scoring output is never returned
     // to the candidate — results are staff-only.
     if (attempt.status === "finished") {
@@ -489,6 +523,7 @@ export const candidateGetTestIntro = createServerFn({ method: "POST" })
         .createSignedUrl((test as any).voice_audio_path, 60 * 60);
       voice_audio_url = signed?.signedUrl ?? null;
     }
+    await assertTestOpen(sb, cand.id, data.test_id);
     return {
       test: { ...test, voice_audio_url },
       resumed: !!attempt && attempt.status !== "finished",
