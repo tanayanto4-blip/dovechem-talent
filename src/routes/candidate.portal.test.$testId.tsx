@@ -214,9 +214,10 @@ function TakeTest() {
     try {
       const payload = Object.entries(answers).map(([question_id, answer]) => ({ question_id, answer }));
       await submit({ data: { code: session!.code, attempt_id: data.attempt.id, answers: payload } });
-      toast.success("Jawaban terkirim. Hasil penilaian akan diproses oleh tim HR.");
+      toast.success("Jawaban terkirim. Hasil penilaian diproses oleh tim HR.");
       qc.invalidateQueries({ queryKey: ["candidate-profile"] });
-      nav({ to: "/candidate/portal/tests" });
+      qc.removeQueries({ queryKey: ["start-test", testId, session?.code] });
+      nav({ to: "/candidate/portal/tests", replace: true });
     } catch (e: any) { toast.error(e?.message || "Gagal mengirim jawaban. Coba lagi."); }
     finally { setSubmitting(false); }
   }
@@ -258,8 +259,18 @@ function TakeTest() {
     );
   }
   if (data.attempt.status === "finished") {
-    return <Card><CardContent className="py-8 text-center">Test sudah selesai. Skor: <b>{data.attempt.score}</b></CardContent></Card>;
+    return (
+      <Card>
+        <CardContent className="space-y-3 py-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            Test sudah selesai dan jawaban Anda telah tersimpan. Hasil penilaian tidak ditampilkan dan akan diproses oleh tim HR.
+          </p>
+          <Button onClick={() => nav({ to: "/candidate/portal/tests" })}>Kembali ke daftar test</Button>
+        </CardContent>
+      </Card>
+    );
   }
+
 
 
 
