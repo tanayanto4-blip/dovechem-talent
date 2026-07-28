@@ -334,6 +334,33 @@ function ResultsBank() {
                                           <FileSpreadsheet className="mr-1 h-3.5 w-3.5" /> Excel
                                         </Button>
                                       )}
+                                      {r.tests?.test_type === "wpt" && (
+                                        <Button
+                                          size="sm"
+                                          variant="secondary"
+                                          onClick={async () => {
+                                            try {
+                                              const d: any = await detailFn({ data: { id: r.id } });
+                                              const map = new Map<string, any>((d.attempt?.test_answers ?? []).map((x: any) => [x.question_id, x]));
+                                              const rows = (d.questions ?? []).map((q: any) => ({
+                                                question_number: q.question_number,
+                                                answer: map.get(q.id)?.answer,
+                                              }));
+                                              const { total, iq, category } = await exportWptExcel(rows, {
+                                                candidateName: g.name,
+                                                candidateCode: g.code,
+                                                position: g.position,
+                                                finishedAt: r.finished_at,
+                                              });
+                                              toast.success(`Excel WPT diunduh — benar ${total}/50, IQ ${iq} (${category})`);
+                                            } catch (e: any) {
+                                              toast.error(e?.message ?? "Gagal membuat file Excel");
+                                            }
+                                          }}
+                                        >
+                                          <FileSpreadsheet className="mr-1 h-3.5 w-3.5" /> Excel
+                                        </Button>
+                                      )}
                                     </div>
                                   </td>
                                 </tr>
