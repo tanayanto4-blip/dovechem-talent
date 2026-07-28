@@ -54,11 +54,10 @@ function TestsPage() {
                   <span className="uppercase">{t.test_type}</span>
                 </div>
                 {done ? (
-                  <Button asChild className="mt-5 w-full" variant="outline">
-                    <Link to="/candidate/portal/result/$attemptId" params={{ attemptId: attempt.id }}>
-                      <CheckCircle2 className="mr-2 h-4 w-4" /> Lihat Hasil & Jawaban
-                    </Link>
-                  </Button>
+                  <div className="mt-5 rounded-md border bg-muted/40 p-3 text-center text-xs text-muted-foreground">
+                    <CheckCircle2 className="mr-1 inline h-3.5 w-3.5 text-success" />
+                    Jawaban Anda telah tersimpan. Hasil penilaian hanya dapat dilihat oleh tim HR &amp; Admin.
+                  </div>
                 ) : (
                   <Button
                     className="mt-5 w-full"
