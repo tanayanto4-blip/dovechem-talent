@@ -290,13 +290,13 @@ function ResultsBank() {
                                                 question_number: q.question_number,
                                                 answer: map.get(q.id)?.answer,
                                               }));
-                                              const { filled } = await exportMbtiExcel(rows, {
+                                              const { filled, type } = await exportMbtiExcel(rows, {
                                                 candidateName: g.name,
                                                 candidateCode: g.code,
                                                 position: g.position,
                                                 finishedAt: r.finished_at,
                                               });
-                                              toast.success(`Excel MBTI diunduh (${filled}/60 jawaban)`);
+                                              toast.success(`Excel MBTI diunduh — tipe ${type} (${filled}/60 jawaban)`);
                                             } catch (e: any) {
                                               toast.error(e?.message ?? "Gagal membuat file Excel");
                                             }
