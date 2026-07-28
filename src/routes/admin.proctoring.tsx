@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Loader2, RefreshCw, ShieldAlert, Video, VideoOff, AlertTriangle, CheckCircle2, CircleOff, Radio } from "lucide-react";
+import { ProctorLiveView } from "@/components/ProctorLiveView";
 
 export const Route = createFileRoute("/admin/proctoring")({
   ssr: false,
@@ -152,19 +153,13 @@ function ProctoringPage() {
               >
                 {/* CCTV viewport */}
                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-black">
-                  {s.latest_url ? (
-                    <img
-                      key={s.latest_url}
-                      src={s.latest_url}
-                      alt={`Frame kamera ${s.candidate_name}`}
-                      className="h-full w-full object-cover contrast-110 saturate-75"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-neutral-500">
-                      <VideoOff className="h-8 w-8" />
-                      <span className="font-mono text-[11px] tracking-widest">NO SIGNAL</span>
-                    </div>
-                  )}
+                  <ProctorLiveView
+                    attemptId={s.attempt_id}
+                    fallbackUrl={s.latest_url}
+                    alt={`Kamera ${s.candidate_name}`}
+                    className="h-full w-full object-cover contrast-110 saturate-75"
+                  />
+
 
                   {/* scanline + vignette overlay */}
                   <div
