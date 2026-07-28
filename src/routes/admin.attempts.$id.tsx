@@ -9,6 +9,7 @@ import { ArrowLeft, Printer, FileDown, FileSpreadsheet } from "lucide-react";
 import { exportMbtiPdf } from "@/lib/mbti-pdf";
 import { exportMbtiExcel } from "@/lib/mbti-excel";
 import { exportEqExcel } from "@/lib/eq-excel";
+import { exportWptExcel } from "@/lib/wpt-excel";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/attempts/$id")({ component: AttemptDetail });
