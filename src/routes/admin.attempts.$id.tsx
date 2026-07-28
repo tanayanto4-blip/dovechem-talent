@@ -10,6 +10,7 @@ import { exportMbtiPdf } from "@/lib/mbti-pdf";
 import { exportMbtiExcel } from "@/lib/mbti-excel";
 import { exportEqExcel } from "@/lib/eq-excel";
 import { exportWptExcel } from "@/lib/wpt-excel";
+import { exportDiscExcel } from "@/lib/disc-excel";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/attempts/$id")({ component: AttemptDetail });
@@ -100,6 +101,34 @@ function AttemptDetail() {
               }}
             >
               <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel EQ
+            </Button>
+          )}
+          {isDisc && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const rows = (data.questions as any[]).map((q) => ({
+                    question_number: q.question_number,
+                    answer: answerMap.get(q.id)?.answer,
+                  }));
+                  const { filled, total, valid } = await exportDiscExcel(rows, {
+                    candidateName: a.candidates?.full_name,
+                    candidateCode: a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot,
+                    position: a.candidates?.position_applied ?? null,
+                    gender: a.candidates?.gender ?? null,
+                    finishedAt: a.finished_at,
+                  });
+                  toast.success(
+                    `Excel DISC diunduh — ${filled}/${total} kelompok terisi${valid ? "" : ", cek ulang isian"}`,
+                  );
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Gagal membuat file Excel");
+                }
+              }}
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel DISC
             </Button>
           )}
           {isWpt && (
