@@ -16,6 +16,7 @@ import { Route as CandidatePortalRouteImport } from './routes/candidate.portal'
 import { Route as CandidateLoginRouteImport } from './routes/candidate.login'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminResultsRouteImport } from './routes/admin.results'
+import { Route as AdminProctoringRouteImport } from './routes/admin.proctoring'
 import { Route as AdminMbtiRouteImport } from './routes/admin.mbti'
 import { Route as AdminDocumentsRouteImport } from './routes/admin.documents'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
@@ -66,6 +67,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
 const AdminResultsRoute = AdminResultsRouteImport.update({
   id: '/results',
   path: '/results',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProctoringRoute = AdminProctoringRouteImport.update({
+  id: '/proctoring',
+  path: '/proctoring',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminMbtiRoute = AdminMbtiRouteImport.update({
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/documents': typeof AdminDocumentsRoute
   '/admin/mbti': typeof AdminMbtiRouteWithChildren
+  '/admin/proctoring': typeof AdminProctoringRoute
   '/admin/results': typeof AdminResultsRoute
   '/admin/users': typeof AdminUsersRoute
   '/candidate/login': typeof CandidateLoginRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/documents': typeof AdminDocumentsRoute
   '/admin/mbti': typeof AdminMbtiRouteWithChildren
+  '/admin/proctoring': typeof AdminProctoringRoute
   '/admin/results': typeof AdminResultsRoute
   '/admin/users': typeof AdminUsersRoute
   '/candidate/login': typeof CandidateLoginRoute
@@ -210,6 +218,7 @@ export interface FileRoutesById {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/documents': typeof AdminDocumentsRoute
   '/admin/mbti': typeof AdminMbtiRouteWithChildren
+  '/admin/proctoring': typeof AdminProctoringRoute
   '/admin/results': typeof AdminResultsRoute
   '/admin/users': typeof AdminUsersRoute
   '/candidate/login': typeof CandidateLoginRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/documents'
     | '/admin/mbti'
+    | '/admin/proctoring'
     | '/admin/results'
     | '/admin/users'
     | '/candidate/login'
@@ -262,6 +272,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/documents'
     | '/admin/mbti'
+    | '/admin/proctoring'
     | '/admin/results'
     | '/admin/users'
     | '/candidate/login'
@@ -286,6 +297,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/documents'
     | '/admin/mbti'
+    | '/admin/proctoring'
     | '/admin/results'
     | '/admin/users'
     | '/candidate/login'
@@ -359,6 +371,13 @@ declare module '@tanstack/react-router' {
       path: '/results'
       fullPath: '/admin/results'
       preLoaderRoute: typeof AdminResultsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/proctoring': {
+      id: '/admin/proctoring'
+      path: '/proctoring'
+      fullPath: '/admin/proctoring'
+      preLoaderRoute: typeof AdminProctoringRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/mbti': {
@@ -507,6 +526,7 @@ interface AdminRouteChildren {
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminDocumentsRoute: typeof AdminDocumentsRoute
   AdminMbtiRoute: typeof AdminMbtiRouteWithChildren
+  AdminProctoringRoute: typeof AdminProctoringRoute
   AdminResultsRoute: typeof AdminResultsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminAttemptsIdRoute: typeof AdminAttemptsIdRoute
@@ -521,6 +541,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDashboardRoute: AdminDashboardRoute,
   AdminDocumentsRoute: AdminDocumentsRoute,
   AdminMbtiRoute: AdminMbtiRouteWithChildren,
+  AdminProctoringRoute: AdminProctoringRoute,
   AdminResultsRoute: AdminResultsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminAttemptsIdRoute: AdminAttemptsIdRoute,
