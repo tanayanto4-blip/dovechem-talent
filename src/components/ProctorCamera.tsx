@@ -21,10 +21,18 @@ const STREAM_INTERVAL_MS = 500;
 export function ProctorCamera({
   code,
   attemptId,
+  candidateId,
+  candidateName,
+  testName,
+  position,
   onStatusChange,
 }: {
   code: string;
   attemptId: string;
+  candidateId?: string;
+  candidateName?: string;
+  testName?: string;
+  position?: string | null;
   onStatusChange?: (s: Status) => void;
 }) {
   const send = useServerFn(candidateProctorSnapshot);
@@ -35,6 +43,7 @@ export function ProctorCamera({
   const [frames, setFrames] = useState(0);
 
   const setS = useCallback((s: Status) => { setStatus(s); onStatusChange?.(s); }, [onStatusChange]);
+
 
   const report = useCallback(
     async (event: "snapshot" | "camera_on" | "camera_off" | "camera_denied" | "tab_hidden", base64?: string) => {
