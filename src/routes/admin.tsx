@@ -41,6 +41,7 @@ function AdminLayout() {
     { to: "/admin/candidates", label: "Kandidat", icon: Users },
     { to: "/admin/documents", label: "Bank Dokumen", icon: FolderOpen },
     { to: "/admin/tests", label: "Bank Soal", icon: ClipboardList },
+    { to: "/admin/instruksi", label: "Instruksi Suara", icon: Volume2 },
     { to: "/admin/results", label: "Bank Data Hasil", icon: BarChart3 },
     { to: "/admin/users", label: "User Admin/HR", icon: UserCog },
     ...(isAdmin ? [

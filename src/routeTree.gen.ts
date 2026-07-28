@@ -17,6 +17,7 @@ import { Route as CandidateLoginRouteImport } from './routes/candidate.login'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminResultsRouteImport } from './routes/admin.results'
 import { Route as AdminMbtiRouteImport } from './routes/admin.mbti'
+import { Route as AdminInstruksiRouteImport } from './routes/admin.instruksi'
 import { Route as AdminDocumentsRouteImport } from './routes/admin.documents'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminCodesRouteImport } from './routes/admin.codes'
@@ -70,6 +71,11 @@ const AdminResultsRoute = AdminResultsRouteImport.update({
 const AdminMbtiRoute = AdminMbtiRouteImport.update({
   id: '/mbti',
   path: '/mbti',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminInstruksiRoute = AdminInstruksiRouteImport.update({
+  id: '/instruksi',
+  path: '/instruksi',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminDocumentsRoute = AdminDocumentsRouteImport.update({
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/admin/codes': typeof AdminCodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/documents': typeof AdminDocumentsRoute
+  '/admin/instruksi': typeof AdminInstruksiRoute
   '/admin/mbti': typeof AdminMbtiRouteWithChildren
   '/admin/results': typeof AdminResultsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByTo {
   '/admin/codes': typeof AdminCodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/documents': typeof AdminDocumentsRoute
+  '/admin/instruksi': typeof AdminInstruksiRoute
   '/admin/mbti': typeof AdminMbtiRouteWithChildren
   '/admin/results': typeof AdminResultsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/admin/codes': typeof AdminCodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/documents': typeof AdminDocumentsRoute
+  '/admin/instruksi': typeof AdminInstruksiRoute
   '/admin/mbti': typeof AdminMbtiRouteWithChildren
   '/admin/results': typeof AdminResultsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/admin/codes'
     | '/admin/dashboard'
     | '/admin/documents'
+    | '/admin/instruksi'
     | '/admin/mbti'
     | '/admin/results'
     | '/admin/users'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/admin/codes'
     | '/admin/dashboard'
     | '/admin/documents'
+    | '/admin/instruksi'
     | '/admin/mbti'
     | '/admin/results'
     | '/admin/users'
@@ -274,6 +285,7 @@ export interface FileRouteTypes {
     | '/admin/codes'
     | '/admin/dashboard'
     | '/admin/documents'
+    | '/admin/instruksi'
     | '/admin/mbti'
     | '/admin/results'
     | '/admin/users'
@@ -354,6 +366,13 @@ declare module '@tanstack/react-router' {
       path: '/mbti'
       fullPath: '/admin/mbti'
       preLoaderRoute: typeof AdminMbtiRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/instruksi': {
+      id: '/admin/instruksi'
+      path: '/instruksi'
+      fullPath: '/admin/instruksi'
+      preLoaderRoute: typeof AdminInstruksiRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/documents': {
@@ -487,6 +506,7 @@ interface AdminRouteChildren {
   AdminCodesRoute: typeof AdminCodesRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminDocumentsRoute: typeof AdminDocumentsRoute
+  AdminInstruksiRoute: typeof AdminInstruksiRoute
   AdminMbtiRoute: typeof AdminMbtiRouteWithChildren
   AdminResultsRoute: typeof AdminResultsRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -501,6 +521,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCodesRoute: AdminCodesRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminDocumentsRoute: AdminDocumentsRoute,
+  AdminInstruksiRoute: AdminInstruksiRoute,
   AdminMbtiRoute: AdminMbtiRouteWithChildren,
   AdminResultsRoute: AdminResultsRoute,
   AdminUsersRoute: AdminUsersRoute,
