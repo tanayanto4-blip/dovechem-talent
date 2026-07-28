@@ -63,7 +63,13 @@ export function VoiceInstructionPlayer({
   autoplay = false,
   title = "Instruksi Suara",
   compact = false,
-}: VoiceSettings & { autoplay?: boolean; title?: string; compact?: boolean }) {
+  replayRef,
+}: VoiceSettings & {
+  autoplay?: boolean;
+  title?: string;
+  compact?: boolean;
+  replayRef?: React.MutableRefObject<(() => void) | null>;
+}) {
   const { supported, speaking, paused, speak, stop, togglePause } = useSpeech({ text, lang, rate });
   const autoTried = useRef(false);
 
@@ -74,7 +80,14 @@ export function VoiceInstructionPlayer({
     return () => clearTimeout(t);
   }, [autoplay, supported, text, speak]);
 
+  useEffect(() => {
+    if (!replayRef) return;
+    replayRef.current = speak;
+    return () => { replayRef.current = null; };
+  }, [replayRef, speak]);
+
   if (!text.trim()) return null;
+
 
   return (
     <div className={`rounded-lg border bg-accent/40 ${compact ? "p-3" : "p-4"}`}>
