@@ -45,6 +45,12 @@ function CodesPage() {
   const [purging, setPurging] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
+  // Urutan stabil: kode yang dibuat massal punya created_at identik,
+  // tanpa tiebreaker urutannya bisa berubah tiap refetch (terlihat seperti "salah nomor").
+  const codes: any[] = [...(data?.codes ?? [])].sort((a: any, b: any) =>
+    String(a.code).localeCompare(String(b.code), "en", { numeric: true }) || String(a.id).localeCompare(String(b.id)),
+  );
+
   async function onToggle(id: string, active: boolean) {
     setTogglingId(id);
     try {
@@ -197,7 +203,7 @@ function CodesPage() {
               <DialogHeader><DialogTitle>Hapus Semua Kode Kandidat</DialogTitle></DialogHeader>
               <form onSubmit={onDeleteAll} className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Seluruh kode akses ({data?.codes?.length ?? 0} kode) akan dihapus dan kandidat tidak bisa login lagi.
+                  Seluruh kode akses ({codes.length} kode) akan dihapus dan kandidat tidak bisa login lagi.
                   <b className="text-foreground"> Data kandidat, berkas di Bank Dokumen, dan Bank Data Hasil tetap tersimpan</b> (kode lama disimpan sebagai arsip pada data kandidat).
                 </p>
                 <div className="space-y-2">
@@ -284,7 +290,7 @@ function CodesPage() {
         <CardContent>
           {/* Mobile: kartu per kode */}
           <div className="space-y-3 md:hidden">
-            {(data?.codes ?? []).map((c: any, i: number) => (
+            {codes.map((c: any, i: number) => (
               <div key={c.id} className="rounded-lg border p-3">
                 <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                   <div className="min-w-0">
@@ -322,7 +328,7 @@ function CodesPage() {
                 </div>
               </div>
             ))}
-            {(data?.codes ?? []).length === 0 && (
+            {codes.length === 0 && (
               <p className="py-8 text-center text-sm text-muted-foreground">Belum ada kode. Klik "Buat Kode" untuk mulai.</p>
             )}
           </div>
@@ -344,7 +350,7 @@ function CodesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(data?.codes ?? []).map((c: any, i: number) => (
+                {codes.map((c: any, i: number) => (
                   <TableRow key={c.id}>
                     <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
                     <TableCell>
@@ -387,7 +393,7 @@ function CodesPage() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {(data?.codes ?? []).length === 0 && (
+                {codes.length === 0 && (
                   <TableRow><TableCell colSpan={9} className="py-8 text-center text-muted-foreground">Belum ada kode. Klik "Buat Kode" untuk mulai.</TableCell></TableRow>
                 )}
               </TableBody>

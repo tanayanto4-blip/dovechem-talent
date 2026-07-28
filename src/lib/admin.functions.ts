@@ -175,7 +175,9 @@ export const listCandidateCodes = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("candidate_codes")
       .select("*, candidates(id, data_completed, updated_at)")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .order("code", { ascending: true })
+      .order("id", { ascending: true });
     if (error) throw new Error(error.message);
     return { codes: data ?? [] };
   });
