@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate, Outlet, useRouterState } from "@tan
 import { useEffect } from "react";
 import { useCandidateSession, setCandidateSession } from "@/lib/candidate-session";
 import { Button } from "@/components/ui/button";
-import { Beaker, LogOut, User, Upload, ClipboardList, Home } from "lucide-react";
+import { Beaker, LogOut, User, ClipboardList, Home } from "lucide-react";
 
 export const Route = createFileRoute("/candidate/portal")({
   head: () => ({ meta: [{ title: "Portal Kandidat — PT Dover Chemical" }] }),
@@ -25,7 +25,7 @@ function PortalLayout() {
   const nav_items = [
     { to: "/candidate/portal", label: "Overview", icon: Home, exact: true },
     { to: "/candidate/portal/data", label: "Data Diri", icon: User },
-    { to: "/candidate/portal/berkas", label: "Upload Berkas", icon: Upload },
+    
     { to: "/candidate/portal/tests", label: "Psikotest", icon: ClipboardList },
   ];
 
