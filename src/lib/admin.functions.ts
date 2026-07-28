@@ -798,3 +798,66 @@ export const getProctorSession = createServerFn({ method: "POST" })
       snapshots: (rows ?? []).map((r: any) => ({ ...r, url: r.image_path ? urlMap.get(r.image_path) ?? null : null })),
     };
   });
+
+/**
+ * Full proctoring recording of one session (all frames + events, oldest first)
+ * with signed URLs, used to build the downloadable evidence bundle (ZIP +
+ * timelapse video). Super Admin only.
+ */
+export const getProctorEvidence = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) =>
+    z.object({ attempt_id: z.string().uuid().optional(), candidate_id: z.string().uuid().optional() }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    if (!data.attempt_id && !data.candidate_id) throw new Error("attempt_id atau candidate_id wajib diisi.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let q = supabaseAdmin
+      .from("proctor_snapshots")
+      .select(
+        "id, image_path, event, captured_at, candidate_id, attempt_id, candidates(full_name, position_applied, candidate_codes(code)), tests(name, test_type), test_attempts(status, started_at, finished_at)",
+      )
+      .order("captured_at", { ascending: true })
+      .limit(3000);
+    if (data.attempt_id) q = q.eq("attempt_id", data.attempt_id);
+    else q = q.eq("candidate_id", data.candidate_id!);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+
+    const list = (rows ?? []) as any[];
+    const paths = list.map((r) => r.image_path).filter(Boolean);
+    const urlMap = new Map<string, string>();
+    // Sign in batches — storage limits the number of paths per request.
+    for (let i = 0; i < paths.length; i += 200) {
+      const { data: signed } = await supabaseAdmin.storage
+        .from("candidate-files")
+        .createSignedUrls(paths.slice(i, i + 200), 60 * 30);
+      for (const s of (signed ?? []) as any[]) if (s.signedUrl) urlMap.set(s.path, s.signedUrl);
+    }
+
+    const first = list[0];
+    await logAudit(context, "proctor.evidence.download", "test_attempt", data.attempt_id ?? null, {
+      candidate_id: data.candidate_id ?? first?.candidate_id ?? null,
+      frames: paths.length,
+      events: list.length,
+    });
+
+    return {
+      session: {
+        candidate_name: first?.candidates?.full_name ?? "kandidat",
+        candidate_code: first?.candidates?.candidate_codes?.code ?? null,
+        position: first?.candidates?.position_applied ?? null,
+        test_name: first?.tests?.name ?? null,
+        test_type: first?.tests?.test_type ?? null,
+        attempt_status: first?.test_attempts?.status ?? null,
+        started_at: first?.test_attempts?.started_at ?? first?.captured_at ?? null,
+        finished_at: first?.test_attempts?.finished_at ?? null,
+      },
+      frames: list.map((r) => ({
+        id: r.id as string,
+        event: r.event as string,
+        captured_at: r.captured_at as string,
+        url: r.image_path ? urlMap.get(r.image_path) ?? null : null,
+      })),
+    };
+  });

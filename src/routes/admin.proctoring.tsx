@@ -2,13 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getMyRoles, listProctorSessions, getProctorSession } from "@/lib/admin.functions";
+import { toast } from "sonner";
+import { getMyRoles, listProctorSessions, getProctorSession, getProctorEvidence } from "@/lib/admin.functions";
+import { downloadProctorEvidence } from "@/lib/proctor-evidence";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, RefreshCw, ShieldAlert, Video, VideoOff, AlertTriangle, CheckCircle2, CircleOff, Radio } from "lucide-react";
+import { Loader2, RefreshCw, ShieldAlert, Video, VideoOff, AlertTriangle, CheckCircle2, CircleOff, Radio, Download } from "lucide-react";
 import { ProctorLiveView } from "@/components/ProctorLiveView";
+
 
 export const Route = createFileRoute("/admin/proctoring")({
   ssr: false,
@@ -75,8 +78,37 @@ function ProctoringPage() {
   const rolesFn = useServerFn(getMyRoles);
   const listFn = useServerFn(listProctorSessions);
   const detailFn = useServerFn(getProctorSession);
+  const evidenceFn = useServerFn(getProctorEvidence);
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [openAttempt, setOpenAttempt] = useState<{ attempt_id?: string; candidate_id?: string; name: string } | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  async function handleDownload(key: string, s: { attempt_id?: string | null; candidate_id?: string }) {
+    if (downloading) return;
+    setDownloading(key);
+    const toastId = toast.loading("Menyiapkan bukti proctoring...");
+    try {
+      const res = await evidenceFn({
+        data: { attempt_id: s.attempt_id ?? undefined, candidate_id: s.attempt_id ? undefined : s.candidate_id },
+      });
+      if (!res.frames.length) {
+        toast.error("Belum ada rekaman untuk sesi ini.", { id: toastId });
+        return;
+      }
+      const out = await downloadProctorEvidence(res.session, res.frames, (label, pct) =>
+        toast.loading(`${label}... ${pct}%`, { id: toastId }),
+      );
+      toast.success(
+        `Bukti proctoring diunduh — ${out.frames} frame${out.video ? " + video rekaman" : ""}.`,
+        { id: toastId },
+      );
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal mengunduh bukti proctoring.", { id: toastId });
+    } finally {
+      setDownloading(null);
+    }
+  }
+
 
   const { data: roles } = useQuery({ queryKey: ["my-roles"], queryFn: () => rolesFn({ data: {} as never }) });
   const isAdmin = !!roles?.roles?.includes("admin");
@@ -257,17 +289,33 @@ function ProctoringPage() {
                     </div>
                   )}
 
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full border-neutral-600 bg-transparent text-neutral-200 hover:bg-neutral-800 hover:text-white"
-                    onClick={() => {
-                      setOpenAttempt({ attempt_id: s.attempt_id ?? undefined, candidate_id: s.candidate_id, name: s.candidate_name });
-                      setOpenKey(s.key);
-                    }}
-                  >
-                    <Video className="mr-2 h-4 w-4" /> Lihat riwayat kamera
-                  </Button>
+                  <div className="grid gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full border-neutral-600 bg-transparent text-neutral-200 hover:bg-neutral-800 hover:text-white"
+                      onClick={() => {
+                        setOpenAttempt({ attempt_id: s.attempt_id ?? undefined, candidate_id: s.candidate_id, name: s.candidate_name });
+                        setOpenKey(s.key);
+                      }}
+                    >
+                      <Video className="mr-2 h-4 w-4" /> Lihat riwayat kamera
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      disabled={downloading === s.key}
+                      onClick={() => handleDownload(s.key, { attempt_id: s.attempt_id, candidate_id: s.candidate_id })}
+                    >
+                      {downloading === s.key ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="mr-2 h-4 w-4" />
+                      )}
+                      Unduh rekaman (ZIP + video)
+                    </Button>
+                  </div>
+
                 </div>
               </div>
             );
@@ -282,6 +330,24 @@ function ProctoringPage() {
           <DialogDescription className="text-xs">
             Seluruh frame dan peristiwa kamera selama sesi psikotest. Tautan gambar bersifat sementara.
           </DialogDescription>
+          <div>
+            <Button
+              size="sm"
+              disabled={!openKey || downloading === openKey}
+              onClick={() =>
+                openKey &&
+                handleDownload(openKey, { attempt_id: openAttempt?.attempt_id, candidate_id: openAttempt?.candidate_id })
+              }
+            >
+              {downloading === openKey ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              Unduh bukti proctoring (ZIP + video)
+            </Button>
+          </div>
+
           {detail.isLoading ? (
             <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Memuat...</div>
           ) : (
