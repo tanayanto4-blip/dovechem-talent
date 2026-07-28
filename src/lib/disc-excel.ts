@@ -145,7 +145,24 @@ export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExce
     ? new Date(meta.finishedAt).toLocaleDateString("id-ID")
     : new Date().toLocaleDateString("id-ID");
 
+  // Buang cached value lama pada sheet turunan (Input, Result, dll) agar
+  // Excel/LibreOffice/Sheets menghitung ulang rumusnya saat file dibuka.
+  for (const sheet of wb.worksheets) {
+    if (sheet === ws) continue;
+    sheet.eachRow({ includeEmpty: false }, (row) =>
+      row.eachCell({ includeEmpty: false }, (cell) => {
+        const v: any = cell.value;
+        if (v && typeof v === "object" && typeof v.formula === "string") {
+          cell.value = { formula: v.formula, result: undefined } as ExcelJS.CellFormulaValue;
+        } else if (v && typeof v === "object" && typeof v.sharedFormula === "string") {
+          cell.value = { sharedFormula: v.sharedFormula, result: undefined } as any;
+        }
+      }),
+    );
+  }
+
   (wb as any).calcProperties = { ...(wb as any).calcProperties, fullCalcOnLoad: true };
+
 
   const out = await wb.xlsx.writeBuffer();
   const blob = new Blob([out], {
