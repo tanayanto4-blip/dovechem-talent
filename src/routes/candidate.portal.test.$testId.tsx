@@ -737,7 +737,7 @@ function TakeTest() {
         </Button>
       </div>
       </>
-      )}
+
     </div>
   );
 }
