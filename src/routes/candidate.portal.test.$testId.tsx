@@ -175,6 +175,7 @@ function TakeTest() {
   const hydratedRef = useRef(false);
   const inflight = useRef(0);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
+  const replayVoiceRef = useRef<(() => void) | null>(null);
 
 
   // Hydrate saved answers on first load so the candidate can resume.
