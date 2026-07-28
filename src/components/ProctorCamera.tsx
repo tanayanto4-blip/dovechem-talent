@@ -99,12 +99,48 @@ export function ProctorCamera({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Periodic capture
+  // Periodic capture (stored history)
   useEffect(() => {
     if (status !== "live") return;
     const t = setInterval(() => { capture(); }, CAPTURE_INTERVAL_MS);
     return () => clearInterval(t);
   }, [status, capture]);
+
+  // Realtime live stream to the Super Admin dashboard (~2 fps, not stored)
+  useEffect(() => {
+    if (status !== "live") return;
+    let cancelled = false;
+    const channel: RealtimeChannel = supabase.channel(`proctor-live-${attemptId}`, {
+      config: { broadcast: { self: false } },
+    });
+    channel.subscribe();
+    channelRef.current = channel;
+
+    const canvas = document.createElement("canvas");
+    const t = setInterval(() => {
+      if (cancelled) return;
+      const video = videoRef.current;
+      if (!video || video.readyState < 2) return;
+      const w = 320;
+      const h = Math.round((video.videoHeight / (video.videoWidth || 1)) * w) || 240;
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.drawImage(video, 0, 0, w, h);
+      const b64 = canvas.toDataURL("image/jpeg", 0.5).split(",")[1];
+      if (!b64) return;
+      channel.send({ type: "broadcast", event: "frame", payload: { b64, at: Date.now() } }).catch(() => {});
+    }, STREAM_INTERVAL_MS);
+
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+      supabase.removeChannel(channel);
+      channelRef.current = null;
+    };
+  }, [status, attemptId]);
+
 
   // Detect the candidate leaving the tab and camera being cut off
   useEffect(() => {
