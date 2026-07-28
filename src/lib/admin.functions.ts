@@ -699,3 +699,102 @@ export const listAllAttempts = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return { attempts: data ?? [] };
   });
+
+/* ------------------------------------------------------------------ */
+/* Proctoring monitor — Super Admin only                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Live camera monitor: one row per candidate attempt that has proctoring
+ * activity, with the latest captured frame as a short-lived signed URL.
+ */
+export const listProctorSessions = createServerFn({ method: "GET" })
+  .middleware([requireAdmin])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data, error } = await supabaseAdmin
+      .from("proctor_snapshots")
+      .select("id, candidate_id, attempt_id, test_id, image_path, event, captured_at, candidates(id, full_name, position_applied, candidate_codes(code)), tests(id, name, test_type), test_attempts(id, status, started_at, finished_at)")
+      .gte("captured_at", since)
+      .order("captured_at", { ascending: false })
+      .limit(1500);
+    if (error) throw new Error(error.message);
+
+    type Row = any;
+    const byAttempt = new Map<string, { rows: Row[] }>();
+    for (const r of (data ?? []) as Row[]) {
+      const key = r.attempt_id ?? r.candidate_id;
+      if (!byAttempt.has(key)) byAttempt.set(key, { rows: [] });
+      byAttempt.get(key)!.rows.push(r);
+    }
+
+    const latestPaths: string[] = [];
+    const sessions = [...byAttempt.entries()].map(([key, { rows }]) => {
+      const latest = rows.find((r) => r.image_path) ?? rows[0];
+      if (latest?.image_path) latestPaths.push(latest.image_path);
+      return {
+        key,
+        attempt_id: rows[0].attempt_id as string | null,
+        candidate_id: rows[0].candidate_id as string,
+        candidate_name: rows[0].candidates?.full_name ?? "(tanpa nama)",
+        candidate_code: rows[0].candidates?.candidate_codes?.code ?? null,
+        position: rows[0].candidates?.position_applied ?? null,
+        test_name: rows[0].tests?.name ?? "-",
+        test_type: rows[0].tests?.test_type ?? "-",
+        attempt_status: rows[0].test_attempts?.status ?? null,
+        last_captured_at: rows[0].captured_at as string,
+        last_event: rows[0].event as string,
+        frames: rows.filter((r) => r.image_path).length,
+        alerts: rows.filter((r) => r.event !== "snapshot" && r.event !== "camera_on").length,
+        latest_path: latest?.image_path || null,
+        latest_url: null as string | null,
+      };
+    });
+
+    if (latestPaths.length) {
+      const { data: signed } = await supabaseAdmin.storage
+        .from("candidate-files")
+        .createSignedUrls(latestPaths, 60 * 5);
+      const map = new Map((signed ?? []).map((s: any) => [s.path, s.signedUrl]));
+      for (const s of sessions) if (s.latest_path) s.latest_url = map.get(s.latest_path) ?? null;
+    }
+
+    sessions.sort((a, b) => (a.last_captured_at < b.last_captured_at ? 1 : -1));
+    await logAudit(context, "proctor.monitor.view", "area", null, { sessions: sessions.length });
+    return { sessions };
+  });
+
+/** All frames of one proctoring session, newest first, with signed URLs. */
+export const getProctorSession = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) => z.object({ attempt_id: z.string().uuid().optional(), candidate_id: z.string().uuid().optional() }).parse(d))
+  .handler(async ({ context, data }) => {
+    if (!data.attempt_id && !data.candidate_id) throw new Error("attempt_id atau candidate_id wajib diisi.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let q = supabaseAdmin
+      .from("proctor_snapshots")
+      .select("id, image_path, event, captured_at, candidate_id, attempt_id")
+      .order("captured_at", { ascending: false })
+      .limit(500);
+    if (data.attempt_id) q = q.eq("attempt_id", data.attempt_id);
+    else q = q.eq("candidate_id", data.candidate_id!);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+
+    const paths = (rows ?? []).map((r: any) => r.image_path).filter(Boolean);
+    const urlMap = new Map<string, string>();
+    if (paths.length) {
+      const { data: signed } = await supabaseAdmin.storage
+        .from("candidate-files")
+        .createSignedUrls(paths, 60 * 10);
+      for (const s of (signed ?? []) as any[]) urlMap.set(s.path, s.signedUrl);
+    }
+    await logAudit(context, "proctor.session.view", "test_attempt", data.attempt_id ?? null, {
+      candidate_id: data.candidate_id ?? null,
+      frames: rows?.length ?? 0,
+    });
+    return {
+      snapshots: (rows ?? []).map((r: any) => ({ ...r, url: r.image_path ? urlMap.get(r.image_path) ?? null : null })),
+    };
+  });
