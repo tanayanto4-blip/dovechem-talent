@@ -31,21 +31,20 @@ const DISC_BLOCK = (() => {
 })();
 
 describe("DISC layout regression", () => {
-  it("uses a 3-column grid (M | statement | L) for header and rows", () => {
+  it("uses a 3-column grid (statement | M | L) for header and rows", () => {
     const grids = DISC_BLOCK.match(
-      /grid-cols-\[[^\]]*_minmax\(0,1fr\)_[^\]]*\]/g,
+      /grid-cols-\[minmax\(0,1fr\)_[^\]]*\]/g,
     );
-    // header + statement row = at least 2 occurrences.
     expect(grids?.length ?? 0).toBeGreaterThanOrEqual(2);
   });
 
-  it("renders M header before Pernyataan, and Pernyataan before L", () => {
-    const mIdx = DISC_BLOCK.indexOf('text-primary">M<');
+  it("renders Pernyataan header before M, and M before L", () => {
     const pIdx = DISC_BLOCK.indexOf(">Pernyataan<");
+    const mIdx = DISC_BLOCK.indexOf('text-primary">M<');
     const lIdx = DISC_BLOCK.indexOf('text-destructive">L<');
-    expect(mIdx).toBeGreaterThan(-1);
-    expect(pIdx).toBeGreaterThan(mIdx);
-    expect(lIdx).toBeGreaterThan(pIdx);
+    expect(pIdx).toBeGreaterThan(-1);
+    expect(mIdx).toBeGreaterThan(pIdx);
+    expect(lIdx).toBeGreaterThan(mIdx);
   });
 
   it("renders the M button before the L button inside every option row", () => {
@@ -60,12 +59,13 @@ describe("DISC layout regression", () => {
     expect(DISC_BLOCK).not.toMatch(/q\.options[\s\S]{0,40}\.(sort|reverse)\(/);
   });
 
-  it("keeps the M/L legend order (M kiri, L kanan) in the footer", () => {
-    const mLegend = DISC_BLOCK.indexOf("(kiri)");
-    const lLegend = DISC_BLOCK.indexOf("(kanan)");
+  it("keeps the M/L legend order (M kolom kiri, L kolom kanan) in the footer", () => {
+    const mLegend = DISC_BLOCK.indexOf("(kolom kiri)");
+    const lLegend = DISC_BLOCK.indexOf("(kolom kanan)");
     expect(mLegend).toBeGreaterThan(-1);
     expect(lLegend).toBeGreaterThan(mLegend);
   });
+
 
   it("keeps the setDisc contract: M -> most, L -> least", () => {
     // Guards the scoring path in candidateSubmitTest which reads
