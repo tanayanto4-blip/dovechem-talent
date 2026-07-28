@@ -34,6 +34,7 @@ function AdminLayout() {
     logAccess({ data: { area: seg } }).catch(() => {});
   }, [pathname, logAccess]);
 
+  const isAdmin = !!roles?.roles?.includes("admin");
   const items = [
     { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/admin/codes", label: "Kode Kandidat", icon: KeyRound },
@@ -42,7 +43,7 @@ function AdminLayout() {
     { to: "/admin/tests", label: "Bank Soal", icon: ClipboardList },
     { to: "/admin/results", label: "Bank Data Hasil", icon: BarChart3 },
     { to: "/admin/users", label: "User Admin/HR", icon: UserCog },
-    { to: "/admin/audit", label: "Audit Log", icon: ShieldCheck },
+    ...(isAdmin ? [{ to: "/admin/audit", label: "Audit Log", icon: ShieldCheck }] : []),
   ];
 
 
