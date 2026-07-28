@@ -9,7 +9,7 @@ import { Camera, CameraOff, Loader2 } from "lucide-react";
 
 type Status = "idle" | "requesting" | "live" | "denied" | "error";
 
-const CAPTURE_INTERVAL_MS = 5_000;
+const CAPTURE_INTERVAL_MS = 3_000;
 const STREAM_INTERVAL_MS = 500;
 
 
