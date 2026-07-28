@@ -114,7 +114,6 @@ export function ProctorCamera({
       config: { broadcast: { self: false } },
     });
     channel.subscribe();
-    channelRef.current = channel;
 
     const canvas = document.createElement("canvas");
     const t = setInterval(() => {
@@ -137,7 +136,6 @@ export function ProctorCamera({
       cancelled = true;
       clearInterval(t);
       supabase.removeChannel(channel);
-      channelRef.current = null;
     };
   }, [status, attemptId]);
 
