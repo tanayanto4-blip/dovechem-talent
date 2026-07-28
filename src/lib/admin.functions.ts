@@ -700,4 +700,3 @@ export const listAllAttempts = createServerFn({ method: "GET" })
     return { attempts: data ?? [] };
   });
 
-/* ------------------------------------------------------------------ */
