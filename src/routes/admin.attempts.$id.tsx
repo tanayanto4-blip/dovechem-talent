@@ -24,6 +24,7 @@ function AttemptDetail() {
   const answerMap = new Map<string, any>((a.test_answers ?? []).map((x: any) => [x.question_id, x]));
   const isDisc = t?.test_type === "disc";
   const isMbti = t?.test_type === "mbti";
+  const isEq = t?.test_type === "eq";
   const candId = a.candidates?.id;
 
   return (
