@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listCandidates } from "@/lib/admin.functions";
-import { computeChecklist } from "@/lib/document-checklist";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -62,7 +61,7 @@ function CandidatesList() {
                 })}
 
                 {(data?.candidates ?? []).length === 0 && (
-                  <TableRow><TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Belum ada kandidat yang login.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="py-8 text-center text-muted-foreground">Belum ada kandidat yang login.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
