@@ -289,17 +289,33 @@ function ProctoringPage() {
                     </div>
                   )}
 
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full border-neutral-600 bg-transparent text-neutral-200 hover:bg-neutral-800 hover:text-white"
-                    onClick={() => {
-                      setOpenAttempt({ attempt_id: s.attempt_id ?? undefined, candidate_id: s.candidate_id, name: s.candidate_name });
-                      setOpenKey(s.key);
-                    }}
-                  >
-                    <Video className="mr-2 h-4 w-4" /> Lihat riwayat kamera
-                  </Button>
+                  <div className="grid gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full border-neutral-600 bg-transparent text-neutral-200 hover:bg-neutral-800 hover:text-white"
+                      onClick={() => {
+                        setOpenAttempt({ attempt_id: s.attempt_id ?? undefined, candidate_id: s.candidate_id, name: s.candidate_name });
+                        setOpenKey(s.key);
+                      }}
+                    >
+                      <Video className="mr-2 h-4 w-4" /> Lihat riwayat kamera
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      disabled={downloading === s.key}
+                      onClick={() => handleDownload(s.key, { attempt_id: s.attempt_id, candidate_id: s.candidate_id })}
+                    >
+                      {downloading === s.key ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="mr-2 h-4 w-4" />
+                      )}
+                      Unduh rekaman (ZIP + video)
+                    </Button>
+                  </div>
+
                 </div>
               </div>
             );
