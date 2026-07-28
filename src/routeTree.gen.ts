@@ -31,7 +31,6 @@ import { Route as AdminMbtiPreviewRouteImport } from './routes/admin.mbti.previe
 import { Route as AdminCandidatesIdRouteImport } from './routes/admin.candidates.$id'
 import { Route as AdminAttemptsIdRouteImport } from './routes/admin.attempts.$id'
 import { Route as CandidatePortalTestTestIdRouteImport } from './routes/candidate.portal.test.$testId'
-import { Route as CandidatePortalResultAttemptIdRouteImport } from './routes/candidate.portal.result.$attemptId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -144,12 +143,6 @@ const CandidatePortalTestTestIdRoute =
     path: '/test/$testId',
     getParentRoute: () => CandidatePortalRoute,
   } as any)
-const CandidatePortalResultAttemptIdRoute =
-  CandidatePortalResultAttemptIdRouteImport.update({
-    id: '/result/$attemptId',
-    path: '/result/$attemptId',
-    getParentRoute: () => CandidatePortalRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -173,7 +166,6 @@ export interface FileRoutesByFullPath {
   '/candidate/portal/tests': typeof CandidatePortalTestsRoute
   '/admin/tests/': typeof AdminTestsIndexRoute
   '/candidate/portal/': typeof CandidatePortalIndexRoute
-  '/candidate/portal/result/$attemptId': typeof CandidatePortalResultAttemptIdRoute
   '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
 }
 export interface FileRoutesByTo {
@@ -197,7 +189,6 @@ export interface FileRoutesByTo {
   '/candidate/portal/tests': typeof CandidatePortalTestsRoute
   '/admin/tests': typeof AdminTestsIndexRoute
   '/candidate/portal': typeof CandidatePortalIndexRoute
-  '/candidate/portal/result/$attemptId': typeof CandidatePortalResultAttemptIdRoute
   '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
 }
 export interface FileRoutesById {
@@ -223,7 +214,6 @@ export interface FileRoutesById {
   '/candidate/portal/tests': typeof CandidatePortalTestsRoute
   '/admin/tests/': typeof AdminTestsIndexRoute
   '/candidate/portal/': typeof CandidatePortalIndexRoute
-  '/candidate/portal/result/$attemptId': typeof CandidatePortalResultAttemptIdRoute
   '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
 }
 export interface FileRouteTypes {
@@ -250,7 +240,6 @@ export interface FileRouteTypes {
     | '/candidate/portal/tests'
     | '/admin/tests/'
     | '/candidate/portal/'
-    | '/candidate/portal/result/$attemptId'
     | '/candidate/portal/test/$testId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -274,7 +263,6 @@ export interface FileRouteTypes {
     | '/candidate/portal/tests'
     | '/admin/tests'
     | '/candidate/portal'
-    | '/candidate/portal/result/$attemptId'
     | '/candidate/portal/test/$testId'
   id:
     | '__root__'
@@ -299,7 +287,6 @@ export interface FileRouteTypes {
     | '/candidate/portal/tests'
     | '/admin/tests/'
     | '/candidate/portal/'
-    | '/candidate/portal/result/$attemptId'
     | '/candidate/portal/test/$testId'
   fileRoutesById: FileRoutesById
 }
@@ -467,13 +454,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CandidatePortalTestTestIdRouteImport
       parentRoute: typeof CandidatePortalRoute
     }
-    '/candidate/portal/result/$attemptId': {
-      id: '/candidate/portal/result/$attemptId'
-      path: '/result/$attemptId'
-      fullPath: '/candidate/portal/result/$attemptId'
-      preLoaderRoute: typeof CandidatePortalResultAttemptIdRouteImport
-      parentRoute: typeof CandidatePortalRoute
-    }
   }
 }
 
@@ -534,7 +514,6 @@ interface CandidatePortalRouteChildren {
   CandidatePortalDataRoute: typeof CandidatePortalDataRoute
   CandidatePortalTestsRoute: typeof CandidatePortalTestsRoute
   CandidatePortalIndexRoute: typeof CandidatePortalIndexRoute
-  CandidatePortalResultAttemptIdRoute: typeof CandidatePortalResultAttemptIdRoute
   CandidatePortalTestTestIdRoute: typeof CandidatePortalTestTestIdRoute
 }
 
@@ -543,7 +522,6 @@ const CandidatePortalRouteChildren: CandidatePortalRouteChildren = {
   CandidatePortalDataRoute: CandidatePortalDataRoute,
   CandidatePortalTestsRoute: CandidatePortalTestsRoute,
   CandidatePortalIndexRoute: CandidatePortalIndexRoute,
-  CandidatePortalResultAttemptIdRoute: CandidatePortalResultAttemptIdRoute,
   CandidatePortalTestTestIdRoute: CandidatePortalTestTestIdRoute,
 }
 
