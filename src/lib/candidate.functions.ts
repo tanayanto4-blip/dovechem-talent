@@ -456,3 +456,30 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+
+/**
+ * Intro screen before a test starts: returns test metadata plus the spoken
+ * instruction configured by staff. Does NOT create an attempt, so the timer
+ * only begins once the candidate presses "Mulai".
+ */
+export const candidateGetTestIntro = createServerFn({ method: "POST" })
+  .inputValidator((d) => z.object({ code: z.string().trim().min(3).max(64), test_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const sb = await admin();
+    const codeRow = await resolveActiveCode(sb, data.code);
+    const { data: cand } = await sb.from("candidates").select("id, data_completed").eq("code_id", codeRow.id).single();
+    if (!cand) throw new Error("Kandidat tidak ditemukan.");
+    const { data: test, error } = await sb
+      .from("tests")
+      .select("id, code, name, description, test_type, duration_minutes, voice_instruction, voice_enabled, voice_lang, voice_rate, voice_autoplay")
+      .eq("id", data.test_id)
+      .single();
+    if (error || !test) throw new Error("Test tidak ditemukan.");
+    const { data: attempt } = await sb
+      .from("test_attempts")
+      .select("id, status")
+      .eq("candidate_id", cand.id)
+      .eq("test_id", data.test_id)
+      .maybeSingle();
+    return { test, resumed: !!attempt && attempt.status !== "finished", data_completed: cand.data_completed };
+  });

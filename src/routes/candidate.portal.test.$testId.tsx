@@ -2,7 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { candidateStartTest, candidateSubmitTest, candidateSaveAnswer } from "@/lib/candidate.functions";
+import { candidateStartTest, candidateSubmitTest, candidateSaveAnswer, candidateGetTestIntro } from "@/lib/candidate.functions";
+import { VoiceInstructionPlayer } from "@/components/voice-instruction";
 import { useCandidateSession } from "@/lib/candidate-session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -145,11 +146,22 @@ function TakeTest() {
   const start = useServerFn(candidateStartTest);
   const submit = useServerFn(candidateSubmitTest);
   const saveAnswer = useServerFn(candidateSaveAnswer);
+  const getIntro = useServerFn(candidateGetTestIntro);
+
+  // Instruction gate: the attempt (and timer) only starts after the candidate
+  // has listened to / read the spoken instruction and pressed "Mulai Test".
+  const [started, setStarted] = useState(false);
+  const intro = useQuery({
+    queryKey: ["test-intro", testId, session?.code],
+    queryFn: () => getIntro({ data: { code: session!.code, test_id: testId } }),
+    enabled: !!session && !started,
+    staleTime: Infinity,
+  });
 
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["start-test", testId, session?.code],
     queryFn: () => start({ data: { code: session!.code, test_id: testId } }),
-    enabled: !!session,
+    enabled: !!session && started,
     staleTime: Infinity,
     retry: 1,
   });
@@ -233,6 +245,59 @@ function TakeTest() {
       </Card>
     );
   }
+
+  if (!started) {
+    const it: any = intro.data?.test;
+    return (
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle className="font-display text-xl text-primary">
+            {intro.isLoading ? "Memuat instruksi..." : it?.name ?? "Persiapan Test"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {intro.error && (
+            <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+              {(intro.error as any)?.message || "Gagal memuat instruksi test."}
+            </div>
+          )}
+          {it && (
+            <>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-1"><Timer className="h-4 w-4" /> {it.duration_minutes} menit</span>
+                <span className="uppercase">{it.test_type}</span>
+                {intro.data?.resumed && <span className="rounded bg-accent px-2 py-0.5 text-xs">Melanjutkan pengerjaan</span>}
+              </div>
+              {it.description && <p className="text-sm text-muted-foreground">{it.description}</p>}
+              {it.voice_enabled && it.voice_instruction ? (
+                <VoiceInstructionPlayer
+                  text={it.voice_instruction}
+                  lang={it.voice_lang}
+                  rate={Number(it.voice_rate)}
+                  autoplay={!!it.voice_autoplay}
+                  title="Instruksi Suara"
+                />
+              ) : (
+                <div className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
+                  Belum ada instruksi suara untuk test ini. Silakan langsung mulai mengerjakan.
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Waktu pengerjaan baru berjalan setelah Anda menekan tombol <b>Mulai Test</b>.
+              </p>
+            </>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => { try { window.speechSynthesis?.cancel(); } catch { /* noop */ } setStarted(true); }} disabled={intro.isLoading || !!intro.error}>
+              Mulai Test
+            </Button>
+            <Button variant="outline" onClick={() => nav({ to: "/candidate/portal/tests" })}>Kembali</Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (isLoading || isFetching && !data) {
     return (
       <Card>

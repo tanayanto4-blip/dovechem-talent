@@ -730,3 +730,53 @@ export const listAllAttempts = createServerFn({ method: "GET" })
     return { attempts: data ?? [] };
   });
 
+
+/* ---------------- Instruksi Suara per Test (Admin & HR) ---------------- */
+
+/** Staff-only: list every test with its voice-instruction settings. */
+export const listVoiceInstructions = createServerFn({ method: "GET" })
+  .middleware([requireStaff])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("tests")
+      .select("id, code, name, test_type, active, duration_minutes, voice_instruction, voice_enabled, voice_lang, voice_rate, voice_autoplay")
+      .order("code");
+    if (error) throw new Error(error.message);
+    return { tests: data ?? [] };
+  });
+
+const VoiceInput = z.object({
+  test_id: z.string().uuid(),
+  voice_instruction: z.string().trim().max(4000).nullable().optional(),
+  voice_enabled: z.boolean(),
+  voice_lang: z.string().trim().min(2).max(16),
+  voice_rate: z.number().min(0.5).max(2),
+  voice_autoplay: z.boolean(),
+});
+
+/** Staff-only: save the spoken instruction text/settings for one test. */
+export const saveVoiceInstruction = createServerFn({ method: "POST" })
+  .middleware([requireStaff])
+  .inputValidator((d) => VoiceInput.parse(d))
+  .handler(async ({ context, data }) => {
+    const text = (data.voice_instruction ?? "").trim();
+    const { error } = await context.supabase
+      .from("tests")
+      .update({
+        voice_instruction: text.length ? text : null,
+        voice_enabled: data.voice_enabled,
+        voice_lang: data.voice_lang,
+        voice_rate: data.voice_rate,
+        voice_autoplay: data.voice_autoplay,
+      })
+      .eq("id", data.test_id);
+    if (error) throw new Error(error.message);
+    await logAudit(context, "test.voice_instruction.update", "test", data.test_id, {
+      enabled: data.voice_enabled,
+      lang: data.voice_lang,
+      rate: data.voice_rate,
+      autoplay: data.voice_autoplay,
+      length: text.length,
+    });
+    return { ok: true };
+  });
