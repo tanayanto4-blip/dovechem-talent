@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Volume2, Square, Pause, Play, AlertCircle } from "lucide-react";
+import { Volume2, Square, Pause, Play, AlertCircle, RotateCcw } from "lucide-react";
 
 export type VoiceSettings = {
   text: string;
@@ -63,7 +63,13 @@ export function VoiceInstructionPlayer({
   autoplay = false,
   title = "Instruksi Suara",
   compact = false,
-}: VoiceSettings & { autoplay?: boolean; title?: string; compact?: boolean }) {
+  replayRef,
+}: VoiceSettings & {
+  autoplay?: boolean;
+  title?: string;
+  compact?: boolean;
+  replayRef?: React.MutableRefObject<(() => void) | null>;
+}) {
   const { supported, speaking, paused, speak, stop, togglePause } = useSpeech({ text, lang, rate });
   const autoTried = useRef(false);
 
@@ -74,7 +80,14 @@ export function VoiceInstructionPlayer({
     return () => clearTimeout(t);
   }, [autoplay, supported, text, speak]);
 
+  useEffect(() => {
+    if (!replayRef) return;
+    replayRef.current = speak;
+    return () => { replayRef.current = null; };
+  }, [replayRef, speak]);
+
   if (!text.trim()) return null;
+
 
   return (
     <div className={`rounded-lg border bg-accent/40 ${compact ? "p-3" : "p-4"}`}>
@@ -89,6 +102,9 @@ export function VoiceInstructionPlayer({
           <Button type="button" size="sm" variant="outline" onClick={togglePause} disabled={!supported || !speaking}>
             {paused ? <Play className="mr-1.5 h-3.5 w-3.5" /> : <Pause className="mr-1.5 h-3.5 w-3.5" />}
             {paused ? "Lanjut" : "Jeda"}
+          </Button>
+          <Button type="button" size="sm" variant="secondary" onClick={speak} disabled={!supported}>
+            <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Ulangi instruksi
           </Button>
           <Button type="button" size="sm" variant="ghost" onClick={stop} disabled={!supported || !speaking}>
             <Square className="mr-1.5 h-3.5 w-3.5" /> Berhenti
