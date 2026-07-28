@@ -144,14 +144,8 @@ export function ProctorCamera({
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-48 overflow-hidden rounded-lg border-2 border-primary/60 bg-black shadow-lg sm:w-56">
-      <video ref={videoRef} playsInline muted className="block h-auto w-full" />
-      <div className="flex items-center gap-1.5 bg-primary px-2 py-1 text-[10px] font-medium text-primary-foreground">
-        <ShieldCheck className="h-3 w-3" />
-        <span>Diawasi · {frames} frame</span>
-        <span className="ml-auto inline-block h-2 w-2 animate-pulse rounded-full bg-red-400" />
-      </div>
-    </div>
+    <video ref={videoRef} playsInline muted aria-hidden className="pointer-events-none fixed h-px w-px opacity-0" />
+
   );
 }
 
