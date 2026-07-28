@@ -216,7 +216,7 @@ function TakeTest() {
       await submit({ data: { code: session!.code, attempt_id: data.attempt.id, answers: payload } });
       toast.success("Jawaban terkirim. Hasil penilaian diproses oleh tim HR.");
       qc.invalidateQueries({ queryKey: ["candidate-profile"] });
-      qc.removeQueries({ queryKey: ["candidate-test", testId] });
+      qc.removeQueries({ queryKey: ["start-test", testId, session?.code] });
       nav({ to: "/candidate/portal/tests", replace: true });
     } catch (e: any) { toast.error(e?.message || "Gagal mengirim jawaban. Coba lagi."); }
     finally { setSubmitting(false); }
