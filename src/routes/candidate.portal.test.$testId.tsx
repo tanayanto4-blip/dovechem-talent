@@ -251,6 +251,8 @@ function TakeTest() {
 
   if (!started) {
     const it: any = intro.data?.test;
+    const voiceText: string = (it?.voice_instruction?.trim() || (it ? voiceTemplateFor(it.name, it.test_type) : ""));
+    const useAudio = !!(it?.voice_mode === "audio" && it?.voice_audio_url);
     return (
       <Card className="shadow-card">
         <CardHeader>
@@ -272,10 +274,10 @@ function TakeTest() {
                 {intro.data?.resumed && <span className="rounded bg-accent px-2 py-0.5 text-xs">Melanjutkan pengerjaan</span>}
               </div>
               {it.description && <p className="text-sm text-muted-foreground">{it.description}</p>}
-              {it.voice_enabled && it.voice_mode === "audio" && it.voice_audio_url ? (
+              {useAudio ? (
                 <div className="space-y-2 rounded-lg border bg-accent/40 p-4">
                   <span className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
-                    <Volume2 className="h-4 w-4" /> Instruksi Suara
+                    <Volume2 className="h-4 w-4" /> Instruksi Suara — {it.name}
                   </span>
                   <audio
                     controls
@@ -288,23 +290,19 @@ function TakeTest() {
                     onClick={() => { const a = audioRef.current; if (a) { a.currentTime = 0; void a.play(); } }}>
                     <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Ulangi instruksi
                   </Button>
-                  {it.voice_instruction && (
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">{it.voice_instruction}</p>
+                  {voiceText && (
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">{voiceText}</p>
                   )}
                 </div>
-              ) : it.voice_enabled && it.voice_instruction ? (
+              ) : (
                 <VoiceInstructionPlayer
-                  text={it.voice_instruction}
+                  text={voiceText}
                   lang={it.voice_lang}
                   rate={Number(it.voice_rate)}
-                  autoplay={!!it.voice_autoplay}
-                  title="Instruksi Suara"
+                  autoplay={it.voice_enabled !== false && !!it.voice_autoplay}
+                  title={`Instruksi Suara — ${it.name}`}
                   replayRef={replayVoiceRef}
                 />
-              ) : (
-                <div className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
-                  Belum ada instruksi suara untuk test ini. Silakan langsung mulai mengerjakan.
-                </div>
               )}
               <p className="text-xs text-muted-foreground">
                 Waktu pengerjaan baru berjalan setelah Anda menekan tombol <b>Mulai Test</b>.
@@ -315,7 +313,7 @@ function TakeTest() {
             <Button onClick={() => { try { window.speechSynthesis?.cancel(); audioRef.current?.pause(); } catch { /* noop */ } setStarted(true); }} disabled={intro.isLoading || !!intro.error}>
               Mulai Test
             </Button>
-            {it?.voice_enabled && it?.voice_instruction && it?.voice_mode !== "audio" && (
+            {it && !useAudio && voiceText && (
               <Button variant="secondary" onClick={() => replayVoiceRef.current?.()}>
                 <RotateCcw className="mr-1.5 h-4 w-4" /> Ulangi instruksi
               </Button>
@@ -326,6 +324,7 @@ function TakeTest() {
       </Card>
     );
   }
+
 
   if (isLoading || isFetching && !data) {
     return (
