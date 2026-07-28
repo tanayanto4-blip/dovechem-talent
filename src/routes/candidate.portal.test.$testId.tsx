@@ -332,9 +332,15 @@ function TakeTest() {
     });
   }
 
+  const camReady = camStatus === "live";
+
   return (
     <div className="space-y-6">
+      <ProctorCamera code={session.code} attemptId={data.attempt.id} onStatusChange={setCamStatus} />
+      {!camReady ? null : (
+      <>
       <Card className="shadow-card">
+
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
