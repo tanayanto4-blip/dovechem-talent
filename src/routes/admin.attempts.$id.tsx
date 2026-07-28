@@ -26,6 +26,7 @@ function AttemptDetail() {
   const isDisc = t?.test_type === "disc";
   const isMbti = t?.test_type === "mbti";
   const isEq = t?.test_type === "eq";
+  const isWpt = t?.test_type === "wpt";
   const candId = a.candidates?.id;
 
   return (
