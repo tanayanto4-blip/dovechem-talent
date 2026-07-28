@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateStartTest, candidateSubmitTest, candidateSaveAnswer } from "@/lib/candidate.functions";
 import { useCandidateSession } from "@/lib/candidate-session";
+import { ProctorCamera } from "@/components/ProctorCamera";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -159,6 +160,7 @@ function TakeTest() {
   const [remaining, setRemaining] = useState<number>(0);
   const [submitting, setSubmitting] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [camStatus, setCamStatus] = useState<"idle" | "requesting" | "live" | "denied" | "error">("idle");
   const hydratedRef = useRef(false);
   const inflight = useRef(0);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
