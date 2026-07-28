@@ -191,7 +191,7 @@ function ProctoringPage() {
         <div>
           <h1 className="font-display text-2xl font-bold text-primary">Pantauan Kamera Kandidat</h1>
           <p className="text-sm text-muted-foreground">
-            Frame kamera diperbarui otomatis setiap 5 detik (tampilan near-live) selama kandidat mengerjakan psikotest (24 jam terakhir).
+            Pemantauan berbasis realtime — klik Segarkan untuk memperbarui daftar sesi secara manual.
           </p>
         </div>
         <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>
