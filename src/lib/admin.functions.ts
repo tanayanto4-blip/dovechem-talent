@@ -956,3 +956,163 @@ export const reopenCandidateTest = createServerFn({ method: "POST" })
     });
     return { ok: true, reset: !!attempt };
   });
+
+/* ---------------- Permintaan Ulang Test (HR mengajukan, Admin memutuskan) ---------------- */
+
+/** Reset an attempt and (re)open the test for a candidate. Shared by reopen + approval. */
+async function performReopen(
+  context: any,
+  candidate_id: string,
+  test_id: string,
+  clear_answers: boolean,
+  reason: string | null,
+) {
+  const { data: attempt } = await context.supabase
+    .from("test_attempts")
+    .select("id, status, score")
+    .eq("candidate_id", candidate_id)
+    .eq("test_id", test_id)
+    .maybeSingle();
+
+  if (attempt) {
+    if (clear_answers) {
+      const del = await context.supabase.from("test_answers").delete().eq("attempt_id", attempt.id);
+      if (del.error) throw new Error(del.error.message);
+    }
+    const upd = await context.supabase
+      .from("test_attempts")
+      .update({ status: "in_progress", finished_at: null, score: null, result: null, started_at: new Date().toISOString() })
+      .eq("id", attempt.id);
+    if (upd.error) throw new Error(upd.error.message);
+  }
+
+  const { data: prev } = await context.supabase
+    .from("candidate_test_access")
+    .select("retake_count")
+    .eq("candidate_id", candidate_id)
+    .eq("test_id", test_id)
+    .maybeSingle();
+
+  const { error } = await context.supabase.from("candidate_test_access").upsert(
+    {
+      candidate_id,
+      test_id,
+      is_open: true,
+      reason: reason?.length ? reason : null,
+      retake_count: ((prev?.retake_count as number) ?? 0) + 1,
+      last_reopened_at: new Date().toISOString(),
+      updated_by: context.userId,
+    },
+    { onConflict: "candidate_id,test_id" },
+  );
+  if (error) throw new Error(error.message);
+  return { attempt_id: attempt?.id ?? null, previous_status: attempt?.status ?? null };
+}
+
+/** Staff (HR/Admin): ask Super Admin to let a candidate redo one test. */
+export const requestCandidateRetake = createServerFn({ method: "POST" })
+  .middleware([requireStaff])
+  .inputValidator((d) =>
+    z
+      .object({
+        candidate_id: z.string().uuid(),
+        test_id: z.string().uuid(),
+        reason: z.string().trim().max(300).optional().nullable(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const existing = await context.supabase
+      .from("candidate_retake_requests")
+      .select("id")
+      .eq("candidate_id", data.candidate_id)
+      .eq("test_id", data.test_id)
+      .eq("status", "pending")
+      .maybeSingle();
+    if (existing.data) throw new Error("Sudah ada permintaan yang menunggu persetujuan untuk test ini.");
+
+    const { data: row, error } = await context.supabase
+      .from("candidate_retake_requests")
+      .insert({
+        candidate_id: data.candidate_id,
+        test_id: data.test_id,
+        reason: data.reason?.length ? data.reason : null,
+        requested_by: context.userId,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+
+    await logAudit(context, "test.retake.request", "candidate", data.candidate_id, {
+      test_id: data.test_id,
+      request_id: row?.id ?? null,
+      reason: data.reason ?? null,
+    });
+    return { ok: true, id: row?.id ?? null };
+  });
+
+/** Staff: list retake requests (default: pending first). */
+export const listRetakeRequests = createServerFn({ method: "POST" })
+  .middleware([requireStaff])
+  .inputValidator((d) =>
+    z.object({ status: z.enum(["pending", "approved", "rejected", "all"]).default("pending") }).parse(d ?? {}),
+  )
+  .handler(async ({ context, data }) => {
+    let q = context.supabase
+      .from("candidate_retake_requests")
+      .select("*, candidates(id, full_name, code_snapshot), tests(id, code, name)")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (data.status !== "all") q = q.eq("status", data.status);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return { requests: rows ?? [], isAdmin: context.isAdmin };
+  });
+
+/** Admin-only: approve (reopen the test) or reject a retake request. */
+export const decideRetakeRequest = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        approve: z.boolean(),
+        clear_answers: z.boolean().default(true),
+        note: z.string().trim().max(300).optional().nullable(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: req, error: reqErr } = await context.supabase
+      .from("candidate_retake_requests")
+      .select("id, candidate_id, test_id, status, reason")
+      .eq("id", data.id)
+      .single();
+    if (reqErr) throw new Error(reqErr.message);
+    if (req.status !== "pending") throw new Error("Permintaan ini sudah diproses.");
+
+    let reset: { attempt_id: string | null; previous_status: string | null } | null = null;
+    if (data.approve) {
+      reset = await performReopen(context, req.candidate_id, req.test_id, data.clear_answers, data.note ?? req.reason ?? null);
+    }
+
+    const { error } = await context.supabase
+      .from("candidate_retake_requests")
+      .update({
+        status: data.approve ? "approved" : "rejected",
+        decided_by: context.userId,
+        decided_at: new Date().toISOString(),
+        decision_note: data.note?.length ? data.note : null,
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+
+    await logAudit(context, data.approve ? "test.retake.approved" : "test.retake.rejected", "candidate", req.candidate_id, {
+      request_id: req.id,
+      test_id: req.test_id,
+      cleared_answers: data.approve ? data.clear_answers : false,
+      attempt_id: reset?.attempt_id ?? null,
+      note: data.note ?? null,
+    });
+    return { ok: true };
+  });
