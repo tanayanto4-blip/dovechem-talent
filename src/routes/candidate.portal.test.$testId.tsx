@@ -737,6 +737,11 @@ function TakeTest() {
           {submitting ? "Mengirim..." : `Kirim Jawaban (${answered}/${total})`}
         </Button>
       </div>
+      </>
+      )}
     </div>
+  );
+}
+
   );
 }
