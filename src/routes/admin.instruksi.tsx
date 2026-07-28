@@ -11,8 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Volume2, Save, Loader2 } from "lucide-react";
+import { Volume2, Save, Loader2, Upload, Trash2, Mic } from "lucide-react";
 import { VoiceInstructionPlayer } from "@/components/voice-instruction";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/admin/instruksi")({ component: VoiceAdmin });
 
@@ -20,7 +21,13 @@ type Row = {
   id: string; code: string; name: string; test_type: string;
   voice_instruction: string | null; voice_enabled: boolean;
   voice_lang: string; voice_rate: number; voice_autoplay: boolean;
+  voice_mode: "tts" | "audio" | string;
+  voice_audio_path: string | null; voice_audio_name: string | null;
+  voice_audio_mime: string | null; voice_audio_url: string | null;
 };
+
+const AUDIO_MIME = ["audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/webm", "audio/ogg", "audio/mp4", "audio/aac", "audio/m4a", "audio/x-m4a"];
+const MAX_AUDIO_MB = 15;
 
 /** Template instruksi khusus per jenis test — tiap test punya teks berbeda. */
 const TYPE_TEMPLATES: Record<string, (name: string) => string> = {
@@ -80,13 +87,39 @@ function VoiceCard({ row, onSave }: { row: Row; onSave: (p: any) => Promise<void
   const [lang, setLang] = useState(row.voice_lang || "id-ID");
   const [rate, setRate] = useState(Number(row.voice_rate) || 1);
   const [saving, setSaving] = useState(false);
+  const [mode, setMode] = useState<"tts" | "audio">(row.voice_mode === "audio" ? "audio" : "tts");
+  const [audio, setAudio] = useState<{ path: string | null; name: string | null; mime: string | null; url: string | null }>({
+    path: row.voice_audio_path, name: row.voice_audio_name, mime: row.voice_audio_mime, url: row.voice_audio_url,
+  });
+  const [uploading, setUploading] = useState(false);
+
+  async function handleUpload(file: File) {
+    if (!AUDIO_MIME.includes(file.type)) { toast.error("Format audio tidak didukung (gunakan MP3, WAV, M4A, OGG, atau WEBM)."); return; }
+    if (file.size > MAX_AUDIO_MB * 1024 * 1024) { toast.error(`Ukuran file maksimal ${MAX_AUDIO_MB} MB.`); return; }
+    setUploading(true);
+    try {
+      const ext = (file.name.split(".").pop() || "mp3").toLowerCase();
+      const path = `${row.id}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("voice-instructions").upload(path, file, { contentType: file.type, upsert: false });
+      if (error) throw error;
+      const { data: signed } = await supabase.storage.from("voice-instructions").createSignedUrl(path, 3600);
+      setAudio({ path, name: file.name, mime: file.type, url: signed?.signedUrl ?? null });
+      setMode("audio");
+      toast.success("Rekaman terunggah. Jangan lupa tekan Simpan.");
+    } catch (e: any) { toast.error(e?.message || "Gagal mengunggah audio."); }
+    finally { setUploading(false); }
+  }
 
   useEffect(() => { setText(row.voice_instruction ?? ""); }, [row.voice_instruction]);
 
   async function save() {
     setSaving(true);
     try {
-      await onSave({ test_id: row.id, voice_instruction: text, voice_enabled: enabled, voice_lang: lang, voice_rate: rate, voice_autoplay: autoplay });
+      await onSave({
+        test_id: row.id, voice_instruction: text, voice_enabled: enabled, voice_lang: lang,
+        voice_rate: rate, voice_autoplay: autoplay, voice_mode: mode,
+        voice_audio_path: audio.path, voice_audio_name: audio.name, voice_audio_mime: audio.mime,
+      });
     } catch (e: any) { toast.error(e?.message || "Gagal menyimpan."); }
     finally { setSaving(false); }
   }
@@ -136,7 +169,49 @@ function VoiceCard({ row, onSave }: { row: Row; onSave: (p: any) => Promise<void
           </div>
         </div>
 
-        {text.trim() && <VoiceInstructionPlayer text={text} lang={lang} rate={rate} title="Pratinjau suara" compact />}
+        <div className="space-y-3 rounded-lg border p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Mic className="h-4 w-4 text-primary" />
+            <span className="text-sm font-semibold text-primary">Sumber suara instruksi</span>
+            <div className="ml-auto flex gap-2">
+              <Button type="button" size="sm" variant={mode === "tts" ? "default" : "outline"} onClick={() => setMode("tts")}>
+                Suara otomatis (teks)
+              </Button>
+              <Button type="button" size="sm" variant={mode === "audio" ? "default" : "outline"} onClick={() => setMode("audio")} disabled={!audio.path}>
+                Rekaman sendiri
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Label htmlFor={`f-${row.id}`} className="cursor-pointer">
+              <span className="inline-flex items-center gap-2 rounded-md border border-dashed px-3 py-2 text-sm hover:bg-accent">
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                {uploading ? "Mengunggah..." : "Unggah file audio"}
+              </span>
+            </Label>
+            <input id={`f-${row.id}`} type="file" accept="audio/*" className="hidden" disabled={uploading}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); e.currentTarget.value = ""; }} />
+            <span className="text-xs text-muted-foreground">MP3, WAV, M4A, OGG, atau WEBM · maks {MAX_AUDIO_MB} MB</span>
+            {audio.path && (
+              <Button type="button" size="sm" variant="ghost" className="text-destructive"
+                onClick={() => { setAudio({ path: null, name: null, mime: null, url: null }); setMode("tts"); }}>
+                <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Hapus rekaman
+              </Button>
+            )}
+          </div>
+
+          {audio.url ? (
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">{audio.name}</p>
+              <audio controls src={audio.url} className="w-full" />
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">Belum ada rekaman. Kandidat akan mendengar suara otomatis dari teks di atas.</p>
+          )}
+        </div>
+
+        {mode === "tts" && text.trim() && <VoiceInstructionPlayer text={text} lang={lang} rate={rate} title="Pratinjau suara" compact />}
 
         <div className="flex justify-end">
           <Button onClick={save} disabled={saving}>
