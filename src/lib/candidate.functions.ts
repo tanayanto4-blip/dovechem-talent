@@ -281,16 +281,12 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: attempt } = await sb.from("test_attempts").select("*, tests(*)").eq("id", data.attempt_id).eq("candidate_id", cand.id).single();
     if (!attempt) throw new Error("Attempt tidak valid.");
-    // Idempotent: if already finished, return the persisted score/result without
-    // touching answers or re-running scoring. Repeat submits are a no-op.
+    // Idempotent: repeat submits are a no-op. Scoring output is never returned
+    // to the candidate — results are staff-only.
     if (attempt.status === "finished") {
-      return {
-        ok: true,
-        score: (attempt as any).score ?? 0,
-        result: (attempt as any).result ?? {},
-        idempotent: true,
-      };
+      return { ok: true, idempotent: true };
     }
+
 
     // Persist answers idempotently. Upsert on (attempt_id, question_id) so a
     // retried submit for the same attempt cannot create duplicate rows, and
