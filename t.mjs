@@ -13,3 +13,13 @@ for(let g=1;g<=24;g++){const set=COLUMN_SETS[Math.floor((g-1)/8)],row0=BLOCK_ROW
  setCached(ws,`${set.k}${sumRow}`,pick&&pick.least>=0?1:0);setCached(ws,`${kS}${sumRow}`,pick&&pick.least>=0?pick.least+1:0);}
 wb.calcProperties={...wb.calcProperties,fullCalcOnLoad:true};
 await wb.xlsx.writeFile('/tmp/out2.xlsx');
+// strip stale cached values on other sheets
+for (const s of wb.worksheets) {
+  if (s === ws) continue;
+  s.eachRow({includeEmpty:false}, (row)=>row.eachCell({includeEmpty:false},(cell)=>{
+    const v=cell.value;
+    if(v&&typeof v==='object'&&typeof v.formula==='string') cell.value={formula:v.formula,result:undefined};
+    else if(v&&typeof v==='object'&&typeof v.sharedFormula==='string') cell.value={sharedFormula:v.sharedFormula,result:undefined};
+  }));
+}
+await wb.xlsx.writeFile('/tmp/out3.xlsx');
