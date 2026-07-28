@@ -282,32 +282,82 @@ function CodesPage() {
       <Card className="shadow-card">
         <CardHeader><CardTitle>Daftar Kode</CardTitle></CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          {/* Mobile: kartu per kode */}
+          <div className="space-y-3 md:hidden">
+            {(data?.codes ?? []).map((c: any, i: number) => (
+              <div key={c.id} className="rounded-lg border p-3">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                  <div className="min-w-0">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="shrink-0 text-xs text-muted-foreground">{i + 1}.</span>
+                      <span className="truncate font-mono font-semibold">{c.code}</span>
+                      <button onClick={() => { navigator.clipboard.writeText(c.code); toast.success("Kode disalin"); }} className="shrink-0 text-muted-foreground hover:text-primary" aria-label="Salin kode">
+                        <Copy className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <div className="truncate text-sm font-medium">{c.candidate_name}</div>
+                    <div className="truncate text-xs text-muted-foreground">{c.candidate_email}</div>
+                    <div className="truncate text-xs text-muted-foreground">{c.position_applied ?? "-"}</div>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-medium ${c.active ? "text-success" : "text-muted-foreground"}`}>{c.active ? "Aktif" : "Off"}</span>
+                      <Switch checked={c.active} disabled={togglingId === c.id} onCheckedChange={(v) => onToggle(c.id, v)} aria-label={`Aktifkan kode ${c.code}`} />
+                    </div>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onDelete(c.id, c.code)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2 border-t pt-2 text-xs">
+                  {c.candidates?.data_completed ? <Badge className="bg-success">Data lengkap</Badge> : c.candidates ? <Badge variant="secondary">Data belum lengkap</Badge> : <Badge variant="outline">Belum login</Badge>}
+                  <span className="text-muted-foreground">Digunakan: {c.used_at ? new Date(c.used_at).toLocaleDateString("id-ID") : "-"}</span>
+                  <button onClick={() => onEditExpiry(c.id, c.expires_at)} className="hover:underline">
+                    {c.expires_at ? (
+                      <span className={new Date(c.expires_at).getTime() < Date.now() ? "text-destructive" : ""}>
+                        Berlaku s/d {new Date(c.expires_at).toLocaleString("id-ID", { dateStyle: "short", timeStyle: "short" })}
+                      </span>
+                    ) : <span className="text-muted-foreground">Tanpa batas</span>}
+                  </button>
+                </div>
+              </div>
+            ))}
+            {(data?.codes ?? []).length === 0 && (
+              <p className="py-8 text-center text-sm text-muted-foreground">Belum ada kode. Klik "Buat Kode" untuk mulai.</p>
+            )}
+          </div>
+
+          {/* Desktop: tabel */}
+          <div className="hidden overflow-x-auto md:block">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">#</TableHead>
                   <TableHead>Kode</TableHead>
                   <TableHead>Kandidat</TableHead>
                   <TableHead>Posisi</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Digunakan</TableHead>
                   <TableHead>Masa Berlaku</TableHead>
-                  <TableHead>Aktif</TableHead>
+                  <TableHead className="text-center">Aktif</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(data?.codes ?? []).map((c: any) => (
+                {(data?.codes ?? []).map((c: any, i: number) => (
                   <TableRow key={c.id}>
-                    <TableCell className="flex items-center gap-2 font-mono font-semibold">
-                      {c.code}
-                      <button onClick={() => { navigator.clipboard.writeText(c.code); toast.success("Kode disalin"); }} className="text-muted-foreground hover:text-primary">
-                        <Copy className="h-3.5 w-3.5" />
-                      </button>
-                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
                     <TableCell>
-                      <div className="font-medium">{c.candidate_name}</div>
-                      <div className="text-xs text-muted-foreground">{c.candidate_email}</div>
+                      <div className="flex items-center gap-2 font-mono font-semibold">
+                        {c.code}
+                        <button onClick={() => { navigator.clipboard.writeText(c.code); toast.success("Kode disalin"); }} className="text-muted-foreground hover:text-primary" aria-label="Salin kode">
+                          <Copy className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </TableCell>
+                    <TableCell className="max-w-[200px]">
+                      <div className="truncate font-medium">{c.candidate_name}</div>
+                      <div className="truncate text-xs text-muted-foreground">{c.candidate_email}</div>
                     </TableCell>
                     <TableCell>{c.position_applied ?? "-"}</TableCell>
                     <TableCell>
@@ -325,22 +375,20 @@ function CodesPage() {
                       </button>
                     </TableCell>
                     <TableCell>
-                      <Switch checked={c.active} onCheckedChange={async (v) => { await toggle({ data: { id: c.id, active: v } }); qc.invalidateQueries({ queryKey: ["codes"] }); }} />
+                      <div className="flex flex-col items-center gap-1">
+                        <Switch checked={c.active} disabled={togglingId === c.id} onCheckedChange={(v) => onToggle(c.id, v)} aria-label={`Aktifkan kode ${c.code}`} />
+                        <span className={`text-[10px] font-medium ${c.active ? "text-success" : "text-muted-foreground"}`}>{c.active ? "Aktif" : "Off"}</span>
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <Button size="icon" variant="ghost" onClick={async () => {
-                        if (!confirm(`Hapus kode ${c.code}? Data kandidat, dokumen, dan hasil tes tetap tersimpan.`)) return;
-                        await del({ data: { id: c.id } });
-                        qc.invalidateQueries({ queryKey: ["codes"] });
-                        toast.success("Kode dihapus");
-                      }}>
+                      <Button size="icon" variant="ghost" onClick={() => onDelete(c.id, c.code)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </TableCell>
                   </TableRow>
                 ))}
                 {(data?.codes ?? []).length === 0 && (
-                  <TableRow><TableCell colSpan={8} className="py-8 text-center text-muted-foreground">Belum ada kode. Klik "Buat Kode" untuk mulai.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="py-8 text-center text-muted-foreground">Belum ada kode. Klik "Buat Kode" untuk mulai.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
