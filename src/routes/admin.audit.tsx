@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { listAuditLogs } from "@/lib/admin.functions";
+import { listAuditLogs, getMyRoles } from "@/lib/admin.functions";
 import { listAdminUsers } from "@/lib/users.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
