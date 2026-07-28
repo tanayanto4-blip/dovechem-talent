@@ -45,7 +45,7 @@ function TestsPage() {
                   <div className="grid h-10 w-10 place-items-center rounded-md bg-hero text-primary-foreground">
                     <ClipboardList className="h-5 w-5" />
                   </div>
-                  {done ? <Badge className="bg-success">Selesai — Skor {attempt.score}</Badge> : <Badge variant="secondary">Belum dikerjakan</Badge>}
+                  {done ? <Badge className="bg-success">Selesai</Badge> : <Badge variant="secondary">Belum dikerjakan</Badge>}
                 </div>
                 <h3 className="font-display text-lg font-bold text-primary">{t.name}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{t.description}</p>
