@@ -145,11 +145,22 @@ function TakeTest() {
   const start = useServerFn(candidateStartTest);
   const submit = useServerFn(candidateSubmitTest);
   const saveAnswer = useServerFn(candidateSaveAnswer);
+  const getIntro = useServerFn(candidateGetTestIntro);
+
+  // Instruction gate: the attempt (and timer) only starts after the candidate
+  // has listened to / read the spoken instruction and pressed "Mulai Test".
+  const [started, setStarted] = useState(false);
+  const intro = useQuery({
+    queryKey: ["test-intro", testId, session?.code],
+    queryFn: () => getIntro({ data: { code: session!.code, test_id: testId } }),
+    enabled: !!session && !started,
+    staleTime: Infinity,
+  });
 
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["start-test", testId, session?.code],
     queryFn: () => start({ data: { code: session!.code, test_id: testId } }),
-    enabled: !!session,
+    enabled: !!session && started,
     staleTime: Infinity,
     retry: 1,
   });
