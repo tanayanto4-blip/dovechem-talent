@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listAllAttempts, getAttemptDetail } from "@/lib/admin.functions";
 import { exportMbtiExcel } from "@/lib/mbti-excel";
+import { exportEqExcel } from "@/lib/eq-excel";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
