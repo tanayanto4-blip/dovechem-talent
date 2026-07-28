@@ -46,7 +46,7 @@ function CandidatesList() {
                         <div className="font-medium">{c.full_name ?? "-"}</div>
                         <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
                       </TableCell>
-                      <TableCell className="font-mono">{c.candidate_codes?.code}</TableCell>
+                      <TableCell className="font-mono">{c.candidate_codes?.code ?? c.code_snapshot ?? "-"}</TableCell>
                       <TableCell>{c.position_applied ?? "-"}</TableCell>
                       <TableCell>{c.data_completed ? <Badge className="bg-success">Lengkap</Badge> : <Badge variant="secondary">Belum</Badge>}</TableCell>
                       <TableCell>

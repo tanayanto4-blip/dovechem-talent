@@ -67,7 +67,7 @@ function ResultsBank() {
       if (type !== "all" && a.tests?.test_type !== type) return false;
       if (status !== "all" && a.status !== status) return false;
       if (!needle) return true;
-      return [a.candidates?.full_name, a.candidates?.candidate_codes?.code, a.candidates?.position_applied, a.tests?.name]
+      return [a.candidates?.full_name, a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot, a.candidates?.position_applied, a.tests?.name]
         .filter(Boolean)
         .some((v: string) => v.toLowerCase().includes(needle));
     });
@@ -84,7 +84,7 @@ function ResultsBank() {
         g = {
           key,
           name: c.full_name ?? "(Tanpa Nama)",
-          code: c.candidate_codes?.code ?? "-",
+          code: c.candidate_codes?.code ?? c.code_snapshot ?? "-",
           position: c.position_applied ?? "-",
           attempts: [],
           finished: 0,

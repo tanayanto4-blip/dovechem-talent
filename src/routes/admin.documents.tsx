@@ -69,7 +69,7 @@ function DocumentsBank() {
         f.candidates?.full_name,
         f.candidates?.nik,
         f.candidates?.position_applied,
-        f.candidates?.candidate_codes?.code,
+        f.candidates?.candidate_codes?.code ?? f.candidates?.code_snapshot,
       ]
         .filter(Boolean)
         .join(" ")
@@ -134,7 +134,7 @@ function DocumentsBank() {
         manifestRows.push({
           candidate_name: f.candidates?.full_name ?? "",
           candidate_nik: f.candidates?.nik ?? "",
-          candidate_code: f.candidates?.candidate_codes?.code ?? "",
+          candidate_code: f.candidates?.candidate_codes?.code ?? f.candidates?.code_snapshot ?? "",
           position: f.candidates?.position_applied ?? "",
           file_type: f.file_type ?? "",
           file_name: f.file_name ?? "",
@@ -312,7 +312,7 @@ function DocumentsBank() {
                                 {r.c?.position_applied ?? "-"}
                               </div>
                             </TableCell>
-                            <TableCell className="font-mono text-xs">{r.c?.candidate_codes?.code ?? "-"}</TableCell>
+                            <TableCell className="font-mono text-xs">{r.c?.candidate_codes?.code ?? r.c?.code_snapshot ?? "-"}</TableCell>
                             <TableCell>
                               <button
                                 onClick={() => {
