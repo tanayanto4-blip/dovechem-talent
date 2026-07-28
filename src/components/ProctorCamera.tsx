@@ -7,11 +7,11 @@ import { Camera, CameraOff, Loader2, ShieldCheck } from "lucide-react";
 
 type Status = "idle" | "requesting" | "live" | "denied" | "error";
 
-const CAPTURE_INTERVAL_MS = 30_000;
+const CAPTURE_INTERVAL_MS = 5_000;
 
 /**
  * Candidate webcam proctoring. Requests camera access, shows a small live
- * preview, and uploads a JPEG frame every 30 seconds plus camera/tab events.
+ * preview, and uploads a JPEG frame every 5 seconds plus camera/tab events.
  * Frames are only visible to Super Admin in the monitoring dashboard.
  */
 export function ProctorCamera({
@@ -47,7 +47,7 @@ export function ProctorCamera({
   const capture = useCallback(async () => {
     const video = videoRef.current;
     if (!video || video.readyState < 2) return;
-    const w = 320;
+    const w = 480;
     const h = Math.round((video.videoHeight / (video.videoWidth || 1)) * w) || 240;
     const canvas = document.createElement("canvas");
     canvas.width = w;
@@ -55,7 +55,7 @@ export function ProctorCamera({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.drawImage(video, 0, 0, w, h);
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.6);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
     const base64 = dataUrl.split(",")[1];
     if (base64) await report("snapshot", base64);
   }, [report]);
@@ -72,7 +72,7 @@ export function ProctorCamera({
       }
       setS("live");
       await report("camera_on");
-      setTimeout(() => { capture(); }, 1500);
+      setTimeout(() => { capture(); }, 800);
     } catch (e: any) {
       const denied = e?.name === "NotAllowedError" || e?.name === "SecurityError";
       setS(denied ? "denied" : "error");
@@ -144,7 +144,7 @@ export function ProctorCamera({
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-40 overflow-hidden rounded-lg border-2 border-primary/60 bg-black shadow-lg sm:w-48">
+    <div className="fixed bottom-4 right-4 z-50 w-48 overflow-hidden rounded-lg border-2 border-primary/60 bg-black shadow-lg sm:w-56">
       <video ref={videoRef} playsInline muted className="block h-auto w-full" />
       <div className="flex items-center gap-1.5 bg-primary px-2 py-1 text-[10px] font-medium text-primary-foreground">
         <ShieldCheck className="h-3 w-3" />

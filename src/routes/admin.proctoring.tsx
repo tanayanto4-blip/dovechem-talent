@@ -50,13 +50,15 @@ function getSessionStatus(s: any): { status: SessionStatus; label: string; since
   const inProgress = s.attempt_status === "in_progress";
   const finished = s.attempt_status === "completed" || s.attempt_status === "submitted" || s.attempt_status === "finished";
 
-  const sinceText = lastMs < 60_000
+  const sinceText = lastMs < 15_000
+    ? "live"
+    : lastMs < 60_000
     ? "baru saja"
     : lastMs < 60 * 60 * 1000
       ? `${Math.round(lastMs / 60_000)} menit lalu`
       : `${Math.round(lastMs / 3_600_000)} jam lalu`;
 
-  if (inProgress && lastMs < 3 * 60 * 1000) {
+  if (inProgress && lastMs < 30_000) {
     return { status: isAlertEvent ? "live-warning" : "live", label: isAlertEvent ? "LIVE · Perlu perhatian" : "LIVE · Diawasi", sinceText };
   }
   if (inProgress) {
@@ -82,13 +84,15 @@ function ProctoringPage() {
     queryKey: ["proctor-sessions"],
     queryFn: () => listFn({ data: {} as never }),
     enabled: isAdmin,
-    refetchInterval: 20_000,
+    refetchInterval: 4_000,
+    refetchIntervalInBackground: true,
   });
 
   const detail = useQuery({
     queryKey: ["proctor-session", openKey],
     queryFn: () => detailFn({ data: { attempt_id: openAttempt?.attempt_id, candidate_id: openAttempt?.attempt_id ? undefined : openAttempt?.candidate_id } }),
     enabled: !!openKey && isAdmin,
+    refetchInterval: 5_000,
   });
 
   if (roles && !isAdmin) {
@@ -111,7 +115,7 @@ function ProctoringPage() {
         <div>
           <h1 className="font-display text-2xl font-bold text-primary">Pantauan Kamera Kandidat</h1>
           <p className="text-sm text-muted-foreground">
-            Frame kamera diambil otomatis setiap 30 detik selama kandidat mengerjakan psikotest (24 jam terakhir).
+            Frame kamera diperbarui otomatis setiap 5 detik (tampilan near-live) selama kandidat mengerjakan psikotest (24 jam terakhir).
           </p>
         </div>
         <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>
@@ -144,7 +148,7 @@ function ProctoringPage() {
               <Card key={s.key} className="overflow-hidden shadow-card">
                 <div className="relative aspect-[4/3] w-full bg-black">
                   {s.latest_url ? (
-                    <img src={s.latest_url} alt={`Frame kamera ${s.candidate_name}`} className="h-full w-full object-cover" />
+                    <img key={s.latest_url} src={s.latest_url} alt={`Frame kamera ${s.candidate_name}`} className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-white/60">
                       <VideoOff className="h-8 w-8" />
