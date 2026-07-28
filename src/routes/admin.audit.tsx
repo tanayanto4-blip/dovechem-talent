@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { listAuditLogs } from "@/lib/admin.functions";
+import { listAuditLogs, getMyRoles } from "@/lib/admin.functions";
 import { listAdminUsers } from "@/lib/users.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -117,8 +117,16 @@ function localToIso(v: string): string | null {
 const ANY = "__any__";
 
 function AuditPage() {
+  const rolesFn = useServerFn(getMyRoles);
+  const { data: myRoles, isPending: rolesLoading } = useQuery({
+    queryKey: ["my-roles"],
+    queryFn: () => rolesFn({ data: {} as never }),
+  });
+  const isAdmin = !!myRoles?.roles?.includes("admin");
+
   const fetchLogs = useServerFn(listAuditLogs);
   const fetchUsers = useServerFn(listAdminUsers);
+
 
   const [action, setAction] = useState<string | null>(null);
   const [onlyDenied, setOnlyDenied] = useState(false);
@@ -220,6 +228,21 @@ function AuditPage() {
     targetId.trim() !== "" ||
     from !== "" ||
     to !== "";
+
+  if (!rolesLoading && !isAdmin) {
+    return (
+      <Card className="mx-auto max-w-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-muted-foreground" /> Akses terbatas
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          Audit Log hanya dapat diakses oleh Super Admin.
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
