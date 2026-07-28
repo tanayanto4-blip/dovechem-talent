@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { candidateProctorSnapshot } from "@/lib/candidate.functions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, CameraOff, Loader2, ShieldCheck } from "lucide-react";
+import { Camera, CameraOff, Loader2 } from "lucide-react";
 
 type Status = "idle" | "requesting" | "live" | "denied" | "error";
 
