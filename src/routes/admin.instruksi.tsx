@@ -22,8 +22,26 @@ type Row = {
   voice_lang: string; voice_rate: number; voice_autoplay: boolean;
 };
 
-const TEMPLATE = (name: string) =>
-  `Selamat datang di ${name}. Bacalah setiap soal dengan teliti. Kerjakan sesuai waktu yang tersedia. Jawaban tersimpan otomatis. Jika waktu habis, jawaban akan terkirim secara otomatis. Tekan tombol Mulai Test bila Anda sudah siap.`;
+/** Template instruksi khusus per jenis test — tiap test punya teks berbeda. */
+const TYPE_TEMPLATES: Record<string, (name: string) => string> = {
+  disc: (n) =>
+    `Selamat datang di ${n}. Anda akan melihat kelompok pernyataan. Pada setiap kelompok, pilih satu pernyataan yang PALING menggambarkan diri Anda pada kolom Most, dan satu yang PALING TIDAK menggambarkan diri Anda pada kolom Least. Tidak ada jawaban benar atau salah. Tekan tombol Mulai Test bila Anda sudah siap.`,
+  eq: (n) =>
+    `Selamat datang di ${n}. Terdapat lima puluh pernyataan tentang cara Anda mengenali dan mengelola emosi. Jawablah sejujurnya sesuai kebiasaan Anda sehari-hari, bukan sesuai yang dianggap ideal. Jawaban tersimpan otomatis. Tekan tombol Mulai Test bila Anda sudah siap.`,
+  mbti: (n) =>
+    `Selamat datang di ${n}. Setiap nomor berisi dua pilihan, A dan B. Pilih satu yang paling mendekati diri Anda yang sebenarnya. Tidak ada jawaban benar atau salah, dan jangan terlalu lama berpikir pada satu nomor. Tekan tombol Mulai Test bila Anda sudah siap.`,
+  wpt: (n) =>
+    `Selamat datang di ${n}. Waktu pengerjaan sangat singkat, jadi kerjakan secepat mungkin. Soal tersusun makin lama makin sulit. Jika satu soal terasa sulit, lewati dan lanjutkan ke soal berikutnya. Tuliskan jawaban Anda pada kolom yang tersedia. Tekan tombol Mulai Test bila Anda sudah siap.`,
+  kraepelin: (n) =>
+    `Selamat datang di ${n}. Jumlahkan dua angka yang berdekatan secepat dan seteliti mungkin, lalu tuliskan angka satuannya saja. Kerjakan terus tanpa berhenti sampai ada aba-aba pindah kolom. Kecepatan dan ketelitian sama pentingnya. Tekan tombol Mulai Test bila Anda sudah siap.`,
+  mcq: (n) =>
+    `Selamat datang di ${n}. Setiap soal memiliki satu jawaban yang paling tepat. Kerjakan soal yang mudah lebih dahulu, lalu kembali ke soal yang sulit. Jawaban terkirim otomatis saat waktu habis. Tekan tombol Mulai Test bila Anda sudah siap.`,
+};
+
+const TEMPLATE = (name: string, type: string) =>
+  (TYPE_TEMPLATES[type] ??
+    ((n: string) =>
+      `Selamat datang di ${n}. Bacalah setiap soal dengan teliti. Kerjakan sesuai waktu yang tersedia. Jawaban tersimpan otomatis. Jika waktu habis, jawaban akan terkirim secara otomatis. Tekan tombol Mulai Test bila Anda sudah siap.`))(name);
 
 function VoiceAdmin() {
   const listFn = useServerFn(listVoiceInstructions);
@@ -88,7 +106,9 @@ function VoiceCard({ row, onSave }: { row: Row; onSave: (p: any) => Promise<void
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Label htmlFor={`t-${row.id}`}>Teks instruksi (dibacakan ke kandidat)</Label>
-            <Button type="button" size="sm" variant="ghost" onClick={() => setText(TEMPLATE(row.name))}>Gunakan template</Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setText(TEMPLATE(row.name, row.test_type))}>
+              Template {row.test_type.toUpperCase()}
+            </Button>
           </div>
           <Textarea id={`t-${row.id}`} rows={5} value={text} maxLength={4000}
             placeholder="Contoh: Selamat datang di test ini. Bacalah setiap soal dengan teliti..."
