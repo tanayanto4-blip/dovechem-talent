@@ -180,7 +180,13 @@ function ProctoringPage() {
     );
   }
 
-  const sessions = data?.sessions ?? [];
+  const sessions = useMemo(() => {
+    const stored = data?.sessions ?? [];
+    const storedAttempts = new Set(stored.map((s: any) => s.attempt_id).filter(Boolean));
+    const fresh = livePresence.filter((p) => !storedAttempts.has(p.attempt_id));
+    return [...fresh, ...stored];
+  }, [data, livePresence]);
+
 
   return (
     <div className="space-y-6">
