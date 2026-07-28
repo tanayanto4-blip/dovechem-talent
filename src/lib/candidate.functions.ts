@@ -471,7 +471,7 @@ export const candidateGetTestIntro = createServerFn({ method: "POST" })
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: test, error } = await sb
       .from("tests")
-      .select("id, code, name, description, test_type, duration_minutes, voice_instruction, voice_enabled, voice_lang, voice_rate, voice_autoplay")
+      .select("id, code, name, description, test_type, duration_minutes, voice_instruction, voice_enabled, voice_lang, voice_rate, voice_autoplay, voice_mode, voice_audio_path, voice_audio_name, voice_audio_mime")
       .eq("id", data.test_id)
       .single();
     if (error || !test) throw new Error("Test tidak ditemukan.");
@@ -481,5 +481,17 @@ export const candidateGetTestIntro = createServerFn({ method: "POST" })
       .eq("candidate_id", cand.id)
       .eq("test_id", data.test_id)
       .maybeSingle();
-    return { test, resumed: !!attempt && attempt.status !== "finished", data_completed: cand.data_completed };
+    // Signed URL for the recorded audio instruction (private bucket).
+    let voice_audio_url: string | null = null;
+    if ((test as any).voice_audio_path) {
+      const { data: signed } = await sb.storage
+        .from("voice-instructions")
+        .createSignedUrl((test as any).voice_audio_path, 60 * 60);
+      voice_audio_url = signed?.signedUrl ?? null;
+    }
+    return {
+      test: { ...test, voice_audio_url },
+      resumed: !!attempt && attempt.status !== "finished",
+      data_completed: cand.data_completed,
+    };
   });

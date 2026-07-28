@@ -739,10 +739,19 @@ export const listVoiceInstructions = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("tests")
-      .select("id, code, name, test_type, active, duration_minutes, voice_instruction, voice_enabled, voice_lang, voice_rate, voice_autoplay")
+      .select("id, code, name, test_type, active, duration_minutes, voice_instruction, voice_enabled, voice_lang, voice_rate, voice_autoplay, voice_mode, voice_audio_path, voice_audio_name, voice_audio_mime")
       .order("code");
     if (error) throw new Error(error.message);
-    return { tests: data ?? [] };
+    const tests = await Promise.all(
+      (data ?? []).map(async (t: any) => {
+        if (!t.voice_audio_path) return { ...t, voice_audio_url: null };
+        const { data: signed } = await context.supabase.storage
+          .from("voice-instructions")
+          .createSignedUrl(t.voice_audio_path, 60 * 60);
+        return { ...t, voice_audio_url: signed?.signedUrl ?? null };
+      }),
+    );
+    return { tests };
   });
 
 const VoiceInput = z.object({
@@ -752,6 +761,10 @@ const VoiceInput = z.object({
   voice_lang: z.string().trim().min(2).max(16),
   voice_rate: z.number().min(0.5).max(2),
   voice_autoplay: z.boolean(),
+  voice_mode: z.enum(["tts", "audio"]).default("tts"),
+  voice_audio_path: z.string().trim().max(400).nullable().optional(),
+  voice_audio_name: z.string().trim().max(200).nullable().optional(),
+  voice_audio_mime: z.string().trim().max(100).nullable().optional(),
 });
 
 /** Staff-only: save the spoken instruction text/settings for one test. */
@@ -768,6 +781,10 @@ export const saveVoiceInstruction = createServerFn({ method: "POST" })
         voice_lang: data.voice_lang,
         voice_rate: data.voice_rate,
         voice_autoplay: data.voice_autoplay,
+        voice_mode: data.voice_mode,
+        voice_audio_path: data.voice_audio_path ?? null,
+        voice_audio_name: data.voice_audio_name ?? null,
+        voice_audio_mime: data.voice_audio_mime ?? null,
       })
       .eq("id", data.test_id);
     if (error) throw new Error(error.message);
@@ -776,6 +793,8 @@ export const saveVoiceInstruction = createServerFn({ method: "POST" })
       lang: data.voice_lang,
       rate: data.voice_rate,
       autoplay: data.voice_autoplay,
+      mode: data.voice_mode,
+      audio: data.voice_audio_name ?? null,
       length: text.length,
     });
     return { ok: true };

@@ -443,10 +443,14 @@ export type Database = {
           id: string
           name: string
           test_type: string
+          voice_audio_mime: string | null
+          voice_audio_name: string | null
+          voice_audio_path: string | null
           voice_autoplay: boolean
           voice_enabled: boolean
           voice_instruction: string | null
           voice_lang: string
+          voice_mode: string
           voice_rate: number
         }
         Insert: {
@@ -458,10 +462,14 @@ export type Database = {
           id?: string
           name: string
           test_type: string
+          voice_audio_mime?: string | null
+          voice_audio_name?: string | null
+          voice_audio_path?: string | null
           voice_autoplay?: boolean
           voice_enabled?: boolean
           voice_instruction?: string | null
           voice_lang?: string
+          voice_mode?: string
           voice_rate?: number
         }
         Update: {
@@ -473,10 +481,14 @@ export type Database = {
           id?: string
           name?: string
           test_type?: string
+          voice_audio_mime?: string | null
+          voice_audio_name?: string | null
+          voice_audio_path?: string | null
           voice_autoplay?: boolean
           voice_enabled?: boolean
           voice_instruction?: string | null
           voice_lang?: string
+          voice_mode?: string
           voice_rate?: number
         }
         Relationships: []
