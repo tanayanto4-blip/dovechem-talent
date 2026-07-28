@@ -78,8 +78,37 @@ function ProctoringPage() {
   const rolesFn = useServerFn(getMyRoles);
   const listFn = useServerFn(listProctorSessions);
   const detailFn = useServerFn(getProctorSession);
+  const evidenceFn = useServerFn(getProctorEvidence);
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [openAttempt, setOpenAttempt] = useState<{ attempt_id?: string; candidate_id?: string; name: string } | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  async function handleDownload(key: string, s: { attempt_id?: string | null; candidate_id?: string }) {
+    if (downloading) return;
+    setDownloading(key);
+    const toastId = toast.loading("Menyiapkan bukti proctoring...");
+    try {
+      const res = await evidenceFn({
+        data: { attempt_id: s.attempt_id ?? undefined, candidate_id: s.attempt_id ? undefined : s.candidate_id },
+      });
+      if (!res.frames.length) {
+        toast.error("Belum ada rekaman untuk sesi ini.", { id: toastId });
+        return;
+      }
+      const out = await downloadProctorEvidence(res.session, res.frames, (label, pct) =>
+        toast.loading(`${label}... ${pct}%`, { id: toastId }),
+      );
+      toast.success(
+        `Bukti proctoring diunduh — ${out.frames} frame${out.video ? " + video rekaman" : ""}.`,
+        { id: toastId },
+      );
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal mengunduh bukti proctoring.", { id: toastId });
+    } finally {
+      setDownloading(null);
+    }
+  }
+
 
   const { data: roles } = useQuery({ queryKey: ["my-roles"], queryFn: () => rolesFn({ data: {} as never }) });
   const isAdmin = !!roles?.roles?.includes("admin");
