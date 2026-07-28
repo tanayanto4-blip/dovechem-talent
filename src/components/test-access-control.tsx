@@ -7,6 +7,7 @@ import {
   setCandidateTestAccess,
   setAllCandidateTestAccess,
   reopenCandidateTest,
+  requestCandidateRetake,
 } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
   const setFn = useServerFn(setCandidateTestAccess);
   const setAllFn = useServerFn(setAllCandidateTestAccess);
   const reopenFn = useServerFn(reopenCandidateTest);
+  const requestFn = useServerFn(requestCandidateRetake);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -88,9 +90,17 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
             maxLength={300}
           />
         ) : (
-          <p className="text-sm text-muted-foreground">
-            Hanya Super Admin yang dapat membuka/menutup akses atau meminta kandidat mengulang test.
-          </p>
+          <div className="space-y-2">
+            <Input
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Alasan permintaan (opsional) — mis. 'Koneksi kandidat terputus'"
+              maxLength={300}
+            />
+            <p className="text-sm text-muted-foreground">
+              Anda dapat <b>mengajukan permintaan ulang test</b>. Persetujuan buka/tutup akses dilakukan oleh Super Admin.
+            </p>
+          </div>
         )}
 
         <div className="divide-y rounded-md border">
@@ -132,21 +142,38 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
                     />
                     {closed ? "Tutup" : "Buka"}
                   </label>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={!isAdmin || busy === `re-${t.id}`}
-                    onClick={() => {
-                      if (!confirm(`Minta kandidat mengulangi ${t.name}? Jawaban sebelumnya akan dihapus.`)) return;
-                      run(
-                        `re-${t.id}`,
-                        () => reopenFn({ data: { candidate_id: candidateId, test_id: t.id, clear_answers: true, reason: reason || null } }),
-                        `${t.name} dibuka untuk pengerjaan ulang.`,
-                      );
-                    }}
-                  >
-                    <RotateCcw className="mr-2 h-4 w-4" /> Ulangi
-                  </Button>
+                  {isAdmin ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy === `re-${t.id}`}
+                      onClick={() => {
+                        if (!confirm(`Minta kandidat mengulangi ${t.name}? Jawaban sebelumnya akan dihapus.`)) return;
+                        run(
+                          `re-${t.id}`,
+                          () => reopenFn({ data: { candidate_id: candidateId, test_id: t.id, clear_answers: true, reason: reason || null } }),
+                          `${t.name} dibuka untuk pengerjaan ulang.`,
+                        );
+                      }}
+                    >
+                      <RotateCcw className="mr-2 h-4 w-4" /> Ulangi
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy === `req-${t.id}`}
+                      onClick={() =>
+                        run(
+                          `req-${t.id}`,
+                          () => requestFn({ data: { candidate_id: candidateId, test_id: t.id, reason: reason || null } }),
+                          `Permintaan ulang ${t.name} dikirim ke Super Admin.`,
+                        )
+                      }
+                    >
+                      <RotateCcw className="mr-2 h-4 w-4" /> Minta Ulangi
+                    </Button>
+                  )}
                 </div>
               </div>
             );
