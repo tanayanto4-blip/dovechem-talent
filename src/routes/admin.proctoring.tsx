@@ -119,15 +119,12 @@ function ProctoringPage() {
     queryKey: ["proctor-sessions"],
     queryFn: () => listFn({ data: {} as never }),
     enabled: isAdmin,
-    refetchInterval: 4_000,
-    refetchIntervalInBackground: true,
   });
 
   const detail = useQuery({
     queryKey: ["proctor-session", openKey],
     queryFn: () => detailFn({ data: { attempt_id: openAttempt?.attempt_id, candidate_id: openAttempt?.attempt_id ? undefined : openAttempt?.candidate_id } }),
     enabled: !!openKey && isAdmin,
-    refetchInterval: 5_000,
   });
 
   // Kandidat yang sedang membuka halaman tes (muncul seketika tanpa menunggu snapshot)
