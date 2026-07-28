@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { bulkCreateCandidateCodes, bulkSetCodesActive, bulkSetCodesExpiry, createCandidateCode, deleteCode, listCandidateCodes, setCodeExpiry, toggleCode } from "@/lib/admin.functions";
+import { bulkCreateCandidateCodes, bulkSetCodesActive, bulkSetCodesExpiry, createCandidateCode, deleteAllCodes, deleteCode, listCandidateCodes, setCodeExpiry, toggleCode } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ function CodesPage() {
   const setExpiry = useServerFn(setCodeExpiry);
   const toggle = useServerFn(toggleCode);
   const del = useServerFn(deleteCode);
+  const purgeAll = useServerFn(deleteAllCodes);
   const { data } = useQuery({ queryKey: ["codes"], queryFn: () => list({ data: {} as never }) });
   const [open, setOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -39,6 +40,9 @@ function CodesPage() {
   const [saving, setSaving] = useState(false);
   const [bulkSaving, setBulkSaving] = useState(false);
   const [autoSaving, setAutoSaving] = useState(false);
+  const [purgeOpen, setPurgeOpen] = useState(false);
+  const [purgeText, setPurgeText] = useState("");
+  const [purging, setPurging] = useState(false);
 
   function toIso(local: string): string | null {
     if (!local) return null;
@@ -304,7 +308,7 @@ function CodesPage() {
                     </TableCell>
                     <TableCell>
                       <Button size="icon" variant="ghost" onClick={async () => {
-                        if (!confirm(`Hapus kode ${c.code}? Data kandidat terkait juga akan terhapus.`)) return;
+                        if (!confirm(`Hapus kode ${c.code}? Data kandidat, dokumen, dan hasil tes tetap tersimpan.`)) return;
                         await del({ data: { id: c.id } });
                         qc.invalidateQueries({ queryKey: ["codes"] });
                         toast.success("Kode dihapus");
