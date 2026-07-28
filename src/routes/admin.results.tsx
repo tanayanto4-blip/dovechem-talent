@@ -2,12 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Fragment, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listAllAttempts } from "@/lib/admin.functions";
+import { listAllAttempts, getAttemptDetail } from "@/lib/admin.functions";
+import { exportMbtiExcel } from "@/lib/mbti-excel";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileDown, Eye, BarChart3, FolderOpen, ChevronDown, ChevronRight, Users } from "lucide-react";
+import { FileDown, Eye, BarChart3, FolderOpen, ChevronDown, ChevronRight, Users, FileSpreadsheet } from "lucide-react";
 
 export const Route = createFileRoute("/admin/results")({
   component: ResultsBank,
@@ -50,6 +52,7 @@ type Group = {
 
 function ResultsBank() {
   const fn = useServerFn(listAllAttempts);
+  const detailFn = useServerFn(getAttemptDetail);
   const { data, isLoading } = useQuery({ queryKey: ["admin-all-attempts"], queryFn: () => fn({ data: {} as never }) });
   const [q, setQ] = useState("");
   const [type, setType] = useState("all");
@@ -271,9 +274,38 @@ function ResultsBank() {
                                   <td className="py-2 pr-2 text-xs text-muted-foreground">{fmt(r.started_at)}</td>
                                   <td className="py-2 pr-2 text-xs text-muted-foreground">{fmt(r.finished_at)}</td>
                                   <td className="py-2">
-                                    <Button asChild size="sm" variant="outline">
-                                      <Link to="/admin/attempts/$id" params={{ id: r.id }}><Eye className="mr-1 h-3.5 w-3.5" /> Detail</Link>
-                                    </Button>
+                                    <div className="flex gap-2">
+                                      <Button asChild size="sm" variant="outline">
+                                        <Link to="/admin/attempts/$id" params={{ id: r.id }}><Eye className="mr-1 h-3.5 w-3.5" /> Detail</Link>
+                                      </Button>
+                                      {r.tests?.test_type === "mbti" && (
+                                        <Button
+                                          size="sm"
+                                          variant="secondary"
+                                          onClick={async () => {
+                                            try {
+                                              const d: any = await detailFn({ data: { id: r.id } });
+                                              const map = new Map<string, any>((d.attempt?.test_answers ?? []).map((x: any) => [x.question_id, x]));
+                                              const rows = (d.questions ?? []).map((q: any) => ({
+                                                question_number: q.question_number,
+                                                answer: map.get(q.id)?.answer,
+                                              }));
+                                              const { filled } = await exportMbtiExcel(rows, {
+                                                candidateName: g.name,
+                                                candidateCode: g.code,
+                                                position: g.position,
+                                                finishedAt: r.finished_at,
+                                              });
+                                              toast.success(`Excel MBTI diunduh (${filled}/60 jawaban)`);
+                                            } catch (e: any) {
+                                              toast.error(e?.message ?? "Gagal membuat file Excel");
+                                            }
+                                          }}
+                                        >
+                                          <FileSpreadsheet className="mr-1 h-3.5 w-3.5" /> Excel
+                                        </Button>
+                                      )}
+                                    </div>
                                   </td>
                                 </tr>
                               </Fragment>

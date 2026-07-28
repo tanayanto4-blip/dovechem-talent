@@ -5,8 +5,10 @@ import { getAttemptDetail } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, FileDown } from "lucide-react";
+import { ArrowLeft, Printer, FileDown, FileSpreadsheet } from "lucide-react";
 import { exportMbtiPdf } from "@/lib/mbti-pdf";
+import { exportMbtiExcel } from "@/lib/mbti-excel";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/attempts/$id")({ component: AttemptDetail });
 
@@ -40,6 +42,31 @@ function AttemptDetail() {
               score: a.score,
             })}>
               <FileDown className="mr-2 h-4 w-4" /> Unduh PDF MBTI
+            </Button>
+          )}
+          {isMbti && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const rows = (data.questions as any[]).map((q) => ({
+                    question_number: q.question_number,
+                    answer: answerMap.get(q.id)?.answer,
+                  }));
+                  const { filled } = await exportMbtiExcel(rows, {
+                    candidateName: a.candidates?.full_name,
+                    candidateCode: a.candidates?.candidate_codes?.code,
+                    position: a.candidates?.position ?? null,
+                    finishedAt: a.finished_at,
+                  });
+                  toast.success(`Excel MBTI diunduh (${filled}/60 jawaban terisi)`);
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Gagal membuat file Excel");
+                }
+              }}
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel MBTI
             </Button>
           )}
           <Button size="sm" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Cetak</Button>
