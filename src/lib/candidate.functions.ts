@@ -452,5 +452,6 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       console.error("audit_log_insert_failed", { action: "attempt.submit", error: (e as Error).message });
     }
 
-    return { ok: true, score, result };
+    // Score/result stay server-side: only HR/Admin may view psikotest results.
+    return { ok: true };
   });
