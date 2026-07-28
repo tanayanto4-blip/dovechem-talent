@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, RefreshCw, ShieldAlert, Video, VideoOff } from "lucide-react";
+import { Loader2, RefreshCw, ShieldAlert, Video, VideoOff, AlertTriangle, CheckCircle2, CircleOff, Radio } from "lucide-react";
 
 export const Route = createFileRoute("/admin/proctoring")({
   ssr: false,
