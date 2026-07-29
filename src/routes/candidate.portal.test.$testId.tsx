@@ -608,8 +608,16 @@ function TakeTest() {
 
 
 
-      <div className="space-y-4">
-        {data.questions.map((q: any, i: number) => (
+      {isPauli && (
+        <PauliSheet
+          questions={data.questions as any}
+          answers={answers}
+          onChange={(qid, value) => setAnswer(qid, value)}
+        />
+      )}
+
+      <div className={isPauli ? "hidden" : "space-y-4"}>
+        {(isPauli ? [] : data.questions).map((q: any, i: number) => (
           <Card key={q.id} className="shadow-card">
             <CardContent className="p-6">
               <div className="mb-3 flex items-center justify-between">
