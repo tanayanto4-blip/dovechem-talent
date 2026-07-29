@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateStartTest, candidateSubmitTest, candidateSaveAnswer, candidateGetTestIntro } from "@/lib/candidate.functions";
 import { VoiceInstructionPlayer } from "@/components/voice-instruction";
+import { PauliSheet, pauliFilledCount } from "@/components/pauli-sheet";
 import { voiceTemplateFor } from "@/lib/voice-templates";
 import { RotateCcw, Volume2 } from "lucide-react";
 import { useCandidateSession } from "@/lib/candidate-session";
