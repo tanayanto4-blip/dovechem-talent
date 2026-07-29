@@ -612,7 +612,10 @@ function TakeTest() {
         <PauliSheet
           questions={data.questions as any}
           answers={answers}
-          onChange={(qid, value) => setAnswer(qid, value)}
+          onChange={(qid, value) => {
+            setAnswers((prev) => ({ ...prev, [qid]: value }));
+            persistDebounced(qid, value, 800);
+          }}
         />
       )}
 
