@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateStartTest, candidateSubmitTest, candidateSaveAnswer, candidateGetTestIntro } from "@/lib/candidate.functions";
 import { VoiceInstructionPlayer } from "@/components/voice-instruction";
+import { PauliSheet, pauliFilledCount } from "@/components/pauli-sheet";
 import { voiceTemplateFor } from "@/lib/voice-templates";
 import { RotateCcw, Volume2 } from "lucide-react";
 import { useCandidateSession } from "@/lib/candidate-session";
@@ -376,9 +377,12 @@ function TakeTest() {
   const isMbti = data.test.test_type === "mbti";
   const isEq = data.test.test_type === "eq";
   const isWpt = data.test.test_type === "wpt";
+  const isPauli = data.test.test_type === "pauli";
   const answered = isDisc
     ? Object.values(discPicks).filter((p) => p.most && p.least && p.most !== p.least).length
-    : Object.keys(answers).filter((k) => (answers[k] ?? "").trim() !== "").length;
+    : isPauli
+      ? data.questions.filter((q: any) => pauliFilledCount(answers[q.id]) > 0).length
+      : Object.keys(answers).filter((k) => (answers[k] ?? "").trim() !== "").length;
 
   async function persist(qid: string, answer: string) {
     if (!data?.attempt || !session) return;
@@ -604,8 +608,19 @@ function TakeTest() {
 
 
 
-      <div className="space-y-4">
-        {data.questions.map((q: any, i: number) => (
+      {isPauli && (
+        <PauliSheet
+          questions={data.questions as any}
+          answers={answers}
+          onChange={(qid, value) => {
+            setAnswers((prev) => ({ ...prev, [qid]: value }));
+            persistDebounced(qid, value, 800);
+          }}
+        />
+      )}
+
+      <div className={isPauli ? "hidden" : "space-y-4"}>
+        {(isPauli ? [] : data.questions).map((q: any, i: number) => (
           <Card key={q.id} className="shadow-card">
             <CardContent className="p-6">
               <div className="mb-3 flex items-center justify-between">

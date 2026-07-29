@@ -445,6 +445,34 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       const total = (qs.data ?? []).length || 50;
       score = 0;
       result = { requires_manual_review: true, answered, total, unanswered: total - answered };
+    } else if (test.test_type === "pauli") {
+      // Pauli/Koran: kunci dihitung dari deret angka (jumlah dua angka bersebelahan, ambil digit terakhir).
+      const byId = new Map((qs.data ?? []).map((q: any) => [q.id, q]));
+      let attempted = 0;
+      let correct = 0;
+      const perColumn: Array<{ column: number; attempted: number; correct: number }> = [];
+      for (const a of data.answers) {
+        const q: any = byId.get(a.question_id);
+        const digits: string = (q?.options as any)?.digits ?? "";
+        if (!digits) continue;
+        const chars = (a.answer ?? "").split("");
+        let cAtt = 0;
+        let cCor = 0;
+        for (let i = 0; i < digits.length - 1; i++) {
+          const ch = chars[i];
+          if (!ch || !/\d/.test(ch)) continue;
+          cAtt++;
+          const key = (Number(digits[i]) + Number(digits[i + 1])) % 10;
+          if (Number(ch) === key) cCor++;
+        }
+        attempted += cAtt;
+        correct += cCor;
+        perColumn.push({ column: q?.question_number ?? 0, attempted: cAtt, correct: cCor });
+      }
+      perColumn.sort((x, y) => x.column - y.column);
+      const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
+      score = accuracy;
+      result = { attempted, correct, wrong: attempted - correct, accuracy, perColumn };
     }
 
     const finishedAt = new Date().toISOString();
