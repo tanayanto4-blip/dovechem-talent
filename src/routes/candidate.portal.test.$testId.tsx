@@ -376,9 +376,12 @@ function TakeTest() {
   const isMbti = data.test.test_type === "mbti";
   const isEq = data.test.test_type === "eq";
   const isWpt = data.test.test_type === "wpt";
+  const isPauli = data.test.test_type === "pauli";
   const answered = isDisc
     ? Object.values(discPicks).filter((p) => p.most && p.least && p.most !== p.least).length
-    : Object.keys(answers).filter((k) => (answers[k] ?? "").trim() !== "").length;
+    : isPauli
+      ? data.questions.filter((q: any) => pauliFilledCount(answers[q.id]) > 0).length
+      : Object.keys(answers).filter((k) => (answers[k] ?? "").trim() !== "").length;
 
   async function persist(qid: string, answer: string) {
     if (!data?.attempt || !session) return;
