@@ -17,8 +17,8 @@ export function pauliFilledCount(value: string | undefined) {
   return (value ?? "").split("").filter((c) => /\d/.test(c)).length;
 }
 
-const WINDOW_BEFORE = 3;
-const WINDOW_AFTER = 5;
+
+
 
 export function PauliSheet({
   questions,
