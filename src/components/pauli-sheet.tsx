@@ -17,8 +17,8 @@ export function pauliFilledCount(value: string | undefined) {
   return (value ?? "").split("").filter((c) => /\d/.test(c)).length;
 }
 
-const WINDOW_BEFORE = 3;
-const WINDOW_AFTER = 5;
+
+
 
 export function PauliSheet({
   questions,
@@ -81,10 +81,9 @@ export function PauliSheet({
 
   if (!q) return null;
 
-  const start = Math.max(0, row - WINDOW_BEFORE);
-  const end = Math.min(digits.length, row + WINDOW_AFTER + 2);
-  const visible: number[] = [];
-  for (let i = start; i < end; i++) visible.push(i);
+  const top = digits[row];
+  const bottom = digits[row + 1];
+  const val = chars[row] === "." ? "" : chars[row];
 
   return (
     <div className="space-y-4">
@@ -98,73 +97,43 @@ export function PauliSheet({
         </span>
       </div>
 
-      <div className="rounded-lg border bg-card p-4">
-        <div className="mx-auto grid w-max grid-cols-[auto_auto] items-start gap-x-8">
-          <div className="text-center text-[11px] uppercase tracking-widest text-muted-foreground">
-            Soal Berderet
-          </div>
-          <div className="text-center text-[11px] uppercase tracking-widest text-muted-foreground">
-            Jawaban
-          </div>
-
-          <div className="mt-2 border-x border-t border-foreground/70">
-            {visible.map((i) => {
-              const isPair = i === row || i === row + 1;
-              return (
-                <div
-                  key={i}
-                  className={`grid h-11 w-14 place-items-center border-b border-foreground/70 font-mono text-lg font-semibold transition-colors ${
-                    isPair ? "bg-primary/10 text-primary" : "text-foreground"
-                  }`}
-                >
-                  {digits[i]}
-                </div>
-              );
-            })}
+      <div className="rounded-lg border bg-card p-6">
+        <div className="mx-auto flex w-max items-center gap-4">
+          <div className="border border-foreground/70">
+            <div className="grid h-9 w-9 place-items-center border-b border-foreground/70 font-mono text-base font-semibold">
+              {top}
+            </div>
+            <div className="grid h-9 w-9 place-items-center font-mono text-base font-semibold">
+              {bottom}
+            </div>
           </div>
 
-          <div className="mt-2">
-            {visible.map((i) => {
-              if (i >= gaps) return <div key={i} className="h-11" />;
-              const active = i === row;
-              const val = chars[i] === "." ? "" : chars[i];
-              return (
-                <div key={i} className="flex h-11 items-center" style={{ transform: "translateY(1.375rem)" }}>
-                  {active ? (
-                    <input
-                      ref={inputRef}
-                      inputMode="numeric"
-                      autoFocus
-                      maxLength={1}
-                      value={val}
-                      onChange={(e) => setChar(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Backspace" && val === "") {
-                          e.preventDefault();
-                          back();
-                        }
-                        if (e.key === "ArrowUp") { e.preventDefault(); back(); }
-                        if (e.key === "ArrowDown" || e.key === "Enter") { e.preventDefault(); advance(); }
-                      }}
-                      aria-label={`Jawaban baris ${i + 1} deret ${col + 1}`}
-                      className="h-9 w-11 rounded-md border-2 border-primary bg-primary/5 text-center font-mono text-base font-bold text-primary outline-none"
-                    />
-                  ) : (
-                    <div className="grid h-9 w-11 place-items-center font-mono text-base font-semibold text-muted-foreground">
-                      {val}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <input
+            ref={inputRef}
+            inputMode="numeric"
+            autoFocus
+            maxLength={1}
+            value={val}
+            onChange={(e) => setChar(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Backspace" && val === "") {
+                e.preventDefault();
+                back();
+              }
+              if (e.key === "ArrowUp") { e.preventDefault(); back(); }
+              if (e.key === "ArrowDown" || e.key === "Enter") { e.preventDefault(); advance(); }
+            }}
+            aria-label={`Jawaban baris ${row + 1} deret ${col + 1}`}
+            className="h-8 w-8 rounded border-2 border-primary bg-primary/5 text-center font-mono text-sm font-bold text-primary outline-none"
+          />
         </div>
 
-        <p className="mt-8 text-center text-[11px] text-muted-foreground">
-          Jumlahkan dua angka yang bersebelahan, tulis <b>angka terakhir</b> hasilnya. Contoh: 7 + 8 = 15
-          → tulis <b>5</b>. Setelah menjawab, lembar bergeser otomatis ke soal berikutnya.
+        <p className="mt-6 text-center text-[11px] text-muted-foreground">
+          Jumlahkan dua angka pada kotak, tulis <b>angka terakhir</b> hasilnya. Contoh: 7 + 8 = 15 → tulis{" "}
+          <b>5</b>. Setelah menjawab, otomatis bergeser ke pasangan berikutnya.
         </p>
       </div>
     </div>
   );
 }
+
