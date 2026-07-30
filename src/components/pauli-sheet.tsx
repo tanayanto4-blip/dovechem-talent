@@ -108,48 +108,52 @@ export function PauliSheet({
         className="rounded-lg border bg-card p-8"
         onClick={() => inputRef.current?.focus()}
       >
-        <div className="mx-auto grid w-max grid-cols-[auto_auto] items-center gap-x-3">
-          {/* baris sebelumnya (samar) */}
-          <div className="grid h-7 w-7 place-items-center border border-dashed border-muted-foreground/30 font-mono text-sm text-muted-foreground/50">
-            {row > 0 ? digits[row - 1] : ""}
-          </div>
-          <div className="grid h-7 w-7 place-items-center font-mono text-xs text-muted-foreground/50">
-            {prevAnswer}
+        <div className="mx-auto flex w-max items-start gap-4">
+          {/* kolom angka */}
+          <div className="flex flex-col items-center">
+            <div className="grid h-7 w-9 place-items-center font-mono text-sm text-muted-foreground/40">
+              {row > 0 ? digits[row - 1] : ""}
+            </div>
+            <div className="border-2 border-foreground">
+              <div className="grid h-9 w-9 place-items-center border-b-2 border-foreground font-mono text-base font-bold">
+                {top}
+              </div>
+              <div className="grid h-9 w-9 place-items-center font-mono text-base font-bold">
+                {bottom}
+              </div>
+            </div>
+            <div className="grid h-7 w-9 place-items-center font-mono text-sm text-muted-foreground/40">
+              {digits[row + 2] ?? ""}
+            </div>
           </div>
 
-          {/* pasangan aktif */}
-          <div className="row-span-2 grid grid-rows-2 border-2 border-foreground">
-            <div className="grid h-9 w-9 place-items-center border-b-2 border-foreground font-mono text-base font-bold">
-              {top}
+          {/* kolom jawaban, sejajar celah antar dua angka */}
+          <div className="flex flex-col items-center">
+            <div className="grid h-7 w-9 place-items-center font-mono text-xs text-muted-foreground/40">
+              {prevAnswer}
             </div>
-            <div className="grid h-9 w-9 place-items-center font-mono text-base font-bold">
-              {bottom}
+            <div className="flex h-[72px] items-center">
+              <input
+                ref={inputRef}
+                inputMode="numeric"
+                autoFocus
+                maxLength={1}
+                value={val}
+                onChange={(e) => setChar(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Backspace" && val === "") {
+                    e.preventDefault();
+                    back();
+                  }
+                  if (e.key === "ArrowUp") { e.preventDefault(); back(); }
+                  if (e.key === "ArrowDown" || e.key === "Enter") { e.preventDefault(); advance(); }
+                }}
+                aria-label={`Jawaban baris ${row + 1} deret ${col + 1}`}
+                className="h-9 w-9 rounded border-2 border-primary bg-primary/5 text-center font-mono text-base font-bold text-primary outline-none focus:ring-2 focus:ring-primary/40"
+              />
             </div>
+            <div className="h-7" />
           </div>
-          <input
-            ref={inputRef}
-            inputMode="numeric"
-            autoFocus
-            maxLength={1}
-            value={val}
-            onChange={(e) => setChar(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Backspace" && val === "") {
-                e.preventDefault();
-                back();
-              }
-              if (e.key === "ArrowUp") { e.preventDefault(); back(); }
-              if (e.key === "ArrowDown" || e.key === "Enter") { e.preventDefault(); advance(); }
-            }}
-            aria-label={`Jawaban baris ${row + 1} deret ${col + 1}`}
-            className="col-start-2 row-span-2 h-9 w-9 rounded border-2 border-primary bg-primary/5 text-center font-mono text-base font-bold text-primary outline-none focus:ring-2 focus:ring-primary/40"
-          />
-
-          {/* baris berikutnya (samar) */}
-          <div className="grid h-7 w-7 place-items-center border border-dashed border-muted-foreground/30 font-mono text-sm text-muted-foreground/50">
-            {digits[row + 2] ?? ""}
-          </div>
-          <div className="h-7 w-7" />
         </div>
 
         <p className="mt-6 text-center text-[11px] text-muted-foreground">
