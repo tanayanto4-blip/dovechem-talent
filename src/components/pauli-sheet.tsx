@@ -1,6 +1,4 @@
-import { useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo, useRef, useState, useEffect } from "react";
 
 export type PauliQuestion = { id: string; question_number: number; options: any };
 
@@ -19,6 +17,9 @@ export function pauliFilledCount(value: string | undefined) {
   return (value ?? "").split("").filter((c) => /\d/.test(c)).length;
 }
 
+const WINDOW_BEFORE = 3;
+const WINDOW_AFTER = 5;
+
 export function PauliSheet({
   questions,
   answers,
@@ -28,111 +29,140 @@ export function PauliSheet({
   answers: Record<string, string>;
   onChange: (questionId: string, value: string) => void;
 }) {
+  // Cursor = posisi soal aktif (kolom + celah antar dua angka)
   const [col, setCol] = useState(0);
-  const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
+  const [row, setRow] = useState(0);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
   const q = questions[col];
   const digits = useMemo(() => pauliDigits(q), [q]);
   const gaps = Math.max(digits.length - 1, 0);
   const chars = pauliNormalize(answers[q?.id], gaps);
-  const filled = chars.filter((c) => /\d/.test(c)).length;
 
-  function setChar(i: number, raw: string) {
+  const totalGaps = useMemo(
+    () => questions.reduce((s, item) => s + Math.max(pauliDigits(item).length - 1, 0), 0),
+    [questions],
+  );
+  const totalFilled = useMemo(
+    () => questions.reduce((s, item) => s + pauliFilledCount(answers[item.id]), 0),
+    [questions, answers],
+  );
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [col, row]);
+
+  function advance() {
+    if (row + 1 < gaps) {
+      setRow(row + 1);
+    } else if (col + 1 < questions.length) {
+      setCol(col + 1);
+      setRow(0);
+    }
+  }
+
+  function back() {
+    if (row > 0) {
+      setRow(row - 1);
+    } else if (col > 0) {
+      const prev = Math.max(pauliDigits(questions[col - 1]).length - 1, 0);
+      setCol(col - 1);
+      setRow(Math.max(prev - 1, 0));
+    }
+  }
+
+  function setChar(raw: string) {
     const v = raw.replace(/\D/g, "").slice(-1);
     const next = [...chars];
-    next[i] = v === "" ? "." : v;
+    next[row] = v === "" ? "." : v;
     onChange(q.id, next.join(""));
-    if (v !== "") inputsRef.current[i + 1]?.focus();
+    if (v !== "") advance();
   }
 
   if (!q) return null;
 
+  const start = Math.max(0, row - WINDOW_BEFORE);
+  const end = Math.min(digits.length, row + WINDOW_AFTER + 2);
+  const visible: number[] = [];
+  for (let i = start; i < end; i++) visible.push(i);
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-3">
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={col === 0}
-            onClick={() => setCol((c) => Math.max(0, c - 1))}
-          >
-            <ChevronLeft className="h-4 w-4" /> Kolom sebelumnya
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={col >= questions.length - 1}
-            onClick={() => setCol((c) => Math.min(questions.length - 1, c + 1))}
-          >
-            Kolom berikutnya <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="text-xs text-muted-foreground">
-          Kolom <b className="text-foreground">{col + 1}</b> dari {questions.length} · terisi{" "}
-          <b className="text-foreground">{filled}</b>/{gaps}
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-1.5 rounded-lg border bg-muted/30 p-3">
-        {questions.map((item, i) => {
-          const done = pauliFilledCount(answers[item.id]);
-          const active = i === col;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setCol(i)}
-              className={`h-7 w-9 rounded border text-[11px] font-semibold transition ${
-                active
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : done > 0
-                    ? "border-success bg-success/10 text-success"
-                    : "border-input bg-background text-muted-foreground hover:border-primary/40"
-              }`}
-              aria-label={`Buka kolom ${i + 1}`}
-            >
-              {i + 1}
-            </button>
-          );
-        })}
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 text-xs text-muted-foreground">
+        <span>
+          Deret <b className="text-foreground">{col + 1}</b>/{questions.length} · baris{" "}
+          <b className="text-foreground">{row + 1}</b>/{gaps}
+        </span>
+        <span>
+          Terisi <b className="text-foreground">{totalFilled}</b>/{totalGaps}
+        </span>
       </div>
 
       <div className="rounded-lg border bg-card p-4">
-        <div className="mb-3 text-center text-xs uppercase tracking-widest text-muted-foreground">
-          Lembar Jawaban — Kolom {col + 1}
+        <div className="mx-auto grid w-max grid-cols-[auto_auto] items-start gap-x-8">
+          <div className="text-center text-[11px] uppercase tracking-widest text-muted-foreground">
+            Soal Berderet
+          </div>
+          <div className="text-center text-[11px] uppercase tracking-widest text-muted-foreground">
+            Jawaban
+          </div>
+
+          <div className="mt-2 border-x border-t border-foreground/70">
+            {visible.map((i) => {
+              const isPair = i === row || i === row + 1;
+              return (
+                <div
+                  key={i}
+                  className={`grid h-11 w-14 place-items-center border-b border-foreground/70 font-mono text-lg font-semibold transition-colors ${
+                    isPair ? "bg-primary/10 text-primary" : "text-foreground"
+                  }`}
+                >
+                  {digits[i]}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-2">
+            {visible.map((i) => {
+              if (i >= gaps) return <div key={i} className="h-11" />;
+              const active = i === row;
+              const val = chars[i] === "." ? "" : chars[i];
+              return (
+                <div key={i} className="flex h-11 items-center" style={{ transform: "translateY(1.375rem)" }}>
+                  {active ? (
+                    <input
+                      ref={inputRef}
+                      inputMode="numeric"
+                      autoFocus
+                      maxLength={1}
+                      value={val}
+                      onChange={(e) => setChar(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Backspace" && val === "") {
+                          e.preventDefault();
+                          back();
+                        }
+                        if (e.key === "ArrowUp") { e.preventDefault(); back(); }
+                        if (e.key === "ArrowDown" || e.key === "Enter") { e.preventDefault(); advance(); }
+                      }}
+                      aria-label={`Jawaban baris ${i + 1} deret ${col + 1}`}
+                      className="h-9 w-11 rounded-md border-2 border-primary bg-primary/5 text-center font-mono text-base font-bold text-primary outline-none"
+                    />
+                  ) : (
+                    <div className="grid h-9 w-11 place-items-center font-mono text-base font-semibold text-muted-foreground">
+                      {val}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
-        <div className="mx-auto w-max">
-          {digits.map((d, i) => (
-            <div key={i} className="relative flex h-9 items-center">
-              <div className="grid h-9 w-11 place-items-center border border-input bg-background font-mono text-base font-semibold">
-                {d}
-              </div>
-              {i < gaps && (
-                <input
-                  ref={(el) => { inputsRef.current[i] = el; }}
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={chars[i] === "." ? "" : chars[i]}
-                  onChange={(e) => setChar(i, e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Backspace" && (chars[i] === "." || chars[i] === "")) {
-                      inputsRef.current[i - 1]?.focus();
-                    }
-                    if (e.key === "ArrowUp") { e.preventDefault(); inputsRef.current[i - 1]?.focus(); }
-                    if (e.key === "ArrowDown") { e.preventDefault(); inputsRef.current[i + 1]?.focus(); }
-                  }}
-                  aria-label={`Hasil penjumlahan angka ke-${i + 1} dan ke-${i + 2} kolom ${col + 1}`}
-                  className="absolute left-[3.25rem] top-[1.125rem] h-8 w-10 rounded border border-dashed border-primary/50 bg-primary/5 text-center font-mono text-sm font-bold text-primary outline-none focus:border-primary focus:bg-primary/10"
-                />
-              )}
-            </div>
-          ))}
-        </div>
-        <p className="mt-4 text-center text-[11px] text-muted-foreground">
-          Jumlahkan dua angka yang bersebelahan (atas + bawah), tulis <b>angka terakhir</b> hasilnya
-          pada kotak putus-putus di samping. Contoh: 7 + 8 = 15 → tulis <b>5</b>.
+
+        <p className="mt-8 text-center text-[11px] text-muted-foreground">
+          Jumlahkan dua angka yang bersebelahan, tulis <b>angka terakhir</b> hasilnya. Contoh: 7 + 8 = 15
+          → tulis <b>5</b>. Setelah menjawab, lembar bergeser otomatis ke soal berikutnya.
         </p>
       </div>
     </div>
