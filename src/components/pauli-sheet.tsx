@@ -79,11 +79,18 @@ export function PauliSheet({
     if (v !== "") advance();
   }
 
-  if (!q) return null;
+  if (!q || gaps === 0) {
+    return (
+      <div className="rounded-lg border bg-card p-6 text-center text-sm text-muted-foreground">
+        Deret angka Pauli belum tersedia untuk tes ini.
+      </div>
+    );
+  }
 
   const top = digits[row];
   const bottom = digits[row + 1];
   const val = chars[row] === "." ? "" : chars[row];
+  const prevAnswer = row > 0 ? (chars[row - 1] === "." ? "" : chars[row - 1]) : "";
 
   return (
     <div className="space-y-4">
@@ -97,35 +104,56 @@ export function PauliSheet({
         </span>
       </div>
 
-      <div className="rounded-lg border bg-card p-6">
-        <div className="mx-auto flex w-max items-center gap-4">
-          <div className="border border-foreground/70">
-            <div className="grid h-9 w-9 place-items-center border-b border-foreground/70 font-mono text-base font-semibold">
-              {top}
+      <div
+        className="rounded-lg border bg-card p-8"
+        onClick={() => inputRef.current?.focus()}
+      >
+        <div className="mx-auto flex w-max items-start gap-4">
+          {/* kolom angka */}
+          <div className="flex flex-col items-center">
+            <div className="grid h-7 w-9 place-items-center font-mono text-sm text-muted-foreground/40">
+              {row > 0 ? digits[row - 1] : ""}
             </div>
-            <div className="grid h-9 w-9 place-items-center font-mono text-base font-semibold">
-              {bottom}
+            <div className="border-2 border-foreground">
+              <div className="grid h-9 w-9 place-items-center border-b-2 border-foreground font-mono text-base font-bold">
+                {top}
+              </div>
+              <div className="grid h-9 w-9 place-items-center font-mono text-base font-bold">
+                {bottom}
+              </div>
+            </div>
+            <div className="grid h-7 w-9 place-items-center font-mono text-sm text-muted-foreground/40">
+              {digits[row + 2] ?? ""}
             </div>
           </div>
 
-          <input
-            ref={inputRef}
-            inputMode="numeric"
-            autoFocus
-            maxLength={1}
-            value={val}
-            onChange={(e) => setChar(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Backspace" && val === "") {
-                e.preventDefault();
-                back();
-              }
-              if (e.key === "ArrowUp") { e.preventDefault(); back(); }
-              if (e.key === "ArrowDown" || e.key === "Enter") { e.preventDefault(); advance(); }
-            }}
-            aria-label={`Jawaban baris ${row + 1} deret ${col + 1}`}
-            className="h-8 w-8 rounded border-2 border-primary bg-primary/5 text-center font-mono text-sm font-bold text-primary outline-none"
-          />
+          {/* kolom jawaban, sejajar celah antar dua angka */}
+          <div className="flex flex-col items-center">
+            <div className="grid h-7 w-9 place-items-center font-mono text-xs text-muted-foreground/40">
+              {prevAnswer}
+            </div>
+            <div className="flex h-[72px] items-center">
+              <input
+                ref={inputRef}
+                inputMode="numeric"
+                autoFocus
+                maxLength={1}
+                value={val}
+                onChange={(e) => setChar(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Backspace" && val === "") {
+                    e.preventDefault();
+                    back();
+                  }
+                  if (e.key === "ArrowUp") { e.preventDefault(); back(); }
+                  if (e.key === "ArrowDown" || e.key === "Enter") { e.preventDefault(); advance(); }
+                }}
+                aria-label={`Jawaban baris ${row + 1} deret ${col + 1}`}
+                className="h-9 w-9 rounded border-2 border-primary bg-primary/5 text-center font-mono text-base font-bold text-primary outline-none focus:ring-2 focus:ring-primary/40"
+              />
+            </div>
+            <div className="h-7" />
+          </div>
         </div>
 
         <p className="mt-6 text-center text-[11px] text-muted-foreground">
