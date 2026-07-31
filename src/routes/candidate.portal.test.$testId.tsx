@@ -378,6 +378,7 @@ function TakeTest() {
   const isEq = data.test.test_type === "eq";
   const isWpt = data.test.test_type === "wpt";
   const isPauli = data.test.test_type === "pauli";
+  const isPapi = data.test.test_type === "papi";
   const answered = isDisc
     ? Object.values(discPicks).filter((p) => p.most && p.least && p.most !== p.least).length
     : isPauli
@@ -581,6 +582,25 @@ function TakeTest() {
         </Card>
       )}
 
+      {isPapi && (
+        <Card className="border-primary/30 bg-primary/5 shadow-card">
+          <CardContent className="space-y-3 p-6 text-sm">
+            <div className="font-semibold text-primary">Petunjuk Pengisian PAPI Kostick</div>
+            <p className="text-muted-foreground">
+              Terdapat <b className="text-foreground">90 pasang pernyataan</b>. Untuk setiap nomor, pilih
+              <b className="text-foreground"> satu pernyataan saja</b> (opsi <b className="text-foreground">A</b> di atas atau
+              <b className="text-foreground"> B</b> di bawah) yang paling mendekati gambaran diri Anda dalam pekerjaan atau yang paling menunjukkan perasaan Anda.
+            </p>
+            <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
+              <li>Klik lingkaran pada baris pernyataan yang Anda pilih — pernyataan tampil di samping pilihannya.</li>
+              <li>Kadang kedua pernyataan terasa kurang sesuai, tetapi Anda tetap harus memilih salah satu.</li>
+              <li>Bekerjalah cepat dan jangan sampai ada nomor yang terlewat.</li>
+              <li>Tidak ada jawaban benar atau salah. Autosave aktif.</li>
+            </ol>
+          </CardContent>
+        </Card>
+      )}
+
       {isWpt && (
         <Card className="border-primary/30 bg-primary/5 shadow-card">
           <CardContent className="space-y-3 p-6 text-sm">
@@ -637,7 +657,7 @@ function TakeTest() {
                   </div>
                 )}
               </div>
-              {!isDisc && !isMbti && <div className="text-base font-medium">{q.question_text}</div>}
+              {!isDisc && !isMbti && !isPapi && <div className="text-base font-medium">{q.question_text}</div>}
               {isWpt && WPT_IMAGES[q.question_number] && (
                 <WptImageFigure
                   url={WPT_IMAGES[q.question_number].url}
@@ -645,7 +665,38 @@ function TakeTest() {
                   number={q.question_number}
                 />
               )}
-              {isMbti ? (
+              {isPapi ? (
+                <div className="overflow-hidden rounded-md border bg-card">
+                  {(q.options ?? []).slice(0, 2).map((opt: any, oi: number) => {
+                    const picked = answers[q.id] === opt.key;
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => pickMcq(q.id, opt.key)}
+                        aria-pressed={picked}
+                        className={`flex w-full items-center gap-3 px-3 sm:px-4 py-3 text-left transition ${oi === 0 ? "border-b" : ""} ${
+                          picked ? "bg-primary/10" : "hover:bg-accent"
+                        }`}
+                      >
+                        <span
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${
+                            picked
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-input bg-background text-muted-foreground"
+                          }`}
+                        >
+                          {opt.key}
+                        </span>
+                        <span className="min-w-0 break-words text-[13px] sm:text-sm leading-snug">{opt.label}</span>
+                      </button>
+                    );
+                  })}
+                  <div className="border-t bg-muted/40 px-3 sm:px-4 py-2 text-[11px] text-muted-foreground">
+                    Pilih salah satu saja — A (atas) atau B (bawah).
+                  </div>
+                </div>
+              ) : isMbti ? (
                 <div className="rounded-md border bg-card">
                   {q.question_text && (
                     <div className="border-b bg-muted/40 px-3 sm:px-4 py-2 text-sm font-medium">

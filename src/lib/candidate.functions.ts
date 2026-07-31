@@ -445,6 +445,26 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       const total = (qs.data ?? []).length || 50;
       score = 0;
       result = { requires_manual_review: true, answered, total, unanswered: total - answered };
+    } else if (test.test_type === "papi") {
+      // PAPI Kostick: forced-choice A/B. Jika opsi memiliki tag dimension (skala PAPI),
+      // hitung frekuensi per skala; interpretasi akhir tetap oleh tim HR/psikolog.
+      const qMap = new Map((qs.data ?? []).map((q: any) => [q.id, q]));
+      const scales: Record<string, number> = {};
+      const picks: Record<number, string> = {};
+      let answered = 0;
+      for (const a of data.answers) {
+        const key = (a.answer ?? "").trim().toUpperCase();
+        if (key !== "A" && key !== "B") continue;
+        answered++;
+        const q: any = qMap.get(a.question_id);
+        if (q?.question_number) picks[q.question_number] = key;
+        const opt = (q?.options ?? []).find((o: any) => o.key === key);
+        const dim = opt?.dimension;
+        if (dim) scales[dim] = (scales[dim] ?? 0) + 1;
+      }
+      const total = (qs.data ?? []).length || 90;
+      score = 0;
+      result = { requires_manual_review: true, answered, total, unanswered: total - answered, scales, picks };
     } else if (test.test_type === "pauli") {
       // Pauli/Koran: kunci dihitung dari deret angka (jumlah dua angka bersebelahan, ambil digit terakhir).
       const byId = new Map((qs.data ?? []).map((q: any) => [q.id, q]));
