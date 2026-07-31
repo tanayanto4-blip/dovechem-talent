@@ -11,6 +11,8 @@ import { exportMbtiExcel } from "@/lib/mbti-excel";
 import { exportEqExcel } from "@/lib/eq-excel";
 import { exportWptExcel } from "@/lib/wpt-excel";
 import { exportDiscExcel } from "@/lib/disc-excel";
+import { exportPapiPdf } from "@/lib/papi-pdf";
+import { papiScore, PAPI_SCALE_LABEL, PAPI_TOP_ORDER, PAPI_BOTTOM_ORDER } from "@/lib/papi-key";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/attempts/$id")({ component: AttemptDetail });
@@ -28,7 +30,17 @@ function AttemptDetail() {
   const isMbti = t?.test_type === "mbti";
   const isEq = t?.test_type === "eq";
   const isWpt = t?.test_type === "wpt";
+  const isPapi = t?.test_type === "papi";
   const candId = a.candidates?.id;
+  const papiPicks: Record<number, string> = {};
+  if (isPapi) {
+    for (const q of data.questions as any[]) {
+      const ans = (answerMap.get(q.id)?.answer ?? "").trim().toUpperCase();
+      if (ans === "A" || ans === "B") papiPicks[q.question_number] = ans;
+    }
+  }
+  const papi = isPapi ? papiScore(papiPicks) : null;
+
 
   return (
     <div className="space-y-6 print-area">
@@ -158,7 +170,32 @@ function AttemptDetail() {
               <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel WPT
             </Button>
           )}
+          {isPapi && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                try {
+                  const res = exportPapiPdf(papiPicks, {
+                    candidateName: a.candidates?.full_name,
+                    candidateCode: a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot,
+                    position: a.candidates?.position_applied ?? null,
+                    startedAt: a.started_at,
+                    finishedAt: a.finished_at,
+                  });
+                  toast.success(
+                    `Lembar jawaban PAPI diunduh — ${res.answered}/90 terisi, skala tertinggi ${res.highest.join(", ") || "-"}`,
+                  );
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Gagal membuat lembar PAPI");
+                }
+              }}
+            >
+              <FileDown className="mr-2 h-4 w-4" /> Unduh Lembar Jawaban PAPI
+            </Button>
+          )}
           <Button size="sm" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Cetak</Button>
+
         </div>
       </div>
       <div>
@@ -173,7 +210,46 @@ function AttemptDetail() {
         </div>
       </div>
 
-      {a.result && (
+      {isPapi && papi && (
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle>Skor PAPI Kostick — {papi.answered}/90 terisi</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {([
+              ["Skala Peran (Roles)", PAPI_TOP_ORDER],
+              ["Skala Kebutuhan (Needs)", PAPI_BOTTOM_ORDER],
+            ] as const).map(([title, order]) => (
+              <div key={title}>
+                <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{title}</div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {order.map((letter) => {
+                    const v = papi.scales[letter] ?? 0;
+                    return (
+                      <div key={letter} className="flex items-center gap-3 rounded border bg-muted/30 px-3 py-2">
+                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded bg-primary text-xs font-bold text-primary-foreground">
+                          {letter}
+                        </span>
+                        <span className="flex-1 truncate text-xs">{PAPI_SCALE_LABEL[letter]}</span>
+                        <div className="h-2 w-20 overflow-hidden rounded bg-muted">
+                          <div className="h-full bg-primary" style={{ width: `${(v / 9) * 100}%` }} />
+                        </div>
+                        <b className="w-8 text-right text-xs">{v}/9</b>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            <p className="text-xs text-muted-foreground">
+              Skala tertinggi: <b className="text-foreground">{papi.highest.join(", ") || "-"}</b>. Opsi A dihitung ke
+              panah atas dan opsi B ke panah bawah sesuai lembar jawaban resmi PAPI.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {a.result && !isPapi && (
         <Card className="shadow-card">
           <CardHeader><CardTitle>Ringkasan Hasil</CardTitle></CardHeader>
           <CardContent>
