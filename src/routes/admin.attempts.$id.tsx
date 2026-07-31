@@ -11,6 +11,8 @@ import { exportMbtiExcel } from "@/lib/mbti-excel";
 import { exportEqExcel } from "@/lib/eq-excel";
 import { exportWptExcel } from "@/lib/wpt-excel";
 import { exportDiscExcel } from "@/lib/disc-excel";
+import { exportPapiPdf } from "@/lib/papi-pdf";
+import { papiScore, PAPI_SCALE_LABEL, PAPI_TOP_ORDER, PAPI_BOTTOM_ORDER } from "@/lib/papi-key";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/attempts/$id")({ component: AttemptDetail });
