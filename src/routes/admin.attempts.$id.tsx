@@ -170,7 +170,32 @@ function AttemptDetail() {
               <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel WPT
             </Button>
           )}
+          {isPapi && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                try {
+                  const res = exportPapiPdf(papiPicks, {
+                    candidateName: a.candidates?.full_name,
+                    candidateCode: a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot,
+                    position: a.candidates?.position_applied ?? null,
+                    startedAt: a.started_at,
+                    finishedAt: a.finished_at,
+                  });
+                  toast.success(
+                    `Lembar jawaban PAPI diunduh — ${res.answered}/90 terisi, skala tertinggi ${res.highest.join(", ") || "-"}`,
+                  );
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Gagal membuat lembar PAPI");
+                }
+              }}
+            >
+              <FileDown className="mr-2 h-4 w-4" /> Unduh Lembar Jawaban PAPI
+            </Button>
+          )}
           <Button size="sm" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Cetak</Button>
+
         </div>
       </div>
       <div>
