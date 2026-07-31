@@ -25,7 +25,6 @@ const fmt = (v?: string | null) => (v ? new Date(v).toLocaleString("id-ID") : "-
 export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) {
   const s = papiScore(picks);
   const doc = new jsPDF({ unit: "pt", format: "a4", orientation: "landscape" });
-  const pageW = doc.internal.pageSize.getWidth();
 
   // Header kiri
   doc.setFont("helvetica", "bold");
@@ -204,6 +203,3 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
   doc.save(`PAPI_${safe}.pdf`);
   return s;
 }
-
-export { pageWMarker };
-const pageWMarker = 0;
