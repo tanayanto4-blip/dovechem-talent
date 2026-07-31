@@ -657,7 +657,7 @@ function TakeTest() {
                   </div>
                 )}
               </div>
-              {!isDisc && !isMbti && <div className="text-base font-medium">{q.question_text}</div>}
+              {!isDisc && !isMbti && !isPapi && <div className="text-base font-medium">{q.question_text}</div>}
               {isWpt && WPT_IMAGES[q.question_number] && (
                 <WptImageFigure
                   url={WPT_IMAGES[q.question_number].url}
@@ -665,7 +665,38 @@ function TakeTest() {
                   number={q.question_number}
                 />
               )}
-              {isMbti ? (
+              {isPapi ? (
+                <div className="overflow-hidden rounded-md border bg-card">
+                  {(q.options ?? []).slice(0, 2).map((opt: any, oi: number) => {
+                    const picked = answers[q.id] === opt.key;
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => pickMcq(q.id, opt.key)}
+                        aria-pressed={picked}
+                        className={`flex w-full items-center gap-3 px-3 sm:px-4 py-3 text-left transition ${oi === 0 ? "border-b" : ""} ${
+                          picked ? "bg-primary/10" : "hover:bg-accent"
+                        }`}
+                      >
+                        <span
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${
+                            picked
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-input bg-background text-muted-foreground"
+                          }`}
+                        >
+                          {opt.key}
+                        </span>
+                        <span className="min-w-0 break-words text-[13px] sm:text-sm leading-snug">{opt.label}</span>
+                      </button>
+                    );
+                  })}
+                  <div className="border-t bg-muted/40 px-3 sm:px-4 py-2 text-[11px] text-muted-foreground">
+                    Pilih salah satu saja — A (atas) atau B (bawah).
+                  </div>
+                </div>
+              ) : isMbti ? (
                 <div className="rounded-md border bg-card">
                   {q.question_text && (
                     <div className="border-b bg-muted/40 px-3 sm:px-4 py-2 text-sm font-medium">
