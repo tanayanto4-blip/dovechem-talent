@@ -378,6 +378,7 @@ function TakeTest() {
   const isEq = data.test.test_type === "eq";
   const isWpt = data.test.test_type === "wpt";
   const isPauli = data.test.test_type === "pauli";
+  const isPapi = data.test.test_type === "papi";
   const answered = isDisc
     ? Object.values(discPicks).filter((p) => p.most && p.least && p.most !== p.least).length
     : isPauli
