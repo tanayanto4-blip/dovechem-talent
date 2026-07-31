@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { papiScore } from "@/lib/papi-key";
+
 
 const CodeInput = z.object({ code: z.string().trim().min(3).max(64) });
 
