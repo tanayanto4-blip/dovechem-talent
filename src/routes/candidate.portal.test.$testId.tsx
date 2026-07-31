@@ -582,6 +582,25 @@ function TakeTest() {
         </Card>
       )}
 
+      {isPapi && (
+        <Card className="border-primary/30 bg-primary/5 shadow-card">
+          <CardContent className="space-y-3 p-6 text-sm">
+            <div className="font-semibold text-primary">Petunjuk Pengisian PAPI Kostick</div>
+            <p className="text-muted-foreground">
+              Terdapat <b className="text-foreground">90 pasang pernyataan</b>. Untuk setiap nomor, pilih
+              <b className="text-foreground"> satu pernyataan saja</b> (opsi <b className="text-foreground">A</b> di atas atau
+              <b className="text-foreground"> B</b> di bawah) yang paling mendekati gambaran diri Anda dalam pekerjaan atau yang paling menunjukkan perasaan Anda.
+            </p>
+            <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
+              <li>Klik lingkaran pada baris pernyataan yang Anda pilih — pernyataan tampil di samping pilihannya.</li>
+              <li>Kadang kedua pernyataan terasa kurang sesuai, tetapi Anda tetap harus memilih salah satu.</li>
+              <li>Bekerjalah cepat dan jangan sampai ada nomor yang terlewat.</li>
+              <li>Tidak ada jawaban benar atau salah. Autosave aktif.</li>
+            </ol>
+          </CardContent>
+        </Card>
+      )}
+
       {isWpt && (
         <Card className="border-primary/30 bg-primary/5 shadow-card">
           <CardContent className="space-y-3 p-6 text-sm">
