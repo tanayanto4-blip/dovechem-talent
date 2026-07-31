@@ -28,7 +28,17 @@ function AttemptDetail() {
   const isMbti = t?.test_type === "mbti";
   const isEq = t?.test_type === "eq";
   const isWpt = t?.test_type === "wpt";
+  const isPapi = t?.test_type === "papi";
   const candId = a.candidates?.id;
+  const papiPicks: Record<number, string> = {};
+  if (isPapi) {
+    for (const q of data.questions as any[]) {
+      const ans = (answerMap.get(q.id)?.answer ?? "").trim().toUpperCase();
+      if (ans === "A" || ans === "B") papiPicks[q.question_number] = ans;
+    }
+  }
+  const papi = isPapi ? papiScore(papiPicks) : null;
+
 
   return (
     <div className="space-y-6 print-area">
