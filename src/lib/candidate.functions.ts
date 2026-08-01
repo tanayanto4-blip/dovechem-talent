@@ -112,16 +112,13 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
 const ProfileInput = z.object({
   code: z.string().trim().min(3),
   full_name: z.string().trim().min(2).max(120),
-  nik: z.string().trim().min(6).max(32),
-  birth_place: z.string().trim().max(80).optional().nullable(),
-  birth_date: z.string().optional().nullable(),
-  gender: z.string().max(20).optional().nullable(),
-  address: z.string().max(500).optional().nullable(),
-  phone: z.string().max(30).optional().nullable(),
-  email: z.string().email().max(200).optional().nullable(),
-  position_applied: z.string().max(120).optional().nullable(),
-  education: z.string().max(120).optional().nullable(),
-  marital_status: z.string().max(30).optional().nullable(),
+  school_name: z.string().trim().max(160).optional().nullable(),
+  education: z.string().trim().max(120).optional().nullable(),
+  major: z.string().trim().max(120).optional().nullable(),
+  work_experience: z.string().trim().max(120).optional().nullable(),
+  phone: z.string().trim().max(30).optional().nullable(),
+  email: z.union([z.string().email().max(200), z.literal("")]).optional().nullable(),
+  position_applied: z.string().trim().max(120).optional().nullable(),
 });
 
 export const candidateSaveProfile = createServerFn({ method: "POST" })
