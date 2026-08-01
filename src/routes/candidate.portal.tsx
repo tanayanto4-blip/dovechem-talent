@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, Outlet, useRouterState } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useCandidateSession, setCandidateSession } from "@/lib/candidate-session";
 import { Button } from "@/components/ui/button";
 import { Beaker, LogOut, User, ClipboardList, Home } from "lucide-react";
