@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Download, ExternalLink, Eye, FileArchive, FileText, FolderOpen, Search } from "lucide-react";
 import { toast } from "sonner";
+import { BiodataBank } from "@/components/biodata-bank";
 
 function mimeKind(name: string, mime?: string | null): "image" | "pdf" | "other" {
   const m = (mime ?? "").toLowerCase();
@@ -231,6 +232,8 @@ function DocumentsBank() {
           </Button>
         </div>
       </div>
+
+      <BiodataBank />
 
       <Card className="shadow-card">
         <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
