@@ -308,11 +308,14 @@ export type Database = {
           full_name: string | null
           gender: string | null
           id: string
+          major: string | null
           marital_status: string | null
           nik: string | null
           phone: string | null
           position_applied: string | null
+          school_name: string | null
           updated_at: string
+          work_experience: string | null
         }
         Insert: {
           address?: string | null
@@ -327,11 +330,14 @@ export type Database = {
           full_name?: string | null
           gender?: string | null
           id?: string
+          major?: string | null
           marital_status?: string | null
           nik?: string | null
           phone?: string | null
           position_applied?: string | null
+          school_name?: string | null
           updated_at?: string
+          work_experience?: string | null
         }
         Update: {
           address?: string | null
@@ -346,11 +352,14 @@ export type Database = {
           full_name?: string | null
           gender?: string | null
           id?: string
+          major?: string | null
           marital_status?: string | null
           nik?: string | null
           phone?: string | null
           position_applied?: string | null
+          school_name?: string | null
           updated_at?: string
+          work_experience?: string | null
         }
         Relationships: [
           {
