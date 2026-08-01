@@ -13,14 +13,18 @@ function PortalLayout() {
   const nav = useNavigate();
   const session = useCandidateSession();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => { setHydrated(true); }, []);
 
   useEffect(() => {
-    if (session === null && typeof window !== "undefined") {
+    if (hydrated && session === null && typeof window !== "undefined") {
       nav({ to: "/candidate/login" });
     }
-  }, [session, nav]);
+  }, [hydrated, session, nav]);
 
   if (!session) return null;
+
 
   const nav_items = [
     { to: "/candidate/portal", label: "Overview", icon: Home, exact: true },
