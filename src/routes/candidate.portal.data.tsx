@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
@@ -31,16 +30,13 @@ function DataForm() {
   useEffect(() => {
     if (c) setForm({
       full_name: c.full_name ?? "",
-      nik: c.nik ?? "",
-      birth_place: c.birth_place ?? "",
-      birth_date: c.birth_date ?? "",
-      gender: c.gender ?? "",
-      address: c.address ?? "",
+      school_name: c.school_name ?? "",
+      education: c.education ?? "",
+      major: c.major ?? "",
+      work_experience: c.work_experience ?? "",
       phone: c.phone ?? "",
       email: c.email ?? "",
       position_applied: c.position_applied ?? "",
-      education: c.education ?? "",
-      marital_status: c.marital_status ?? "",
     });
   }, [c]);
 
@@ -59,35 +55,27 @@ function DataForm() {
     <Card className="shadow-card">
       <CardHeader>
         <CardTitle className="font-display">Data Diri Kandidat</CardTitle>
-        <p className="text-sm text-muted-foreground">Pastikan data sesuai dokumen resmi (KTP).</p>
+        <p className="text-sm text-muted-foreground">Data yang Anda isi otomatis tersimpan ke bank data HR.</p>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="grid gap-4 md:grid-cols-2">
           <Field label="Nama Lengkap" required><Input value={form.full_name ?? ""} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required /></Field>
-          <Field label="NIK (KTP)" required><Input value={form.nik ?? ""} onChange={(e) => setForm({ ...form, nik: e.target.value })} required maxLength={20} /></Field>
-          <Field label="Tempat Lahir"><Input value={form.birth_place ?? ""} onChange={(e) => setForm({ ...form, birth_place: e.target.value })} /></Field>
-          <Field label="Tanggal Lahir"><Input type="date" value={form.birth_date ?? ""} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} /></Field>
-          <Field label="Jenis Kelamin">
-            <Select value={form.gender ?? ""} onValueChange={(v) => setForm({ ...form, gender: v })}>
-              <SelectTrigger><SelectValue placeholder="Pilih" /></SelectTrigger>
-              <SelectContent><SelectItem value="Laki-laki">Laki-laki</SelectItem><SelectItem value="Perempuan">Perempuan</SelectItem></SelectContent>
-            </Select>
-          </Field>
-          <Field label="Status Perkawinan">
-            <Select value={form.marital_status ?? ""} onValueChange={(v) => setForm({ ...form, marital_status: v })}>
-              <SelectTrigger><SelectValue placeholder="Pilih" /></SelectTrigger>
+          <Field label="Nama Sekolah / Universitas"><Input value={form.school_name ?? ""} onChange={(e) => setForm({ ...form, school_name: e.target.value })} placeholder="Institut Teknologi Bandung" /></Field>
+          <Field label="Pendidikan">
+            <Select value={form.education ?? ""} onValueChange={(v) => setForm({ ...form, education: v })}>
+              <SelectTrigger><SelectValue placeholder="Pilih jenjang" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="Belum Menikah">Belum Menikah</SelectItem>
-                <SelectItem value="Menikah">Menikah</SelectItem>
-                <SelectItem value="Cerai">Cerai</SelectItem>
+                {["SMA/SMK", "D1", "D2", "D3", "D4", "S1", "S2", "S3"].map((v) => (
+                  <SelectItem key={v} value={v}>{v}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </Field>
-          <Field label="No. Handphone"><Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></Field>
+          <Field label="Jurusan"><Input value={form.major ?? ""} onChange={(e) => setForm({ ...form, major: e.target.value })} placeholder="Teknik Kimia" /></Field>
+          <Field label="Pernah Bekerja Berapa Lama"><Input value={form.work_experience ?? ""} onChange={(e) => setForm({ ...form, work_experience: e.target.value })} placeholder="2 tahun 6 bulan / Belum pernah" /></Field>
+          <Field label="Telp / HP"><Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0812xxxxxxx" /></Field>
           <Field label="Email"><Input type="email" value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
-          <Field label="Pendidikan Terakhir"><Input value={form.education ?? ""} onChange={(e) => setForm({ ...form, education: e.target.value })} placeholder="S1 Teknik Kimia — ITB" /></Field>
           <Field label="Posisi Dilamar"><Input value={form.position_applied ?? ""} onChange={(e) => setForm({ ...form, position_applied: e.target.value })} /></Field>
-          <Field label="Alamat" className="md:col-span-2"><Textarea rows={3} value={form.address ?? ""} onChange={(e) => setForm({ ...form, address: e.target.value })} /></Field>
           <div className="md:col-span-2">
             <Button type="submit" disabled={saving}>{saving ? "Menyimpan..." : "Simpan Data"}</Button>
           </div>
