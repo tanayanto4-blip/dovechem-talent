@@ -2,8 +2,12 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FileDown } from "lucide-react";
+import { toast } from "sonner";
+import { exportPauliPdf, type PauliPdfMeta } from "@/lib/pauli-pdf";
 
 type Q = { id: string; question_number: number; options: any };
+
 
 export type PauliColumn = {
   column: number;
