@@ -311,7 +311,7 @@ function AttemptDetail() {
                 {q.question_text && <div className="mb-2 text-sm font-medium">{q.question_text}</div>}
                 {isDisc ? (
                   <div className="overflow-hidden rounded-md border text-sm">
-                    {(q.options ?? []).map((opt: any) => {
+                    {opts.map((opt: any) => {
                       const isMost = disc?.most === opt.key;
                       const isLeast = disc?.least === opt.key;
                       return (
@@ -325,7 +325,7 @@ function AttemptDetail() {
                   </div>
                 ) : (
                   <div className="space-y-1 text-sm">
-                    {(q.options ?? []).map((opt: any) => {
+                    {opts.map((opt: any) => {
                       const picked = ans?.answer === opt.key;
                       const isKey = q.correct_answer === opt.key;
                       return (
@@ -338,7 +338,7 @@ function AttemptDetail() {
                       );
                     })}
                     {!ans && <div className="text-xs italic text-muted-foreground">Tidak dijawab</div>}
-                    {ans && !(q.options ?? []).some((o: any) => o.key === ans.answer) && (
+                    {ans && !opts.some((o: any) => o.key === ans.answer) && (
                       <div className="rounded border bg-muted/40 p-2 text-xs">Jawaban: <b>{ans.answer}</b></div>
                     )}
                   </div>
