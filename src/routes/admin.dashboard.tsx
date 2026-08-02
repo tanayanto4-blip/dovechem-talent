@@ -56,6 +56,66 @@ function Dashboard() {
         ))}
       </div>
 
+      <Card className="shadow-card">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <BarChart3 className="h-4 w-4 text-primary" /> Bank Data Hasil
+          </CardTitle>
+          <Button asChild size="sm" variant="outline">
+            <Link to="/admin/results">
+              Buka semua hasil <ArrowRight className="ml-1 h-3.5 w-3.5" />
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          {loadingAttempts ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">Memuat hasil psikotest...</div>
+          ) : recent.length === 0 ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">Belum ada hasil psikotest.</div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-xs uppercase text-muted-foreground">
+                  <th className="py-2 pr-2">Kandidat</th>
+                  <th className="py-2 pr-2">Test</th>
+                  <th className="py-2 pr-2">Status</th>
+                  <th className="py-2 pr-2">Skor</th>
+                  <th className="py-2 pr-2">Waktu</th>
+                  <th className="py-2" />
+                </tr>
+              </thead>
+              <tbody>
+                {recent.map((r: any) => (
+                  <tr key={r.id} className="border-b last:border-0">
+                    <td className="py-2 pr-2">
+                      <div className="font-medium">{r.candidates?.full_name ?? "(Tanpa Nama)"}</div>
+                      <div className="font-mono text-xs text-muted-foreground">
+                        {r.candidates?.candidate_codes?.code ?? r.candidates?.code_snapshot ?? "-"}
+                      </div>
+                    </td>
+                    <td className="py-2 pr-2">
+                      {r.tests?.name ?? "-"}
+                      <div><Badge variant="outline" className="mt-1 uppercase">{r.tests?.test_type}</Badge></div>
+                    </td>
+                    <td className="py-2 pr-2">
+                      {r.status === "finished" ? <Badge className="bg-success">Selesai</Badge> : <Badge variant="secondary">Berjalan</Badge>}
+                    </td>
+                    <td className="py-2 pr-2 font-semibold text-primary">{r.status === "finished" ? (r.score ?? "-") : "-"}</td>
+                    <td className="py-2 pr-2 text-xs text-muted-foreground">{fmt(r.finished_at ?? r.started_at)}</td>
+                    <td className="py-2 text-right">
+                      <Button asChild size="sm" variant="ghost">
+                        <Link to="/admin/attempts/$id" params={{ id: r.id }}>Detail</Link>
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </CardContent>
+      </Card>
+
+
       <Card>
         <CardHeader><CardTitle>Selamat datang</CardTitle></CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
