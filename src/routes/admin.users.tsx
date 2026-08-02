@@ -69,7 +69,21 @@ function UsersPage() {
     } catch (err: any) { toast.error(err.message); }
   }
 
+  if (!rolesLoading && !isAdmin) {
+    return (
+      <Card className="mx-auto max-w-lg">
+        <CardHeader>
+          <CardTitle>Akses terbatas</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          Manajemen User hanya dapat diakses oleh Super Admin.
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
+
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
