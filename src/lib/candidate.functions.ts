@@ -118,6 +118,7 @@ const ProfileInput = z.object({
   code: z.string().trim().min(3),
   full_name: z.string().trim().min(2).max(120),
   school_name: z.string().trim().max(160).optional().nullable(),
+  gender: z.union([z.enum(["Laki-laki", "Perempuan"]), z.literal("")]).optional().nullable(),
   education: z.string().trim().max(120).optional().nullable(),
   major: z.string().trim().max(120).optional().nullable(),
   work_experience: z.string().trim().max(120).optional().nullable(),

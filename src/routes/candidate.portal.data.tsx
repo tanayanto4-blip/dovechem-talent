@@ -30,6 +30,7 @@ function DataForm() {
   useEffect(() => {
     if (c) setForm({
       full_name: c.full_name ?? "",
+      gender: c.gender ?? "",
       school_name: c.school_name ?? "",
       education: c.education ?? "",
       major: c.major ?? "",
