@@ -34,7 +34,7 @@ const STEPS = [
   {
     n: "04",
     t: "Kerjakan Psikotest",
-    short: "MBTI, DISC, EQ, WPT, Pauli, PAPI",
+    short: "Sesuai jadwal dari tim HR",
     d: "Kerjakan test sesuai waktu yang tersedia. Jawaban tersimpan otomatis sehingga bisa dilanjutkan pada sesi yang sama.",
   },
   {
