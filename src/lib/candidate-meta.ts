@@ -83,39 +83,35 @@ export function metaRows(meta: CandidateMeta): Array<[string, string]> {
 }
 
 /**
- * Menambahkan sheet "Biodata Kandidat" ke workbook skoring, terisi otomatis
- * dari data biodata yang sudah dimiliki kandidat.
+ * Mengisi biodata kandidat langsung pada lembar skoring template (tanpa
+ * menambah sheet baru). Ditulis pada area kosong di bawah tabel template
+ * sehingga rumus dan tata letak asli tidak terganggu.
  */
-export function applyBiodataSheet(wb: ExcelJS.Workbook, meta: CandidateMeta, testName?: string) {
-  const name = "Biodata Kandidat";
-  const existing = wb.getWorksheet(name);
-  if (existing) wb.removeWorksheet(existing.id);
-  const ws = wb.addWorksheet(name);
-  ws.columns = [{ width: 30 }, { width: 52 }] as any;
+export function applyInlineBiodata(
+  ws: ExcelJS.Worksheet,
+  meta: CandidateMeta,
+  opts: { startRow: number; labelCol?: string; valueCol?: string; title?: string },
+) {
+  const labelCol = opts.labelCol ?? "B";
+  const valueCol = opts.valueCol ?? "D";
+  let r = opts.startRow;
 
-  ws.mergeCells(1, 1, 1, 2);
-  const title = ws.getCell(1, 1);
-  title.value = `PT DOVER CHEMICAL — Biodata Kandidat${testName ? ` (${testName})` : ""}`;
-  title.font = { bold: true, size: 13, color: { argb: "FF0C3A6E" } };
-  ws.getRow(1).height = 22;
+  const titleCell = ws.getCell(`${labelCol}${r}`);
+  titleCell.value = opts.title ?? "BIODATA KANDIDAT";
+  titleCell.font = { bold: true, size: 11, color: { argb: "FF0C3A6E" } };
+  r += 1;
 
-  metaRows(meta).forEach(([label, value], i) => {
-    const row = ws.getRow(i + 3);
-    row.getCell(1).value = label;
-    row.getCell(2).value = value;
-    row.getCell(1).font = { bold: true, size: 10 };
-    row.getCell(2).font = { size: 10 };
-    row.eachCell((cell) => {
-      cell.alignment = { vertical: "middle", wrapText: true };
-      cell.border = {
-        top: { style: "hair" },
-        left: { style: "hair" },
-        bottom: { style: "hair" },
-        right: { style: "hair" },
-      };
-      if (i % 2 === 0) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF4F7FB" } };
-    });
-    row.height = 18;
-  });
-  return ws;
+  for (const [label, value] of metaRows(meta)) {
+    const lc = ws.getCell(`${labelCol}${r}`);
+    const vc = ws.getCell(`${valueCol}${r}`);
+    lc.value = label;
+    vc.value = value;
+    lc.font = { bold: true, size: 10 };
+    vc.font = { size: 10 };
+    lc.alignment = { vertical: "middle" };
+    vc.alignment = { vertical: "middle", wrapText: true };
+    r += 1;
+  }
+  return r;
 }
+
