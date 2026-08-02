@@ -1116,3 +1116,38 @@ export const decideRetakeRequest = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+/* ---------------- Durasi / Waktu Pengerjaan Test (Admin & HR) ---------------- */
+
+/** Staff-only: ubah durasi pengerjaan satu psikotest (menit). */
+export const setTestDuration = createServerFn({ method: "POST" })
+  .middleware([requireStaff])
+  .inputValidator((d) =>
+    z
+      .object({
+        test_id: z.string().uuid(),
+        duration_minutes: z.number().int().min(1).max(600),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { data: before } = await context.supabase
+      .from("tests")
+      .select("code, name, duration_minutes")
+      .eq("id", data.test_id)
+      .single();
+
+    const { error } = await context.supabase
+      .from("tests")
+      .update({ duration_minutes: data.duration_minutes })
+      .eq("id", data.test_id);
+    if (error) throw new Error(error.message);
+
+    await logAudit(context, "test.duration.update", "test", data.test_id, {
+      code: before?.code ?? null,
+      name: before?.name ?? null,
+      from: before?.duration_minutes ?? null,
+      to: data.duration_minutes,
+    });
+    return { ok: true, duration_minutes: data.duration_minutes };
+  });
