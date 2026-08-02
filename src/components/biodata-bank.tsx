@@ -54,6 +54,7 @@ export function BiodataBank() {
     queryFn: () => listFn({ data: {} as never }),
   });
   const [q, setQ] = useState("");
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
 
   const candidates = ((data?.candidates ?? []) as any[]).filter((c) => c.full_name || c.data_completed);
   const filtered = useMemo(() => {
@@ -65,6 +66,20 @@ export function BiodataBank() {
         .some((v: string) => String(v).toLowerCase().includes(s)),
     );
   }, [candidates, q]);
+
+  const selectedRows = useMemo(() => filtered.filter((c) => selected[c.id]), [filtered, selected]);
+  const allChecked = filtered.length > 0 && selectedRows.length === filtered.length;
+  const someChecked = selectedRows.length > 0 && !allChecked;
+
+  function toggleAll(v: boolean) {
+    const next: Record<string, boolean> = { ...selected };
+    for (const c of filtered) next[c.id] = v;
+    setSelected(next);
+  }
+
+  // Rows used for bulk export: selection wins, otherwise everything visible.
+  const exportRows = selectedRows.length ? selectedRows : filtered;
+
 
   function rowFor(c: any) {
     return [c.candidate_codes?.code ?? c.code_snapshot ?? "", ...FIELDS.map((f) => c[f.key] ?? "")];
