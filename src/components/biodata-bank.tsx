@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   DropdownMenu,
@@ -54,6 +56,7 @@ export function BiodataBank() {
     queryFn: () => listFn({ data: {} as never }),
   });
   const [q, setQ] = useState("");
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
 
   const candidates = ((data?.candidates ?? []) as any[]).filter((c) => c.full_name || c.data_completed);
   const filtered = useMemo(() => {
@@ -66,6 +69,20 @@ export function BiodataBank() {
     );
   }, [candidates, q]);
 
+  const selectedRows = useMemo(() => filtered.filter((c) => selected[c.id]), [filtered, selected]);
+  const allChecked = filtered.length > 0 && selectedRows.length === filtered.length;
+  const someChecked = selectedRows.length > 0 && !allChecked;
+
+  function toggleAll(v: boolean) {
+    const next: Record<string, boolean> = { ...selected };
+    for (const c of filtered) next[c.id] = v;
+    setSelected(next);
+  }
+
+  // Rows used for bulk export: selection wins, otherwise everything visible.
+  const exportRows = selectedRows.length ? selectedRows : filtered;
+
+
   function rowFor(c: any) {
     return [c.candidate_codes?.code ?? c.code_snapshot ?? "", ...FIELDS.map((f) => c[f.key] ?? "")];
   }
@@ -76,13 +93,14 @@ export function BiodataBank() {
   }
 
   function downloadAllCsv() {
-    if (!filtered.length) return;
+    if (!exportRows.length) return;
     downloadCsv(
-      [["Kode", ...FIELDS.map((f) => f.label)], ...filtered.map(rowFor)],
+      [["Kode", ...FIELDS.map((f) => f.label)], ...exportRows.map(rowFor)],
       `rekap_biodata_kandidat_${new Date().toISOString().slice(0, 10)}.csv`,
     );
-    toast.success(`${filtered.length} biodata diunduh (CSV)`);
+    toast.success(`${exportRows.length} biodata diunduh (CSV)`);
   }
+
 
   async function run(fn: () => void | Promise<void>, msg: string) {
     try {
@@ -114,28 +132,37 @@ export function BiodataBank() {
             <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Cari nama, sekolah, posisi..." value={q} onChange={(e) => setQ(e.target.value)} className="w-64 pl-8" />
           </div>
+          {selectedRows.length > 0 && (
+            <Button size="sm" variant="ghost" onClick={() => setSelected({})}>
+              Bersihkan pilihan ({selectedRows.length})
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" disabled={!filtered.length} className="gap-2">
-                <Download className="h-4 w-4" /> Unduh semua kandidat <ChevronDown className="h-3.5 w-3.5" />
+              <Button size="sm" disabled={!exportRows.length} className="gap-2">
+                <Download className="h-4 w-4" />
+                {selectedRows.length ? `Unduh ${selectedRows.length} terpilih` : "Unduh semua kandidat"}
+                <ChevronDown className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Rekap {filtered.length} kandidat</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                {selectedRows.length ? `${selectedRows.length} kandidat terpilih` : `Rekap ${filtered.length} kandidat`}
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() =>
                   run(
                     () =>
-                      exportBiodataExcel(filtered, `rekap_biodata_kandidat_${new Date().toISOString().slice(0, 10)}.xlsx`),
-                    `${filtered.length} biodata diunduh (Excel)`,
+                      exportBiodataExcel(exportRows, `rekap_biodata_kandidat_${new Date().toISOString().slice(0, 10)}.xlsx`),
+                    `${exportRows.length} biodata diunduh (Excel)`,
                   )
                 }
               >
                 <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel (.xlsx)
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => run(() => exportAllBiodataPdf(filtered), `${filtered.length} biodata diunduh (PDF)`)}
+                onClick={() => run(() => exportAllBiodataPdf(exportRows), `${exportRows.length} biodata diunduh (PDF)`)}
               >
                 <FileText className="mr-2 h-4 w-4" /> PDF rekap
               </DropdownMenuItem>
@@ -145,6 +172,7 @@ export function BiodataBank() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -156,6 +184,13 @@ export function BiodataBank() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={allChecked ? true : someChecked ? "indeterminate" : false}
+                      onCheckedChange={(v) => toggleAll(v === true)}
+                      aria-label="Pilih semua kandidat"
+                    />
+                  </TableHead>
                   <TableHead className="w-12">No.</TableHead>
                   <TableHead>Kode</TableHead>
                   {FIELDS.map((f) => <TableHead key={f.key}>{f.label}</TableHead>)}
@@ -165,9 +200,17 @@ export function BiodataBank() {
               </TableHeader>
               <TableBody>
                 {filtered.map((c, i) => (
-                  <TableRow key={c.id}>
+                  <TableRow key={c.id} data-state={selected[c.id] ? "selected" : undefined}>
+                    <TableCell>
+                      <Checkbox
+                        checked={!!selected[c.id]}
+                        onCheckedChange={(v) => setSelected((s) => ({ ...s, [c.id]: v === true }))}
+                        aria-label={`Pilih ${c.full_name ?? "kandidat"}`}
+                      />
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
                     <TableCell className="font-mono text-xs">{c.candidate_codes?.code ?? c.code_snapshot ?? "-"}</TableCell>
+
                     {FIELDS.map((f) => (
                       <TableCell key={f.key} className={f.key === "full_name" ? "font-medium" : "text-sm"}>
                         {c[f.key] || "-"}
