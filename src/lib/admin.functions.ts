@@ -300,6 +300,29 @@ export const clearCandidateBiodata = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Hapus seluruh hasil psikotest (attempt + jawaban) milik satu kandidat. */
+export const deleteCandidateResults = createServerFn({ method: "POST" })
+  .middleware([requireStaff])
+  .inputValidator((d) => z.object({ candidate_id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: attempts, error: listErr } = await context.supabase
+      .from("test_attempts")
+      .select("id")
+      .eq("candidate_id", data.candidate_id);
+    if (listErr) throw new Error(listErr.message);
+    const ids = (attempts ?? []).map((a) => a.id);
+    if (ids.length) {
+      const { error: ansErr } = await context.supabase.from("test_answers").delete().in("attempt_id", ids);
+      if (ansErr) throw new Error(ansErr.message);
+      const { error: attErr } = await context.supabase.from("test_attempts").delete().in("id", ids);
+      if (attErr) throw new Error(attErr.message);
+    }
+    await logAudit(context, "candidate.results_delete", "candidate", data.candidate_id, { deleted: ids.length });
+    return { ok: true, deleted: ids.length };
+  });
+
+
+
 
 export const getCandidateDetail = createServerFn({ method: "POST" })
   .middleware([requireStaff])
