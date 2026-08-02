@@ -590,7 +590,7 @@ function TakeTest() {
             q={q}
             index={i}
             total={total}
-            testType={data.test.test_type}
+            testType={data.test!.test_type as any}
             answer={answers[q.id] ?? ""}
             discPick={discPicks[q.id]}
             wptImage={isWpt ? WPT_IMAGES[q.question_number] ?? null : null}
