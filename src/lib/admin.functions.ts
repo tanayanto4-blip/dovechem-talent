@@ -450,7 +450,7 @@ export const bulkSetCodesExpiry = createServerFn({ method: "POST" })
 
 /** Toggle a test's publish/active status. */
 export const setTestActive = createServerFn({ method: "POST" })
-  .middleware([requireAdmin])
+  .middleware([requireStaff])
   .inputValidator((d) => z.object({ id: z.string().uuid(), active: z.boolean() }).parse(d))
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -473,7 +473,7 @@ export const setTestActive = createServerFn({ method: "POST" })
 
 /** Publish/unpublish satu atau beberapa soal (semua jenis test). */
 export const setQuestionsPublished = createServerFn({ method: "POST" })
-  .middleware([requireAdmin])
+  .middleware([requireStaff])
   .inputValidator((d) =>
     z.object({
       ids: z.array(z.string().uuid()).min(1).max(1000),
@@ -512,7 +512,7 @@ export const setQuestionsPublished = createServerFn({ method: "POST" })
 
 /** Publish/unpublish seluruh soal pada satu test sekaligus. */
 export const setAllQuestionsPublished = createServerFn({ method: "POST" })
-  .middleware([requireAdmin])
+  .middleware([requireStaff])
   .inputValidator((d) => z.object({ test_id: z.string().uuid(), active: z.boolean() }).parse(d))
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -616,7 +616,7 @@ export const deleteMbtiQuestion = createServerFn({ method: "POST" })
 
 /** Bulk enable/disable publish for multiple MBTI questions. */
 export const setMbtiQuestionsActive = createServerFn({ method: "POST" })
-  .middleware([requireAdmin])
+  .middleware([requireStaff])
   .inputValidator((d) =>
     z.object({
       ids: z.array(z.string().uuid()).min(1).max(500),
