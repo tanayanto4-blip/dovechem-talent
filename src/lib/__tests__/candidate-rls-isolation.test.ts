@@ -139,6 +139,8 @@ describe("candidate RLS — static scope checks", () => {
         const scopedByVerifiedId =
           /\.eq\(["']attempt_id["'],\s*data\.attempt_id/.test(chain) ||
           /attempt_id:\s*data\.attempt_id/.test(chain) ||
+          // attempt row already loaded/created scoped by cand.id in the same handler
+          /\.eq\(["']attempt_id["'],\s*\(attempt as any\)\.id/.test(chain) ||
           /\.eq\(["']id["'],\s*data\.attempt_id/.test(chain);
         expect(
           scopedByCandidate || scopedByVerifiedId,
