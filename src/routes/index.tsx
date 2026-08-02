@@ -12,6 +12,39 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
+const STEPS = [
+  {
+    n: "01",
+    t: "Login Kode Akses",
+    short: "Kode unik & ada masa berlaku",
+    d: "Masukkan kode akses yang dibuat tim HR. Kode hanya aktif sampai batas tanggal/jam yang ditentukan.",
+  },
+  {
+    n: "02",
+    t: "Lengkapi Biodata",
+    short: "Nama, pendidikan, pengalaman, kontak",
+    d: "Isi nama lengkap, sekolah/universitas, pendidikan, jurusan, lama pengalaman kerja, telp/HP, email, dan posisi yang dilamar.",
+  },
+  {
+    n: "03",
+    t: "Dengarkan Instruksi",
+    short: "Panduan suara sebelum tiap test",
+    d: "Setiap test dibuka dengan instruksi suara dari tim HR. Anda bisa memutar ulang instruksi sebelum menekan Mulai Test.",
+  },
+  {
+    n: "04",
+    t: "Kerjakan Psikotest",
+    short: "MBTI, DISC, EQ, WPT, Pauli, PAPI",
+    d: "Kerjakan test sesuai waktu yang tersedia. Jawaban tersimpan otomatis sehingga bisa dilanjutkan pada sesi yang sama.",
+  },
+  {
+    n: "05",
+    t: "Evaluasi Tim HR",
+    short: "Hasil hanya dilihat HR & Admin",
+    d: "Skor dan interpretasi hasil direkap otomatis untuk tim HR. Kandidat akan dihubungi untuk tahap seleksi berikutnya.",
+  },
+];
+
 function Home() {
   return (
     <div className="min-h-screen bg-background">
