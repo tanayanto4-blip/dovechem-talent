@@ -69,35 +69,52 @@ function TestDetail() {
             </CardHeader>
             <CardContent>
               {q.question_text && <div className="mb-3 font-medium">{q.question_text}</div>}
-              {isDisc ? (
-                <div className="overflow-hidden rounded-md border">
-                  <div className="grid grid-cols-[56px_1fr_80px] bg-muted/60 text-xs font-semibold uppercase text-muted-foreground">
-                    <div className="px-3 py-2">Key</div>
-                    <div className="px-3 py-2 border-l">Pernyataan</div>
-                    <div className="px-3 py-2 border-l">Dimensi</div>
-                  </div>
-                  {(q.options ?? []).map((opt: any) => (
-                    <div key={opt.key} className="grid grid-cols-[56px_1fr_80px] items-center border-t text-sm">
-                      <div className="px-3 py-2 font-mono">{opt.key}</div>
-                      <div className="px-3 py-2 border-l">{opt.label}</div>
-                      <div className="px-3 py-2 border-l"><Badge variant="secondary">{opt.dimension ?? "-"}</Badge></div>
+              {Array.isArray(q.options) && q.options.length > 0 ? (
+                isDisc ? (
+                  <div className="overflow-hidden rounded-md border">
+                    <div className="grid grid-cols-[56px_1fr_80px] bg-muted/60 text-xs font-semibold uppercase text-muted-foreground">
+                      <div className="px-3 py-2">Key</div>
+                      <div className="px-3 py-2 border-l">Pernyataan</div>
+                      <div className="px-3 py-2 border-l">Dimensi</div>
                     </div>
-                  ))}
+                    {q.options.map((opt: any) => (
+                      <div key={opt.key} className="grid grid-cols-[56px_1fr_80px] items-center border-t text-sm">
+                        <div className="px-3 py-2 font-mono">{opt.key}</div>
+                        <div className="px-3 py-2 border-l">{opt.label}</div>
+                        <div className="px-3 py-2 border-l"><Badge variant="secondary">{opt.dimension ?? "-"}</Badge></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {q.options.map((opt: any) => {
+                      const correct = q.correct_answer && opt.key === q.correct_answer;
+                      return (
+                        <div key={opt.key} className={`flex items-center gap-3 rounded-md border p-2 text-sm ${correct ? "border-success bg-success/10" : ""}`}>
+                          <span className="font-mono font-bold">{opt.key}.</span>
+                          <span className="flex-1">{opt.label}</span>
+                          {correct && <Badge className="bg-success">Kunci</Badge>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
+              ) : q.options && typeof q.options === "object" && typeof (q.options as any).digits === "string" ? (
+                <div className="space-y-2">
+                  <div className="text-xs text-muted-foreground">
+                    Deret angka kolom ini ({(q.options as any).digits.length} digit) — kandidat menjumlahkan dua angka bersebelahan.
+                  </div>
+                  <div className="max-h-32 overflow-auto rounded-md border bg-muted/40 p-2 font-mono text-xs leading-relaxed break-all">
+                    {(q.options as any).digits}
+                  </div>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {(q.options ?? []).map((opt: any) => {
-                    const correct = q.correct_answer && opt.key === q.correct_answer;
-                    return (
-                      <div key={opt.key} className={`flex items-center gap-3 rounded-md border p-2 text-sm ${correct ? "border-success bg-success/10" : ""}`}>
-                        <span className="font-mono font-bold">{opt.key}.</span>
-                        <span className="flex-1">{opt.label}</span>
-                        {correct && <Badge className="bg-success">Kunci</Badge>}
-                      </div>
-                    );
-                  })}
+                <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+                  Soal isian bebas — kandidat mengetik jawaban sendiri.
+                  {q.correct_answer ? <> Kunci: <span className="font-mono font-semibold">{q.correct_answer}</span></> : null}
                 </div>
               )}
+
               {q.explanation && (
                 <div className="mt-3 rounded bg-muted p-2 text-xs text-muted-foreground"><b>Penjelasan:</b> {q.explanation}</div>
               )}
