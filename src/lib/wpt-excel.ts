@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { applyBiodataSheet, type CandidateMeta } from "@/lib/candidate-meta";
+import { applyInlineBiodata, type CandidateMeta } from "@/lib/candidate-meta";
 import templateAsset from "@/assets/wpt-template.xlsx.asset.json";
 
 /**
@@ -180,8 +180,8 @@ export async function exportWptExcel(answers: WptExcelAnswer[], meta: WptExcelMe
   const nama = [meta.candidateName, meta.candidateCode].filter(Boolean).join(" — ") || "-";
   ws.getCell("B5").value = `Nama : ${nama}   |   Jabatan : ${meta.position ?? "-"}`;
 
-  // Biodata kandidat terisi otomatis dari data yang sudah tersimpan
-  applyBiodataSheet(wb, meta, "WPT");
+  // Biodata kandidat terisi otomatis pada lembar template (tanpa sheet tambahan)
+  applyInlineBiodata(ws, meta, { startRow: 191, labelCol: "B", valueCol: "C", title: "BIODATA KANDIDAT (PT DOVER CHEMICAL)" });
 
   (wb as any).calcProperties = { ...(wb as any).calcProperties, fullCalcOnLoad: true };
 

@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { applyBiodataSheet, type CandidateMeta } from "@/lib/candidate-meta";
+import { applyInlineBiodata, type CandidateMeta } from "@/lib/candidate-meta";
 import templateAsset from "@/assets/disc-template.xlsx.asset.json";
 
 /**
@@ -155,8 +155,8 @@ export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExce
     );
   }
 
-  // Biodata kandidat terisi otomatis dari data yang sudah tersimpan
-  applyBiodataSheet(wb, meta, "DISC");
+  // Biodata kandidat terisi otomatis pada lembar template (tanpa sheet tambahan)
+  applyInlineBiodata(ws, meta, { startRow: 58, labelCol: "B", valueCol: "D", title: "BIODATA KANDIDAT (PT DOVER CHEMICAL)" });
 
   (wb as any).calcProperties = { ...(wb as any).calcProperties, fullCalcOnLoad: true };
 

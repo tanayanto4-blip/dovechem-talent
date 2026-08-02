@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { applyBiodataSheet, type CandidateMeta } from "@/lib/candidate-meta";
+import { applyInlineBiodata, type CandidateMeta } from "@/lib/candidate-meta";
 import templateAsset from "@/assets/eq-template.xlsx.asset.json";
 
 /**
@@ -100,8 +100,8 @@ export async function exportEqExcel(answers: EqExcelAnswer[], meta: EqExcelMeta 
   ws.getCell("B6").value = `Nama : ${nama}`;
   ws.getCell("F6").value = `Jabatan : ${meta.position ?? "-"}`;
 
-  // Biodata kandidat terisi otomatis dari data yang sudah tersimpan
-  applyBiodataSheet(wb, meta, "EQ");
+  // Biodata kandidat terisi otomatis pada lembar template (tanpa sheet tambahan)
+  applyInlineBiodata(ws, meta, { startRow: 38, labelCol: "B", valueCol: "D", title: "BIODATA KANDIDAT (PT DOVER CHEMICAL)" });
 
   (wb as any).calcProperties = { ...(wb as any).calcProperties, fullCalcOnLoad: true };
 
