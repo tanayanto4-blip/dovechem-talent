@@ -25,6 +25,13 @@ import {
   safeName,
 } from "@/lib/biodata-export";
 
+function fmtWhen(v: unknown) {
+  if (!v) return "-";
+  const d = new Date(String(v));
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
 function csvCell(v: unknown) {
   const s = v == null ? "" : String(v);
   return `"${s.replace(/"/g, '""')}"`;
@@ -152,6 +159,7 @@ export function BiodataBank() {
                   <TableHead className="w-12">No.</TableHead>
                   <TableHead>Kode</TableHead>
                   {FIELDS.map((f) => <TableHead key={f.key}>{f.label}</TableHead>)}
+                  <TableHead className="w-40">Terakhir diperbarui</TableHead>
                   <TableHead className="w-32 text-right">Unduh</TableHead>
                 </TableRow>
               </TableHeader>
@@ -165,6 +173,9 @@ export function BiodataBank() {
                         {c[f.key] || "-"}
                       </TableCell>
                     ))}
+                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                      {fmtWhen(c.updated_at ?? c.created_at)}
+                    </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
