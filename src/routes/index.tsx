@@ -12,6 +12,39 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
+const STEPS = [
+  {
+    n: "01",
+    t: "Login Kode Akses",
+    short: "Kode unik & ada masa berlaku",
+    d: "Masukkan kode akses yang dibuat tim HR. Kode hanya aktif sampai batas tanggal/jam yang ditentukan.",
+  },
+  {
+    n: "02",
+    t: "Lengkapi Biodata",
+    short: "Nama, pendidikan, pengalaman, kontak",
+    d: "Isi nama lengkap, sekolah/universitas, pendidikan, jurusan, lama pengalaman kerja, telp/HP, email, dan posisi yang dilamar.",
+  },
+  {
+    n: "03",
+    t: "Dengarkan Instruksi",
+    short: "Panduan suara sebelum tiap test",
+    d: "Setiap test dibuka dengan instruksi suara dari tim HR. Anda bisa memutar ulang instruksi sebelum menekan Mulai Test.",
+  },
+  {
+    n: "04",
+    t: "Kerjakan Psikotest",
+    short: "MBTI, DISC, EQ, WPT, Pauli, PAPI",
+    d: "Kerjakan test sesuai waktu yang tersedia. Jawaban tersimpan otomatis sehingga bisa dilanjutkan pada sesi yang sama.",
+  },
+  {
+    n: "05",
+    t: "Evaluasi Tim HR",
+    short: "Hasil hanya dilihat HR & Admin",
+    d: "Skor dan interpretasi hasil direkap otomatis untuk tim HR. Kandidat akan dihubungi untuk tahap seleksi berikutnya.",
+  },
+];
+
 function Home() {
   return (
     <div className="min-h-screen bg-background">
@@ -52,8 +85,9 @@ function Home() {
               <span className="text-primary-glow">PT Dover Chemical</span>
             </h1>
             <p className="mt-6 max-w-lg text-lg text-white/80">
-              Platform psikotest & administrasi rekrutmen untuk calon karyawan.
-              Kandidat login dengan kode akses yang diberikan tim HR untuk mengerjakan test dan melengkapi berkas.
+              Platform psikotest &amp; administrasi rekrutmen untuk calon karyawan.
+              Kandidat login dengan kode akses dari tim HR, mengisi biodata, lalu mengerjakan
+              rangkaian psikotest resmi secara online.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg" className="bg-primary-glow text-primary-foreground hover:bg-primary-glow/90">
@@ -63,21 +97,23 @@ function Home() {
                 <Link to="/auth">Panel Admin HR</Link>
               </Button>
             </div>
+            <div className="mt-8 flex flex-wrap gap-2">
+              {["MBTI", "DISC", "EQ", "WPT", "Pauli", "PAPI Kostick"].map((t) => (
+                <span key={t} className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur">
+                  {t}
+                </span>
+              ))}
+            </div>
           </div>
           <div className="hidden md:block">
             <div className="relative rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur shadow-elegant">
-              <div className="space-y-4">
-                {[
-                  { n: "01", t: "Terima Kode Akses", d: "Kode unik dikirim tim HR" },
-                  { n: "02", t: "Lengkapi Data Diri", d: "KTP, KK, CV, ijazah, transkrip" },
-                  { n: "03", t: "Kerjakan Psikotest", d: "Logika, DISC, Kraepelin" },
-                  { n: "04", t: "Menunggu Evaluasi", d: "Hasil dievaluasi tim HR" },
-                ].map((s) => (
+              <div className="space-y-3">
+                {STEPS.map((s) => (
                   <div key={s.n} className="flex items-start gap-4 rounded-lg border border-white/10 bg-white/5 p-4">
                     <div className="font-display text-2xl font-bold text-primary-glow">{s.n}</div>
                     <div>
                       <div className="font-semibold">{s.t}</div>
-                      <div className="text-sm text-white/70">{s.d}</div>
+                      <div className="text-sm text-white/70">{s.short}</div>
                     </div>
                   </div>
                 ))}
@@ -114,10 +150,10 @@ function Home() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             {[
-              { i: ShieldCheck, t: "Aman & Terenkripsi", d: "Data pribadi dan berkas Anda dilindungi dengan standar keamanan tinggi." },
-              { i: ClipboardList, t: "Terstruktur", d: "Test dan pengisian data mengikuti alur yang jelas." },
-              { i: Users, t: "Dipantau HR", d: "Setiap kandidat dievaluasi langsung oleh tim rekrutmen kami." },
-              { i: CheckCircle2, t: "Real-time", d: "Progress test tersimpan otomatis." },
+              { i: ShieldCheck, t: "Aman & Terkontrol", d: "Kode akses punya masa berlaku dan setiap akses hasil tercatat pada audit log." },
+              { i: ClipboardList, t: "Test Terstandar", d: "MBTI, DISC, EQ, WPT, Pauli, dan PAPI Kostick dengan penilaian otomatis." },
+              { i: Users, t: "Dipantau HR", d: "Biodata dan hasil kandidat tersinkron langsung ke dashboard Admin & HR." },
+              { i: CheckCircle2, t: "Autosave Jawaban", d: "Jawaban tersimpan per soal sehingga test bisa dilanjutkan tanpa kehilangan progres." },
             ].map((f) => (
               <div key={f.t} className="rounded-xl border bg-card p-5 shadow-card">
                 <f.i className="h-6 w-6 text-primary-glow" />
@@ -134,17 +170,22 @@ function Home() {
         <div className="mx-auto max-w-7xl px-6">
           <div className="max-w-2xl">
             <div className="text-xs font-semibold uppercase tracking-widest text-secondary">Alur Kandidat</div>
-            <h2 className="mt-3 font-display text-4xl font-bold text-primary">4 langkah dari kode akses hingga hasil</h2>
+            <h2 className="mt-3 font-display text-4xl font-bold text-primary">5 langkah dari kode akses hingga hasil</h2>
+            <p className="mt-3 text-muted-foreground">
+              Alur terbaru portal rekrutmen PT Dover Chemical — tanpa unggah berkas, cukup biodata dan pengerjaan test online.
+            </p>
           </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-4">
-            {[
-              { n: 1, t: "Login dengan Kode", d: "Masukkan kode akses yang dikirim tim HR ke email Anda." },
-              { n: 2, t: "Isi Data Diri", d: "Lengkapi biodata lalu upload KTP, KK, CV, ijazah dan transkrip." },
-              { n: 3, t: "Kerjakan Psikotest", d: "Test logika, kepribadian DISC, dan ketelitian Kraepelin." },
-              { n: 4, t: "Hasil Dievaluasi", d: "Tim HR akan menghubungi Anda untuk tahap selanjutnya." },
-            ].map((s) => (
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+            {STEPS.map((s, i) => (
               <div key={s.n} className="relative rounded-xl border bg-card p-6 shadow-card">
-                <div className="mb-4 grid h-10 w-10 place-items-center rounded-md bg-hero font-display text-lg font-bold text-primary-foreground">{s.n}</div>
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-hero font-display text-lg font-bold text-primary-foreground">
+                    {i + 1}
+                  </div>
+                  {i < STEPS.length - 1 && (
+                    <ArrowRight className="hidden h-4 w-4 text-muted-foreground/50 lg:block" />
+                  )}
+                </div>
                 <div className="font-semibold text-primary">{s.t}</div>
                 <div className="mt-1 text-sm text-muted-foreground">{s.d}</div>
               </div>
