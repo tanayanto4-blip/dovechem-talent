@@ -328,7 +328,7 @@ function TakeTest() {
   }
 
 
-  if (isLoading || isFetching && !data) {
+  if (isLoading || !data) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center gap-2 py-10 text-muted-foreground">
