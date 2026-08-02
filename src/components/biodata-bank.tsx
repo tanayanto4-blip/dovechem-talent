@@ -25,6 +25,13 @@ import {
   safeName,
 } from "@/lib/biodata-export";
 
+function fmtWhen(v: unknown) {
+  if (!v) return "-";
+  const d = new Date(String(v));
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
 function csvCell(v: unknown) {
   const s = v == null ? "" : String(v);
   return `"${s.replace(/"/g, '""')}"`;
@@ -90,10 +97,17 @@ export function BiodataBank() {
   return (
     <Card className="shadow-card">
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <IdCard className="h-4 w-4 text-primary" />
           <CardTitle className="text-base">Rekap Biodata Kandidat</CardTitle>
           <Badge variant="secondary">{filtered.length}</Badge>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/5 px-2 py-0.5 text-[11px] font-medium text-primary">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/70" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
+            </span>
+            Sinkron otomatis
+          </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
@@ -145,6 +159,7 @@ export function BiodataBank() {
                   <TableHead className="w-12">No.</TableHead>
                   <TableHead>Kode</TableHead>
                   {FIELDS.map((f) => <TableHead key={f.key}>{f.label}</TableHead>)}
+                  <TableHead className="w-40">Terakhir diperbarui</TableHead>
                   <TableHead className="w-32 text-right">Unduh</TableHead>
                 </TableRow>
               </TableHeader>
@@ -158,6 +173,9 @@ export function BiodataBank() {
                         {c[f.key] || "-"}
                       </TableCell>
                     ))}
+                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                      {fmtWhen(c.updated_at ?? c.created_at)}
+                    </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
