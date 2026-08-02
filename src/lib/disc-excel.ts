@@ -84,8 +84,8 @@ function buildCell(ref: string, style: string, value: CellValue) {
  * (`<v>`) supaya aplikasi spreadsheet menghitung ulang saat file dibuka.
  */
 function patchSheet(xml: string, edits: Map<string, CellValue>, clearCache = true) {
-  const rowRe = /<row\b[^>]*(?:\/>|>[\s\S]*?<\/row>)/g;
-  const cellRe = /<c\b[^>]*(?:\/>|>[\s\S]*?<\/c>)/g;
+  const rowRe = /<row\b[^>]*\/>|<row\b[^>]*>[\s\S]*?<\/row>/g;
+  const cellRe = /<c\b[^>]*\/>|<c\b[^>]*>[\s\S]*?<\/c>/g;
 
   return xml.replace(rowRe, (rowXml) => {
     const rowNum = attr(rowXml, "r");
