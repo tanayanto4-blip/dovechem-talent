@@ -36,21 +36,21 @@ function PortalLayout() {
 
   return (
     <div className="min-h-screen bg-subtle">
-      <header className="border-b bg-primary text-primary-foreground">
+      <header className="border-b bg-card text-foreground shadow-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2.5">
-            <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="h-8 w-auto rounded bg-white/95 p-0.5 object-contain" />
+            <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="h-8 w-auto rounded p-0.5 object-contain" />
             <div>
               <div className="font-display text-sm font-bold">PT DOVER CHEMICAL</div>
-              <div className="text-[10px] uppercase tracking-widest text-white/60">Portal Kandidat</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Portal Kandidat</div>
             </div>
           </Link>
           <div className="flex items-center gap-3">
             <div className="hidden text-right md:block">
               <div className="text-sm font-medium">{session.candidate_name}</div>
-              <div className="text-xs text-white/60">Kode: {session.code}</div>
+              <div className="text-xs text-muted-foreground">Kode: {session.code}</div>
             </div>
-            <Button variant="outline" size="sm" className="border-white/30 bg-transparent text-primary-foreground hover:bg-white/10 hover:text-primary-foreground" onClick={() => { setCandidateSession(null); nav({ to: "/" }); }}>
+            <Button variant="outline" size="sm" onClick={() => { setCandidateSession(null); nav({ to: "/" }); }}>
               <LogOut className="mr-2 h-4 w-4" /> Keluar
             </Button>
           </div>
