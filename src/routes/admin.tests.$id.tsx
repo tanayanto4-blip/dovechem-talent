@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { MbtiAdmin } from "@/components/mbti-admin";
+import { TestDurationEditor } from "@/components/test-duration-editor";
 
 export const Route = createFileRoute("/admin/tests/$id")({ component: TestDetail });
 
@@ -21,6 +22,9 @@ function TestDetail() {
     return (
       <div className="space-y-4">
         <Button asChild variant="ghost" size="sm"><Link to="/admin/tests"><ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Bank Soal</Link></Button>
+        <div className="max-w-sm">
+          <TestDurationEditor testId={t.id} testName={t.name} value={t.duration_minutes} />
+        </div>
         <MbtiAdmin initialTestId={id} />
       </div>
     );
@@ -38,6 +42,9 @@ function TestDetail() {
           <Badge>{data.questions.length} soal</Badge>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">{t.description}</p>
+        <div className="mt-4 max-w-sm">
+          <TestDurationEditor testId={t.id} testName={t.name} value={t.duration_minutes} />
+        </div>
       </div>
 
       <div className="space-y-4">

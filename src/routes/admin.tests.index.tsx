@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ClipboardList, ArrowRight, Timer, Search, X } from "lucide-react";
+import { TestDurationEditor } from "@/components/test-duration-editor";
 
 export const Route = createFileRoute("/admin/tests/")({ component: TestsList });
 
@@ -123,7 +124,10 @@ function TestsList() {
                     <span>{t.question_count} soal</span>
                     <span className="font-mono text-[10px] opacity-70">ID: {t.id.slice(0, 8)}…</span>
                   </div>
-                  <Button asChild className="mt-5 w-full">
+                  <div className="mt-4">
+                    <TestDurationEditor testId={t.id} testName={t.name} value={t.duration_minutes} />
+                  </div>
+                  <Button asChild className="mt-4 w-full">
                     <Link to="/admin/tests/$id" params={{ id: t.id }}>
                       {t.test_type === "mbti" ? "Kelola Soal MBTI" : "Lihat Soal"} <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>

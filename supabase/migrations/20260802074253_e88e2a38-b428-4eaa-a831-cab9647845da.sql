@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.guard_tests_hr_update() FROM PUBLIC, anon, authenticated;
