@@ -471,6 +471,68 @@ export const setTestActive = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Publish/unpublish satu atau beberapa soal (semua jenis test). */
+export const setQuestionsPublished = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) =>
+    z.object({
+      ids: z.array(z.string().uuid()).min(1).max(1000),
+      active: z.boolean(),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const before = await supabaseAdmin
+      .from("test_questions")
+      .select("id, test_id, question_number, active")
+      .in("id", data.ids);
+    const rows = (before.data ?? []) as any[];
+    if (rows.length === 0) throw new Error("Soal tidak ditemukan.");
+    const ids = rows.map((r) => r.id);
+    const { error, count } = await supabaseAdmin
+      .from("test_questions")
+      .update({ active: data.active }, { count: "exact" })
+      .in("id", ids);
+    if (error) throw new Error(error.message);
+    await logAudit(
+      context,
+      data.active ? "question.publish" : "question.unpublish",
+      "test_question",
+      ids.length === 1 ? ids[0] : null,
+      {
+        active: data.active,
+        count: count ?? ids.length,
+        ids,
+        numbers: rows.map((r) => r.question_number),
+        test_ids: Array.from(new Set(rows.map((r) => r.test_id))),
+      },
+    );
+    return { ok: true, updated: count ?? ids.length };
+  });
+
+/** Publish/unpublish seluruh soal pada satu test sekaligus. */
+export const setAllQuestionsPublished = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) => z.object({ test_id: z.string().uuid(), active: z.boolean() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error, count } = await supabaseAdmin
+      .from("test_questions")
+      .update({ active: data.active }, { count: "exact" })
+      .eq("test_id", data.test_id);
+    if (error) throw new Error(error.message);
+    await logAudit(
+      context,
+      data.active ? "question.publish_all" : "question.unpublish_all",
+      "test",
+      data.test_id,
+      { active: data.active, count: count ?? 0 },
+    );
+    return { ok: true, updated: count ?? 0 };
+  });
+
+
+
 const MbtiOption = z.object({
   key: z.enum(["A", "B"]),
   label: z.string().trim().min(1).max(500),

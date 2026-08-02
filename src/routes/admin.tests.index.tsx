@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ClipboardList, ArrowRight, Timer, Search, X } from "lucide-react";
 import { TestDurationEditor } from "@/components/test-duration-editor";
+import { TestPublishToggle } from "@/components/publish-toggle";
 
 export const Route = createFileRoute("/admin/tests/")({ component: TestsList });
 
@@ -125,6 +126,9 @@ function TestsList() {
                     <span className="font-mono text-[10px] opacity-70">ID: {t.id.slice(0, 8)}…</span>
                   </div>
                   <div className="mt-4">
+                    <TestPublishToggle testId={t.id} testName={t.name} active={!!t.active} />
+                  </div>
+                  <div className="mt-3">
                     <TestDurationEditor testId={t.id} testName={t.name} value={t.duration_minutes} />
                   </div>
                   <Button asChild className="mt-4 w-full">

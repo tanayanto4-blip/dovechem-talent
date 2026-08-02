@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { MbtiAdmin } from "@/components/mbti-admin";
 import { TestDurationEditor } from "@/components/test-duration-editor";
+import { TestPublishToggle, QuestionPublishToggle, BulkQuestionPublish } from "@/components/publish-toggle";
 
 export const Route = createFileRoute("/admin/tests/$id")({ component: TestDetail });
 
@@ -22,7 +23,8 @@ function TestDetail() {
     return (
       <div className="space-y-4">
         <Button asChild variant="ghost" size="sm"><Link to="/admin/tests"><ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Bank Soal</Link></Button>
-        <div className="max-w-sm">
+        <div className="grid max-w-2xl gap-3 md:grid-cols-2">
+          <TestPublishToggle testId={t.id} testName={t.name} active={!!t.active} />
           <TestDurationEditor testId={t.id} testName={t.name} value={t.duration_minutes} />
         </div>
         <MbtiAdmin initialTestId={id} />
@@ -42,20 +44,27 @@ function TestDetail() {
           <Badge>{data.questions.length} soal</Badge>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">{t.description}</p>
-        <div className="mt-4 max-w-sm">
+        <div className="mt-4 grid max-w-2xl gap-3 md:grid-cols-2">
+          <TestPublishToggle testId={t.id} testName={t.name} active={!!t.active} />
           <TestDurationEditor testId={t.id} testName={t.name} value={t.duration_minutes} />
+        </div>
+        <div className="mt-3">
+          <BulkQuestionPublish testId={t.id} />
         </div>
       </div>
 
       <div className="space-y-4">
         {data.questions.map((q: any, i: number) => (
-          <Card key={q.id} className="shadow-card">
+          <Card key={q.id} className={`shadow-card ${q.active === false ? "opacity-60" : ""}`}>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm text-muted-foreground">
                   {isDisc ? `Kelompok ${i + 1}` : `Soal ${i + 1}`}
                 </CardTitle>
-                {q.dimension && <Badge variant="outline">Dim: {q.dimension}</Badge>}
+                <div className="flex items-center gap-2">
+                  {q.dimension && <Badge variant="outline">Dim: {q.dimension}</Badge>}
+                  <QuestionPublishToggle id={q.id} active={q.active !== false} />
+                </div>
               </div>
             </CardHeader>
             <CardContent>
