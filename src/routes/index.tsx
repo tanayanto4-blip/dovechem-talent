@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Beaker, ShieldCheck, ClipboardList, Users, ArrowRight, CheckCircle2 } from "lucide-react";
+import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -52,9 +53,7 @@ function Home() {
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="grid h-9 w-9 place-items-center rounded-md bg-hero text-primary-foreground">
-              <Beaker className="h-5 w-5" />
-            </div>
+            <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="h-9 w-auto object-contain" />
             <div className="leading-tight">
               <div className="font-display text-base font-bold text-primary">PT DOVER CHEMICAL</div>
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Recruitment Portal</div>
@@ -213,7 +212,7 @@ function Home() {
       <footer className="border-t bg-primary py-8 text-primary-foreground">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 md:flex-row">
           <div className="flex items-center gap-2">
-            <Beaker className="h-4 w-4" />
+            <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="h-6 w-auto rounded bg-white/95 p-0.5 object-contain" />
             <span className="text-sm">© {new Date().getFullYear()} PT Dover Chemical Indonesia. All rights reserved.</span>
           </div>
           <div className="text-xs text-white/60">Recruitment & Psychotest Portal</div>
