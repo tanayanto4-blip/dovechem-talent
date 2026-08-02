@@ -616,7 +616,7 @@ export const deleteMbtiQuestion = createServerFn({ method: "POST" })
 
 /** Bulk enable/disable publish for multiple MBTI questions. */
 export const setMbtiQuestionsActive = createServerFn({ method: "POST" })
-  .middleware([requireAdmin])
+  .middleware([requireStaff])
   .inputValidator((d) =>
     z.object({
       ids: z.array(z.string().uuid()).min(1).max(500),
