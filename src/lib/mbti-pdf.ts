@@ -15,9 +15,9 @@ const DIM_TITLE: Record<string, string> = {
 };
 
 export interface MbtiPdfMeta {
-  candidateName?: string;
-  candidateCode?: string;
-  position?: string;
+  candidateName?: string | null;
+  candidateCode?: string | null;
+  position?: string | null;
   attemptId: string;
   finishedAt?: string | null;
   score?: number | null;
