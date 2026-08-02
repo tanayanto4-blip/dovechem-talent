@@ -68,22 +68,22 @@ function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-subtle">
-      <header className="border-b bg-primary text-primary-foreground">
+      <header className="border-b bg-card text-foreground shadow-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2.5">
-            <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="h-8 w-auto rounded bg-white/95 p-0.5 object-contain" />
+            <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="h-8 w-auto rounded p-0.5 object-contain" />
             <div>
               <div className="font-display text-sm font-bold">PT DOVER CHEMICAL</div>
-              <div className="text-[10px] uppercase tracking-widest text-white/60">Admin HR Panel</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Admin HR Panel</div>
             </div>
           </Link>
           <div className="flex items-center gap-3">
             {roles?.roles?.length ? (
-              <span className="hidden rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-xs md:inline-block">
+              <span className="hidden rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground md:inline-block">
                 {roles.roles.join(", ")}
               </span>
             ) : null}
-            <Button size="sm" variant="outline" className="border-white/30 bg-transparent text-primary-foreground hover:bg-white/10 hover:text-primary-foreground" onClick={signOut}>
+            <Button size="sm" variant="outline"  onClick={signOut}>
               <LogOut className="mr-2 h-4 w-4" /> Keluar
             </Button>
           </div>
