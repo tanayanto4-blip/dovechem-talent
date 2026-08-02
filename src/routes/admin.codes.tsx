@@ -27,7 +27,7 @@ function CodesPage() {
   const toggle = useServerFn(toggleCode);
   const del = useServerFn(deleteCode);
   const purgeAll = useServerFn(deleteAllCodes);
-  const { data } = useQuery({ queryKey: ["codes"], queryFn: () => list({ data: {} as never }) });
+  const { data } = useQuery({ queryKey: ["codes"], queryFn: () => list({ data: { limit: 1000 } }) });
   const [open, setOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [autoOpen, setAutoOpen] = useState(false);

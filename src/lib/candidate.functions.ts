@@ -88,24 +88,29 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sb = await admin();
     const codeRow = await resolveActiveCode(sb, data.code);
-    const [candQ, filesQ, testsQ, attemptsQ] = await Promise.all([
-      sb.from("candidates").select("*").eq("code_id", codeRow.id).single(),
-      sb.from("candidate_files").select("*").eq("candidate_id", (await sb.from("candidates").select("id").eq("code_id", codeRow.id).single()).data?.id ?? ""),
+    const { data: candidate, error: candErr } = await sb
+      .from("candidates")
+      .select("*")
+      .eq("code_id", codeRow.id)
+      .single();
+    if (candErr || !candidate) throw new Error("Kandidat tidak ditemukan.");
+    const candId = candidate.id;
+    const [filesQ, testsQ, attemptsQ, accessQ] = await Promise.all([
+      sb.from("candidate_files").select("*").eq("candidate_id", candId),
       sb.from("tests").select("*").eq("active", true).order("code"),
       // Scores/results are staff-only: expose progress fields only.
-      sb.from("test_attempts").select("id, test_id, status, started_at, finished_at").eq("candidate_id", (await sb.from("candidates").select("id").eq("code_id", codeRow.id).single()).data?.id ?? ""),
+      sb.from("test_attempts").select("id, test_id, status, started_at, finished_at").eq("candidate_id", candId),
+      sb
+        .from("candidate_test_access")
+        .select("test_id, is_open, reason, retake_count, last_reopened_at")
+        .eq("candidate_id", candId),
     ]);
-    const candId = candQ.data?.id ?? "";
-    const { data: access } = await sb
-      .from("candidate_test_access")
-      .select("test_id, is_open, reason, retake_count, last_reopened_at")
-      .eq("candidate_id", candId);
     return {
-      candidate: candQ.data,
+      candidate,
       files: filesQ.data ?? [],
       tests: testsQ.data ?? [],
       attempts: attemptsQ.data ?? [],
-      access: access ?? [],
+      access: accessQ.data ?? [],
     };
   });
 

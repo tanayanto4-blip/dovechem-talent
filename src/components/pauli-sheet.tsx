@@ -43,10 +43,15 @@ export function PauliSheet({
     () => questions.reduce((s, item) => s + Math.max(pauliDigits(item).length - 1, 0), 0),
     [questions],
   );
-  const totalFilled = useMemo(
-    () => questions.reduce((s, item) => s + pauliFilledCount(answers[item.id]), 0),
-    [questions, answers],
-  );
+  // Memoize per-question filled counts so we only recompute the changed column.
+  const filledPerQuestion = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const item of questions) {
+      map[item.id] = pauliFilledCount(answers[item.id]);
+    }
+    return map;
+  }, [questions, answers]);
+  const totalFilled = useMemo(() => Object.values(filledPerQuestion).reduce((s, n) => s + n, 0), [filledPerQuestion]);
 
   useEffect(() => {
     inputRef.current?.focus();

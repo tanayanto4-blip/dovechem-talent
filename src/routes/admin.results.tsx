@@ -58,7 +58,7 @@ type Group = {
 function ResultsBank() {
   const fn = useServerFn(listAllAttempts);
   const detailFn = useServerFn(getAttemptDetail);
-  const { data, isLoading } = useQuery({ queryKey: ["admin-all-attempts"], queryFn: () => fn({ data: {} as never }) });
+  const { data, isLoading } = useQuery({ queryKey: ["admin-all-attempts"], queryFn: () => fn({ data: { limit: 1000 } }) });
   const [q, setQ] = useState("");
   const [type, setType] = useState("all");
   const [status, setStatus] = useState("all");
