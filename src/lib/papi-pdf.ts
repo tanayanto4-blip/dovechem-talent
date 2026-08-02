@@ -268,36 +268,37 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
     doc.rect(x, yT, tw, rowH);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
-    doc.text("Total", x + 8, yT + 14);
+    doc.text("Total", x + 8, yT + 17);
     doc.text(
       String(order === PAPI_TOP_ORDER ? s.totalTop : s.totalBottom),
-      x + tw - 95,
-      yT + 14,
+      x + tw - 102,
+      yT + 17,
     );
     doc.setFont("helvetica", "normal");
   };
 
-  drawScaleTable("Roles  (G L I T V S R D C E)", PAPI_TOP_ORDER, 52, 158);
-  drawScaleTable("Needs  (N A P X B O Z K F W)", PAPI_BOTTOM_ORDER, 452, 158);
+  drawScaleTable("Roles  (G L I T V S R D C E)", PAPI_TOP_ORDER, 52, 176);
+  drawScaleTable("Needs  (N A P X B O Z K F W)", PAPI_BOTTOM_ORDER, 452, 176);
 
   doc.setFontSize(8);
   doc.setTextColor(60);
   doc.text(
     `Skala tertinggi: ${s.highest.join(", ") || "-"}   ·   Terjawab ${s.answered}/${s.total}   ·   Interpretasi akhir oleh psikolog/HR.`,
     52,
-    doc.internal.pageSize.getHeight() - 46,
+    doc.internal.pageSize.getHeight() - 42,
     { maxWidth: p2w - 104 },
   );
 
   // Halaman 3: detail jawaban — tabel berkotak 6 blok x 15 baris
   sheetHeader("Detail Jawaban & Skala per Item");
-  const blockW = 122;
+  const blockW = 118;
   const rowH2 = 21;
   const startX = 52;
-  const startY = 152;
+  const startY = 180;
   doc.setTextColor(20);
   for (let b = 0; b < 6; b++) {
-    const bx = startX + b * (blockW + 8);
+    const bx = startX + b * (blockW + 6);
+
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setLineWidth(0.8);
