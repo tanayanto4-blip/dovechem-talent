@@ -104,7 +104,8 @@ function patchSheet(xml: string, edits: Map<string, CellValue>, clearCache = tru
       }
       if (!clearCache || !/<f[\s>/]/.test(cellXml)) return cellXml;
       // sel rumus: pertahankan <f>, buang cache <v> dan atribut t
-      X
+      const formula =
+        cellXml.match(/<f\b[^>]*\/>|<f\b[^>]*>[\s\S]*?<\/f>/)?.[0] ?? "";
       const open = cellXml.match(/<c\b[^>]*?>/)?.[0] ?? `<c r="${ref}">`;
       const cleanOpen = open.replace(/\st="[^"]*"/, "");
       return `${cleanOpen}${formula}</c>`;
