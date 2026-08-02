@@ -18,11 +18,22 @@ export const Route = createFileRoute("/admin/users")({ component: UsersPage });
 
 function UsersPage() {
   const qc = useQueryClient();
+  const rolesFn = useServerFn(getMyRoles);
+  const { data: myRoles, isPending: rolesLoading } = useQuery({
+    queryKey: ["my-roles"],
+    queryFn: () => rolesFn({ data: {} as never }),
+  });
+  const isAdmin = !!myRoles?.roles?.includes("admin");
   const listFn = useServerFn(listAdminUsers);
   const createFn = useServerFn(createAdminUser);
   const deleteFn = useServerFn(deleteAdminUser);
   const resetFn = useServerFn(resetUserPassword);
-  const { data } = useQuery({ queryKey: ["admin-users"], queryFn: () => listFn({ data: {} as never }) });
+  const { data } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: () => listFn({ data: {} as never }),
+    enabled: isAdmin,
+  });
+
 
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
