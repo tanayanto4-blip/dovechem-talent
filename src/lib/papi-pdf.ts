@@ -15,137 +15,186 @@ export interface PapiPdfMeta {
   finishedAt?: string | null;
 }
 
-const fmt = (v?: string | null) => (v ? new Date(v).toLocaleString("id-ID") : "-");
+const fmtTime = (v?: string | null) =>
+  v ? new Date(v).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "";
+const fmtDate = (v?: string | null) => (v ? new Date(v).toLocaleDateString("id-ID") : "");
 
 /**
- * Cetak lembar jawaban PAPI Kostick berisi jawaban kandidat.
- * Opsi A = panah atas, opsi B = panah bawah (sesuai lembar resmi),
- * total tiap skala terisi otomatis pada kotak atas (role) dan bawah (need).
+ * Cetak lembar jawaban PAPI Kostick mengikuti template resmi:
+ * grid 9 kolom x 10 baris, skala peran (G L I T V S R D C E) di atas,
+ * skala kebutuhan (N A P X B O Z K F W) di bawah, opsi A = panah atas,
+ * opsi B = panah bawah, kotak total terisi otomatis dari jawaban kandidat.
  */
 export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) {
   const s = papiScore(picks);
   const doc = new jsPDF({ unit: "pt", format: "a4", orientation: "landscape" });
+  const pw = doc.internal.pageSize.getWidth();
+  const ph = doc.internal.pageSize.getHeight();
 
-  // Header kiri
+  // Bingkai lembar
+  doc.setDrawColor(30);
+  doc.setLineWidth(1.2);
+  doc.rect(24, 24, pw - 48, ph - 48);
+
+  // ---------- Header kiri ----------
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(26);
-  doc.setTextColor(15, 55, 110);
-  doc.text("PAPI", 40, 60);
+  doc.setFontSize(40);
+  doc.setTextColor(20);
+  doc.text("PAPI", 52, 78);
   doc.setFontSize(11);
-  doc.setTextColor(40);
-  doc.text("PA Preference Inventory", 40, 78);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(60);
-  const info: [string, string][] = [
-    ["Nama", meta.candidateName || "-"],
-    ["Kode", meta.candidateCode || "-"],
-    ["Posisi", meta.position || "-"],
-    ["Mulai", fmt(meta.startedAt)],
-    ["Selesai", fmt(meta.finishedAt)],
-    ["Terjawab", `${s.answered} / ${s.total}`],
-  ];
-  let iy = 100;
-  info.forEach(([k, v]) => {
-    doc.text(`${k}`, 40, iy);
-    doc.text(`: ${v}`, 95, iy);
-    iy += 15;
-  });
+  doc.text("PA Preference Inventory", 52, 98);
 
-  // Grid
-  const gridX = 300;
-  const gridY = 118;
-  const colW = 50;
-  const rowH = 40;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  doc.setLineWidth(0.8);
+  const field = (label: string, value: string, y: number, boxed: boolean) => {
+    doc.text(label, 52, y);
+    if (boxed) {
+      doc.rect(170, y - 13, 62, 20);
+      doc.text(value, 201, y, { align: "center" });
+    } else {
+      doc.line(52, y + 4, 262, y + 4);
+      doc.text(value, 110, y);
+    }
+  };
+  field("Time started", fmtTime(meta.startedAt), 132, true);
+  field("Time finished", fmtTime(meta.finishedAt), 170, true);
+  field("Name", meta.candidateName || "", 210, false);
+  field("Date", fmtDate(meta.finishedAt ?? meta.startedAt), 248, false);
+  doc.setFontSize(8.5);
+  doc.setTextColor(90);
+  doc.text(`Kode  : ${meta.candidateCode || "-"}`, 52, 282);
+  doc.text(`Posisi: ${meta.position || "-"}`, 52, 298);
+  doc.text(`Terjawab: ${s.answered}/${s.total}`, 52, 314);
+
+  // ---------- Grid ----------
+  const cols = 9;
+  const rows = 10;
+  const cellW = 48;
+  const cellH = 36;
+  const gridX = 322;
+  const gridY = 128;
+  const gridW = cols * cellW;
+  const gridH = rows * cellH;
+  const boxW = 26;
   const boxH = 20;
 
-  doc.setLineWidth(0.6);
-  doc.setDrawColor(30);
-  doc.setFontSize(10);
+  const letterX = (i: number) => gridX + i * cellW; // 10 titik untuk 10 skala
 
-  // Kotak total atas (role)
+  // Kotak skala atas
+  doc.setDrawColor(30);
+  doc.setLineWidth(0.9);
   PAPI_TOP_ORDER.forEach((letter, i) => {
-    const x = gridX + i * colW;
+    const cx = letterX(i);
     doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
     doc.setTextColor(20);
-    doc.text(letter, x + colW / 2, gridY - boxH - 6, { align: "center" });
-    doc.rect(x + 10, gridY - boxH, 30, boxH);
+    doc.text(letter, cx, gridY - boxH - 12, { align: "center" });
+    doc.rect(cx - boxW / 2, gridY - boxH - 6, boxW, boxH);
     doc.setFontSize(11);
-    doc.text(String(s.scales[letter] ?? 0), x + 25, gridY - 6, { align: "center" });
-    doc.setFontSize(10);
+    doc.text(String(s.scales[letter] ?? 0), cx, gridY - 11, { align: "center" });
   });
+  // Total atas
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
-  doc.text("Total", gridX - 44, gridY - 6);
-  doc.rect(gridX - 50, gridY - boxH, 46, boxH);
-  doc.setFontSize(10);
-  doc.text(String(s.totalTop), gridX - 27, gridY - 6, { align: "center" });
+  doc.setTextColor(40);
+  doc.text("Total", gridX - 78, gridY - boxH - 12);
+  doc.rect(gridX - 86, gridY - boxH - 6, 44, boxH);
+  doc.setFontSize(11);
+  doc.text(String(s.totalTop), gridX - 64, gridY - 11, { align: "center" });
 
-  // Sel item
+  // Panah
+  const arrow = (x1: number, y1: number, x2: number, y2: number, active: boolean) => {
+    if (active) {
+      doc.setDrawColor(15, 55, 110);
+      doc.setLineWidth(1.6);
+    } else {
+      doc.setDrawColor(120);
+      doc.setLineWidth(0.5);
+    }
+    doc.line(x1, y1, x2, y2);
+    const ang = Math.atan2(y2 - y1, x2 - x1);
+    const h = active ? 5 : 3.6;
+    doc.line(x2, y2, x2 - h * Math.cos(ang - 0.5), y2 - h * Math.sin(ang - 0.5));
+    doc.line(x2, y2, x2 - h * Math.cos(ang + 0.5), y2 - h * Math.sin(ang + 0.5));
+    doc.setLineWidth(0.8);
+  };
+
   for (let n = 1; n <= 90; n++) {
-    const col = Math.floor((n - 1) / 10) + 1; // 1..9 (1 = paling kanan)
+    const col = Math.floor((n - 1) / 10) + 1; // 1 = paling kanan
     const row = ((n - 1) % 10) + 1;
-    const x = gridX + (9 - col) * colW;
-    const y = gridY + (row - 1) * rowH;
-    const key = PAPI_KEY[n];
+    const x = gridX + (cols - col) * cellW;
+    const y = gridY + (row - 1) * cellH;
+    const cx = x + cellW / 2;
+    const cy = y + cellH / 2;
     const pick = (picks[n] ?? "").toUpperCase();
+    const topRegion = row <= col;
 
-    doc.setDrawColor(215);
-    doc.rect(x, y, colW, rowH);
+    // garis bantu titik-titik searah diagonal
+    doc.setLineDashPattern([1, 2.2], 0);
+    doc.setDrawColor(175);
+    doc.setLineWidth(0.4);
+    if (topRegion) doc.line(x + 4, y + cellH - 4, x + cellW - 4, y + 4);
+    else doc.line(x + 4, y + 4, x + cellW - 4, y + cellH - 4);
+    doc.setLineDashPattern([], 0);
 
+    // nomor item
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
-    doc.setTextColor(120);
-    doc.text(String(n), x + 3, y + rowH / 2 + 2.5);
+    doc.setFontSize(7.5);
+    doc.setTextColor(60);
+    doc.text(String(n), cx - 15, cy + 2.5);
 
-    const mark = (opt: "A" | "B", my: number) => {
-      const chosen = pick === opt;
-      const bx = x + 16;
-      const by = my - 7;
-      if (chosen) {
-        doc.setFillColor(15, 55, 110);
-        doc.setDrawColor(15, 55, 110);
-        doc.rect(bx, by, 28, 12, "FD");
-        doc.setTextColor(255);
-        doc.setFont("helvetica", "bold");
-      } else {
-        doc.setDrawColor(200);
-        doc.rect(bx, by, 28, 12);
-        doc.setTextColor(150);
-        doc.setFont("helvetica", "normal");
-      }
-      doc.setFontSize(7.5);
-      doc.text(`${opt}${chosen ? " ✓" : ""} ${key[opt]}`, bx + 14, by + 8.5, { align: "center" });
-    };
-    mark("A", y + rowH * 0.3);
-    mark("B", y + rowH * 0.75);
+    // A = panah atas, B = panah bawah
+    if (topRegion) {
+      arrow(cx - 2, cy - 5, cx - 16, cy - 10, pick === "A"); // ke kiri-atas
+      arrow(cx - 2, cy + 9, cx + 12, cy + 2, pick === "B"); // ke kanan-atas
+    } else {
+      arrow(cx - 2, cy - 5, cx + 12, cy - 10, pick === "A"); // ke kanan-atas/kanan
+      arrow(cx - 2, cy + 9, cx - 16, cy + 15, pick === "B"); // ke kiri-bawah
+    }
+
+    if (pick === "A" || pick === "B") {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(6.5);
+      doc.setTextColor(15, 55, 110);
+      doc.text(pick, cx - 15, pick === "A" ? cy - 8 : cy + 14);
+      doc.setTextColor(60);
+    }
   }
 
-  // Kotak total bawah (need)
-  const bottomY = gridY + 10 * rowH + 6;
+  // Garis diagonal tebal pemisah role / need
   doc.setDrawColor(30);
+  doc.setLineWidth(1.2);
+  doc.line(gridX + gridW, gridY, gridX, gridY + gridH);
+  // Siku kiri-bawah & kanan-atas seperti lembar asli
+  doc.line(gridX, gridY + 12, gridX, gridY + gridH);
+  doc.line(gridX + gridW, gridY, gridX + gridW, gridY + gridH - 12);
+
+  // Kotak skala bawah
+  const bottomY = gridY + gridH + 8;
+  doc.setLineWidth(0.9);
   PAPI_BOTTOM_ORDER.forEach((letter, i) => {
-    const x = gridX + i * colW;
-    doc.rect(x + 10, bottomY, 30, boxH);
+    const cx = letterX(i);
+    doc.rect(cx - boxW / 2, bottomY, boxW, boxH);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(20);
-    doc.text(String(s.scales[letter] ?? 0), x + 25, bottomY + 14, { align: "center" });
-    doc.setFontSize(10);
-    doc.text(letter, x + colW / 2, bottomY + boxH + 12, { align: "center" });
+    doc.text(String(s.scales[letter] ?? 0), cx, bottomY + 14, { align: "center" });
+    doc.setFontSize(13);
+    doc.text(letter, cx, bottomY + boxH + 15, { align: "center" });
   });
-  doc.rect(gridX - 50, bottomY, 46, boxH);
-  doc.setFontSize(10);
-  doc.text(String(s.totalBottom), gridX - 27, bottomY + 14, { align: "center" });
+  doc.rect(gridX + gridW + 22, bottomY, 44, boxH);
+  doc.setFontSize(11);
+  doc.text(String(s.totalBottom), gridX + gridW + 44, bottomY + 14, { align: "center" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
-  doc.text("Total", gridX - 44, bottomY + boxH + 10);
+  doc.text("Total", gridX + gridW + 44, bottomY + boxH + 12, { align: "center" });
 
-  // Halaman 2: rekap skala
+  // ---------- Halaman 2: rekap skala ----------
   doc.addPage("a4", "portrait");
-  const pw = doc.internal.pageSize.getWidth();
+  const p2w = doc.internal.pageSize.getWidth();
   doc.setFillColor(15, 55, 110);
-  doc.rect(0, 0, pw, 64, "F");
+  doc.rect(0, 0, p2w, 64, "F");
   doc.setTextColor(255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(15);
@@ -168,7 +217,8 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
     doc.text(title, 40, y);
     y += 12;
     doc.setDrawColor(210);
-    doc.line(40, y, pw - 40, y);
+    doc.setLineWidth(0.6);
+    doc.line(40, y, p2w - 40, y);
     y += 12;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
@@ -176,7 +226,7 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
     for (const letter of order) {
       const v = s.scales[letter] ?? 0;
       doc.text(PAPI_SCALE_LABEL[letter] ?? letter, 40, y);
-      const barX = pw - 190;
+      const barX = p2w - 190;
       doc.setDrawColor(220);
       doc.rect(barX, y - 7, 100, 9);
       doc.setFillColor(15, 55, 110);
@@ -196,8 +246,31 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
     `Skala tertinggi: ${s.highest.join(", ") || "-"} · Terjawab ${s.answered}/${s.total} · Interpretasi akhir oleh psikolog/HR.`,
     40,
     y,
-    { maxWidth: pw - 80 },
+    { maxWidth: p2w - 80 },
   );
+
+  // Kunci item (A/B) untuk verifikasi manual
+  doc.addPage("a4", "portrait");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(15, 55, 110);
+  doc.text("Detail Jawaban & Skala", 40, 50);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(40);
+  let cx0 = 40;
+  let cy0 = 74;
+  for (let n = 1; n <= 90; n++) {
+    const pick = (picks[n] ?? "").toUpperCase();
+    const k = PAPI_KEY[n];
+    const scale = pick === "A" || pick === "B" ? k[pick as "A" | "B"] : "-";
+    doc.text(`${String(n).padStart(2, "0")}. ${pick || "-"} → ${scale}   (A:${k.A} / B:${k.B})`, cx0, cy0);
+    cy0 += 13;
+    if (cy0 > 780) {
+      cy0 = 74;
+      cx0 += 175;
+    }
+  }
 
   const safe = (meta.candidateName || "kandidat").replace(/[^a-z0-9]+/gi, "_");
   doc.save(`PAPI_${safe}.pdf`);
