@@ -98,7 +98,7 @@ function Home() {
               </Button>
             </div>
             <div className="mt-8 flex flex-wrap gap-2">
-              {["MBTI", "DISC", "EQ", "WPT", "Pauli", "PAPI Kostick"].map((t) => (
+              {["Industri Kimia", "Resin & Hardener", "Sejak 1984", "Berorientasi Mutu"].map((t) => (
                 <span key={t} className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur">
                   {t}
                 </span>
