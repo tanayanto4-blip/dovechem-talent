@@ -7,23 +7,23 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Search, IdCard } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Download, Search, IdCard, FileSpreadsheet, FileText, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
-
-const FIELDS: { key: string; label: string }[] = [
-  { key: "full_name", label: "Nama Lengkap" },
-  { key: "school_name", label: "Nama Sekolah/Universitas" },
-  { key: "education", label: "Pendidikan" },
-  { key: "major", label: "Jurusan" },
-  { key: "work_experience", label: "Pernah Bekerja" },
-  { key: "phone", label: "Telp/HP" },
-  { key: "email", label: "Email" },
-  { key: "position_applied", label: "Posisi" },
-];
-
-function safeName(s: string) {
-  return (s || "kandidat").replace(/[^a-zA-Z0-9-_ ]/g, "").trim().replace(/\s+/g, "_") || "kandidat";
-}
+import {
+  BIODATA_FIELDS as FIELDS,
+  exportAllBiodataPdf,
+  exportBiodataExcel,
+  exportCandidateBiodataPdf,
+  safeName,
+} from "@/lib/biodata-export";
 
 function csvCell(v: unknown) {
   const s = v == null ? "" : String(v);
@@ -63,17 +63,28 @@ export function BiodataBank() {
     return [c.candidate_codes?.code ?? c.code_snapshot ?? "", ...FIELDS.map((f) => c[f.key] ?? "")];
   }
 
-  function downloadOne(c: any) {
-    const rows = [["Kode", ...FIELDS.map((f) => f.label)], rowFor(c)];
-    downloadCsv(rows, `biodata_${safeName(c.full_name ?? "")}.csv`);
-    toast.success(`Biodata ${c.full_name ?? "kandidat"} diunduh`);
+  function downloadOneCsv(c: any) {
+    downloadCsv([["Kode", ...FIELDS.map((f) => f.label)], rowFor(c)], `biodata_${safeName(c.full_name ?? "")}.csv`);
+    toast.success(`CSV biodata ${c.full_name ?? "kandidat"} diunduh`);
   }
 
-  function downloadAll() {
+  function downloadAllCsv() {
     if (!filtered.length) return;
-    const rows = [["Kode", ...FIELDS.map((f) => f.label)], ...filtered.map(rowFor)];
-    downloadCsv(rows, `biodata_kandidat_${new Date().toISOString().slice(0, 10)}.csv`);
-    toast.success(`${filtered.length} biodata diunduh`);
+    downloadCsv(
+      [["Kode", ...FIELDS.map((f) => f.label)], ...filtered.map(rowFor)],
+      `rekap_biodata_kandidat_${new Date().toISOString().slice(0, 10)}.csv`,
+    );
+    toast.success(`${filtered.length} biodata diunduh (CSV)`);
+  }
+
+  async function run(fn: () => void | Promise<void>, msg: string) {
+    try {
+      await fn();
+      toast.success(msg);
+    } catch (e) {
+      console.error(e);
+      toast.error("Gagal membuat file unduhan");
+    }
   }
 
   return (
@@ -81,7 +92,7 @@ export function BiodataBank() {
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2">
           <IdCard className="h-4 w-4 text-primary" />
-          <CardTitle className="text-base">Biodata Kandidat</CardTitle>
+          <CardTitle className="text-base">Rekap Biodata Kandidat</CardTitle>
           <Badge variant="secondary">{filtered.length}</Badge>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -89,9 +100,36 @@ export function BiodataBank() {
             <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Cari nama, sekolah, posisi..." value={q} onChange={(e) => setQ(e.target.value)} className="w-64 pl-8" />
           </div>
-          <Button size="sm" onClick={downloadAll} disabled={!filtered.length} className="gap-2">
-            <Download className="h-4 w-4" /> Unduh semua
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" disabled={!filtered.length} className="gap-2">
+                <Download className="h-4 w-4" /> Unduh semua kandidat <ChevronDown className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Rekap {filtered.length} kandidat</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() =>
+                  run(
+                    () =>
+                      exportBiodataExcel(filtered, `rekap_biodata_kandidat_${new Date().toISOString().slice(0, 10)}.xlsx`),
+                    `${filtered.length} biodata diunduh (Excel)`,
+                  )
+                }
+              >
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel (.xlsx)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => run(() => exportAllBiodataPdf(filtered), `${filtered.length} biodata diunduh (PDF)`)}
+              >
+                <FileText className="mr-2 h-4 w-4" /> PDF rekap
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={downloadAllCsv}>
+                <Download className="mr-2 h-4 w-4" /> CSV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardHeader>
       <CardContent>
@@ -105,23 +143,49 @@ export function BiodataBank() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12">No.</TableHead>
+                  <TableHead>Kode</TableHead>
                   {FIELDS.map((f) => <TableHead key={f.key}>{f.label}</TableHead>)}
-                  <TableHead className="w-28 text-right">Aksi</TableHead>
+                  <TableHead className="w-32 text-right">Unduh</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((c, i) => (
                   <TableRow key={c.id}>
                     <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
+                    <TableCell className="font-mono text-xs">{c.candidate_codes?.code ?? c.code_snapshot ?? "-"}</TableCell>
                     {FIELDS.map((f) => (
                       <TableCell key={f.key} className={f.key === "full_name" ? "font-medium" : "text-sm"}>
                         {c[f.key] || "-"}
                       </TableCell>
                     ))}
                     <TableCell className="text-right">
-                      <Button size="sm" variant="outline" className="gap-1" onClick={() => downloadOne(c)}>
-                        <Download className="h-3.5 w-3.5" /> CSV
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="outline" className="gap-1">
+                            <Download className="h-3.5 w-3.5" /> Unduh <ChevronDown className="h-3 w-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel className="max-w-48 truncate">{c.full_name ?? "Kandidat"}</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() =>
+                              run(
+                                () => exportBiodataExcel([c], `biodata_${safeName(c.full_name ?? "")}.xlsx`),
+                                "Excel biodata diunduh",
+                              )
+                            }
+                          >
+                            <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel (.xlsx)
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => run(() => exportCandidateBiodataPdf(c), "PDF biodata diunduh")}>
+                            <FileText className="mr-2 h-4 w-4" /> PDF
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => downloadOneCsv(c)}>
+                            <Download className="mr-2 h-4 w-4" /> CSV
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
