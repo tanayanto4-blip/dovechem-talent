@@ -222,6 +222,74 @@ function TakeTest() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remaining]);
 
+  // --- Autosave callbacks -------------------------------------------------
+  // These MUST stay above the early returns below: calling hooks after a
+  // conditional return changes hook order between renders and crashes React.
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
+
+  const persist = useCallback(async (qid: string, answer: string) => {
+    const d = dataRef.current;
+    const s = sessionRef.current;
+    if (!d?.attempt || !s) return;
+    inflight.current += 1;
+    setSaveState("saving");
+    try {
+      await saveAnswer({ data: { code: s.code, attempt_id: d.attempt.id, question_id: qid, answer } });
+      inflight.current -= 1;
+      if (inflight.current <= 0) { inflight.current = 0; setSaveState("saved"); }
+    } catch {
+      inflight.current = Math.max(0, inflight.current - 1);
+      setSaveState("error");
+    }
+  }, [saveAnswer]);
+
+  const persistDebounced = useCallback((qid: string, answer: string, delay = 500) => {
+    if (timers.current[qid]) clearTimeout(timers.current[qid]);
+    setSaveState("saving");
+    timers.current[qid] = setTimeout(() => { void persist(qid, answer); }, delay);
+  }, [persist]);
+
+  const pickMcq = useCallback((qid: string, key: string) => {
+    setAnswers((a) => ({ ...a, [qid]: key }));
+    void persist(qid, key);
+  }, [persist]);
+
+  const handleTextChange = useCallback((qid: string, value: string) => {
+    setAnswers((a) => ({ ...a, [qid]: value }));
+    persistDebounced(qid, value);
+  }, [persistDebounced]);
+
+  const setDisc = useCallback((qid: string, kind: "most" | "least", key: string) => {
+    setDiscPicks((prev) => {
+      const cur = { ...(prev[qid] ?? {}) };
+      // Toggle off if same, else set and clear opposite if collides
+      if (cur[kind] === key) delete cur[kind];
+      else {
+        cur[kind] = key;
+        const other = kind === "most" ? "least" : "most";
+        if (cur[other] === key) delete cur[other];
+      }
+      const next = { ...prev, [qid]: cur };
+      if (cur.most && cur.least && cur.most !== cur.least) {
+        const payload = JSON.stringify({ most: cur.most, least: cur.least });
+        setAnswers((a) => ({ ...a, [qid]: payload }));
+        void persist(qid, payload);
+      } else {
+        setAnswers((a) => { const c = { ...a }; delete c[qid]; return c; });
+      }
+      return next;
+    });
+  }, [persist]);
+
+  // Flush pending debounced saves when leaving the page.
+  useEffect(() => {
+    const t = timers.current;
+    return () => { Object.values(t).forEach((h) => h && clearTimeout(h)); };
+  }, []);
+
   async function handleSubmit(auto = false) {
     if (!data) return;
     if (!auto && !confirm("Kirim jawaban? Anda tidak dapat mengubah setelah dikirim.")) return;
@@ -236,6 +304,7 @@ function TakeTest() {
     } catch (e: any) { toast.error(e?.message || "Gagal mengirim jawaban. Coba lagi."); }
     finally { setSubmitting(false); }
   }
+
 
 
   if (!session) {
@@ -383,55 +452,8 @@ function TakeTest() {
       ? data.questions.filter((q: any) => pauliFilledCount(answers[q.id]) > 0).length
       : Object.keys(answers).filter((k) => (answers[k] ?? "").trim() !== "").length;
 
-  async function persist(qid: string, answer: string) {
-    if (!data?.attempt || !session) return;
-    inflight.current += 1;
-    setSaveState("saving");
-    try {
-      await saveAnswer({ data: { code: session.code, attempt_id: data.attempt.id, question_id: qid, answer } });
-      inflight.current -= 1;
-      if (inflight.current <= 0) { inflight.current = 0; setSaveState("saved"); }
-    } catch (e) {
-      inflight.current = Math.max(0, inflight.current - 1);
-      setSaveState("error");
-    }
-  }
-  const persistDebounced = useCallback((qid: string, answer: string, delay = 500) => {
-    if (timers.current[qid]) clearTimeout(timers.current[qid]);
-    setSaveState("saving");
-    timers.current[qid] = setTimeout(() => { persist(qid, answer); }, delay);
-  }, []);
-  const pickMcq = useCallback((qid: string, key: string) => {
-    setAnswers((a) => ({ ...a, [qid]: key }));
-    persist(qid, key);
-  }, []);
-  const handleTextChange = useCallback((qid: string, value: string) => {
-    setAnswers((a) => ({ ...a, [qid]: value }));
-    persistDebounced(qid, value);
-  }, [persistDebounced]);
 
-  const setDisc = useCallback((qid: string, kind: "most" | "least", key: string) => {
-    setDiscPicks((prev) => {
-      const cur = { ...(prev[qid] ?? {}) };
-      // Toggle off if same, else set and clear opposite if collides
-      if (cur[kind] === key) delete cur[kind];
-      else {
-        cur[kind] = key;
-        const other = kind === "most" ? "least" : "most";
-        if (cur[other] === key) delete cur[other];
-      }
-      const next = { ...prev, [qid]: cur };
-      // sync to answers as JSON when both chosen; autosave that JSON
-      if (cur.most && cur.least && cur.most !== cur.least) {
-        const payload = JSON.stringify({ most: cur.most, least: cur.least });
-        setAnswers((a) => ({ ...a, [qid]: payload }));
-        persist(qid, payload);
-      } else {
-        setAnswers((a) => { const c = { ...a }; delete c[qid]; return c; });
-      }
-      return next;
-    });
-  }, []);
+
 
   return (
     <div className="space-y-6">
