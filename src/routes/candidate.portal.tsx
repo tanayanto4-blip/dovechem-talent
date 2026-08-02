@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useCandidateSession, setCandidateSession } from "@/lib/candidate-session";
 import { Button } from "@/components/ui/button";
 import { Beaker, LogOut, User, ClipboardList, Home } from "lucide-react";
+import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/candidate/portal")({
   head: () => ({ meta: [{ title: "Portal Kandidat — PT Dover Chemical" }] }),
@@ -38,7 +39,7 @@ function PortalLayout() {
       <header className="border-b bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2.5">
-            <Beaker className="h-5 w-5 text-primary-glow" />
+            <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="h-8 w-auto rounded bg-white/95 p-0.5 object-contain" />
             <div>
               <div className="font-display text-sm font-bold">PT DOVER CHEMICAL</div>
               <div className="text-[10px] uppercase tracking-widest text-white/60">Portal Kandidat</div>

@@ -9,6 +9,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { bootstrapStatus, createBootstrapAdmin } from "@/lib/users.functions";
 import { toast } from "sonner";
 import { Beaker, ArrowLeft, Lock } from "lucide-react";
+import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Login Admin — PT Dover Chemical" }, { name: "description", content: "Login administrator HR PT Dover Chemical." }] }),
@@ -65,9 +66,7 @@ function AuthPage() {
         </Link>
         <Card className="shadow-elegant">
           <CardHeader className="text-center">
-            <div className="mx-auto grid h-12 w-12 place-items-center rounded-lg bg-hero text-primary-foreground">
-              <Beaker className="h-6 w-6" />
-            </div>
+            <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="mx-auto h-12 w-auto object-contain" />
             <CardTitle className="mt-3 font-display text-2xl">
               {needsBootstrap ? "Setup Super Admin" : "Portal Admin HR"}
             </CardTitle>

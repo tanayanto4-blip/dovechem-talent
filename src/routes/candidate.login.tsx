@@ -9,6 +9,7 @@ import { candidateLogin } from "@/lib/candidate.functions";
 import { setCandidateSession } from "@/lib/candidate-session";
 import { toast } from "sonner";
 import { Beaker, ArrowLeft, KeyRound } from "lucide-react";
+import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/candidate/login")({
   head: () => ({ meta: [{ title: "Login Kandidat — PT Dover Chemical" }, { name: "description", content: "Login kandidat dengan kode akses untuk mengerjakan psikotest PT Dover Chemical." }] }),
@@ -46,9 +47,7 @@ function CandidateLogin() {
         </Link>
         <Card className="shadow-elegant">
           <CardHeader className="text-center">
-            <div className="mx-auto grid h-12 w-12 place-items-center rounded-lg bg-hero text-primary-foreground">
-              <Beaker className="h-6 w-6" />
-            </div>
+            <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="mx-auto h-12 w-auto object-contain" />
             <CardTitle className="mt-3 font-display text-2xl">Portal Kandidat</CardTitle>
             <CardDescription>Masukkan kode akses yang dikirim tim HR</CardDescription>
           </CardHeader>

@@ -7,6 +7,7 @@ import { getMyRoles, logStaffAccess } from "@/lib/admin.functions";
 import { useCandidatesRealtime } from "@/hooks/use-candidates-realtime";
 import { Button } from "@/components/ui/button";
 import { Beaker, LayoutDashboard, KeyRound, Users, LogOut, UserCog, ClipboardList, ShieldCheck, FolderOpen, BarChart3, Volume2, Unlock } from "lucide-react";
+import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
@@ -70,7 +71,7 @@ function AdminLayout() {
       <header className="border-b bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2.5">
-            <Beaker className="h-5 w-5 text-primary-glow" />
+            <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="h-8 w-auto rounded bg-white/95 p-0.5 object-contain" />
             <div>
               <div className="font-display text-sm font-bold">PT DOVER CHEMICAL</div>
               <div className="text-[10px] uppercase tracking-widest text-white/60">Admin HR Panel</div>
