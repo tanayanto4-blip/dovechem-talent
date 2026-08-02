@@ -291,12 +291,14 @@ function AttemptDetail() {
         </Card>
       )}
 
-      <div className={`space-y-3 ${isPauli ? "hidden" : ""}`}>
-        {data.questions.map((q: any, i: number) => {
+      <div className="space-y-3">
+        {(isPauli ? [] : data.questions).map((q: any, i: number) => {
           const ans = answerMap.get(q.id);
+          const opts: any[] = Array.isArray(q.options) ? q.options : [];
           let disc: { most?: string; least?: string } | null = null;
           if (isDisc && ans?.answer) { try { disc = JSON.parse(ans.answer); } catch { disc = null; } }
           const correct = !isDisc && q.correct_answer && ans?.answer === q.correct_answer;
+
           return (
             <Card key={q.id} className="shadow-card">
               <CardContent className="p-4">
@@ -309,7 +311,7 @@ function AttemptDetail() {
                 {q.question_text && <div className="mb-2 text-sm font-medium">{q.question_text}</div>}
                 {isDisc ? (
                   <div className="overflow-hidden rounded-md border text-sm">
-                    {(q.options ?? []).map((opt: any) => {
+                    {opts.map((opt: any) => {
                       const isMost = disc?.most === opt.key;
                       const isLeast = disc?.least === opt.key;
                       return (
@@ -323,7 +325,7 @@ function AttemptDetail() {
                   </div>
                 ) : (
                   <div className="space-y-1 text-sm">
-                    {(q.options ?? []).map((opt: any) => {
+                    {opts.map((opt: any) => {
                       const picked = ans?.answer === opt.key;
                       const isKey = q.correct_answer === opt.key;
                       return (
@@ -336,7 +338,7 @@ function AttemptDetail() {
                       );
                     })}
                     {!ans && <div className="text-xs italic text-muted-foreground">Tidak dijawab</div>}
-                    {ans && !(q.options ?? []).some((o: any) => o.key === ans.answer) && (
+                    {ans && !opts.some((o: any) => o.key === ans.answer) && (
                       <div className="rounded border bg-muted/40 p-2 text-xs">Jawaban: <b>{ans.answer}</b></div>
                     )}
                   </div>

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { createAdminUser, deleteAdminUser, listAdminUsers, resetUserPassword } from "@/lib/users.functions";
+import { getMyRoles } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,11 +19,22 @@ export const Route = createFileRoute("/admin/users")({ component: UsersPage });
 
 function UsersPage() {
   const qc = useQueryClient();
+  const rolesFn = useServerFn(getMyRoles);
+  const { data: myRoles, isPending: rolesLoading } = useQuery({
+    queryKey: ["my-roles"],
+    queryFn: () => rolesFn({ data: {} as never }),
+  });
+  const isAdmin = !!myRoles?.roles?.includes("admin");
   const listFn = useServerFn(listAdminUsers);
   const createFn = useServerFn(createAdminUser);
   const deleteFn = useServerFn(deleteAdminUser);
   const resetFn = useServerFn(resetUserPassword);
-  const { data } = useQuery({ queryKey: ["admin-users"], queryFn: () => listFn({ data: {} as never }) });
+  const { data } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: () => listFn({ data: {} as never }),
+    enabled: isAdmin,
+  });
+
 
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -57,7 +69,21 @@ function UsersPage() {
     } catch (err: any) { toast.error(err.message); }
   }
 
+  if (!rolesLoading && !isAdmin) {
+    return (
+      <Card className="mx-auto max-w-lg">
+        <CardHeader>
+          <CardTitle>Akses terbatas</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          Manajemen User hanya dapat diakses oleh Super Admin.
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
+
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>

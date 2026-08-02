@@ -50,10 +50,11 @@ function AdminLayout() {
     { to: "/admin/instruksi", label: "Instruksi Suara", icon: Volume2 },
     { to: "/admin/test-access", label: "Kontrol Test", icon: Unlock },
     { to: "/admin/results", label: "Bank Data Hasil", icon: BarChart3 },
-    { to: "/admin/users", label: "User Admin/HR", icon: UserCog },
     ...(isAdmin ? [
+      { to: "/admin/users", label: "User Admin/HR", icon: UserCog },
       { to: "/admin/audit", label: "Audit Log", icon: ShieldCheck },
     ] : []),
+
   ];
 
 
