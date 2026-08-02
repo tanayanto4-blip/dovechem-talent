@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS candidates_set_updated_at ON public.candidates;
