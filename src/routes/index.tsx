@@ -150,10 +150,10 @@ function Home() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             {[
-              { i: ShieldCheck, t: "Aman & Terkontrol", d: "Kode akses punya masa berlaku dan setiap akses hasil tercatat pada audit log." },
-              { i: ClipboardList, t: "Test Terstandar", d: "MBTI, DISC, EQ, WPT, Pauli, dan PAPI Kostick dengan penilaian otomatis." },
-              { i: Users, t: "Dipantau HR", d: "Biodata dan hasil kandidat tersinkron langsung ke dashboard Admin & HR." },
-              { i: CheckCircle2, t: "Autosave Jawaban", d: "Jawaban tersimpan per soal sehingga test bisa dilanjutkan tanpa kehilangan progres." },
+              { i: ClipboardList, t: "Produsen Bahan Kimia", d: "Memproduksi resin, hardener, dan bahan kimia industri untuk pasar domestik maupun ekspor." },
+              { i: ShieldCheck, t: "Standar Mutu & K3", d: "Operasional pabrik mengacu pada standar mutu, keselamatan kerja, dan kelestarian lingkungan." },
+              { i: Users, t: "Pengembangan SDM", d: "Karyawan didukung program pelatihan, jenjang karier, dan budaya kerja yang kolaboratif." },
+              { i: CheckCircle2, t: "Inovasi Berkelanjutan", d: "Tim R&D terus mengembangkan formulasi baru sesuai kebutuhan pelanggan industri." },
             ].map((f) => (
               <div key={f.t} className="rounded-xl border bg-card p-5 shadow-card">
                 <f.i className="h-6 w-6 text-primary-glow" />
