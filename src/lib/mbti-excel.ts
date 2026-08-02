@@ -104,7 +104,7 @@ export async function exportMbtiExcel(answers: MbtiExcelAnswer[], meta: MbtiExce
 
   // Identitas kandidat pada baris tanda tangan
   const nama = [meta.candidateName, meta.candidateCode].filter(Boolean).join(" — ") || "-";
-  ws.getCell("B64").value = `Nama lengkap & Usia : ${nama}`;
+  ws.getCell("B64").value = `Nama lengkap & Usia : ${nama} (${meta.age ?? "-"} th)`;
   ws.getCell("E64").value = `Pendidikan & Jabatan : ${meta.education ?? "-"} - ${meta.position ?? "-"}`;
 
   // Paksa Excel menghitung ulang seluruh rumus saat file dibuka
