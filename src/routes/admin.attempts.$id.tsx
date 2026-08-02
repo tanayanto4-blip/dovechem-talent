@@ -255,8 +255,16 @@ function AttemptDetail() {
         <PauliResult
           questions={data.questions as any[]}
           answerOf={(qid: string) => answerMap.get(qid)?.answer}
+          meta={{
+            candidateName: a.candidates?.full_name,
+            candidateCode: a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot,
+            position: a.candidates?.position ?? null,
+            startedAt: a.started_at,
+            finishedAt: a.finished_at,
+          }}
         />
       )}
+
 
       {a.result && !isPapi && !isPauli && (
         <Card className="shadow-card">
