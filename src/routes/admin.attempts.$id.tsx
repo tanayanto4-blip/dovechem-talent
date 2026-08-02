@@ -12,6 +12,7 @@ import { exportEqExcel } from "@/lib/eq-excel";
 import { exportWptExcel } from "@/lib/wpt-excel";
 import { exportDiscExcel } from "@/lib/disc-excel";
 import { exportPapiPdf } from "@/lib/papi-pdf";
+import { PauliResult } from "@/components/pauli-result";
 import { papiScore, PAPI_SCALE_LABEL, PAPI_TOP_ORDER, PAPI_BOTTOM_ORDER } from "@/lib/papi-key";
 import { toast } from "sonner";
 
@@ -31,6 +32,7 @@ function AttemptDetail() {
   const isEq = t?.test_type === "eq";
   const isWpt = t?.test_type === "wpt";
   const isPapi = t?.test_type === "papi";
+  const isPauli = t?.test_type === "pauli";
   const candId = a.candidates?.id;
   const papiPicks: Record<number, string> = {};
   if (isPapi) {
@@ -249,7 +251,14 @@ function AttemptDetail() {
         </Card>
       )}
 
-      {a.result && !isPapi && (
+      {isPauli && (
+        <PauliResult
+          questions={data.questions as any[]}
+          answerOf={(qid: string) => answerMap.get(qid)?.answer}
+        />
+      )}
+
+      {a.result && !isPapi && !isPauli && (
         <Card className="shadow-card">
           <CardHeader><CardTitle>Ringkasan Hasil</CardTitle></CardHeader>
           <CardContent>
@@ -274,7 +283,7 @@ function AttemptDetail() {
         </Card>
       )}
 
-      <div className="space-y-3">
+      <div className={`space-y-3 ${isPauli ? "hidden" : ""}`}>
         {data.questions.map((q: any, i: number) => {
           const ans = answerMap.get(q.id);
           let disc: { most?: string; least?: string } | null = null;
