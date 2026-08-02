@@ -165,6 +165,7 @@ function AttemptDetail() {
                 try {
                   const res = exportPapiPdf(papiPicks, {
                     ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
+                    startedAt: a.started_at,
                   });
                   toast.success(
                     `Lembar jawaban PAPI diunduh — ${res.answered}/90 terisi, skala tertinggi ${res.highest.join(", ") || "-"}`,
