@@ -91,13 +91,14 @@ export function BiodataBank() {
   }
 
   function downloadAllCsv() {
-    if (!filtered.length) return;
+    if (!exportRows.length) return;
     downloadCsv(
-      [["Kode", ...FIELDS.map((f) => f.label)], ...filtered.map(rowFor)],
+      [["Kode", ...FIELDS.map((f) => f.label)], ...exportRows.map(rowFor)],
       `rekap_biodata_kandidat_${new Date().toISOString().slice(0, 10)}.csv`,
     );
-    toast.success(`${filtered.length} biodata diunduh (CSV)`);
+    toast.success(`${exportRows.length} biodata diunduh (CSV)`);
   }
+
 
   async function run(fn: () => void | Promise<void>, msg: string) {
     try {
