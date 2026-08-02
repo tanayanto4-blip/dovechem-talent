@@ -207,14 +207,15 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9.5);
     doc.text(subtitle, 52, 104);
-    doc.setLineWidth(0.8);
-    doc.line(52, 112, w - 52, 112);
     doc.setFontSize(9);
-    doc.text(`Name  : ${meta.candidateName || "-"}`, 52, 130);
-    doc.text(`Kode  : ${meta.candidateCode || "-"}`, 300, 130);
-    doc.text(`Posisi: ${meta.position || "-"}`, 500, 130);
-    doc.text(`Date  : ${fmtDate(meta.finishedAt ?? meta.startedAt) || "-"}`, 700, 130);
+    doc.text(`Name  : ${meta.candidateName || "-"}`, 52, 128);
+    doc.text(`Kode  : ${meta.candidateCode || "-"}`, 300, 128);
+    doc.text(`Posisi: ${meta.position || "-"}`, 500, 128);
+    doc.text(`Date  : ${fmtDate(meta.finishedAt ?? meta.startedAt) || "-"}`, 700, 128);
+    doc.setLineWidth(0.8);
+    doc.line(52, 138, w - 52, 138);
     return w;
+
   };
 
   // Halaman 2: rekap skala — dua tabel berkotak (Roles & Needs)
