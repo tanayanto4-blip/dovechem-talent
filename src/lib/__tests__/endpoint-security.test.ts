@@ -172,6 +172,7 @@ describe("endpoint security — no sensitive-field leaks", () => {
         expect(projection, `${name}: correct_answer forbidden`).not.toMatch(/\bcorrect_answer\b/);
       }
     }
+    expect(totalSelects, "expected at least one safe test_questions projection").toBeGreaterThan(0);
   });
 
   it("candidateSubmitTest reads the answer key server-side but never returns it", () => {
