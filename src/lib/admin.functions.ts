@@ -321,6 +321,36 @@ export const deleteCandidateResults = createServerFn({ method: "POST" })
     return { ok: true, deleted: ids.length };
   });
 
+/** Hapus satu kandidat beserta seluruh data turunannya (jawaban, attempt, berkas, akses test). */
+export const deleteCandidate = createServerFn({ method: "POST" })
+  .middleware([requireStaff])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const sb = context.supabase;
+    const { data: cand } = await sb.from("candidates").select("full_name").eq("id", data.id).maybeSingle();
+
+    const { data: attempts, error: listErr } = await sb.from("test_attempts").select("id").eq("candidate_id", data.id);
+    if (listErr) throw new Error(listErr.message);
+    const ids = (attempts ?? []).map((a) => a.id);
+    if (ids.length) {
+      const { error: ansErr } = await sb.from("test_answers").delete().in("attempt_id", ids);
+      if (ansErr) throw new Error(ansErr.message);
+      const { error: attErr } = await sb.from("test_attempts").delete().in("id", ids);
+      if (attErr) throw new Error(attErr.message);
+    }
+    await sb.from("candidate_files").delete().eq("candidate_id", data.id);
+    await sb.from("candidate_test_access").delete().eq("candidate_id", data.id);
+
+    const { error } = await sb.from("candidates").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+
+    await logAudit(context, "candidate.delete", "candidate", data.id, {
+      full_name: cand?.full_name ?? null,
+      attempts_deleted: ids.length,
+    });
+    return { ok: true, deleted_attempts: ids.length };
+  });
+
 
 
 

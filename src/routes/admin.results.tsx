@@ -94,6 +94,77 @@ function ResultsBank() {
     }
   }
 
+  async function answerRows(id: string) {
+    const d: any = await detailFn({ data: { id } });
+    const map = new Map<string, any>((d.attempt?.test_answers ?? []).map((x: any) => [x.question_id, x]));
+    return {
+      d,
+      rows: (d.questions ?? []).map((q: any) => ({ question_number: q.question_number, answer: map.get(q.id)?.answer })),
+      map,
+    };
+  }
+
+  /** Unduh dokumen hasil (Excel) untuk satu attempt. Return true kalau tipe test didukung. */
+  async function exportAttemptDoc(r: any, g: Group) {
+    const meta = { candidateName: g.name, candidateCode: g.code, position: g.position, finishedAt: r.finished_at };
+    const t = r.tests?.test_type;
+    if (t === "mbti") {
+      const { rows } = await answerRows(r.id);
+      await exportMbtiExcel(rows, meta);
+      return true;
+    }
+    if (t === "eq") {
+      const { rows } = await answerRows(r.id);
+      await exportEqExcel(rows, meta);
+      return true;
+    }
+    if (t === "wpt") {
+      const { rows } = await answerRows(r.id);
+      await exportWptExcel(rows, meta);
+      return true;
+    }
+    if (t === "disc") {
+      const { rows } = await answerRows(r.id);
+      await exportDiscExcel(rows, meta);
+      return true;
+    }
+    if (t === "papi") {
+      const { d, map } = await answerRows(r.id);
+      const picks: Record<number, string> = {};
+      for (const q of d.questions ?? []) {
+        const ans = String(map.get(q.id)?.answer ?? "").trim().toUpperCase();
+        if (ans === "A" || ans === "B") picks[q.question_number] = ans;
+      }
+      await exportPapiExcel(picks, meta);
+      return true;
+    }
+    return false;
+  }
+
+  const [bulkKey, setBulkKey] = useState<string | null>(null);
+
+  async function downloadGroupDocs(g: Group) {
+    setBulkKey(g.key);
+    let ok = 0;
+    let skipped = 0;
+    try {
+      for (const r of g.attempts) {
+        try {
+          const done = await exportAttemptDoc(r, g);
+          if (done) ok++;
+          else skipped++;
+        } catch {
+          skipped++;
+        }
+        await new Promise((res) => setTimeout(res, 350));
+      }
+      if (ok) toast.success(`${ok} dokumen hasil ${g.name} diunduh${skipped ? ` · ${skipped} dilewati` : ""}`);
+      else toast.error("Tidak ada dokumen hasil yang bisa diunduh untuk kandidat ini");
+    } finally {
+      setBulkKey(null);
+    }
+  }
+
   const rows = useMemo(() => {
     const all = (data?.attempts ?? []) as any[];
     const needle = q.trim().toLowerCase();
@@ -277,6 +348,20 @@ function ResultsBank() {
                         <span className="hidden sm:inline">Awal: {fmt(g.first)} → Akhir: {fmt(g.last)}</span>
                       </span>
                     </button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="shrink-0"
+                      disabled={bulkKey === g.key}
+                      title="Unduh semua dokumen hasil test kandidat ini"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void downloadGroupDocs(g);
+                      }}
+                    >
+                      <FileDown className="mr-1 h-3.5 w-3.5" />
+                      {bulkKey === g.key ? "Menyiapkan..." : "Unduh semua"}
+                    </Button>
                     <Button
                       size="icon"
                       variant="ghost"
