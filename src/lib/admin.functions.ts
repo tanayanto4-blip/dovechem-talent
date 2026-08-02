@@ -800,16 +800,23 @@ export const logMbtiExport = createServerFn({ method: "POST" })
  * Bank Data Hasil — staff-only listing of every psikotest attempt across all
  * candidates. Scores/results are visible to admin & HR only.
  */
-export const listAllAttempts = createServerFn({ method: "GET" })
+export const listAllAttempts = createServerFn({ method: "POST" })
   .middleware([requireStaff])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+  .inputValidator((d) => z.object({ limit: z.number().int().min(1).max(1000).optional(), offset: z.number().int().min(0).optional() }).parse(d ?? {}))
+  .handler(async ({ context, data }) => {
+    const limit = data.limit ?? 500;
+    const offset = data.offset ?? 0;
+    const { data: rows, error, count } = await context.supabase
       .from("test_attempts")
-      .select("id, status, score, result, started_at, finished_at, test_id, candidate_id, tests(id, code, name, test_type), candidates(id, full_name, position_applied, code_snapshot, candidate_codes(code))")
+      .select(
+        "id, status, score, result, started_at, finished_at, test_id, candidate_id, tests(id, code, name, test_type), candidates(id, full_name, position_applied, code_snapshot, candidate_codes(code))",
+        { count: "exact" },
+      )
       .order("finished_at", { ascending: false, nullsFirst: false })
-      .order("started_at", { ascending: false });
+      .order("started_at", { ascending: false })
+      .range(offset, offset + limit - 1);
     if (error) throw new Error(error.message);
-    return { attempts: data ?? [] };
+    return { attempts: rows ?? [], total: count ?? 0, limit, offset };
   });
 
 

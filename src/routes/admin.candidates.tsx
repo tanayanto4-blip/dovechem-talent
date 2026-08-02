@@ -11,7 +11,7 @@ export const Route = createFileRoute("/admin/candidates")({ component: Candidate
 
 function CandidatesList() {
   const listFn = useServerFn(listCandidates);
-  const { data } = useQuery({ queryKey: ["candidates"], queryFn: () => listFn({ data: {} as never }) });
+  const { data } = useQuery({ queryKey: ["candidates"], queryFn: () => listFn({ data: { limit: 1000 } }) });
 
   return (
     <div className="space-y-6">

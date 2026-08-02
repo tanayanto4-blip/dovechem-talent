@@ -46,7 +46,7 @@ function DocumentsBank() {
   const signed = useServerFn(getFileSignedUrl);
   const { data, isLoading } = useQuery({
     queryKey: ["all-candidate-files"],
-    queryFn: () => listFn({ data: {} as never }),
+    queryFn: () => listFn({ data: { limit: 1000 } }),
   });
 
   const [q, setQ] = useState("");
