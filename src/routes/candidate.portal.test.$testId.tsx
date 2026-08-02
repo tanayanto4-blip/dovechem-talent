@@ -396,17 +396,21 @@ function TakeTest() {
       setSaveState("error");
     }
   }
-  function persistDebounced(qid: string, answer: string, delay = 500) {
+  const persistDebounced = useCallback((qid: string, answer: string, delay = 500) => {
     if (timers.current[qid]) clearTimeout(timers.current[qid]);
     setSaveState("saving");
     timers.current[qid] = setTimeout(() => { persist(qid, answer); }, delay);
-  }
-  function pickMcq(qid: string, key: string) {
+  }, []);
+  const pickMcq = useCallback((qid: string, key: string) => {
     setAnswers((a) => ({ ...a, [qid]: key }));
     persist(qid, key);
-  }
+  }, []);
+  const handleTextChange = useCallback((qid: string, value: string) => {
+    setAnswers((a) => ({ ...a, [qid]: value }));
+    persistDebounced(qid, value);
+  }, [persistDebounced]);
 
-  function setDisc(qid: string, kind: "most" | "least", key: string) {
+  const setDisc = useCallback((qid: string, kind: "most" | "least", key: string) => {
     setDiscPicks((prev) => {
       const cur = { ...(prev[qid] ?? {}) };
       // Toggle off if same, else set and clear opposite if collides
@@ -427,7 +431,7 @@ function TakeTest() {
       }
       return next;
     });
-  }
+  }, []);
 
   return (
     <div className="space-y-6">
