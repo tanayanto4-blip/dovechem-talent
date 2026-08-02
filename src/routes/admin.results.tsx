@@ -361,7 +361,63 @@ function ResultsBank() {
                                           <FileSpreadsheet className="mr-1 h-3.5 w-3.5" /> Excel
                                         </Button>
                                       )}
+                                      {r.tests?.test_type === "papi" && (
+                                        <Button
+                                          size="sm"
+                                          variant="secondary"
+                                          onClick={async () => {
+                                            try {
+                                              const d: any = await detailFn({ data: { id: r.id } });
+                                              const map = new Map<string, any>((d.attempt?.test_answers ?? []).map((x: any) => [x.question_id, x]));
+                                              const picks: Record<number, string> = {};
+                                              for (const q of d.questions ?? []) {
+                                                const ans = String(map.get(q.id)?.answer ?? "").trim().toUpperCase();
+                                                if (ans === "A" || ans === "B") picks[q.question_number] = ans;
+                                              }
+                                              const res = await exportPapiExcel(picks, {
+                                                candidateName: g.name,
+                                                candidateCode: g.code,
+                                                position: g.position,
+                                                finishedAt: r.finished_at,
+                                              });
+                                              toast.success(`Excel PAPI diunduh — ${res.answered}/${res.total} item, skala tertinggi ${res.highest.join(", ") || "-"}`);
+                                            } catch (e: any) {
+                                              toast.error(e?.message ?? "Gagal membuat file Excel");
+                                            }
+                                          }}
+                                        >
+                                          <FileSpreadsheet className="mr-1 h-3.5 w-3.5" /> Excel
+                                        </Button>
+                                      )}
+                                      {r.tests?.test_type === "disc" && (
+                                        <Button
+                                          size="sm"
+                                          variant="secondary"
+                                          onClick={async () => {
+                                            try {
+                                              const d: any = await detailFn({ data: { id: r.id } });
+                                              const map = new Map<string, any>((d.attempt?.test_answers ?? []).map((x: any) => [x.question_id, x]));
+                                              const rows = (d.questions ?? []).map((q: any) => ({
+                                                question_number: q.question_number,
+                                                answer: map.get(q.id)?.answer,
+                                              }));
+                                              const res: any = await exportDiscExcel(rows, {
+                                                candidateName: g.name,
+                                                candidateCode: g.code,
+                                                position: g.position,
+                                                finishedAt: r.finished_at,
+                                              });
+                                              toast.success(`Excel DISC diunduh — ${res?.filled ?? 0}/${res?.total ?? 24} kelompok terisi`);
+                                            } catch (e: any) {
+                                              toast.error(e?.message ?? "Gagal membuat file Excel");
+                                            }
+                                          }}
+                                        >
+                                          <FileSpreadsheet className="mr-1 h-3.5 w-3.5" /> Excel
+                                        </Button>
+                                      )}
                                     </div>
+
                                   </td>
                                 </tr>
                               </Fragment>
