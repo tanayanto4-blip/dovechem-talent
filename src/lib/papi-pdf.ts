@@ -223,7 +223,7 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
 
   const drawScaleTable = (title: string, order: readonly string[], x: number, top: number) => {
     const tw = 330;
-    const rowH = 22;
+    const rowH = 26;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(20);
@@ -233,32 +233,35 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
     // header baris
     doc.rect(x, top, tw, rowH);
     doc.setFontSize(8.5);
-    doc.text("Skala", x + 8, top + 14);
-    doc.text("Skor", x + tw - 96, top + 14);
-    doc.text("Grafik (0-9)", x + tw - 70, top + 14);
+    doc.text("Skala", x + 8, top + 17);
+    doc.text("Skor", x + tw - 104, top + 17);
+    doc.text("Grafik (0-9)", x + tw - 74, top + 17);
     doc.setFont("helvetica", "normal");
     order.forEach((letter, i) => {
       const y0 = top + rowH * (i + 1);
       const v = s.scales[letter] ?? 0;
       doc.setLineWidth(0.6);
       doc.rect(x, y0, tw, rowH);
-      doc.line(x + tw - 110, y0, x + tw - 110, y0 + rowH);
-      doc.line(x + tw - 80, y0, x + tw - 80, y0 + rowH);
-      doc.setFontSize(8);
-      doc.text(PAPI_SCALE_LABEL[letter] ?? letter, x + 8, y0 + 14, { maxWidth: tw - 122 });
+      doc.line(x + tw - 112, y0, x + tw - 112, y0 + rowH);
+      doc.line(x + tw - 82, y0, x + tw - 82, y0 + rowH);
+      doc.setFontSize(7.5);
+      const lines = doc.splitTextToSize(PAPI_SCALE_LABEL[letter] ?? letter, tw - 124).slice(0, 2);
+      const startTextY = lines.length > 1 ? y0 + 11 : y0 + 16;
+      lines.forEach((ln: string, li: number) => doc.text(ln, x + 8, startTextY + li * 9));
       doc.setFont("helvetica", "bold");
-      doc.text(String(v), x + tw - 95, y0 + 14);
+      doc.setFontSize(9);
+      doc.text(String(v), x + tw - 102, y0 + 17);
       doc.setFont("helvetica", "normal");
       // grafik kotak 9 sel
       doc.setFillColor(30, 30, 30);
       for (let c = 0; c < 9; c++) {
-
-        const bx = x + tw - 74 + c * 7.5;
+        const bx = x + tw - 76 + c * 7.6;
         doc.setLineWidth(0.4);
-        doc.rect(bx, y0 + 6, 6, 10);
-        if (c < v) doc.rect(bx, y0 + 6, 6, 10, "F");
+        doc.rect(bx, y0 + 8, 6, 10);
+        if (c < v) doc.rect(bx, y0 + 8, 6, 10, "F");
       }
     });
+
     // total
     const yT = top + rowH * (order.length + 1);
     doc.setLineWidth(0.8);
