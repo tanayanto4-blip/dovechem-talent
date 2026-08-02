@@ -4,6 +4,7 @@ export type BiodataField = { key: string; label: string };
 
 export const BIODATA_FIELDS: BiodataField[] = [
   { key: "full_name", label: "Nama Lengkap" },
+  { key: "gender", label: "Jenis Kelamin" },
   { key: "school_name", label: "Nama Sekolah/Universitas" },
   { key: "education", label: "Pendidikan" },
   { key: "major", label: "Jurusan" },
