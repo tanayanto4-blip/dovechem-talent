@@ -66,6 +66,11 @@ export function BiodataBank() {
     queryFn: () => listFn({ data: {} as never }),
   });
   const [q, setQ] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [toDelete, setToDelete] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const qc = useQueryClient();
+  const clearFn = useServerFn(clearCandidateBiodata);
 
   const candidates = ((data?.candidates ?? []) as any[]).filter((c) => c.full_name || c.data_completed);
   const filtered = useMemo(() => {
@@ -78,6 +83,38 @@ export function BiodataBank() {
     );
   }, [candidates, q]);
 
+  const selectedSet = useMemo(() => new Set(selected), [selected]);
+  /** Kandidat yang dicentang; jika belum ada centang, pakai seluruh hasil filter. */
+  const target = useMemo(
+    () => (selected.length ? filtered.filter((c) => selectedSet.has(c.id)) : filtered),
+    [filtered, selected.length, selectedSet],
+  );
+  const allChecked = filtered.length > 0 && filtered.every((c) => selectedSet.has(c.id));
+
+  function toggleOne(id: string, on: boolean) {
+    setSelected((prev) => (on ? [...new Set([...prev, id])] : prev.filter((x) => x !== id)));
+  }
+  function toggleAll(on: boolean) {
+    setSelected(on ? filtered.map((c) => c.id) : []);
+  }
+
+  async function confirmDelete() {
+    if (!toDelete) return;
+    setDeleting(true);
+    try {
+      await clearFn({ data: { id: toDelete.id } });
+      setSelected((prev) => prev.filter((x) => x !== toDelete.id));
+      await qc.invalidateQueries({ queryKey: ["biodata-bank-candidates"] });
+      toast.success(`Biodata ${toDelete.full_name ?? "kandidat"} dihapus`);
+      setToDelete(null);
+    } catch (e) {
+      console.error(e);
+      toast.error("Gagal menghapus biodata");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   function rowFor(c: any) {
     return [c.candidate_codes?.code ?? c.code_snapshot ?? "", ...FIELDS.map((f) => c[f.key] ?? "")];
   }
@@ -88,13 +125,14 @@ export function BiodataBank() {
   }
 
   function downloadAllCsv() {
-    if (!filtered.length) return;
+    if (!target.length) return;
     downloadCsv(
-      [["Kode", ...FIELDS.map((f) => f.label)], ...filtered.map(rowFor)],
+      [["Kode", ...FIELDS.map((f) => f.label)], ...target.map(rowFor)],
       `rekap_biodata_kandidat_${new Date().toISOString().slice(0, 10)}.csv`,
     );
-    toast.success(`${filtered.length} biodata diunduh (CSV)`);
+    toast.success(`${target.length} biodata diunduh (CSV)`);
   }
+
 
   async function run(fn: () => void | Promise<void>, msg: string) {
     try {
