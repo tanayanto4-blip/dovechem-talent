@@ -25,6 +25,11 @@ function AdminLayout() {
   const rolesFn = useServerFn(getMyRoles);
   const { data: roles } = useQuery({ queryKey: ["my-roles"], queryFn: () => rolesFn({ data: {} as never }) });
 
+  // Biodata yang diubah kandidat langsung tersinkron ke dashboard staf.
+  useCandidatesRealtime();
+
+
+
   // Audit staff dashboard access — one entry per area per session.
   const logAccess = useServerFn(logStaffAccess);
   const loggedAreas = useRef<Set<string>>(new Set());
