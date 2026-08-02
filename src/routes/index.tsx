@@ -150,10 +150,10 @@ function Home() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             {[
-              { i: ShieldCheck, t: "Aman & Terenkripsi", d: "Data pribadi dan berkas Anda dilindungi dengan standar keamanan tinggi." },
-              { i: ClipboardList, t: "Terstruktur", d: "Test dan pengisian data mengikuti alur yang jelas." },
-              { i: Users, t: "Dipantau HR", d: "Setiap kandidat dievaluasi langsung oleh tim rekrutmen kami." },
-              { i: CheckCircle2, t: "Real-time", d: "Progress test tersimpan otomatis." },
+              { i: ShieldCheck, t: "Aman & Terkontrol", d: "Kode akses punya masa berlaku dan setiap akses hasil tercatat pada audit log." },
+              { i: ClipboardList, t: "Test Terstandar", d: "MBTI, DISC, EQ, WPT, Pauli, dan PAPI Kostick dengan penilaian otomatis." },
+              { i: Users, t: "Dipantau HR", d: "Biodata dan hasil kandidat tersinkron langsung ke dashboard Admin & HR." },
+              { i: CheckCircle2, t: "Autosave Jawaban", d: "Jawaban tersimpan per soal sehingga test bisa dilanjutkan tanpa kehilangan progres." },
             ].map((f) => (
               <div key={f.t} className="rounded-xl border bg-card p-5 shadow-card">
                 <f.i className="h-6 w-6 text-primary-glow" />
@@ -170,17 +170,22 @@ function Home() {
         <div className="mx-auto max-w-7xl px-6">
           <div className="max-w-2xl">
             <div className="text-xs font-semibold uppercase tracking-widest text-secondary">Alur Kandidat</div>
-            <h2 className="mt-3 font-display text-4xl font-bold text-primary">4 langkah dari kode akses hingga hasil</h2>
+            <h2 className="mt-3 font-display text-4xl font-bold text-primary">5 langkah dari kode akses hingga hasil</h2>
+            <p className="mt-3 text-muted-foreground">
+              Alur terbaru portal rekrutmen PT Dover Chemical — tanpa unggah berkas, cukup biodata dan pengerjaan test online.
+            </p>
           </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-4">
-            {[
-              { n: 1, t: "Login dengan Kode", d: "Masukkan kode akses yang dikirim tim HR ke email Anda." },
-              { n: 2, t: "Isi Data Diri", d: "Lengkapi biodata lalu upload KTP, KK, CV, ijazah dan transkrip." },
-              { n: 3, t: "Kerjakan Psikotest", d: "Test logika, kepribadian DISC, dan ketelitian Kraepelin." },
-              { n: 4, t: "Hasil Dievaluasi", d: "Tim HR akan menghubungi Anda untuk tahap selanjutnya." },
-            ].map((s) => (
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+            {STEPS.map((s, i) => (
               <div key={s.n} className="relative rounded-xl border bg-card p-6 shadow-card">
-                <div className="mb-4 grid h-10 w-10 place-items-center rounded-md bg-hero font-display text-lg font-bold text-primary-foreground">{s.n}</div>
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-hero font-display text-lg font-bold text-primary-foreground">
+                    {i + 1}
+                  </div>
+                  {i < STEPS.length - 1 && (
+                    <ArrowRight className="hidden h-4 w-4 text-muted-foreground/50 lg:block" />
+                  )}
+                </div>
                 <div className="font-semibold text-primary">{s.t}</div>
                 <div className="mt-1 text-sm text-muted-foreground">{s.d}</div>
               </div>
