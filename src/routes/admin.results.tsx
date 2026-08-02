@@ -481,6 +481,31 @@ function ResultsBank() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus hasil psikotest kandidat?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Seluruh {toDelete?.attempts.length ?? 0} hasil test milik {toDelete?.name ?? "kandidat ini"} beserta lembar
+              jawabannya akan dihapus permanen. Biodata dan kode akses tetap tersimpan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmDeleteGroup();
+              }}
+            >
+              {deleting ? "Menghapus..." : "Hapus hasil"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
