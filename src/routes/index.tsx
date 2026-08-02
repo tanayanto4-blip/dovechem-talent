@@ -52,8 +52,9 @@ function Home() {
               <span className="text-primary-glow">PT Dover Chemical</span>
             </h1>
             <p className="mt-6 max-w-lg text-lg text-white/80">
-              Platform psikotest & administrasi rekrutmen untuk calon karyawan.
-              Kandidat login dengan kode akses yang diberikan tim HR untuk mengerjakan test dan melengkapi berkas.
+              Platform psikotest &amp; administrasi rekrutmen untuk calon karyawan.
+              Kandidat login dengan kode akses dari tim HR, mengisi biodata, lalu mengerjakan
+              rangkaian psikotest resmi secara online.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg" className="bg-primary-glow text-primary-foreground hover:bg-primary-glow/90">
@@ -63,21 +64,23 @@ function Home() {
                 <Link to="/auth">Panel Admin HR</Link>
               </Button>
             </div>
+            <div className="mt-8 flex flex-wrap gap-2">
+              {["MBTI", "DISC", "EQ", "WPT", "Pauli", "PAPI Kostick"].map((t) => (
+                <span key={t} className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur">
+                  {t}
+                </span>
+              ))}
+            </div>
           </div>
           <div className="hidden md:block">
             <div className="relative rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur shadow-elegant">
-              <div className="space-y-4">
-                {[
-                  { n: "01", t: "Terima Kode Akses", d: "Kode unik dikirim tim HR" },
-                  { n: "02", t: "Lengkapi Data Diri", d: "KTP, KK, CV, ijazah, transkrip" },
-                  { n: "03", t: "Kerjakan Psikotest", d: "Logika, DISC, Kraepelin" },
-                  { n: "04", t: "Menunggu Evaluasi", d: "Hasil dievaluasi tim HR" },
-                ].map((s) => (
+              <div className="space-y-3">
+                {STEPS.map((s) => (
                   <div key={s.n} className="flex items-start gap-4 rounded-lg border border-white/10 bg-white/5 p-4">
                     <div className="font-display text-2xl font-bold text-primary-glow">{s.n}</div>
                     <div>
                       <div className="font-semibold">{s.t}</div>
-                      <div className="text-sm text-white/70">{s.d}</div>
+                      <div className="text-sm text-white/70">{s.short}</div>
                     </div>
                   </div>
                 ))}
