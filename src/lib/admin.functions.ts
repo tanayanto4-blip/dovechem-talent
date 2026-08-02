@@ -169,17 +169,21 @@ export const bulkSetCodesActive = createServerFn({ method: "POST" })
     return { updated: count ?? 0 };
   });
 
-export const listCandidateCodes = createServerFn({ method: "GET" })
+export const listCandidateCodes = createServerFn({ method: "POST" })
   .middleware([requireStaff])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+  .inputValidator((d) => z.object({ limit: z.number().int().min(1).max(1000).optional(), offset: z.number().int().min(0).optional() }).parse(d ?? {}))
+  .handler(async ({ context, data }) => {
+    const limit = data.limit ?? 500;
+    const offset = data.offset ?? 0;
+    const { data: rows, error, count } = await context.supabase
       .from("candidate_codes")
-      .select("*, candidates(id, data_completed, updated_at)")
+      .select("*, candidates(id, data_completed, updated_at)", { count: "exact" })
       .order("created_at", { ascending: false })
       .order("code", { ascending: true })
-      .order("id", { ascending: true });
+      .order("id", { ascending: true })
+      .range(offset, offset + limit - 1);
     if (error) throw new Error(error.message);
-    return { codes: data ?? [] };
+    return { codes: rows ?? [], total: count ?? 0, limit, offset };
   });
 
 export const toggleCode = createServerFn({ method: "POST" })
@@ -241,15 +245,22 @@ export const deleteAllCodes = createServerFn({ method: "POST" })
   });
 
 
-export const listCandidates = createServerFn({ method: "GET" })
+export const listCandidates = createServerFn({ method: "POST" })
   .middleware([requireStaff])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+  .inputValidator((d) => z.object({ limit: z.number().int().min(1).max(1000).optional(), offset: z.number().int().min(0).optional() }).parse(d ?? {}))
+  .handler(async ({ context, data }) => {
+    const limit = data.limit ?? 500;
+    const offset = data.offset ?? 0;
+    const { data: rows, error, count } = await context.supabase
       .from("candidates")
-      .select("*, candidate_codes(code, active), candidate_files(id, file_type), test_attempts(id, score, status, tests(name, test_type))")
-      .order("created_at", { ascending: false });
+      .select(
+        "*, candidate_codes(code, active), candidate_files(id, file_type), test_attempts(id, score, status, tests(name, test_type))",
+        { count: "exact" },
+      )
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
     if (error) throw new Error(error.message);
-    return { candidates: data ?? [] };
+    return { candidates: rows ?? [], total: count ?? 0, limit, offset };
   });
 
 export const getCandidateDetail = createServerFn({ method: "POST" })
@@ -276,17 +287,24 @@ export const getFileSignedUrl = createServerFn({ method: "POST" })
   });
 
 /** Document bank: list every uploaded candidate file with candidate identity for staff/admin. */
-export const listAllCandidateFiles = createServerFn({ method: "GET" })
+export const listAllCandidateFiles = createServerFn({ method: "POST" })
   .middleware([requireStaff])
-  .handler(async ({ context }) => {
+  .inputValidator((d) => z.object({ limit: z.number().int().min(1).max(1000).optional(), offset: z.number().int().min(0).optional() }).parse(d ?? {}))
+  .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+    const limit = data.limit ?? 500;
+    const offset = data.offset ?? 0;
+    const { data: rows, error, count } = await supabaseAdmin
       .from("candidate_files")
-      .select("id, file_type, file_name, file_path, file_size, mime_type, uploaded_at, candidate_id, candidates(id, full_name, nik, position_applied, code_snapshot, candidate_codes(code))")
-      .order("uploaded_at", { ascending: false });
+      .select(
+        "id, file_type, file_name, file_path, file_size, mime_type, uploaded_at, candidate_id, candidates(id, full_name, nik, position_applied, code_snapshot, candidate_codes(code))",
+        { count: "exact" },
+      )
+      .order("uploaded_at", { ascending: false })
+      .range(offset, offset + limit - 1);
     if (error) throw new Error(error.message);
-    await logAudit(context, "candidate.files.list", "area", null, { count: data?.length ?? 0 });
-    return { files: data ?? [] };
+    await logAudit(context, "candidate.files.list", "area", null, { count: rows?.length ?? 0 });
+    return { files: rows ?? [], total: count ?? 0, limit, offset };
   });
 
 export const listCandidateFileVersions = createServerFn({ method: "POST" })
