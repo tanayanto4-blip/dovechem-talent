@@ -79,19 +79,40 @@ function Stat({ label, value, hint, tone }: { label: string; value: string | num
 }
 
 /** Halaman hasil & lembar jawaban Pauli/Koran untuk Admin & HR. */
-export function PauliResult({ questions, answerOf }: { questions: Q[]; answerOf: (id: string) => string | undefined }) {
+export function PauliResult({
+  questions,
+  answerOf,
+  meta,
+}: {
+  questions: Q[];
+  answerOf: (id: string) => string | undefined;
+  meta?: PauliPdfMeta;
+}) {
   const res = useMemo(() => computePauli(questions, answerOf), [questions, answerOf]);
   const [showSheet, setShowSheet] = useState(true);
   const [onlyWorked, setOnlyWorked] = useState(true);
 
   const cols = onlyWorked ? res.columns.filter((c) => c.filled > 0) : res.columns;
 
+  const handleExport = () => {
+    try {
+      exportPauliPdf(res, meta ?? {});
+      toast.success(`PDF hasil Pauli diunduh — ${res.correct} benar / ${res.wrong} salah`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal membuat PDF Pauli");
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Card className="shadow-card">
-        <CardHeader className="pb-3">
+        <CardHeader className="flex-row items-center justify-between gap-2 space-y-0 pb-3">
           <CardTitle>Hasil Skoring Pauli / Koran</CardTitle>
+          <Button size="sm" variant="secondary" className="no-print" onClick={handleExport}>
+            <FileDown className="mr-2 h-4 w-4" /> Unduh PDF Pauli
+          </Button>
         </CardHeader>
+
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
             <Stat label="Terisi" value={res.filled} hint={`dari ${res.total} soal`} />
