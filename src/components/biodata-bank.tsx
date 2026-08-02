@@ -90,10 +90,17 @@ export function BiodataBank() {
   return (
     <Card className="shadow-card">
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <IdCard className="h-4 w-4 text-primary" />
           <CardTitle className="text-base">Rekap Biodata Kandidat</CardTitle>
           <Badge variant="secondary">{filtered.length}</Badge>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/5 px-2 py-0.5 text-[11px] font-medium text-primary">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/70" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
+            </span>
+            Sinkron otomatis
+          </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
