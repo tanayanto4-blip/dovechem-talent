@@ -188,13 +188,12 @@ export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExce
     (meta.finishedAt ? new Date(meta.finishedAt) : new Date()).toLocaleDateString("id-ID"),
   );
 
-  // 3) Patch sheet 1 + hapus cache rumus di seluruh sheet (Input, Result, dll)
-  for (const s of sheets) {
-    const file = zip.file(s.path);
-    if (!file) continue;
-    const xml = await file.async("string");
-    zip.file(s.path, patchSheet(xml, s === main ? edits : new Map(), true));
-  }
+  // 3) HANYA sheet 1 yang di-patch. Sheet lain (Input, Result + grafik) sama
+  //    sekali tidak disentuh agar rumus & cache-nya tetap terbaca.
+  const mainFile = zip.file(main.path);
+  if (!mainFile) throw new Error("Sheet utama template DISC tidak ditemukan.");
+  const originalMain = await mainFile.async("string");
+  zip.file(main.path, patchSheet(originalMain, edits, true));
 
   // 4) Paksa hitung ulang saat file dibuka (grafik ikut ter-update)
   let wb = wbXml;
@@ -204,11 +203,15 @@ export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExce
   zip.file("xl/workbook.xml", wb);
   zip.remove("xl/calcChain.xml");
 
+  // 5) Kunci integritas: pastikan tidak ada bagian template lain yang berubah
+  await assertTemplateIntact(zip, before, main.path);
+
   const blob = await zip.generateAsync({
     type: "blob",
     mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     compression: "DEFLATE",
   });
+
   const safe = (meta.candidateName ?? "kandidat").replace(/[^\w\-]+/g, "_");
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
