@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Fragment, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listAllAttempts, getAttemptDetail } from "@/lib/admin.functions";
+import { listAllAttempts, getAttemptDetail, deleteCandidateResults } from "@/lib/admin.functions";
 import { exportMbtiExcel } from "@/lib/mbti-excel";
 import { exportEqExcel } from "@/lib/eq-excel";
 import { exportWptExcel } from "@/lib/wpt-excel";
@@ -14,7 +14,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileDown, Eye, BarChart3, FolderOpen, ChevronDown, ChevronRight, Users, FileSpreadsheet } from "lucide-react";
+import { FileDown, Eye, BarChart3, FolderOpen, ChevronDown, ChevronRight, Users, FileSpreadsheet, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/admin/results")({
   component: ResultsBank,
@@ -63,6 +73,26 @@ function ResultsBank() {
   const [type, setType] = useState("all");
   const [status, setStatus] = useState("all");
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const qc = useQueryClient();
+  const deleteResultsFn = useServerFn(deleteCandidateResults);
+  const [toDelete, setToDelete] = useState<Group | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function confirmDeleteGroup() {
+    if (!toDelete) return;
+    setDeleting(true);
+    try {
+      const res: any = await deleteResultsFn({ data: { candidate_id: toDelete.key } });
+      await qc.invalidateQueries({ queryKey: ["admin-all-attempts"] });
+      await qc.invalidateQueries({ queryKey: ["admin-dashboard-attempts"] });
+      toast.success(`${res?.deleted ?? 0} hasil test ${toDelete.name} dihapus`);
+      setToDelete(null);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal menghapus hasil kandidat");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const rows = useMemo(() => {
     const all = (data?.attempts ?? []) as any[];
@@ -229,10 +259,11 @@ function ResultsBank() {
                 const isOpen = !!open[g.key];
                 return (
                   <div key={g.key} className="rounded-lg border">
+                    <div className="flex items-center gap-1 pr-3">
                     <button
                       type="button"
                       onClick={() => setOpen((o) => ({ ...o, [g.key]: !o[g.key] }))}
-                      className="flex w-full flex-wrap items-center gap-3 px-4 py-3 text-left hover:bg-muted/50"
+                      className="flex flex-1 flex-wrap items-center gap-3 px-4 py-3 text-left hover:bg-muted/50"
                     >
                       {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                       <span className="w-6 text-sm text-muted-foreground">{gi + 1}.</span>
@@ -246,6 +277,20 @@ function ResultsBank() {
                         <span className="hidden sm:inline">Awal: {fmt(g.first)} → Akhir: {fmt(g.last)}</span>
                       </span>
                     </button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      aria-label={`Hapus hasil psikotest ${g.name}`}
+                      title="Hapus seluruh hasil test kandidat ini"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setToDelete(g);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    </div>
 
                     {isOpen && (
                       <div className="overflow-x-auto border-t px-4 py-3">
