@@ -61,6 +61,16 @@ function DataForm() {
       <CardContent>
         <form onSubmit={onSubmit} className="grid gap-4 md:grid-cols-2">
           <Field label="Nama Lengkap" required><Input value={form.full_name ?? ""} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required /></Field>
+          <Field label="Jenis Kelamin">
+            <Select value={form.gender ?? ""} onValueChange={(v) => setForm({ ...form, gender: v })}>
+              <SelectTrigger><SelectValue placeholder="Pilih jenis kelamin" /></SelectTrigger>
+              <SelectContent>
+                {["Laki-laki", "Perempuan"].map((v) => (
+                  <SelectItem key={v} value={v}>{v}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
           <Field label="Nama Sekolah / Universitas"><Input value={form.school_name ?? ""} onChange={(e) => setForm({ ...form, school_name: e.target.value })} placeholder="Institut Teknologi Bandung" /></Field>
           <Field label="Pendidikan">
             <Select value={form.education ?? ""} onValueChange={(v) => setForm({ ...form, education: v })}>
