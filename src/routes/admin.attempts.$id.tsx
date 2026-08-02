@@ -55,7 +55,25 @@ function AttemptDetail() {
           {isMbti && a.result?.type && (
             <Button size="sm" variant="secondary" onClick={() => exportMbtiPdf(a.result, {
               ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
-            });
+              attemptId: a.id,
+              score: a.score,
+            })}>
+              <FileDown className="mr-2 h-4 w-4" /> Unduh PDF MBTI
+            </Button>
+          )}
+          {isMbti && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const rows = (data.questions as any[]).map((q) => ({
+                    question_number: q.question_number,
+                    answer: answerMap.get(q.id)?.answer,
+                  }));
+                  const { filled, type, valid } = await exportMbtiExcel(rows, {
+                    ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
+                  });
                   toast.success(
                     `Excel MBTI diunduh — tipe ${type} (${filled}/60 jawaban${valid ? "" : ", cek ulang isian"})`,
                   );
