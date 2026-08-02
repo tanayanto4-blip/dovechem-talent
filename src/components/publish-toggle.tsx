@@ -19,12 +19,14 @@ function useInvalidate() {
   return () => KEYS.forEach((queryKey) => qc.invalidateQueries({ queryKey }));
 }
 
-/** True bila user saat ini Super Admin (hanya Super Admin boleh publish/unpublish). */
+/** True bila user saat ini staff (Super Admin atau HR) — keduanya boleh publish/unpublish. */
 export function useIsAdmin() {
   const fn = useServerFn(getMyRoles);
   const { data } = useQuery({ queryKey: ["my-roles"], queryFn: () => fn({ data: {} as never }) });
-  return !!(data as any)?.roles?.includes("admin");
+  const roles: string[] = (data as any)?.roles ?? [];
+  return roles.includes("admin") || roles.includes("hr");
 }
+
 
 /** Toggle publish/draft untuk satu test di Bank Soal. */
 export function TestPublishToggle({
