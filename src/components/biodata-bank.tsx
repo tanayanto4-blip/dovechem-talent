@@ -130,28 +130,37 @@ export function BiodataBank() {
             <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Cari nama, sekolah, posisi..." value={q} onChange={(e) => setQ(e.target.value)} className="w-64 pl-8" />
           </div>
+          {selectedRows.length > 0 && (
+            <Button size="sm" variant="ghost" onClick={() => setSelected({})}>
+              Bersihkan pilihan ({selectedRows.length})
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" disabled={!filtered.length} className="gap-2">
-                <Download className="h-4 w-4" /> Unduh semua kandidat <ChevronDown className="h-3.5 w-3.5" />
+              <Button size="sm" disabled={!exportRows.length} className="gap-2">
+                <Download className="h-4 w-4" />
+                {selectedRows.length ? `Unduh ${selectedRows.length} terpilih` : "Unduh semua kandidat"}
+                <ChevronDown className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Rekap {filtered.length} kandidat</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                {selectedRows.length ? `${selectedRows.length} kandidat terpilih` : `Rekap ${filtered.length} kandidat`}
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() =>
                   run(
                     () =>
-                      exportBiodataExcel(filtered, `rekap_biodata_kandidat_${new Date().toISOString().slice(0, 10)}.xlsx`),
-                    `${filtered.length} biodata diunduh (Excel)`,
+                      exportBiodataExcel(exportRows, `rekap_biodata_kandidat_${new Date().toISOString().slice(0, 10)}.xlsx`),
+                    `${exportRows.length} biodata diunduh (Excel)`,
                   )
                 }
               >
                 <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel (.xlsx)
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => run(() => exportAllBiodataPdf(filtered), `${filtered.length} biodata diunduh (PDF)`)}
+                onClick={() => run(() => exportAllBiodataPdf(exportRows), `${exportRows.length} biodata diunduh (PDF)`)}
               >
                 <FileText className="mr-2 h-4 w-4" /> PDF rekap
               </DropdownMenuItem>
@@ -161,6 +170,7 @@ export function BiodataBank() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
       </CardHeader>
       <CardContent>
         {isLoading ? (
