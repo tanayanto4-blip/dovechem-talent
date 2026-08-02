@@ -34,7 +34,7 @@ function TestAccessPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const { data: candData } = useQuery({ queryKey: ["candidates"], queryFn: () => candFn({ data: {} as never }) });
+  const { data: candData } = useQuery({ queryKey: ["candidates"], queryFn: () => candFn({ data: { limit: 1000 } }) });
   const { data: reqData } = useQuery({ queryKey: ["retake-requests"], queryFn: () => reqFn({ data: { status: "pending" } }) });
 
   const isAdmin = !!reqData?.isAdmin;
