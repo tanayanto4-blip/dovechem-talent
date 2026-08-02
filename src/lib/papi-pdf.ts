@@ -304,10 +304,10 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
     doc.setLineWidth(0.8);
     doc.setDrawColor(30);
     doc.rect(bx, startY - rowH2, blockW, rowH2);
-    doc.text("No", bx + 6, startY - 7);
-    doc.text("Pilih", bx + 30, startY - 7);
-    doc.text("Skala", bx + 62, startY - 7);
-    doc.text("A/B", bx + 94, startY - 7);
+    doc.text("No", bx + 5, startY - 7);
+    doc.text("Pilih", bx + 29, startY - 7);
+    doc.text("Skala", bx + 59, startY - 7);
+    doc.text("A/B", bx + 91, startY - 7);
     doc.setFont("helvetica", "normal");
     for (let r = 0; r < 15; r++) {
       const n = b * 15 + r + 1;
@@ -317,16 +317,17 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
       const scale = pick === "A" || pick === "B" ? k[pick as "A" | "B"] : "-";
       doc.setLineWidth(0.5);
       doc.rect(bx, y0, blockW, rowH2);
-      doc.line(bx + 26, y0, bx + 26, y0 + rowH2);
-      doc.line(bx + 56, y0, bx + 56, y0 + rowH2);
-      doc.line(bx + 88, y0, bx + 88, y0 + rowH2);
+      doc.line(bx + 25, y0, bx + 25, y0 + rowH2);
+      doc.line(bx + 54, y0, bx + 54, y0 + rowH2);
+      doc.line(bx + 86, y0, bx + 86, y0 + rowH2);
       doc.setFontSize(7.5);
-      doc.text(String(n).padStart(2, "0"), bx + 6, y0 + 14);
+      doc.text(String(n).padStart(2, "0"), bx + 5, y0 + 14);
       doc.setFont("helvetica", "bold");
-      doc.text(pick || "-", bx + 36, y0 + 14);
-      doc.text(scale, bx + 66, y0 + 14);
+      doc.text(pick || "-", bx + 35, y0 + 14);
+      doc.text(scale, bx + 64, y0 + 14);
       doc.setFont("helvetica", "normal");
-      doc.text(`${k.A}/${k.B}`, bx + 93, y0 + 14);
+      doc.text(`${k.A}/${k.B}`, bx + 91, y0 + 14);
+
     }
   }
 
