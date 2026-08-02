@@ -249,7 +249,9 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
       doc.text(String(v), x + tw - 95, y0 + 14);
       doc.setFont("helvetica", "normal");
       // grafik kotak 9 sel
+      doc.setFillColor(30, 30, 30);
       for (let c = 0; c < 9; c++) {
+
         const bx = x + tw - 74 + c * 7.5;
         doc.setLineWidth(0.4);
         doc.rect(bx, y0 + 6, 6, 10);
