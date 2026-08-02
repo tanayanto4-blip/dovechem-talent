@@ -143,14 +143,65 @@ async function sheetPaths(zip: JSZip) {
   return { wbXml: wb, sheets: out };
 }
 
+/* --------------------- kunci integritas template ------------------------ */
+
+/** File yang boleh berubah/ dihapus oleh exporter. */
+const ALLOWED_MODIFIED = ["xl/workbook.xml"];
+const ALLOWED_REMOVED = ["xl/calcChain.xml"];
+
+async function snapshotZip(zip: JSZip) {
+  const snap = new Map<string, string>();
+  await Promise.all(
+    Object.keys(zip.files).map(async (name) => {
+      const f = zip.file(name);
+      if (f && !f.dir) snap.set(name, await f.async("base64"));
+    }),
+  );
+  return snap;
+}
+
+/**
+ * Memastikan hanya sheet 1 (+ workbook.xml/calcChain) yang tersentuh.
+ * Grafik (xl/charts/*), drawing, styles, sheet Input & Result harus identik
+ * byte-per-byte dengan template asli.
+ */
+async function assertTemplateIntact(
+  zip: JSZip,
+  before: Map<string, string>,
+  mainPath: string,
+) {
+  const allowed = new Set([...ALLOWED_MODIFIED, mainPath]);
+  const after = await snapshotZip(zip);
+  const changed: string[] = [];
+
+  for (const [name, data] of before) {
+    if (!after.has(name)) {
+      if (!ALLOWED_REMOVED.includes(name)) changed.push(`hilang: ${name}`);
+      continue;
+    }
+    if (after.get(name) !== data && !allowed.has(name)) changed.push(`berubah: ${name}`);
+  }
+  for (const name of after.keys()) {
+    if (!before.has(name)) changed.push(`baru: ${name}`);
+  }
+
+  if (changed.length) {
+    throw new Error(
+      `Ekspor DISC dibatalkan — template harus tetap utuh. Bagian berikut ikut berubah: ${changed.join(", ")}`,
+    );
+  }
+}
+
 /* ------------------------------- exporter ------------------------------- */
 
 export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExcelMeta = {}) {
   const res = await fetch(templateAsset.url);
   if (!res.ok) throw new Error("Template Excel DISC tidak dapat dimuat.");
   const zip = await JSZip.loadAsync(await res.arrayBuffer());
+  const before = await snapshotZip(zip);
   const { wbXml, sheets } = await sheetPaths(zip);
   const main = sheets.find((s) => /disc\s*test/i.test(s.name)) ?? sheets[0];
+
 
   // 1) Kosongkan semua kolom P/K, lalu isi sesuai jawaban kandidat
   const edits = new Map<string, CellValue>();
