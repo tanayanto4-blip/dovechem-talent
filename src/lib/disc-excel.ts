@@ -1,22 +1,27 @@
-import ExcelJS from "exceljs";
-import { applyInlineBiodata, type CandidateMeta } from "@/lib/candidate-meta";
+import JSZip from "jszip";
+import type { CandidateMeta } from "@/lib/candidate-meta";
 import templateAsset from "@/assets/disc-template.xlsx.asset.json";
 
 /**
  * Mengisi template Excel skoring DISC resmi dengan jawaban kandidat.
- * Kolom [P] = PALING menggambarkan (M pada aplikasi)
- * Kolom [K] = PALING TIDAK menggambarkan (L pada aplikasi)
+ *
+ * Penting: file di-patch langsung pada level XML (bukan ditulis ulang oleh
+ * library spreadsheet) sehingga SEMUA isi template tetap utuh — rumus,
+ * format, sheet tersembunyi, dan grafik pada sheet "Result".
+ *
+ * Yang diisi hanya:
+ *   - tanda "x" pada kolom P (PALING) dan K (PALING TIDAK) di sheet 1
+ *   - identitas kandidat pada G2..G5 sheet 1
+ *
+ * Sheet 2 (Input) dan sheet 3 (Result + grafik) terisi otomatis oleh rumus
+ * bawaan template: seluruh cache nilai lama dihapus dan workbook ditandai
+ * fullCalcOnLoad agar Excel/LibreOffice/Sheets menghitung ulang saat dibuka.
  *
  * Tata letak sheet "DISC Test":
  *   - Kelompok 1-8   -> kolom P = C, K = E
  *   - Kelompok 9-16  -> kolom P = J, K = L
  *   - Kelompok 17-24 -> kolom P = Q, K = S
  *   - Baris awal tiap kelompok: 8, 14, 20, 26, 32, 38, 44, 50 (4 pernyataan)
- *
- * Rumus bawaan template (IF/COUNTIF/VLOOKUP di sheet Input & Result)
- * dipertahankan; nilai turunan pada sheet "DISC Test" dihitung ulang sebagai
- * cached value dan workbook ditandai fullCalcOnLoad agar grafik serta hasil
- * akhir langsung terbaca saat file dibuka.
  */
 export interface DiscExcelMeta extends CandidateMeta {}
 
@@ -53,37 +58,112 @@ function optionIndex(key: string | undefined): number {
   return Number.isFinite(n) && n >= 1 && n <= 4 ? n - 1 : -1;
 }
 
-function setCached(ws: ExcelJS.Worksheet, addr: string, result: any) {
-  const cell = ws.getCell(addr);
-  const v: any = cell.value;
-  const formula =
-    v && typeof v === "object" && typeof v.formula === "string"
-      ? v.formula
-      : typeof v === "string" && v.startsWith("=")
-        ? v.slice(1)
-        : null;
-  cell.value = formula ? ({ formula, result } as ExcelJS.CellFormulaValue) : result;
+/* ---------------------- util patch XML spreadsheet ---------------------- */
+
+const colToNum = (letters: string) =>
+  letters.split("").reduce((acc, ch) => acc * 26 + (ch.charCodeAt(0) - 64), 0);
+
+const esc = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+const attr = (tag: string, name: string) =>
+  tag.match(new RegExp(`\\s${name}="([^"]*)"`))?.[1] ?? "";
+
+type CellValue = string | number | null;
+
+function buildCell(ref: string, style: string, value: CellValue) {
+  const s = style ? ` s="${style}"` : "";
+  if (value === null || value === "") return `<c r="${ref}"${s}/>`;
+  if (typeof value === "number")
+    return `<c r="${ref}"${s} t="n"><v>${value}</v></c>`;
+  return `<c r="${ref}"${s} t="inlineStr"><is><t>${esc(value)}</t></is></c>`;
 }
+
+/**
+ * Menulis nilai pada sel tertentu dan/atau membuang cache hasil rumus
+ * (`<v>`) supaya aplikasi spreadsheet menghitung ulang saat file dibuka.
+ */
+function patchSheet(xml: string, edits: Map<string, CellValue>, clearCache = true) {
+  const rowRe = /<row\b[^>]*\/>|<row\b[^>]*>[\s\S]*?<\/row>/g;
+  const cellRe = /<c\b[^>]*\/>|<c\b[^>]*>[\s\S]*?<\/c>/g;
+
+  return xml.replace(rowRe, (rowXml) => {
+    const rowNum = attr(rowXml, "r");
+    const pending = new Map<string, CellValue>();
+    for (const [ref, val] of edits) {
+      if (ref.replace(/[A-Z]+/, "") === rowNum) pending.set(ref, val);
+    }
+    if (!pending.size && !clearCache) return rowXml;
+
+    let out = rowXml.replace(cellRe, (cellXml) => {
+      const ref = attr(cellXml, "r");
+      if (pending.has(ref)) {
+        const val = pending.get(ref)!;
+        pending.delete(ref);
+        return buildCell(ref, attr(cellXml, "s"), val);
+      }
+      if (!clearCache || !/<f[\s>/]/.test(cellXml)) return cellXml;
+      // sel rumus: pertahankan <f>, buang cache <v> dan atribut t
+      const formula =
+        cellXml.match(/<f\b[^>]*\/>|<f\b[^>]*>[\s\S]*?<\/f>/)?.[0] ?? "";
+      const open = cellXml.match(/<c\b[^>]*?>/)?.[0] ?? `<c r="${ref}">`;
+      const cleanOpen = open.replace(/\st="[^"]*"/, "");
+      return `${cleanOpen}${formula}</c>`;
+    });
+
+    // sel yang belum ada pada baris: sisipkan sesuai urutan kolom
+    for (const [ref, val] of pending) {
+      const newCell = buildCell(ref, "", val);
+      const target = colToNum(ref.replace(/\d+/, ""));
+      const cells = out.match(cellRe) ?? [];
+      const after = cells.find((c) => colToNum(attr(c, "r").replace(/\d+/, "")) > target);
+      if (after) out = out.replace(after, newCell + after);
+      else if (out.endsWith("</row>")) out = out.slice(0, -6) + newCell + "</row>";
+    }
+    return out;
+  });
+}
+
+async function sheetPaths(zip: JSZip) {
+  const wb = await zip.file("xl/workbook.xml")!.async("string");
+  const rels = await zip.file("xl/_rels/workbook.xml.rels")!.async("string");
+  const relMap = new Map<string, string>();
+  for (const m of rels.matchAll(/<Relationship\b[^>]*>/g)) {
+    const id = attr(m[0], "Id");
+    const t = attr(m[0], "Target").replace(/^\/?xl\//, "").replace(/^\.\//, "");
+    if (id) relMap.set(id, `xl/${t}`);
+  }
+  const out: Array<{ name: string; path: string }> = [];
+  for (const m of wb.matchAll(/<sheet\b[^>]*>/g)) {
+    const name = attr(m[0], "name");
+    const rid = attr(m[0], "r:id") || attr(m[0], "id");
+    const path = relMap.get(rid);
+    if (name && path) out.push({ name, path });
+  }
+  return { wbXml: wb, sheets: out };
+}
+
+/* ------------------------------- exporter ------------------------------- */
 
 export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExcelMeta = {}) {
   const res = await fetch(templateAsset.url);
   if (!res.ok) throw new Error("Template Excel DISC tidak dapat dimuat.");
-  const wb = new ExcelJS.Workbook();
-  await wb.xlsx.load(await res.arrayBuffer());
-  const ws = wb.worksheets.find((w) => /disc\s*test/i.test(w.name)) ?? wb.worksheets[0];
+  const zip = await JSZip.loadAsync(await res.arrayBuffer());
+  const { wbXml, sheets } = await sheetPaths(zip);
+  const main = sheets.find((s) => /disc\s*test/i.test(s.name)) ?? sheets[0];
 
-  // Kosongkan seluruh kolom P/K terlebih dahulu
+  // 1) Kosongkan semua kolom P/K, lalu isi sesuai jawaban kandidat
+  const edits = new Map<string, CellValue>();
   for (let g = 1; g <= 24; g++) {
     const set = COLUMN_SETS[Math.floor((g - 1) / 8)];
     const row0 = BLOCK_ROWS[(g - 1) % 8];
     for (let i = 0; i < 4; i++) {
-      ws.getCell(`${set.p}${row0 + i}`).value = null;
-      ws.getCell(`${set.k}${row0 + i}`).value = null;
+      edits.set(`${set.p}${row0 + i}`, null);
+      edits.set(`${set.k}${row0 + i}`, null);
     }
   }
 
   let filled = 0;
-  const picks = new Map<number, { most: number; least: number }>();
   for (const a of answers) {
     const g = Number(a.question_number);
     if (!Number.isFinite(g) || g < 1 || g > 24) continue;
@@ -93,77 +173,41 @@ export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExce
     if (mi < 0 && li < 0) continue;
     const set = COLUMN_SETS[Math.floor((g - 1) / 8)];
     const row0 = BLOCK_ROWS[(g - 1) % 8];
-    if (mi >= 0) ws.getCell(`${set.p}${row0 + mi}`).value = "x";
-    if (li >= 0) ws.getCell(`${set.k}${row0 + li}`).value = "x";
-    picks.set(g, { most: mi, least: li });
+    if (mi >= 0) edits.set(`${set.p}${row0 + mi}`, "x");
+    if (li >= 0) edits.set(`${set.k}${row0 + li}`, "x");
     if (mi >= 0 && li >= 0) filled++;
   }
 
-  // Hitung ulang nilai turunan pada sheet "DISC Test"
-  for (let g = 1; g <= 24; g++) {
-    const setIdx = Math.floor((g - 1) / 8);
-    const set = COLUMN_SETS[setIdx];
-    const row0 = BLOCK_ROWS[(g - 1) % 8];
-    const sumRow = row0 + 4;
-    // kolom skor berada tepat di kanan kolom P dan K
-    const pScore = String.fromCharCode(set.p.charCodeAt(0) + 1); // C->D, J->K, Q->R
-    const kScore = String.fromCharCode(set.k.charCodeAt(0) + 1); // E->F, L->M, S->T
-    const pick = picks.get(g);
-    for (let i = 0; i < 4; i++) {
-      setCached(ws, `${pScore}${row0 + i}`, pick && pick.most === i ? i + 1 : 0);
-      setCached(ws, `${kScore}${row0 + i}`, pick && pick.least === i ? i + 1 : 0);
-    }
-    setCached(ws, `${set.p}${sumRow}`, pick && pick.most >= 0 ? 1 : 0);
-    setCached(ws, `${pScore}${sumRow}`, pick && pick.most >= 0 ? pick.most + 1 : 0);
-    setCached(ws, `${set.k}${sumRow}`, pick && pick.least >= 0 ? 1 : 0);
-    setCached(ws, `${kScore}${sumRow}`, pick && pick.least >= 0 ? pick.least + 1 : 0);
-  }
-  for (const row0 of BLOCK_ROWS) {
-    const sumRow = row0 + 4;
-    let n = 0;
-    for (let s = 0; s < 3; s++) {
-      const g = s * 8 + BLOCK_ROWS.indexOf(row0) + 1;
-      const pick = picks.get(g);
-      if (pick?.most !== undefined && pick.most >= 0) n++;
-      if (pick?.least !== undefined && pick.least >= 0) n++;
-    }
-    setCached(ws, `W${sumRow}`, n);
-  }
-
-  // Identitas kandidat
+  // 2) Identitas kandidat pada kolom yang memang disediakan template
   const nama = [meta.candidateName, meta.candidateCode].filter(Boolean).join(" — ") || "-";
-  ws.getCell("G2").value = nama;
-  if (meta.age != null && meta.age !== "") ws.getCell("G3").value = meta.age;
-  if (meta.gender) ws.getCell("G4").value = meta.gender;
-  ws.getCell("G5").value = meta.finishedAt
-    ? new Date(meta.finishedAt).toLocaleDateString("id-ID")
-    : new Date().toLocaleDateString("id-ID");
+  edits.set("G2", nama);
+  edits.set("G3", meta.age != null && meta.age !== "" ? Number(meta.age) || String(meta.age) : null);
+  edits.set("G4", meta.gender ? String(meta.gender).toUpperCase() : null);
+  edits.set(
+    "G5",
+    (meta.finishedAt ? new Date(meta.finishedAt) : new Date()).toLocaleDateString("id-ID"),
+  );
 
-  // Buang cached value lama pada sheet turunan (Input, Result, dll) agar
-  // Excel/LibreOffice/Sheets menghitung ulang rumusnya saat file dibuka.
-  for (const sheet of wb.worksheets) {
-    if (sheet === ws) continue;
-    sheet.eachRow({ includeEmpty: false }, (row) =>
-      row.eachCell({ includeEmpty: false }, (cell) => {
-        const v: any = cell.value;
-        if (v && typeof v === "object" && typeof v.formula === "string") {
-          cell.value = { formula: v.formula, result: undefined } as ExcelJS.CellFormulaValue;
-        } else if (v && typeof v === "object" && typeof v.sharedFormula === "string") {
-          cell.value = { sharedFormula: v.sharedFormula, result: undefined } as any;
-        }
-      }),
-    );
+  // 3) Patch sheet 1 + hapus cache rumus di seluruh sheet (Input, Result, dll)
+  for (const s of sheets) {
+    const file = zip.file(s.path);
+    if (!file) continue;
+    const xml = await file.async("string");
+    zip.file(s.path, patchSheet(xml, s === main ? edits : new Map(), true));
   }
 
-  // Biodata kandidat terisi otomatis pada lembar template (tanpa sheet tambahan)
-  applyInlineBiodata(ws, meta, { startRow: 58, labelCol: "B", valueCol: "D", title: "BIODATA KANDIDAT (PT DOVER CHEMICAL)" });
+  // 4) Paksa hitung ulang saat file dibuka (grafik ikut ter-update)
+  let wb = wbXml;
+  wb = /<calcPr\b[^>]*\/>/.test(wb)
+    ? wb.replace(/<calcPr\b([^>]*)\/>/, '<calcPr$1 fullCalcOnLoad="1" calcMode="auto"/>')
+    : wb.replace("</workbook>", '<calcPr fullCalcOnLoad="1" calcMode="auto"/></workbook>');
+  zip.file("xl/workbook.xml", wb);
+  zip.remove("xl/calcChain.xml");
 
-  (wb as any).calcProperties = { ...(wb as any).calcProperties, fullCalcOnLoad: true };
-
-
-  const out = await wb.xlsx.writeBuffer();
-  const blob = new Blob([out], {
-    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  const blob = await zip.generateAsync({
+    type: "blob",
+    mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    compression: "DEFLATE",
   });
   const safe = (meta.candidateName ?? "kandidat").replace(/[^\w\-]+/g, "_");
   const url = URL.createObjectURL(blob);
