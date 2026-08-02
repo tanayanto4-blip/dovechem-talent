@@ -1,12 +1,23 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listCandidates } from "@/lib/admin.functions";
+import { listCandidates, clearCandidateBiodata } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Download, Search, IdCard, FileSpreadsheet, FileText, ChevronDown } from "lucide-react";
+import { Download, Search, IdCard, FileSpreadsheet, FileText, ChevronDown, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   BIODATA_FIELDS as FIELDS,
@@ -24,6 +35,7 @@ import {
   exportCandidateBiodataPdf,
   safeName,
 } from "@/lib/biodata-export";
+
 
 function fmtWhen(v: unknown) {
   if (!v) return "-";
