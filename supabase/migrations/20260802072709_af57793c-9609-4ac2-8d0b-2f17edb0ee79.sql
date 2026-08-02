@@ -1,0 +1,1 @@
+UPDATE public.tests SET active = false WHERE code = 'KRAEPELIN' AND NOT EXISTS (SELECT 1 FROM public.test_questions q WHERE q.test_id = tests.id AND q.active);

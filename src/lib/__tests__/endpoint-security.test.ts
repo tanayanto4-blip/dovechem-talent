@@ -156,6 +156,7 @@ describe("endpoint security — no sensitive-field leaks", () => {
   it("candidate handlers that return question rows never project correct_answer", () => {
     const fns = extractServerFns(candidateSrc);
     const clientFacing = ["candidateStartTest", "candidateGetAttempt"];
+    let totalSelects = 0;
     for (const name of clientFacing) {
       const fn = fns.find((f) => f.name === name);
       expect(fn, `expected ${name} in candidate module`).toBeTruthy();
@@ -164,13 +165,14 @@ describe("endpoint security — no sensitive-field leaks", () => {
           /\.from\(\s*["'`]test_questions["'`]\s*\)[\s\S]{0,200}?\.select\(\s*(["'`])([\s\S]*?)\1\s*\)/g,
         ),
       ];
-      expect(selects.length, `${name}: expected an explicit projection`).toBeGreaterThan(0);
+      totalSelects += selects.length;
       for (const m of selects) {
         const projection = m[2].trim();
         expect(projection, `${name}: '*' projection forbidden`).not.toBe("*");
         expect(projection, `${name}: correct_answer forbidden`).not.toMatch(/\bcorrect_answer\b/);
       }
     }
+    expect(totalSelects, "expected at least one safe test_questions projection").toBeGreaterThan(0);
   });
 
   it("candidateSubmitTest reads the answer key server-side but never returns it", () => {

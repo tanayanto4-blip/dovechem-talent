@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { MbtiAdmin } from "./admin.mbti";
+import { MbtiAdmin } from "@/components/mbti-admin";
 
 export const Route = createFileRoute("/admin/tests/$id")({ component: TestDetail });
 

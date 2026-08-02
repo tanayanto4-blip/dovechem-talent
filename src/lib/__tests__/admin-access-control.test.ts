@@ -131,7 +131,10 @@ describe("staff/admin server fns enforce role checks", () => {
       `.select("role")`,
       `.eq("user_id"`,
       `.in("role", ["admin", "hr"])`,
-      `"Forbidden: hanya staff (admin/hr)`,
+      // Denials are returned as an HTTP 403 Response and audit-logged.
+      `error: "Forbidden"`,
+      `reason: "not_staff"`,
+      `status: 403`,
       `isAdmin: roles.includes("admin")`,
     ]) {
       expect(middlewareSrc, `staff-middleware.ts must still contain: ${marker}`).toContain(marker);

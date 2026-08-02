@@ -56,12 +56,12 @@ describe("candidateSubmitTest — static guarantees", () => {
 
   it("resolves the active access code before any write", () => {
     const resolveIdx = body.search(/resolveActiveCode\(sb,\s*data\.code\)/);
-    const answersDeleteIdx = body.search(/from\(["']test_answers["']\)\.delete\(\)/);
-    const answersInsertIdx = body.search(/from\(["']test_answers["']\)\.insert\(/);
+    const answersDeleteIdx = body.search(/from\(["']test_answers["']\)[\s\S]{0,40}\.delete\(\)/);
+    const answersWriteIdx = body.search(/from\(["']test_answers["']\)[\s\S]{0,40}\.(insert|upsert)\(/);
     const attemptUpdateIdx = body.search(/from\(["']test_attempts["']\)\.update\(/);
     expect(resolveIdx).toBeGreaterThan(-1);
     expect(resolveIdx).toBeLessThan(answersDeleteIdx);
-    expect(resolveIdx).toBeLessThan(answersInsertIdx);
+    expect(resolveIdx).toBeLessThan(answersWriteIdx);
     expect(resolveIdx).toBeLessThan(attemptUpdateIdx);
   });
 
@@ -71,18 +71,20 @@ describe("candidateSubmitTest — static guarantees", () => {
     );
   });
 
-  it("rejects an unknown attempt and a finished attempt", () => {
+  it("rejects an unknown attempt and short-circuits a finished attempt", () => {
     expect(body).toMatch(/if\s*\(!attempt\)\s*throw new Error\(["']Attempt tidak valid\.["']\)/);
-    expect(body).toMatch(/attempt\.status\s*===\s*["']finished["'][\s\S]{0,80}throw new Error/);
+    // Re-submitting a finished attempt is an idempotent no-op (no re-scoring).
+    expect(body).toMatch(/attempt\.status\s*===\s*["']finished["'][\s\S]{0,120}return\s*\{\s*ok:\s*true,\s*idempotent:\s*true/);
   });
 
-  it("replaces answers for the attempt (delete-then-insert scoped to attempt_id)", () => {
+  it("replaces answers for the attempt (scoped to attempt_id, upsert-idempotent)", () => {
     expect(body).toMatch(
-      /from\(["']test_answers["']\)\.delete\(\)\.eq\(["']attempt_id["'],\s*data\.attempt_id\)/,
+      /from\(["']test_answers["']\)[\s\S]{0,80}\.delete\(\)[\s\S]{0,80}\.eq\(["']attempt_id["'],\s*data\.attempt_id\)/,
     );
     expect(body).toMatch(
-      /from\(["']test_answers["']\)\.insert\([\s\S]*?attempt_id:\s*data\.attempt_id/,
+      /from\(["']test_answers["']\)[\s\S]{0,80}\.upsert\([\s\S]*?attempt_id:\s*data\.attempt_id/,
     );
+    expect(body).toMatch(/onConflict:\s*["']attempt_id,question_id["']/);
   });
 
   it("updates the attempt row with status/finished_at/score/result", () => {
