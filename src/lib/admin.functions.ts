@@ -263,6 +263,44 @@ export const listCandidates = createServerFn({ method: "POST" })
     return { candidates: rows ?? [], total: count ?? 0, limit, offset };
   });
 
+/** Kosongkan biodata seorang kandidat (kode akses, dokumen dan hasil test tetap ada). */
+export const clearCandidateBiodata = createServerFn({ method: "POST" })
+  .middleware([requireStaff])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: existing } = await context.supabase
+      .from("candidates")
+      .select("full_name")
+      .eq("id", data.id)
+      .maybeSingle();
+    const { error } = await context.supabase
+      .from("candidates")
+      .update({
+        full_name: null,
+        nik: null,
+        birth_place: null,
+        birth_date: null,
+        gender: null,
+        address: null,
+        phone: null,
+        email: null,
+        position_applied: null,
+        education: null,
+        marital_status: null,
+        school_name: null,
+        major: null,
+        work_experience: null,
+        data_completed: false,
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await logAudit(context, "candidate.biodata_delete", "candidate", data.id, {
+      full_name: existing?.full_name ?? null,
+    });
+    return { ok: true };
+  });
+
+
 export const getCandidateDetail = createServerFn({ method: "POST" })
   .middleware([requireStaff])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
