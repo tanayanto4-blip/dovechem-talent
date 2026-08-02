@@ -12,6 +12,7 @@ import { exportEqExcel } from "@/lib/eq-excel";
 import { exportWptExcel } from "@/lib/wpt-excel";
 import { exportDiscExcel } from "@/lib/disc-excel";
 import { exportPapiPdf } from "@/lib/papi-pdf";
+import { exportPapiExcel } from "@/lib/papi-excel";
 import { PauliResult } from "@/components/pauli-result";
 import { papiScore, PAPI_SCALE_LABEL, PAPI_TOP_ORDER, PAPI_BOTTOM_ORDER } from "@/lib/papi-key";
 import { buildCandidateMeta } from "@/lib/candidate-meta";
@@ -176,6 +177,26 @@ function AttemptDetail() {
               }}
             >
               <FileDown className="mr-2 h-4 w-4" /> Unduh Lembar Jawaban PAPI
+            </Button>
+          )}
+          {isPapi && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const res = await exportPapiExcel(papiPicks, {
+                    ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
+                  });
+                  toast.success(
+                    `Excel PAPI diunduh — ${res.answered}/${res.total} item terisi, skala tertinggi ${res.highest.join(", ") || "-"}`,
+                  );
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Gagal membuat file Excel");
+                }
+              }}
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel PAPI
             </Button>
           )}
           <Button size="sm" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" /> Cetak</Button>
