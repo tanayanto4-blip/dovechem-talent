@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { applyBiodataSheet, type CandidateMeta } from "@/lib/candidate-meta";
 import templateAsset from "@/assets/mbti-template.xlsx.asset.json";
 
 /**
@@ -10,13 +11,7 @@ import templateAsset from "@/assets/mbti-template.xlsx.asset.json";
  * disimpan sebagai cached value, sehingga hasil langsung terbaca di Excel,
  * LibreOffice, Google Sheets, maupun saat pratinjau file.
  */
-export interface MbtiExcelMeta {
-  candidateName?: string | null;
-  candidateCode?: string | null;
-  position?: string | null;
-  education?: string | null;
-  finishedAt?: string | null;
-}
+export interface MbtiExcelMeta extends CandidateMeta {}
 
 export interface MbtiExcelAnswer {
   question_number: number;
@@ -113,6 +108,9 @@ export async function exportMbtiExcel(answers: MbtiExcelAnswer[], meta: MbtiExce
   ws.getCell("E64").value = `Pendidikan & Jabatan : ${meta.education ?? "-"} - ${meta.position ?? "-"}`;
 
   // Paksa Excel menghitung ulang seluruh rumus saat file dibuka
+  // Biodata kandidat terisi otomatis dari data yang sudah tersimpan
+  applyBiodataSheet(wb, meta, "MBTI");
+
   (wb as any).calcProperties = { ...(wb as any).calcProperties, fullCalcOnLoad: true };
 
   const out = await wb.xlsx.writeBuffer();

@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { applyBiodataSheet, type CandidateMeta } from "@/lib/candidate-meta";
 import templateAsset from "@/assets/disc-template.xlsx.asset.json";
 
 /**
@@ -17,14 +18,7 @@ import templateAsset from "@/assets/disc-template.xlsx.asset.json";
  * cached value dan workbook ditandai fullCalcOnLoad agar grafik serta hasil
  * akhir langsung terbaca saat file dibuka.
  */
-export interface DiscExcelMeta {
-  candidateName?: string | null;
-  candidateCode?: string | null;
-  position?: string | null;
-  gender?: string | null;
-  age?: number | string | null;
-  finishedAt?: string | null;
-}
+export interface DiscExcelMeta extends CandidateMeta {}
 
 export interface DiscExcelAnswer {
   question_number: number;
@@ -160,6 +154,9 @@ export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExce
       }),
     );
   }
+
+  // Biodata kandidat terisi otomatis dari data yang sudah tersimpan
+  applyBiodataSheet(wb, meta, "DISC");
 
   (wb as any).calcProperties = { ...(wb as any).calcProperties, fullCalcOnLoad: true };
 
