@@ -349,6 +349,20 @@ function ResultsBank() {
                       </span>
                     </button>
                     <Button
+                      size="sm"
+                      variant="secondary"
+                      className="shrink-0"
+                      disabled={bulkKey === g.key}
+                      title="Unduh semua dokumen hasil test kandidat ini"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void downloadGroupDocs(g);
+                      }}
+                    >
+                      <FileDown className="mr-1 h-3.5 w-3.5" />
+                      {bulkKey === g.key ? "Menyiapkan..." : "Unduh semua"}
+                    </Button>
+                    <Button
                       size="icon"
                       variant="ghost"
                       className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
