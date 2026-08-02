@@ -14,6 +14,7 @@ import { exportDiscExcel } from "@/lib/disc-excel";
 import { exportPapiPdf } from "@/lib/papi-pdf";
 import { PauliResult } from "@/components/pauli-result";
 import { papiScore, PAPI_SCALE_LABEL, PAPI_TOP_ORDER, PAPI_BOTTOM_ORDER } from "@/lib/papi-key";
+import { buildCandidateMeta } from "@/lib/candidate-meta";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/attempts/$id")({ component: AttemptDetail });
@@ -53,11 +54,8 @@ function AttemptDetail() {
         <div className="flex gap-2">
           {isMbti && a.result?.type && (
             <Button size="sm" variant="secondary" onClick={() => exportMbtiPdf(a.result, {
-              candidateName: a.candidates?.full_name,
-              candidateCode: a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot,
-              position: a.candidates?.position ?? undefined,
+              ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
               attemptId: a.id,
-              finishedAt: a.finished_at,
               score: a.score,
             })}>
               <FileDown className="mr-2 h-4 w-4" /> Unduh PDF MBTI
@@ -74,10 +72,7 @@ function AttemptDetail() {
                     answer: answerMap.get(q.id)?.answer,
                   }));
                   const { filled, type, valid } = await exportMbtiExcel(rows, {
-                    candidateName: a.candidates?.full_name,
-                    candidateCode: a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot,
-                    position: a.candidates?.position ?? null,
-                    finishedAt: a.finished_at,
+                    ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
                   });
                   toast.success(
                     `Excel MBTI diunduh — tipe ${type} (${filled}/60 jawaban${valid ? "" : ", cek ulang isian"})`,
@@ -101,10 +96,7 @@ function AttemptDetail() {
                     answer: answerMap.get(q.id)?.answer,
                   }));
                   const { filled, strongest, summary } = await exportEqExcel(rows, {
-                    candidateName: a.candidates?.full_name,
-                    candidateCode: a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot,
-                    position: a.candidates?.position ?? null,
-                    finishedAt: a.finished_at,
+                    ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
                   });
                   toast.success(
                     `Excel EQ diunduh — terkuat ${summary[strongest].label} (${filled}/50 jawaban)`,
@@ -128,11 +120,7 @@ function AttemptDetail() {
                     answer: answerMap.get(q.id)?.answer,
                   }));
                   const { filled, total, valid } = await exportDiscExcel(rows, {
-                    candidateName: a.candidates?.full_name,
-                    candidateCode: a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot,
-                    position: a.candidates?.position_applied ?? null,
-                    gender: a.candidates?.gender ?? null,
-                    finishedAt: a.finished_at,
+                    ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
                   });
                   toast.success(
                     `Excel DISC diunduh — ${filled}/${total} kelompok terisi${valid ? "" : ", cek ulang isian"}`,
@@ -156,10 +144,7 @@ function AttemptDetail() {
                     answer: answerMap.get(q.id)?.answer,
                   }));
                   const { filled, total, iq, category } = await exportWptExcel(rows, {
-                    candidateName: a.candidates?.full_name,
-                    candidateCode: a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot,
-                    position: a.candidates?.position ?? null,
-                    finishedAt: a.finished_at,
+                    ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
                   });
                   toast.success(
                     `Excel WPT diunduh — benar ${total}/50, IQ ${iq} (${category}), ${filled} jawaban terisi`,
@@ -179,11 +164,8 @@ function AttemptDetail() {
               onClick={() => {
                 try {
                   const res = exportPapiPdf(papiPicks, {
-                    candidateName: a.candidates?.full_name,
-                    candidateCode: a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot,
-                    position: a.candidates?.position_applied ?? null,
+                    ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
                     startedAt: a.started_at,
-                    finishedAt: a.finished_at,
                   });
                   toast.success(
                     `Lembar jawaban PAPI diunduh — ${res.answered}/90 terisi, skala tertinggi ${res.highest.join(", ") || "-"}`,
@@ -256,11 +238,7 @@ function AttemptDetail() {
           questions={data.questions as any[]}
           answerOf={(qid: string) => answerMap.get(qid)?.answer}
           meta={{
-            candidateName: a.candidates?.full_name,
-            candidateCode: a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot,
-            position: a.candidates?.position ?? null,
-            startedAt: a.started_at,
-            finishedAt: a.finished_at,
+            ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
           }}
         />
       )}

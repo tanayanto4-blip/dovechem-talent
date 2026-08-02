@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { applyBiodataSheet, type CandidateMeta } from "@/lib/candidate-meta";
 import templateAsset from "@/assets/wpt-template.xlsx.asset.json";
 
 /**
@@ -11,13 +12,7 @@ import templateAsset from "@/assets/wpt-template.xlsx.asset.json";
  * disimpan sebagai cached value agar langsung terbaca di Excel, LibreOffice,
  * maupun Google Sheets tanpa perlu menekan apa pun.
  */
-export interface WptExcelMeta {
-  candidateName?: string | null;
-  candidateCode?: string | null;
-  position?: string | null;
-  education?: string | null;
-  finishedAt?: string | null;
-}
+export interface WptExcelMeta extends CandidateMeta {}
 
 export interface WptExcelAnswer {
   question_number: number;
@@ -184,6 +179,9 @@ export async function exportWptExcel(answers: WptExcelAnswer[], meta: WptExcelMe
   // Identitas kandidat
   const nama = [meta.candidateName, meta.candidateCode].filter(Boolean).join(" — ") || "-";
   ws.getCell("B5").value = `Nama : ${nama}   |   Jabatan : ${meta.position ?? "-"}`;
+
+  // Biodata kandidat terisi otomatis dari data yang sudah tersimpan
+  applyBiodataSheet(wb, meta, "WPT");
 
   (wb as any).calcProperties = { ...(wb as any).calcProperties, fullCalcOnLoad: true };
 

@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { applyBiodataSheet, type CandidateMeta } from "@/lib/candidate-meta";
 import templateAsset from "@/assets/eq-template.xlsx.asset.json";
 
 /**
@@ -10,13 +11,7 @@ import templateAsset from "@/assets/eq-template.xlsx.asset.json";
  * ulang di sini dan disimpan sebagai cached value agar langsung terbaca di
  * Excel, LibreOffice, maupun Google Sheets.
  */
-export interface EqExcelMeta {
-  candidateName?: string | null;
-  candidateCode?: string | null;
-  position?: string | null;
-  education?: string | null;
-  finishedAt?: string | null;
-}
+export interface EqExcelMeta extends CandidateMeta {}
 
 export interface EqExcelAnswer {
   question_number: number;
@@ -104,6 +99,9 @@ export async function exportEqExcel(answers: EqExcelAnswer[], meta: EqExcelMeta 
   const nama = [meta.candidateName, meta.candidateCode].filter(Boolean).join(" — ") || "-";
   ws.getCell("B6").value = `Nama : ${nama}`;
   ws.getCell("F6").value = `Jabatan : ${meta.position ?? "-"}`;
+
+  // Biodata kandidat terisi otomatis dari data yang sudah tersimpan
+  applyBiodataSheet(wb, meta, "EQ");
 
   (wb as any).calcProperties = { ...(wb as any).calcProperties, fullCalcOnLoad: true };
 

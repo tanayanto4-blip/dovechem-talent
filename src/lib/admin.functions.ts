@@ -336,7 +336,9 @@ export const getAttemptDetail = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: attempt, error } = await supabaseAdmin
       .from("test_attempts")
-      .select("*, tests(*), candidates(id, full_name, code_snapshot, candidate_codes(code)), test_answers(*)")
+      .select(
+        "*, tests(*), candidates(id, full_name, code_snapshot, school_name, education, major, work_experience, phone, email, position_applied, gender, birth_date, birth_place, nik, address, marital_status, candidate_codes(code)), test_answers(*)",
+      )
       .eq("id", data.id)
       .single();
     if (error) throw new Error(error.message);
