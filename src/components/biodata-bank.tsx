@@ -182,6 +182,13 @@ export function BiodataBank() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={allChecked ? true : someChecked ? "indeterminate" : false}
+                      onCheckedChange={(v) => toggleAll(v === true)}
+                      aria-label="Pilih semua kandidat"
+                    />
+                  </TableHead>
                   <TableHead className="w-12">No.</TableHead>
                   <TableHead>Kode</TableHead>
                   {FIELDS.map((f) => <TableHead key={f.key}>{f.label}</TableHead>)}
@@ -191,9 +198,17 @@ export function BiodataBank() {
               </TableHeader>
               <TableBody>
                 {filtered.map((c, i) => (
-                  <TableRow key={c.id}>
+                  <TableRow key={c.id} data-state={selected[c.id] ? "selected" : undefined}>
+                    <TableCell>
+                      <Checkbox
+                        checked={!!selected[c.id]}
+                        onCheckedChange={(v) => setSelected((s) => ({ ...s, [c.id]: v === true }))}
+                        aria-label={`Pilih ${c.full_name ?? "kandidat"}`}
+                      />
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{i + 1}</TableCell>
                     <TableCell className="font-mono text-xs">{c.candidate_codes?.code ?? c.code_snapshot ?? "-"}</TableCell>
+
                     {FIELDS.map((f) => (
                       <TableCell key={f.key} className={f.key === "full_name" ? "font-medium" : "text-sm"}>
                         {c[f.key] || "-"}
