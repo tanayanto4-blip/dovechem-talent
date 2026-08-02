@@ -1,27 +1,15 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { dashboardStats, listAllAttempts } from "@/lib/admin.functions";
+import { dashboardStats } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Users, KeyRound, ClipboardCheck, TrendingUp, BarChart3, ArrowRight } from "lucide-react";
+import { Users, KeyRound, ClipboardCheck, TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/admin/dashboard")({ component: Dashboard });
-
-function fmt(d?: string | null) {
-  return d ? new Date(d).toLocaleString("id-ID") : "-";
-}
 
 function Dashboard() {
   const stats = useServerFn(dashboardStats);
   const { data } = useQuery({ queryKey: ["admin-stats"], queryFn: () => stats({ data: {} as never }) });
-  const attemptsFn = useServerFn(listAllAttempts);
-  const { data: attemptsData, isLoading: loadingAttempts } = useQuery({
-    queryKey: ["admin-dashboard-attempts"],
-    queryFn: () => attemptsFn({ data: { limit: 8 } }),
-  });
-  const recent = (attemptsData?.attempts ?? []) as any[];
 
   const cards = [
     { label: "Total Kode", value: data?.total_codes ?? "-", sub: `${data?.active_codes ?? 0} aktif`, icon: KeyRound },
@@ -29,6 +17,7 @@ function Dashboard() {
     { label: "Test Diselesaikan", value: data?.finished_attempts ?? "-", sub: `${data?.total_attempts ?? 0} total attempt`, icon: ClipboardCheck },
     { label: "Rata-rata Skor", value: data?.avg_score ?? "-", sub: "seluruh test", icon: TrendingUp },
   ];
+
 
 
   return (
