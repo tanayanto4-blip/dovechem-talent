@@ -291,12 +291,14 @@ function AttemptDetail() {
         </Card>
       )}
 
-      <div className={`space-y-3 ${isPauli ? "hidden" : ""}`}>
-        {data.questions.map((q: any, i: number) => {
+      <div className="space-y-3">
+        {(isPauli ? [] : data.questions).map((q: any, i: number) => {
           const ans = answerMap.get(q.id);
+          const opts: any[] = Array.isArray(q.options) ? q.options : [];
           let disc: { most?: string; least?: string } | null = null;
           if (isDisc && ans?.answer) { try { disc = JSON.parse(ans.answer); } catch { disc = null; } }
           const correct = !isDisc && q.correct_answer && ans?.answer === q.correct_answer;
+
           return (
             <Card key={q.id} className="shadow-card">
               <CardContent className="p-4">
