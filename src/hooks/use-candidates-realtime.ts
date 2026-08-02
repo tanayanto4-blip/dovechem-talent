@@ -29,30 +29,52 @@ export function useCandidatesRealtime(options?: { notify?: boolean }) {
   notifyRef.current = notify;
 
   useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    let pendingName: string | null = null;
+
+    const flush = () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+        debounceTimer = null;
+      }
+      // Only refetch queries that are currently active on screen. Inactive
+      // pages do not need a background fetch, which keeps navigation snappy.
+      for (const key of CANDIDATE_QUERY_KEYS) {
+        qc.invalidateQueries({ queryKey: key as unknown as string[], refetchType: "active" });
+      }
+      if (pendingName && notifyRef.current) {
+        toast.info(
+          pendingName ? `Biodata diperbarui: ${pendingName}` : "Biodata kandidat diperbarui",
+          { description: "Data di dashboard sudah disegarkan otomatis." },
+        );
+      }
+      pendingName = null;
+    };
+
     const channel = supabase
       .channel("staff-candidates-sync")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "candidates" },
         (payload) => {
-          for (const key of CANDIDATE_QUERY_KEYS) {
-            qc.invalidateQueries({ queryKey: key as unknown as string[] });
-          }
           const row = (payload.new ?? payload.old) as { id?: string; full_name?: string } | null;
-          if (row?.id) qc.invalidateQueries({ queryKey: ["candidate", row.id] });
-
-          if (notifyRef.current && payload.eventType === "UPDATE") {
+          if (row?.id) {
+            qc.invalidateQueries({ queryKey: ["candidate", row.id], refetchType: "active" });
+          }
+          if (payload.eventType === "UPDATE") {
             const name = (payload.new as { full_name?: string } | null)?.full_name;
-            toast.info(
-              name ? `Biodata diperbarui: ${name}` : "Biodata kandidat diperbarui",
-              { description: "Data di dashboard sudah disegarkan otomatis." },
-            );
+            if (name) pendingName = name;
+          }
+          // Batch rapid updates (e.g. autosave typing) into one refetch.
+          if (!debounceTimer) {
+            debounceTimer = setTimeout(flush, 800);
           }
         },
       )
       .subscribe();
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       void supabase.removeChannel(channel);
     };
   }, [qc]);
