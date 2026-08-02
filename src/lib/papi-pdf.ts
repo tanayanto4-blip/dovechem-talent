@@ -150,14 +150,14 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
       arrow(cx - 2, cy + 9, cx + 12, cy + 2, pick === "B"); // ke kanan-atas
     } else {
       arrow(cx - 2, cy - 5, cx + 12, cy - 10, pick === "A"); // ke kanan-atas/kanan
-      arrow(cx - 2, cy + 9, cx - 16, cy + 15, pick === "B"); // ke kiri-bawah
+      arrow(cx - 2, cy + 8, cx - 16, cy + 13, pick === "B"); // ke kiri-bawah
     }
 
     if (pick === "A" || pick === "B") {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(6.5);
       doc.setTextColor(15, 55, 110);
-      doc.text(pick, cx - 15, pick === "A" ? cy - 8 : cy + 14);
+      doc.text(pick, cx + 18, pick === "A" ? cy - 6 : cy + 11);
       doc.setTextColor(60);
     }
   }
