@@ -1,17 +1,50 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listCandidates } from "@/lib/admin.functions";
+import { listCandidates, deleteCandidate } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/admin/candidates")({ component: CandidatesList });
 
 function CandidatesList() {
   const listFn = useServerFn(listCandidates);
+  const deleteFn = useServerFn(deleteCandidate);
+  const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["candidates"], queryFn: () => listFn({ data: { limit: 1000 } }) });
+  const [toDelete, setToDelete] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function confirmDelete() {
+    if (!toDelete) return;
+    setDeleting(true);
+    try {
+      await deleteFn({ data: { id: toDelete.id } });
+      await qc.invalidateQueries({ queryKey: ["candidates"] });
+      await qc.invalidateQueries({ queryKey: ["admin-all-attempts"] });
+      toast.success(`Kandidat ${toDelete.full_name ?? ""} dihapus`);
+      setToDelete(null);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal menghapus kandidat");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -54,7 +87,19 @@ function CandidatesList() {
                       <TableCell>{c.data_completed ? <Badge className="bg-success">Lengkap</Badge> : <Badge variant="secondary">Belum</Badge>}</TableCell>
                       <TableCell>{finished} selesai</TableCell>
                       <TableCell>
-                        <Button asChild size="sm" variant="outline"><Link to="/admin/candidates/$id" params={{ id: c.id }}>Detail</Link></Button>
+                        <div className="flex justify-end gap-2">
+                          <Button asChild size="sm" variant="outline"><Link to="/admin/candidates/$id" params={{ id: c.id }}>Detail</Link></Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            aria-label={`Hapus kandidat ${c.full_name ?? ""}`}
+                            title="Hapus kandidat ini"
+                            onClick={() => setToDelete(c)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -68,6 +113,31 @@ function CandidatesList() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus kandidat?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Data kandidat {toDelete?.full_name ?? "ini"} beserta biodata, berkas, dan seluruh hasil test akan dihapus
+              permanen. Kode akses tetap tersimpan dan dapat digunakan kembali.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmDelete();
+              }}
+            >
+              {deleting ? "Menghapus..." : "Hapus kandidat"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
