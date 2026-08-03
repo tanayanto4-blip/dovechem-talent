@@ -6,10 +6,37 @@ import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PT Dover Chemical — Portal Psikotest Rekrutmen" },
-      { name: "description", content: "Portal resmi psikotest & rekrutmen PT Dover Chemical Indonesia. Kandidat login dengan kode akses, tim HR mengelola seluruh proses seleksi." },
+      { title: "Portal Psikotest & Rekrutmen PT Dover Chemical" },
+      { name: "description", content: "Portal resmi psikotest & rekrutmen PT Dover Chemical Indonesia. Kandidat login dengan kode akses, mengisi biodata, lalu mengerjakan psikotest online." },
+      { property: "og:title", content: "Portal Psikotest & Rekrutmen PT Dover Chemical" },
+      { property: "og:description", content: "Portal resmi psikotest & rekrutmen PT Dover Chemical Indonesia. Kandidat login dengan kode akses, mengisi biodata, lalu mengerjakan psikotest online." },
+      { property: "og:url", content: "https://test-dovechem.lovable.app/" },
+    ],
+    links: [{ rel: "canonical", href: "https://test-dovechem.lovable.app/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: "PT Dover Chemical Indonesia",
+              url: "https://test-dovechem.lovable.app/",
+              logo: "https://test-dovechem.lovable.app/favicon.ico",
+              description: "Perusahaan industri kimia dengan portal psikotest & rekrutmen online untuk calon karyawan.",
+            },
+            {
+              "@type": "WebSite",
+              name: "Portal Psikotest & Rekrutmen PT Dover Chemical",
+              url: "https://test-dovechem.lovable.app/",
+            },
+          ],
+        }),
+      },
     ],
   }),
+
   component: Home,
 });
 
