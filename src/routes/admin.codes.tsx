@@ -29,7 +29,8 @@ function CodesPage() {
   const purgeAll = useServerFn(deleteAllCodes);
   const { data } = useQuery({ queryKey: ["codes"], queryFn: () => list({ data: { limit: 1000 } }) });
   const [open, setOpen] = useState(false);
-  const [bulkOpen, setBulkOpen] = useState(false);
+  const [createMode, setCreateMode] = useState<"single" | "bulk">("single");
+
   const [autoOpen, setAutoOpen] = useState(false);
   const [expiryOpen, setExpiryOpen] = useState(false);
   const [expiryValue, setExpiryValue] = useState("");
@@ -123,7 +124,7 @@ function CodesPage() {
       }});
       toast.success(`${res.created} kode dibuat & aktif`);
       qc.invalidateQueries({ queryKey: ["codes"] });
-      setBulkOpen(false);
+      setOpen(false);
     } catch (e: any) { toast.error(e.message); }
     finally { setBulkSaving(false); }
   }
@@ -217,38 +218,40 @@ function CodesPage() {
             </DialogContent>
           </Dialog>
 
-          <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
-            <DialogTrigger asChild><Button variant="secondary"><Layers className="mr-2 h-4 w-4" /> Buat Massal</Button></DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Buat Kode Massal</DialogTitle></DialogHeader>
-              <form onSubmit={onBulk} className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2"><Label>Jumlah *</Label><Input type="number" min={1} max={1000} required value={bulkForm.count} onChange={(e) => setBulkForm({ ...bulkForm, count: Number(e.target.value) })} /></div>
-                  <div className="space-y-2"><Label>Mulai Nomor</Label><Input type="number" min={1} value={bulkForm.start_number} onChange={(e) => setBulkForm({ ...bulkForm, start_number: Number(e.target.value) })} /></div>
-                </div>
-                <div className="space-y-2"><Label>Prefix Kode</Label><Input value={bulkForm.prefix} onChange={(e) => setBulkForm({ ...bulkForm, prefix: e.target.value.toUpperCase() })} placeholder="DOV" /></div>
-                <div className="space-y-2"><Label>Prefix Nama Kandidat</Label><Input value={bulkForm.name_prefix} onChange={(e) => setBulkForm({ ...bulkForm, name_prefix: e.target.value })} placeholder="Kandidat" /></div>
-                <div className="space-y-2"><Label>Posisi Dilamar</Label><Input value={bulkForm.position_applied} onChange={(e) => setBulkForm({ ...bulkForm, position_applied: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Masa Berlaku (opsional)</Label><Input type="datetime-local" value={bulkForm.expires_at} onChange={(e) => setBulkForm({ ...bulkForm, expires_at: e.target.value })} /><p className="text-[11px] text-muted-foreground">Kosongkan jika tanpa batas waktu.</p></div>
-                <p className="text-xs text-muted-foreground">Semua kode dibuat dalam status <b>aktif</b> dan langsung bisa dipakai kandidat login.</p>
-                <DialogFooter><Button type="submit" disabled={bulkSaving}>{bulkSaving ? "Membuat..." : `Buat ${bulkForm.count} Kode`}</Button></DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" /> Buat Kode</Button></DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Buat Kode Kandidat</DialogTitle></DialogHeader>
-              <form onSubmit={onCreate} className="space-y-4">
-                <div className="space-y-2"><Label>Nama Kandidat *</Label><Input required value={form.candidate_name} onChange={(e) => setForm({ ...form, candidate_name: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.candidate_email} onChange={(e) => setForm({ ...form, candidate_email: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Posisi Dilamar</Label><Input value={form.position_applied} onChange={(e) => setForm({ ...form, position_applied: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Kode Custom (opsional)</Label><Input placeholder="Kosongkan untuk auto-generate" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} /></div>
-                <div className="space-y-2"><Label>Masa Berlaku (opsional)</Label><Input type="datetime-local" value={form.expires_at} onChange={(e) => setForm({ ...form, expires_at: e.target.value })} /></div>
-                <DialogFooter><Button type="submit" disabled={saving}>{saving ? "Membuat..." : "Buat"}</Button></DialogFooter>
-              </form>
+              <div className="flex gap-2">
+                <Button type="button" size="sm" variant={createMode === "single" ? "default" : "outline"} onClick={() => setCreateMode("single")} className="flex-1"><Plus className="mr-2 h-4 w-4" /> Satuan</Button>
+                <Button type="button" size="sm" variant={createMode === "bulk" ? "default" : "outline"} onClick={() => setCreateMode("bulk")} className="flex-1"><Layers className="mr-2 h-4 w-4" /> Massal</Button>
+              </div>
+              {createMode === "single" ? (
+                <form onSubmit={onCreate} className="space-y-4">
+                  <div className="space-y-2"><Label>Nama Kandidat *</Label><Input required value={form.candidate_name} onChange={(e) => setForm({ ...form, candidate_name: e.target.value })} /></div>
+                  <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.candidate_email} onChange={(e) => setForm({ ...form, candidate_email: e.target.value })} /></div>
+                  <div className="space-y-2"><Label>Posisi Dilamar</Label><Input value={form.position_applied} onChange={(e) => setForm({ ...form, position_applied: e.target.value })} /></div>
+                  <div className="space-y-2"><Label>Kode Custom (opsional)</Label><Input placeholder="Kosongkan untuk auto-generate" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} /></div>
+                  <div className="space-y-2"><Label>Masa Berlaku (opsional)</Label><Input type="datetime-local" value={form.expires_at} onChange={(e) => setForm({ ...form, expires_at: e.target.value })} /></div>
+                  <DialogFooter><Button type="submit" disabled={saving}>{saving ? "Membuat..." : "Buat"}</Button></DialogFooter>
+                </form>
+              ) : (
+                <form onSubmit={onBulk} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2"><Label>Jumlah *</Label><Input type="number" min={1} max={1000} required value={bulkForm.count} onChange={(e) => setBulkForm({ ...bulkForm, count: Number(e.target.value) })} /></div>
+                    <div className="space-y-2"><Label>Mulai Nomor</Label><Input type="number" min={1} value={bulkForm.start_number} onChange={(e) => setBulkForm({ ...bulkForm, start_number: Number(e.target.value) })} /></div>
+                  </div>
+                  <div className="space-y-2"><Label>Prefix Kode</Label><Input value={bulkForm.prefix} onChange={(e) => setBulkForm({ ...bulkForm, prefix: e.target.value.toUpperCase() })} placeholder="DOV" /></div>
+                  <div className="space-y-2"><Label>Prefix Nama Kandidat</Label><Input value={bulkForm.name_prefix} onChange={(e) => setBulkForm({ ...bulkForm, name_prefix: e.target.value })} placeholder="Kandidat" /></div>
+                  <div className="space-y-2"><Label>Posisi Dilamar</Label><Input value={bulkForm.position_applied} onChange={(e) => setBulkForm({ ...bulkForm, position_applied: e.target.value })} /></div>
+                  <div className="space-y-2"><Label>Masa Berlaku (opsional)</Label><Input type="datetime-local" value={bulkForm.expires_at} onChange={(e) => setBulkForm({ ...bulkForm, expires_at: e.target.value })} /><p className="text-[11px] text-muted-foreground">Kosongkan jika tanpa batas waktu.</p></div>
+                  <p className="text-xs text-muted-foreground">Semua kode dibuat dalam status <b>aktif</b> dan langsung bisa dipakai kandidat login.</p>
+                  <DialogFooter><Button type="submit" disabled={bulkSaving}>{bulkSaving ? "Membuat..." : `Buat ${bulkForm.count} Kode`}</Button></DialogFooter>
+                </form>
+              )}
             </DialogContent>
           </Dialog>
+
         </div>
       </div>
 
