@@ -59,7 +59,7 @@ function TestsPage() {
                     <Badge variant="secondary">Belum dikerjakan</Badge>
                   )}
                 </div>
-                <h3 className="font-display text-lg font-bold text-primary">{t.name}</h3>
+                <h2 className="font-display text-lg font-bold text-primary">{t.name}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">{t.description}</p>
                 <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1"><Timer className="h-3.5 w-3.5" /> {t.duration_minutes} menit</span>
