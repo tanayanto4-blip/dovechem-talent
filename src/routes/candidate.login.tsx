@@ -58,7 +58,7 @@ function CandidateLogin() {
         <Card className="shadow-elegant">
           <CardHeader className="text-center">
             <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="mx-auto h-12 w-auto object-contain" />
-            <CardTitle asChild className="mt-3 font-display text-2xl"><h1>Login Kandidat — Portal Psikotest</h1></CardTitle>
+            <h1 className="mt-3 font-display text-2xl font-semibold leading-none tracking-tight">Login Kandidat — Portal Psikotest</h1>
             <CardDescription>Masukkan kode akses yang dikirim tim HR</CardDescription>
           </CardHeader>
           <CardContent>

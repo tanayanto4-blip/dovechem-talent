@@ -72,7 +72,7 @@ function DataForm() {
   return (
     <Card className="shadow-card">
       <CardHeader>
-        <CardTitle asChild className="font-display"><h1>Biodata Kandidat</h1></CardTitle>
+        <h1 className="font-display text-2xl font-semibold leading-none tracking-tight">Biodata Kandidat</h1>
         <p className="text-sm text-muted-foreground">
           Seluruh kolom wajib diisi. Data diri harus dilengkapi terlebih dahulu sebelum Anda dapat mengerjakan psikotest.
         </p>

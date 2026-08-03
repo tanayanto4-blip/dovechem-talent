@@ -107,7 +107,7 @@ function Home() {
               <span className="h-1.5 w-1.5 rounded-full bg-primary-glow" /> Portal Rekrutmen Resmi
             </div>
             <h1 className="mt-6 font-display text-5xl font-bold leading-tight md:text-6xl">
-              Selamat datang di<br />
+              Portal Psikotest &amp; Rekrutmen<br />
               <span className="text-primary-glow">PT Dover Chemical</span>
             </h1>
             <p className="mt-6 max-w-lg text-lg text-white/80">
