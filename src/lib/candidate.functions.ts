@@ -116,15 +116,15 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
 
 const ProfileInput = z.object({
   code: z.string().trim().min(3),
-  full_name: z.string().trim().min(2).max(120),
-  school_name: z.string().trim().max(160).optional().nullable(),
-  gender: z.union([z.enum(["Laki-laki", "Perempuan"]), z.literal("")]).optional().nullable(),
-  education: z.string().trim().max(120).optional().nullable(),
-  major: z.string().trim().max(120).optional().nullable(),
-  work_experience: z.string().trim().max(120).optional().nullable(),
-  phone: z.string().trim().max(30).optional().nullable(),
-  email: z.union([z.string().email().max(200), z.literal("")]).optional().nullable(),
-  position_applied: z.string().trim().max(120).optional().nullable(),
+  full_name: z.string().trim().min(2, "Nama lengkap wajib diisi").max(120),
+  school_name: z.string().trim().min(2, "Nama sekolah/universitas wajib diisi").max(160),
+  gender: z.enum(["Laki-laki", "Perempuan"], { message: "Jenis kelamin wajib dipilih" }),
+  education: z.string().trim().min(1, "Pendidikan wajib dipilih").max(120),
+  major: z.string().trim().min(1, "Jurusan wajib diisi").max(120),
+  work_experience: z.string().trim().min(1, "Pengalaman kerja wajib diisi").max(120),
+  phone: z.string().trim().min(6, "Nomor telepon wajib diisi").max(30),
+  email: z.string().trim().email("Email tidak valid").max(200),
+  position_applied: z.string().trim().min(2, "Posisi yang dilamar wajib diisi").max(120),
 });
 
 export const candidateSaveProfile = createServerFn({ method: "POST" })
