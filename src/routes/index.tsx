@@ -6,10 +6,37 @@ import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PT Dover Chemical — Portal Psikotest Rekrutmen" },
-      { name: "description", content: "Portal resmi psikotest & rekrutmen PT Dover Chemical Indonesia. Kandidat login dengan kode akses, tim HR mengelola seluruh proses seleksi." },
+      { title: "Portal Psikotest & Rekrutmen PT Dover Chemical" },
+      { name: "description", content: "Portal resmi psikotest & rekrutmen PT Dover Chemical Indonesia. Kandidat login dengan kode akses, mengisi biodata, lalu mengerjakan psikotest online." },
+      { property: "og:title", content: "Portal Psikotest & Rekrutmen PT Dover Chemical" },
+      { property: "og:description", content: "Portal resmi psikotest & rekrutmen PT Dover Chemical Indonesia. Kandidat login dengan kode akses, mengisi biodata, lalu mengerjakan psikotest online." },
+      { property: "og:url", content: "https://test-dovechem.lovable.app/" },
+    ],
+    links: [{ rel: "canonical", href: "https://test-dovechem.lovable.app/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: "PT Dover Chemical Indonesia",
+              url: "https://test-dovechem.lovable.app/",
+              logo: "https://test-dovechem.lovable.app/favicon.ico",
+              description: "Perusahaan industri kimia dengan portal psikotest & rekrutmen online untuk calon karyawan.",
+            },
+            {
+              "@type": "WebSite",
+              name: "Portal Psikotest & Rekrutmen PT Dover Chemical",
+              url: "https://test-dovechem.lovable.app/",
+            },
+          ],
+        }),
+      },
     ],
   }),
+
   component: Home,
 });
 
@@ -80,7 +107,7 @@ function Home() {
               <span className="h-1.5 w-1.5 rounded-full bg-primary-glow" /> Portal Rekrutmen Resmi
             </div>
             <h1 className="mt-6 font-display text-5xl font-bold leading-tight md:text-6xl">
-              Selamat datang di<br />
+              Portal Psikotest &amp; Rekrutmen<br />
               <span className="text-primary-glow">PT Dover Chemical</span>
             </h1>
             <p className="mt-6 max-w-lg text-lg text-white/80">

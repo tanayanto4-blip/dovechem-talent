@@ -12,7 +12,18 @@ import { Beaker, ArrowLeft, Lock } from "lucide-react";
 import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Login Admin — PT Dover Chemical" }, { name: "description", content: "Login administrator HR PT Dover Chemical." }] }),
+  head: () => ({
+    meta: [
+      { title: "Login Admin HR — PT Dover Chemical" },
+      { name: "description", content: "Halaman masuk administrator dan tim HR PT Dover Chemical untuk mengelola kode akses, bank soal, serta hasil psikotest kandidat." },
+      { property: "og:title", content: "Login Admin HR — PT Dover Chemical" },
+      { property: "og:description", content: "Halaman masuk administrator dan tim HR PT Dover Chemical untuk mengelola kode akses, bank soal, serta hasil psikotest kandidat." },
+      { property: "og:url", content: "https://test-dovechem.lovable.app/auth" },
+      { name: "robots", content: "noindex" },
+    ],
+    links: [{ rel: "canonical", href: "https://test-dovechem.lovable.app/auth" }],
+  }),
+
   component: AuthPage,
 });
 

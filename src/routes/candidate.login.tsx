@@ -12,7 +12,17 @@ import { Beaker, ArrowLeft, KeyRound } from "lucide-react";
 import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/candidate/login")({
-  head: () => ({ meta: [{ title: "Login Kandidat — PT Dover Chemical" }, { name: "description", content: "Login kandidat dengan kode akses untuk mengerjakan psikotest PT Dover Chemical." }] }),
+  head: () => ({
+    meta: [
+      { title: "Login Kandidat — PT Dover Chemical" },
+      { name: "description", content: "Masuk sebagai kandidat PT Dover Chemical menggunakan kode akses dari tim HR untuk mengisi biodata dan mengerjakan rangkaian psikotest online." },
+      { property: "og:title", content: "Login Kandidat — PT Dover Chemical" },
+      { property: "og:description", content: "Masuk sebagai kandidat PT Dover Chemical menggunakan kode akses dari tim HR untuk mengisi biodata dan mengerjakan rangkaian psikotest online." },
+      { property: "og:url", content: "https://test-dovechem.lovable.app/candidate/login" },
+    ],
+    links: [{ rel: "canonical", href: "https://test-dovechem.lovable.app/candidate/login" }],
+  }),
+
   component: CandidateLogin,
 });
 
@@ -48,7 +58,7 @@ function CandidateLogin() {
         <Card className="shadow-elegant">
           <CardHeader className="text-center">
             <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="mx-auto h-12 w-auto object-contain" />
-            <CardTitle className="mt-3 font-display text-2xl">Portal Kandidat</CardTitle>
+            <h1 className="mt-3 font-display text-2xl font-semibold leading-none tracking-tight">Login Kandidat — Portal Psikotest</h1>
             <CardDescription>Masukkan kode akses yang dikirim tim HR</CardDescription>
           </CardHeader>
           <CardContent>
