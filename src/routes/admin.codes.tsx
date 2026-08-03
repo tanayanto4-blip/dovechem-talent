@@ -29,7 +29,6 @@ function CodesPage() {
   const purgeAll = useServerFn(deleteAllCodes);
   const { data } = useQuery({ queryKey: ["codes"], queryFn: () => list({ data: { limit: 1000 } }) });
   const [open, setOpen] = useState(false);
-  const [bulkOpen, setBulkOpen] = useState(false);
   const [createMode, setCreateMode] = useState<"single" | "bulk">("single");
 
   const [autoOpen, setAutoOpen] = useState(false);
@@ -125,7 +124,7 @@ function CodesPage() {
       }});
       toast.success(`${res.created} kode dibuat & aktif`);
       qc.invalidateQueries({ queryKey: ["codes"] });
-      setBulkOpen(false);
+      setOpen(false);
     } catch (e: any) { toast.error(e.message); }
     finally { setBulkSaving(false); }
   }
