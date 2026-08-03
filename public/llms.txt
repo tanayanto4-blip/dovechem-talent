@@ -1,0 +1,8 @@
+# PT Dover Chemical — Portal Psikotest Rekrutmen
+
+> Portal resmi psikotest dan rekrutmen PT Dover Chemical Indonesia. Kandidat login memakai kode akses dari tim HR, melengkapi biodata, lalu mengerjakan rangkaian psikotest online.
+
+## Pages
+
+- [Beranda](/): Penjelasan portal rekrutmen dan 5 langkah proses seleksi kandidat.
+- [Login Kandidat](/candidate/login): Halaman masuk kandidat menggunakan kode akses dari tim HR.
