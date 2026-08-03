@@ -41,8 +41,25 @@ function DataForm() {
     });
   }, [c]);
 
+  const requiredFields: [string, string][] = [
+    ["full_name", "Nama lengkap"],
+    ["gender", "Jenis kelamin"],
+    ["school_name", "Nama sekolah / universitas"],
+    ["education", "Pendidikan"],
+    ["major", "Jurusan"],
+    ["work_experience", "Pengalaman kerja"],
+    ["phone", "Telp / HP"],
+    ["email", "Email"],
+    ["position_applied", "Posisi dilamar"],
+  ];
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const missing = requiredFields.filter(([k]) => !String(form[k] ?? "").trim()).map(([, l]) => l);
+    if (missing.length) {
+      toast.error(`Wajib diisi: ${missing.join(", ")}`);
+      return;
+    }
     setSaving(true);
     try {
       await save({ data: { code: session!.code, ...form } });
@@ -56,12 +73,14 @@ function DataForm() {
     <Card className="shadow-card">
       <CardHeader>
         <CardTitle className="font-display">Data Diri Kandidat</CardTitle>
-        <p className="text-sm text-muted-foreground">Data yang Anda isi otomatis tersimpan ke bank data HR.</p>
+        <p className="text-sm text-muted-foreground">
+          Seluruh kolom wajib diisi. Data diri harus dilengkapi terlebih dahulu sebelum Anda dapat mengerjakan psikotest.
+        </p>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="grid gap-4 md:grid-cols-2">
           <Field label="Nama Lengkap" required><Input value={form.full_name ?? ""} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required /></Field>
-          <Field label="Jenis Kelamin">
+          <Field label="Jenis Kelamin" required>
             <Select value={form.gender ?? ""} onValueChange={(v) => setForm({ ...form, gender: v })}>
               <SelectTrigger><SelectValue placeholder="Pilih jenis kelamin" /></SelectTrigger>
               <SelectContent>
@@ -71,8 +90,8 @@ function DataForm() {
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Nama Sekolah / Universitas"><Input value={form.school_name ?? ""} onChange={(e) => setForm({ ...form, school_name: e.target.value })} placeholder="Institut Teknologi Bandung" /></Field>
-          <Field label="Pendidikan">
+          <Field label="Nama Sekolah / Universitas" required><Input value={form.school_name ?? ""} onChange={(e) => setForm({ ...form, school_name: e.target.value })} placeholder="Institut Teknologi Bandung" required /></Field>
+          <Field label="Pendidikan" required>
             <Select value={form.education ?? ""} onValueChange={(v) => setForm({ ...form, education: v })}>
               <SelectTrigger><SelectValue placeholder="Pilih jenjang" /></SelectTrigger>
               <SelectContent>
@@ -82,11 +101,11 @@ function DataForm() {
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Jurusan"><Input value={form.major ?? ""} onChange={(e) => setForm({ ...form, major: e.target.value })} placeholder="Teknik Kimia" /></Field>
-          <Field label="Pernah Bekerja Berapa Lama"><Input value={form.work_experience ?? ""} onChange={(e) => setForm({ ...form, work_experience: e.target.value })} placeholder="2 tahun 6 bulan / Belum pernah" /></Field>
-          <Field label="Telp / HP"><Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0812xxxxxxx" /></Field>
-          <Field label="Email"><Input type="email" value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
-          <Field label="Posisi Dilamar"><Input value={form.position_applied ?? ""} onChange={(e) => setForm({ ...form, position_applied: e.target.value })} /></Field>
+          <Field label="Jurusan" required><Input value={form.major ?? ""} onChange={(e) => setForm({ ...form, major: e.target.value })} placeholder="Teknik Kimia" required /></Field>
+          <Field label="Pernah Bekerja Berapa Lama" required><Input value={form.work_experience ?? ""} onChange={(e) => setForm({ ...form, work_experience: e.target.value })} placeholder="2 tahun 6 bulan / Belum pernah" required /></Field>
+          <Field label="Telp / HP" required><Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0812xxxxxxx" required /></Field>
+          <Field label="Email" required><Input type="email" value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></Field>
+          <Field label="Posisi Dilamar" required><Input value={form.position_applied ?? ""} onChange={(e) => setForm({ ...form, position_applied: e.target.value })} required /></Field>
           <div className="md:col-span-2">
             <Button type="submit" disabled={saving}>{saving ? "Menyimpan..." : "Simpan Data"}</Button>
           </div>
