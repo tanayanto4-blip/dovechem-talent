@@ -30,6 +30,8 @@ function CodesPage() {
   const { data } = useQuery({ queryKey: ["codes"], queryFn: () => list({ data: { limit: 1000 } }) });
   const [open, setOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [createMode, setCreateMode] = useState<"single" | "bulk">("single");
+
   const [autoOpen, setAutoOpen] = useState(false);
   const [expiryOpen, setExpiryOpen] = useState(false);
   const [expiryValue, setExpiryValue] = useState("");
