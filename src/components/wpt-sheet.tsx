@@ -145,12 +145,24 @@ export function WptSheet({ questions, answers, images, onChange, renderImage }: 
               </div>
             </div>
 
-            <div className="text-base font-medium leading-snug">{parsed.stem}</div>
+            <div className="text-base font-medium leading-snug">{block.body || parsed.stem}</div>
+
+            {block.lines.length > 0 && (
+              <ul className="w-full max-w-md space-y-1 rounded-md border bg-muted/40 p-3 font-mono text-sm">
+                {block.lines.map((line, i) => (
+                  <li key={i} className="flex items-center justify-between gap-4 border-b border-dashed border-border/60 pb-1 last:border-0 last:pb-0">
+                    <span>{line.split("/")[0]?.trim()}</span>
+                    <span>{line.split("/").slice(1).join("/").trim()}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
 
             {img && renderImage?.(img, active.question_number)}
 
             {parsed.options.length > 0 ? (
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className={`grid gap-2 ${longOptions ? "" : "sm:grid-cols-2"}`}>
+
                 {parsed.options.map((opt) => {
                   const picked = activeAnswer === opt.key;
                   return (
