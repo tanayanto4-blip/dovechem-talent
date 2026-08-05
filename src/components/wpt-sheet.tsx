@@ -18,9 +18,27 @@ type Props = {
   renderImage?: (img: { url: string; caption: string }, number: number) => React.ReactNode;
 };
 
+/** Buang penanda gambar [IMG:...] dari teks soal */
+export function stripImgToken(text: string): string {
+  return (text ?? "").replace(/\[IMG:[^\]]*\]/g, "").trim();
+}
+
+/**
+ * Pisahkan blok data berturut ke bawah (mis. pasangan "84721 / 84721") dari teks soal.
+ * Blok dipisah oleh 2+ spasi dan setiap barisnya memuat tanda "/".
+ */
+export function extractPairBlock(text: string): { body: string; lines: string[] } {
+  const segments = (text ?? "").split(/\s{2,}/).map((s) => s.trim()).filter(Boolean);
+  const pairIdx = segments.findIndex((s) => /^[^/]+\/[^/]+$/.test(s));
+  if (pairIdx === -1) return { body: text, lines: [] };
+  const lines = segments.slice(pairIdx).filter((s) => /^[^/]+\/[^/]+$/.test(s));
+  if (lines.length < 2) return { body: text, lines: [] };
+  return { body: segments.slice(0, pairIdx).join(" "), lines };
+}
+
 /** Pisahkan teks soal dari opsi inline berformat "1. xxx  2. yyy" */
 export function parseWptOptions(text: string): { stem: string; options: { key: string; label: string }[] } {
-  const raw = text ?? "";
+  const raw = stripImgToken(text ?? "");
   const firstIdx = raw.search(/(^|\s)1\.\s+\S/);
   if (firstIdx === -1) return { stem: raw, options: [] };
   const stem = raw.slice(0, firstIdx).trim();
@@ -32,6 +50,7 @@ export function parseWptOptions(text: string): { stem: string; options: { key: s
   if (options.length < 2) return { stem: raw, options: [] };
   return { stem: stem || raw, options };
 }
+
 
 export function WptSheet({ questions, answers, images, onChange, renderImage }: Props) {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
