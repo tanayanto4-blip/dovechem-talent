@@ -26,6 +26,22 @@ async function logAudit(
   }
 }
 
+/** Skema editor soal generik (dipakai upsertTestQuestion). */
+const AnyJson: z.ZodType<any> = z.lazy(() =>
+  z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(AnyJson), z.record(AnyJson)]),
+);
+
+const QuestionUpsertInput = z.object({
+  question_id: z.string().uuid().optional(),
+  test_id: z.string().uuid(),
+  question_number: z.number().int().min(1).max(1000),
+  question_text: z.string().trim().min(1).max(4000),
+  dimension: z.string().trim().max(60).nullable().optional(),
+  correct_answer: z.string().trim().max(200).nullable().optional(),
+  options: AnyJson.nullable().optional(),
+  active: z.boolean().optional(),
+});
+
 /** Records that a staff member opened an admin surface (dashboard/candidates/etc.). */
 export const logStaffAccess = createServerFn({ method: "POST" })
   .middleware([requireStaff])
