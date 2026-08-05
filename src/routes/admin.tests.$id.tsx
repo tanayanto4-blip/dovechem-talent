@@ -9,6 +9,8 @@ import { ArrowLeft } from "lucide-react";
 import { MbtiAdmin } from "@/components/mbti-admin";
 import { TestDurationEditor } from "@/components/test-duration-editor";
 import { TestPublishToggle, QuestionPublishToggle, BulkQuestionPublish } from "@/components/publish-toggle";
+import { QuestionEditorDialog, QuestionDeleteButton, TestMetaEditor } from "@/components/question-editor";
+
 
 export const Route = createFileRoute("/admin/tests/$id")({ component: TestDetail });
 
