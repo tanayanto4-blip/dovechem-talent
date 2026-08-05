@@ -748,7 +748,7 @@ export const upsertTestQuestion = createServerFn({ method: "POST" })
         .select("question_number, question_text, options, dimension, correct_answer, active")
         .eq("id", data.question_id)
         .maybeSingle();
-      const { error } = await supabaseAdmin.from("test_questions").update(payload).eq("id", data.question_id);
+      const { error } = await supabaseAdmin.from("test_questions").update(payload as any).eq("id", data.question_id);
       if (error) throw new Error(error.message);
       await logAudit(context, "question.update", "test_question", data.question_id, {
         test_id: data.test_id,
