@@ -264,13 +264,20 @@ export const candidateSaveAnswer = createServerFn({ method: "POST" })
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: attempt } = await sb
       .from("test_attempts")
-      .select("id, status, test_id")
+      .select("id, status, test_id, started_at, tests(duration_minutes)")
       .eq("id", data.attempt_id)
       .eq("candidate_id", cand.id)
       .single();
     if (!attempt) throw new Error("Attempt tidak valid.");
     if ((attempt as any).status === "finished") throw new Error("Attempt sudah selesai.");
+    // Server-side time limit: reject autosaves after the allotted duration.
+    const dur = Number((attempt as any).tests?.duration_minutes) || 0;
+    const start = (attempt as any).started_at ? new Date((attempt as any).started_at).getTime() : NaN;
+    if (dur > 0 && Number.isFinite(start) && Date.now() > start + dur * 60_000 + 60_000) {
+      throw new Error("Waktu pengerjaan test sudah habis.");
+    }
     await assertTestOpen(sb, cand.id, (attempt as any).test_id);
+
     const { error } = await sb
       .from("test_answers")
       .upsert(
