@@ -708,20 +708,7 @@ export const upsertMbtiQuestion = createServerFn({ method: "POST" })
 /* Editor soal generik (semua jenis test di Bank Soal) — khusus admin   */
 /* ------------------------------------------------------------------ */
 
-const AnyJson: z.ZodType<any> = z.lazy(() =>
-  z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(AnyJson), z.record(AnyJson)]),
-);
 
-const QuestionUpsertInput = z.object({
-  question_id: z.string().uuid().optional(),
-  test_id: z.string().uuid(),
-  question_number: z.number().int().min(1).max(1000),
-  question_text: z.string().trim().min(1).max(4000),
-  dimension: z.string().trim().max(60).nullable().optional(),
-  correct_answer: z.string().trim().max(200).nullable().optional(),
-  options: AnyJson.nullable().optional(),
-  active: z.boolean().optional(),
-});
 
 /** Create or update ANY test question (multiple choice, DISC, free text, Pauli, dll). */
 export const upsertTestQuestion = createServerFn({ method: "POST" })
