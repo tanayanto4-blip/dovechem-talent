@@ -47,13 +47,22 @@ function TestDetail() {
         </div>
         <p className="mt-2 text-sm text-muted-foreground">{t.description}</p>
         <div className="mt-4 grid max-w-2xl gap-3 md:grid-cols-2">
+        <div className="mt-4 grid max-w-2xl gap-3 md:grid-cols-2">
           <TestPublishToggle testId={t.id} testName={t.name} active={!!t.active} />
           <TestDurationEditor testId={t.id} testName={t.name} value={t.duration_minutes} />
         </div>
-        <div className="mt-3">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <BulkQuestionPublish testId={t.id} />
+          <TestMetaEditor testId={t.id} name={t.name} description={t.description} />
+          <QuestionEditorDialog
+            testId={t.id}
+            nextNumber={
+              (data.questions as any[]).reduce((m, q) => Math.max(m, q.question_number ?? 0), 0) + 1
+            }
+          />
         </div>
       </div>
+
 
       <div className="space-y-4">
         {data.questions.map((q: any, i: number) => (
