@@ -9,6 +9,8 @@ import { ArrowLeft } from "lucide-react";
 import { MbtiAdmin } from "@/components/mbti-admin";
 import { TestDurationEditor } from "@/components/test-duration-editor";
 import { TestPublishToggle, QuestionPublishToggle, BulkQuestionPublish } from "@/components/publish-toggle";
+import { QuestionEditorDialog, QuestionDeleteButton, TestMetaEditor } from "@/components/question-editor";
+
 
 export const Route = createFileRoute("/admin/tests/$id")({ component: TestDetail });
 
@@ -45,27 +47,39 @@ function TestDetail() {
         </div>
         <p className="mt-2 text-sm text-muted-foreground">{t.description}</p>
         <div className="mt-4 grid max-w-2xl gap-3 md:grid-cols-2">
+
           <TestPublishToggle testId={t.id} testName={t.name} active={!!t.active} />
           <TestDurationEditor testId={t.id} testName={t.name} value={t.duration_minutes} />
         </div>
-        <div className="mt-3">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <BulkQuestionPublish testId={t.id} />
+          <TestMetaEditor testId={t.id} name={t.name} description={t.description} />
+          <QuestionEditorDialog
+            testId={t.id}
+            nextNumber={
+              (data.questions as any[]).reduce((m, q) => Math.max(m, q.question_number ?? 0), 0) + 1
+            }
+          />
         </div>
       </div>
+
 
       <div className="space-y-4">
         {data.questions.map((q: any, i: number) => (
           <Card key={q.id} className={`shadow-card ${q.active === false ? "opacity-60" : ""}`}>
             <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <CardTitle className="text-sm text-muted-foreground">
-                  {isDisc ? `Kelompok ${i + 1}` : `Soal ${i + 1}`}
+                  {isDisc ? `Kelompok ${i + 1}` : `Soal ${q.question_number ?? i + 1}`}
                 </CardTitle>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {q.dimension && <Badge variant="outline">Dim: {q.dimension}</Badge>}
                   <QuestionPublishToggle id={q.id} active={q.active !== false} />
+                  <QuestionEditorDialog testId={t.id} question={q} />
+                  <QuestionDeleteButton id={q.id} number={q.question_number ?? i + 1} />
                 </div>
               </div>
+
             </CardHeader>
             <CardContent>
               {q.question_text && <div className="mb-3 font-medium">{q.question_text}</div>}

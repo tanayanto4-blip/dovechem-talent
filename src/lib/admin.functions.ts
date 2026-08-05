@@ -26,6 +26,22 @@ async function logAudit(
   }
 }
 
+/** Skema editor soal generik (dipakai upsertTestQuestion). */
+const AnyJson: z.ZodType<any> = z.lazy(() =>
+  z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(AnyJson), z.record(AnyJson)]),
+);
+
+const QuestionUpsertInput = z.object({
+  question_id: z.string().uuid().optional(),
+  test_id: z.string().uuid(),
+  question_number: z.number().int().min(1).max(1000),
+  question_text: z.string().trim().min(1).max(4000),
+  dimension: z.string().trim().max(60).nullable().optional(),
+  correct_answer: z.string().trim().max(200).nullable().optional(),
+  options: AnyJson.nullable().optional(),
+  active: z.boolean().optional(),
+});
+
 /** Records that a staff member opened an admin surface (dashboard/candidates/etc.). */
 export const logStaffAccess = createServerFn({ method: "POST" })
   .middleware([requireStaff])
@@ -704,7 +720,106 @@ export const upsertMbtiQuestion = createServerFn({ method: "POST" })
     return { ok: true, id: (ins as any).id };
   });
 
+/* ------------------------------------------------------------------ */
+/* Editor soal generik (semua jenis test di Bank Soal) — khusus admin   */
+/* ------------------------------------------------------------------ */
+
+
+
+/** Create or update ANY test question (multiple choice, DISC, free text, Pauli, dll). */
+export const upsertTestQuestion = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) => QuestionUpsertInput.parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const t = await supabaseAdmin.from("tests").select("id").eq("id", data.test_id).maybeSingle();
+    if (t.error || !t.data) throw new Error("Test tidak ditemukan.");
+
+    const payload: Record<string, unknown> = {
+      test_id: data.test_id,
+      question_number: data.question_number,
+      question_text: data.question_text,
+      dimension: data.dimension?.trim() ? data.dimension.trim() : null,
+      correct_answer: data.correct_answer?.trim() ? data.correct_answer.trim() : null,
+      options: data.options ?? null,
+    };
+    if (typeof data.active === "boolean") payload.active = data.active;
+
+    if (data.question_id) {
+      const prev = await supabaseAdmin
+        .from("test_questions")
+        .select("question_number, question_text, options, dimension, correct_answer, active")
+        .eq("id", data.question_id)
+        .maybeSingle();
+      const { error } = await supabaseAdmin.from("test_questions").update(payload as any).eq("id", data.question_id);
+      if (error) throw new Error(error.message);
+      await logAudit(context, "question.update", "test_question", data.question_id, {
+        test_id: data.test_id,
+        question_number: data.question_number,
+        before: prev.data ?? null,
+        after: payload,
+      });
+      return { ok: true, id: data.question_id };
+    }
+
+    const { data: ins, error } = await supabaseAdmin
+      .from("test_questions")
+      .insert(payload as any)
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    await logAudit(context, "question.create", "test_question", (ins as any).id, {
+      test_id: data.test_id,
+      question_number: data.question_number,
+      after: payload,
+    });
+    return { ok: true, id: (ins as any).id };
+  });
+
+/** Delete ANY test question. */
+export const deleteTestQuestion = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const prev = await supabaseAdmin
+      .from("test_questions")
+      .select("test_id, question_number, question_text, options, dimension, correct_answer")
+      .eq("id", data.id)
+      .maybeSingle();
+    await supabaseAdmin.from("test_answers").delete().eq("question_id", data.id);
+    const { error } = await supabaseAdmin.from("test_questions").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await logAudit(context, "question.delete", "test_question", data.id, {
+      test_id: (prev.data as any)?.test_id ?? null,
+      snapshot: prev.data ?? null,
+    });
+    return { ok: true };
+  });
+
+/** Update test metadata (nama, deskripsi, instruksi) — admin only. */
+export const updateTestMeta = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) =>
+    z.object({
+      id: z.string().uuid(),
+      name: z.string().trim().min(1).max(160),
+      description: z.string().trim().max(2000).nullable().optional(),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("tests")
+      .update({ name: data.name, description: data.description?.trim() || null })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await logAudit(context, "test.update_meta", "test", data.id, { name: data.name });
+    return { ok: true };
+  });
+
 /** Delete an MBTI question. */
+
 export const deleteMbtiQuestion = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))

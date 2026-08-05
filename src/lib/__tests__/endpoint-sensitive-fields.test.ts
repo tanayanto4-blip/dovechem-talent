@@ -62,6 +62,11 @@ const SELECT_STAR_WHITELIST: Record<string, readonly string[]> = {
   ],
 };
 
+// Admin-only WRITE handlers (requireAdmin) for the question-bank editor.
+// They read/write `correct_answer` by design but return only { ok, id } —
+// the answer key never crosses back to the browser.
+const ADMIN_QUESTION_WRITERS = ["upsertTestQuestion", "deleteTestQuestion"] as const;
+
 function walk(dir: string): string[] {
   let out: string[] = [];
   let entries: string[];
@@ -116,6 +121,9 @@ describe("endpoint leaks — explicit column projection", () => {
   for (const field of FORBIDDEN) {
     it(`no handler .select()s ${field}`, () => {
       const offenders = HANDLERS.filter((h) => {
+        if (field === "correct_answer" && (ADMIN_QUESTION_WRITERS as readonly string[]).includes(h.name)) {
+          return false;
+        }
         // Match `.select("...")` or `.select(\`...\`)` string arguments
         // that list this field.
         const re = new RegExp(
@@ -169,7 +177,7 @@ describe("endpoint leaks — response object literals", () => {
         // Allow whitelisted scoring handler to reference the field internally
         // as long as it does not appear in a return payload literal.
         if (
-          (SELECT_STAR_WHITELIST["test_questions"] ?? []).includes(h.name) &&
+          [...(SELECT_STAR_WHITELIST["test_questions"] ?? []), ...ADMIN_QUESTION_WRITERS].includes(h.name) &&
           field === "correct_answer"
         ) {
           // Scan return statements only.
