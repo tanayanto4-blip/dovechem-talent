@@ -170,6 +170,8 @@ function TakeTest() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [discPicks, setDiscPicks] = useState<Record<string, { most?: string; least?: string }>>({});
   const [remaining, setRemaining] = useState<number>(0);
+  const [timerReady, setTimerReady] = useState(false);
+  const expiredRef = useRef(false);
   const [submitting, setSubmitting] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const hydratedRef = useRef(false);
