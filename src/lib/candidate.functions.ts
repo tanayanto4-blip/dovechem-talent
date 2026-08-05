@@ -381,7 +381,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
     let score = 0;
     let result: any = {};
     if (test.test_type === "mcq") {
-      const map = new Map(data.answers.map((a) => [a.question_id, a.answer]));
+      const map = new Map(answers.map((a) => [a.question_id, a.answer]));
       let correct = 0;
       for (const q of qs.data ?? []) if (map.get(q.id) === q.correct_answer) correct++;
       const total = (qs.data ?? []).length || 1;
@@ -390,7 +390,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
     } else if (test.test_type === "disc") {
       const most: Record<string, number> = { D: 0, I: 0, S: 0, C: 0 };
       const least: Record<string, number> = { D: 0, I: 0, S: 0, C: 0 };
-      for (const a of data.answers) {
+      for (const a of answers) {
         try {
           const v = JSON.parse(a.answer);
           if (v && most[v.most] !== undefined) most[v.most]++;
@@ -408,7 +408,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       result = { most, least, change, dominant };
     } else if (test.test_type === "kraepelin") {
       // answers are numeric strings; score = correctness rate provided by client-side check
-      const map = new Map(data.answers.map((a) => [a.question_id, a.answer]));
+      const map = new Map(answers.map((a) => [a.question_id, a.answer]));
       let correct = 0;
       for (const q of qs.data ?? []) if (map.get(q.id) === q.correct_answer) correct++;
       const total = (qs.data ?? []).length || 1;
@@ -418,7 +418,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       // Forced-choice: each option carries a dimension letter (E/I, S/N, T/F, J/P).
       const counts: Record<string, number> = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
       const qMap = new Map((qs.data ?? []).map((q: any) => [q.id, q]));
-      for (const a of data.answers) {
+      for (const a of answers) {
         const q: any = qMap.get(a.question_id);
         const opt = (q?.options ?? []).find((o: any) => o.key === a.answer);
         const dim = opt?.dimension;
@@ -448,7 +448,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       const sums: Record<string, number> = { SA: 0, ME: 0, MO: 0, EM: 0, SS: 0 };
       const counts: Record<string, number> = { SA: 0, ME: 0, MO: 0, EM: 0, SS: 0 };
       const qMap = new Map((qs.data ?? []).map((q: any) => [q.id, q]));
-      for (const a of data.answers) {
+      for (const a of answers) {
         const q: any = qMap.get(a.question_id);
         const dim = q?.dimension;
         const val = parseInt(a.answer, 10);
@@ -471,7 +471,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       result = { perDim, dominant, sums, counts };
     } else if (test.test_type === "wpt") {
       // WPT: jawaban bebas — tidak ada auto-scoring; menunggu review manual HR.
-      const answered = data.answers.filter((a) => (a.answer ?? "").trim() !== "").length;
+      const answered = answers.filter((a) => (a.answer ?? "").trim() !== "").length;
       const total = (qs.data ?? []).length || 50;
       score = 0;
       result = { requires_manual_review: true, answered, total, unanswered: total - answered };
@@ -480,7 +480,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       // (opsi A = panah atas, opsi B = panah bawah) -> 20 skala, masing-masing maks 9.
       const qMap = new Map((qs.data ?? []).map((q: any) => [q.id, q]));
       const picks: Record<number, string> = {};
-      for (const a of data.answers) {
+      for (const a of answers) {
         const key = (a.answer ?? "").trim().toUpperCase();
         if (key !== "A" && key !== "B") continue;
         const q: any = qMap.get(a.question_id);
@@ -507,7 +507,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       let attempted = 0;
       let correct = 0;
       const perColumn: Array<{ column: number; attempted: number; correct: number }> = [];
-      for (const a of data.answers) {
+      for (const a of answers) {
         const q: any = byId.get(a.question_id);
         const digits: string = (q?.options as any)?.digits ?? "";
         if (!digits) continue;
