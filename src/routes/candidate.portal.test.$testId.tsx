@@ -19,6 +19,8 @@ import wptQ7 from "@/assets/wpt-q7.jpg.asset.json";
 import wptQ38 from "@/assets/wpt-q38.jpg.asset.json";
 import wptQ42 from "@/assets/wpt-q42.jpg.asset.json";
 import wptQ49 from "@/assets/wpt-q49.jpg.asset.json";
+import { WptSheet } from "@/components/wpt-sheet";
+
 
 const WPT_IMAGES: Record<number, { url: string; caption: string }> = {
   7: { url: wptQ7.url, caption: "Pilihan gambar 1–5 dan dua gambar dalam tanda kurung { } — pilih nomor gambar yang tersusun dari dua gambar di dalam tanda kurung." },
