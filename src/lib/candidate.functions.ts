@@ -264,13 +264,20 @@ export const candidateSaveAnswer = createServerFn({ method: "POST" })
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: attempt } = await sb
       .from("test_attempts")
-      .select("id, status, test_id")
+      .select("id, status, test_id, started_at, tests(duration_minutes)")
       .eq("id", data.attempt_id)
       .eq("candidate_id", cand.id)
       .single();
     if (!attempt) throw new Error("Attempt tidak valid.");
     if ((attempt as any).status === "finished") throw new Error("Attempt sudah selesai.");
+    // Server-side time limit: reject autosaves after the allotted duration.
+    const dur = Number((attempt as any).tests?.duration_minutes) || 0;
+    const start = (attempt as any).started_at ? new Date((attempt as any).started_at).getTime() : NaN;
+    if (dur > 0 && Number.isFinite(start) && Date.now() > start + dur * 60_000 + 60_000) {
+      throw new Error("Waktu pengerjaan test sudah habis.");
+    }
     await assertTestOpen(sb, cand.id, (attempt as any).test_id);
+
     const { error } = await sb
       .from("test_answers")
       .upsert(
@@ -326,37 +333,62 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       return { ok: true, idempotent: true };
     }
 
+    // Server-side time limit enforcement. The client countdown is advisory only;
+    // a candidate could call this function directly after the deadline. Late
+    // submits are accepted only as a "finish" action: the payload answers are
+    // discarded and scoring uses whatever was autosaved before the deadline.
+    const testRow = (attempt as any).tests;
+    const durationMinutes = Number(testRow?.duration_minutes) || 0;
+    const startedAt = (attempt as any).started_at ? new Date((attempt as any).started_at).getTime() : NaN;
+    const GRACE_MS = 60_000; // tolerate clock skew / in-flight submit
+    const isLate =
+      durationMinutes > 0 &&
+      Number.isFinite(startedAt) &&
+      Date.now() > startedAt + durationMinutes * 60_000 + GRACE_MS;
 
-    // Persist answers idempotently. Upsert on (attempt_id, question_id) so a
-    // retried submit for the same attempt cannot create duplicate rows, and
-    // delete any prior rows whose questions are no longer in the payload.
-    const questionIds = data.answers.map((a) => a.question_id);
-    if (questionIds.length > 0) {
-      const del = await sb
+    let answers = data.answers;
+
+    if (isLate) {
+      // Ignore the payload entirely; re-read the answers persisted before the deadline.
+      const saved = await sb
         .from("test_answers")
-        .delete()
-        .eq("attempt_id", data.attempt_id)
-        .not("question_id", "in", `(${questionIds.map((id) => `"${id}"`).join(",")})`);
-      if (del.error) throw new Error(del.error.message);
-      const { error } = await sb
-        .from("test_answers")
-        .upsert(
-          data.answers.map((a) => ({ attempt_id: data.attempt_id, ...a })),
-          { onConflict: "attempt_id,question_id" },
-        );
-      if (error) throw new Error(error.message);
+        .select("question_id, answer")
+        .eq("attempt_id", data.attempt_id);
+      if (saved.error) throw new Error(saved.error.message);
+      answers = (saved.data ?? []).map((a: any) => ({ question_id: a.question_id, answer: a.answer ?? "" }));
     } else {
-      const del = await sb.from("test_answers").delete().eq("attempt_id", data.attempt_id);
-      if (del.error) throw new Error(del.error.message);
+      // Persist answers idempotently. Upsert on (attempt_id, question_id) so a
+      // retried submit for the same attempt cannot create duplicate rows, and
+      // delete any prior rows whose questions are no longer in the payload.
+      const questionIds = answers.map((a) => a.question_id);
+      if (questionIds.length > 0) {
+        const del = await sb
+          .from("test_answers")
+          .delete()
+          .eq("attempt_id", data.attempt_id)
+          .not("question_id", "in", `(${questionIds.map((id) => `"${id}"`).join(",")})`);
+        if (del.error) throw new Error(del.error.message);
+        const { error } = await sb
+          .from("test_answers")
+          .upsert(
+            answers.map((a) => ({ attempt_id: data.attempt_id, ...a })),
+            { onConflict: "attempt_id,question_id" },
+          );
+        if (error) throw new Error(error.message);
+      } else {
+        const del = await sb.from("test_answers").delete().eq("attempt_id", data.attempt_id);
+        if (del.error) throw new Error(del.error.message);
+      }
     }
 
     // scoring
-    const test = (attempt as any).tests;
+    const test = testRow;
     const qs = await sb.from("test_questions").select("*").eq("test_id", test.id);
+
     let score = 0;
     let result: any = {};
     if (test.test_type === "mcq") {
-      const map = new Map(data.answers.map((a) => [a.question_id, a.answer]));
+      const map = new Map(answers.map((a) => [a.question_id, a.answer]));
       let correct = 0;
       for (const q of qs.data ?? []) if (map.get(q.id) === q.correct_answer) correct++;
       const total = (qs.data ?? []).length || 1;
@@ -365,7 +397,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
     } else if (test.test_type === "disc") {
       const most: Record<string, number> = { D: 0, I: 0, S: 0, C: 0 };
       const least: Record<string, number> = { D: 0, I: 0, S: 0, C: 0 };
-      for (const a of data.answers) {
+      for (const a of answers) {
         try {
           const v = JSON.parse(a.answer);
           if (v && most[v.most] !== undefined) most[v.most]++;
@@ -383,7 +415,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       result = { most, least, change, dominant };
     } else if (test.test_type === "kraepelin") {
       // answers are numeric strings; score = correctness rate provided by client-side check
-      const map = new Map(data.answers.map((a) => [a.question_id, a.answer]));
+      const map = new Map(answers.map((a) => [a.question_id, a.answer]));
       let correct = 0;
       for (const q of qs.data ?? []) if (map.get(q.id) === q.correct_answer) correct++;
       const total = (qs.data ?? []).length || 1;
@@ -393,7 +425,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       // Forced-choice: each option carries a dimension letter (E/I, S/N, T/F, J/P).
       const counts: Record<string, number> = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
       const qMap = new Map((qs.data ?? []).map((q: any) => [q.id, q]));
-      for (const a of data.answers) {
+      for (const a of answers) {
         const q: any = qMap.get(a.question_id);
         const opt = (q?.options ?? []).find((o: any) => o.key === a.answer);
         const dim = opt?.dimension;
@@ -423,7 +455,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       const sums: Record<string, number> = { SA: 0, ME: 0, MO: 0, EM: 0, SS: 0 };
       const counts: Record<string, number> = { SA: 0, ME: 0, MO: 0, EM: 0, SS: 0 };
       const qMap = new Map((qs.data ?? []).map((q: any) => [q.id, q]));
-      for (const a of data.answers) {
+      for (const a of answers) {
         const q: any = qMap.get(a.question_id);
         const dim = q?.dimension;
         const val = parseInt(a.answer, 10);
@@ -446,7 +478,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       result = { perDim, dominant, sums, counts };
     } else if (test.test_type === "wpt") {
       // WPT: jawaban bebas — tidak ada auto-scoring; menunggu review manual HR.
-      const answered = data.answers.filter((a) => (a.answer ?? "").trim() !== "").length;
+      const answered = answers.filter((a) => (a.answer ?? "").trim() !== "").length;
       const total = (qs.data ?? []).length || 50;
       score = 0;
       result = { requires_manual_review: true, answered, total, unanswered: total - answered };
@@ -455,7 +487,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       // (opsi A = panah atas, opsi B = panah bawah) -> 20 skala, masing-masing maks 9.
       const qMap = new Map((qs.data ?? []).map((q: any) => [q.id, q]));
       const picks: Record<number, string> = {};
-      for (const a of data.answers) {
+      for (const a of answers) {
         const key = (a.answer ?? "").trim().toUpperCase();
         if (key !== "A" && key !== "B") continue;
         const q: any = qMap.get(a.question_id);
@@ -482,7 +514,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       let attempted = 0;
       let correct = 0;
       const perColumn: Array<{ column: number; attempted: number; correct: number }> = [];
-      for (const a of data.answers) {
+      for (const a of answers) {
         const q: any = byId.get(a.question_id);
         const digits: string = (q?.options as any)?.digits ?? "";
         if (!digits) continue;
