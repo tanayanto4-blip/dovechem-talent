@@ -209,20 +209,24 @@ function TakeTest() {
     const started = new Date(data.attempt.started_at).getTime();
     const left = Math.max(0, Math.floor((started + dur * 1000 - Date.now()) / 1000));
     setRemaining(left);
+    setTimerReady(true);
   }, [data]);
 
   useEffect(() => {
-    if (remaining <= 0) return;
+    if (!timerReady || remaining <= 0) return;
     const t = setInterval(() => setRemaining((r) => Math.max(0, r - 1)), 1000);
     return () => clearInterval(t);
-  }, [remaining]);
+  }, [remaining, timerReady]);
 
   useEffect(() => {
-    if (data && remaining === 0 && !submitting && Object.keys(answers).length > 0) {
+    // Waktu habis -> test otomatis dikunci & dikirim, walau belum ada jawaban.
+    if (timerReady && data && remaining === 0 && !submitting && !expiredRef.current) {
+      expiredRef.current = true;
       handleSubmit(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [remaining]);
+  }, [remaining, timerReady]);
+
 
   // --- Autosave callbacks -------------------------------------------------
   // These MUST stay above the early returns below: calling hooks after a
