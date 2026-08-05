@@ -588,7 +588,7 @@ function TakeTest() {
             <p className="text-muted-foreground">
               Tes ini mengukur <b className="text-foreground">kemampuan memecahkan masalah</b> secara umum: verbal, numerik, logika, dan spasial.
               Berisi <b className="text-foreground">50 soal</b> yang secara bertahap semakin sulit. Anda memiliki
-              waktu <b className="text-foreground">12 menit</b> untuk menjawab sebanyak mungkin dengan benar.
+              waktu <b className="text-foreground">{data.test.duration_minutes} menit</b> (sesuai pengaturan HR) untuk menjawab sebanyak mungkin dengan benar.
             </p>
             <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
               <li>Kerjakan tanpa alat bantu (kalkulator, kamus, dll.).</li>
