@@ -186,9 +186,9 @@ export function WptSheet({ questions, answers, images, onChange, renderImage }: 
 
             <div className="text-base font-medium leading-snug">{block.body || parsed.stem}</div>
 
-            {block.lines.length > 0 && (
+            {block.pairs.length > 0 && (
               <ul className="w-full max-w-md space-y-1 rounded-md border bg-muted/40 p-3 font-mono text-sm">
-                {block.lines.map((line, i) => (
+                {block.pairs.map((line, i) => (
                   <li key={i} className="flex items-center justify-between gap-4 border-b border-dashed border-border/60 pb-1 last:border-0 last:pb-0">
                     <span>{line.split("/")[0]?.trim()}</span>
                     <span>{line.split("/").slice(1).join("/").trim()}</span>
@@ -196,6 +196,28 @@ export function WptSheet({ questions, answers, images, onChange, renderImage }: 
                 ))}
               </ul>
             )}
+
+            {block.series.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/40 p-3 font-mono text-base">
+                {block.series.map((item, i) => (
+                  <span
+                    key={i}
+                    className="min-w-[3rem] rounded-sm border border-border/60 bg-background px-3 py-1.5 text-center"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {block.quote.length > 0 && (
+              <ul className="w-full space-y-1 rounded-md border-l-4 border-primary/50 bg-muted/40 p-3 text-sm italic">
+                {block.quote.map((line, i) => (
+                  <li key={i}>{line}</li>
+                ))}
+              </ul>
+            )}
+
 
             {img && renderImage?.(img, active.question_number)}
 
