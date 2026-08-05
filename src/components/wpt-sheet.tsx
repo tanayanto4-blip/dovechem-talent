@@ -36,20 +36,73 @@ export function extractPairBlock(text: string): { body: string; lines: string[] 
   return { body: segments.slice(0, pairIdx).join(" "), lines };
 }
 
+const isNumToken = (s: string) => /^[-+]?[\d.,/]*\d[\d.,/]*[?.]?$|^\?$/.test(s);
+
+/** Deret angka bersampingan, mis. "1   .5   .25   .125   ?" atau "8, 4, 2, 1, 1/2, ?" */
+export function extractSeriesBlock(text: string): { body: string; items: string[] } {
+  const segments = (text ?? "").split(/\s{2,}/).map((s) => s.trim()).filter(Boolean);
+  const startIdx = segments.findIndex((s, i) => isNumToken(s) && segments.slice(i).every(isNumToken));
+  if (startIdx !== -1) {
+    const items = segments.slice(startIdx);
+    if (items.length >= 3) return { body: segments.slice(0, startIdx).join(" "), items };
+  }
+  // Deret dipisah koma di akhir kalimat: "... muncul?  8, 4, 2, 1, 1/2, 1/4, ?"
+  const tail = segments[segments.length - 1] ?? "";
+  const commaIdx = tail.search(/(?:(?<=\?|:)\s+)[\d.]/);
+  const head = commaIdx === -1 ? "" : tail.slice(0, commaIdx).trim();
+  const listPart = commaIdx === -1 ? tail : tail.slice(commaIdx).trim();
+  const parts = listPart.split(",").map((s) => s.trim()).filter(Boolean);
+  if (parts.length >= 3 && parts.every(isNumToken)) {
+    const body = [...segments.slice(0, -1), head].filter(Boolean).join(" ");
+    return { body, items: parts };
+  }
+  return { body: text, items: [] };
+}
+
+/** Blok pernyataan dalam tanda kutip -> tiap kalimat satu baris ke bawah */
+export function extractQuoteBlock(text: string): { body: string; lines: string[] } {
+  const m = (text ?? "").match(/"([^"]+)"/);
+  if (!m) return { body: text, lines: [] };
+  const lines = m[1]
+    .split(/(?<=\.)\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (lines.length === 0) return { body: text, lines: [] };
+  return { body: (text ?? "").replace(m[0], "").replace(/\s{2,}/g, " ").trim(), lines };
+}
+
+/** Gabungan semua blok tampilan khusus WPT */
+export function extractWptBlocks(stem: string) {
+  const empty = { pairs: [] as string[], series: [] as string[], quote: [] as string[] };
+  const pair = extractPairBlock(stem);
+  if (pair.lines.length > 0) return { ...empty, body: pair.body, pairs: pair.lines };
+  const series = extractSeriesBlock(stem);
+  if (series.items.length > 0) return { ...empty, body: series.body, series: series.items };
+  const quote = extractQuoteBlock(stem);
+  if (quote.lines.length > 0) return { ...empty, body: quote.body, quote: quote.lines };
+  return { ...empty, body: stem };
+}
+
+
 /** Pisahkan teks soal dari opsi inline berformat "1. xxx  2. yyy" */
 export function parseWptOptions(text: string): { stem: string; options: { key: string; label: string }[] } {
-  const raw = stripImgToken(text ?? "");
+  const cleaned = stripImgToken(text ?? "");
+  // Blok kutipan dipisahkan dulu agar tidak ikut terparsing sebagai opsi
+  const quoteMatch = cleaned.match(/"[^"]+"/);
+  const raw = quoteMatch ? cleaned.replace(quoteMatch[0], "").replace(/\s{2,}/g, "  ").trim() : cleaned;
+  const withQuote = (s: string) => (quoteMatch ? `${s}  ${quoteMatch[0]}`.trim() : s);
   const firstIdx = raw.search(/(^|\s)1\.\s+\S/);
-  if (firstIdx === -1) return { stem: raw, options: [] };
+  if (firstIdx === -1) return { stem: withQuote(raw), options: [] };
   const stem = raw.slice(0, firstIdx).trim();
   const rest = raw.slice(firstIdx);
   const matches = [...rest.matchAll(/(\d)\.\s*([^0-9]*?)(?=\s+\d\.\s|$)/g)];
   const options = matches
     .map((m) => ({ key: m[1], label: (m[2] ?? "").replace(/[?\s]+$/, "").trim() }))
     .filter((o) => o.label.length > 0);
-  if (options.length < 2) return { stem: raw, options: [] };
-  return { stem: stem || raw, options };
+  if (options.length < 2) return { stem: withQuote(raw), options: [] };
+  return { stem: withQuote(stem || raw), options };
 }
+
 
 
 export function WptSheet({ questions, answers, images, onChange, renderImage }: Props) {
@@ -62,7 +115,11 @@ export function WptSheet({ questions, answers, images, onChange, renderImage }: 
 
   const active = activeIdx === null ? null : sorted[activeIdx];
   const parsed = active ? parseWptOptions(active.question_text ?? "") : null;
-  const block = parsed ? extractPairBlock(parsed.stem) : { body: "", lines: [] as string[] };
+  const block = parsed
+
+    ? extractWptBlocks(parsed.stem)
+    : { body: "", pairs: [] as string[], series: [] as string[], quote: [] as string[] };
+
   const longOptions = (parsed?.options ?? []).some((o) => o.label.length > 34);
   const activeAnswer = active ? (answers[active.id] ?? "") : "";
   const img = active ? images[active.question_number] : undefined;
@@ -147,9 +204,9 @@ export function WptSheet({ questions, answers, images, onChange, renderImage }: 
 
             <div className="text-base font-medium leading-snug">{block.body || parsed.stem}</div>
 
-            {block.lines.length > 0 && (
+            {block.pairs.length > 0 && (
               <ul className="w-full max-w-md space-y-1 rounded-md border bg-muted/40 p-3 font-mono text-sm">
-                {block.lines.map((line, i) => (
+                {block.pairs.map((line, i) => (
                   <li key={i} className="flex items-center justify-between gap-4 border-b border-dashed border-border/60 pb-1 last:border-0 last:pb-0">
                     <span>{line.split("/")[0]?.trim()}</span>
                     <span>{line.split("/").slice(1).join("/").trim()}</span>
@@ -157,6 +214,28 @@ export function WptSheet({ questions, answers, images, onChange, renderImage }: 
                 ))}
               </ul>
             )}
+
+            {block.series.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/40 p-3 font-mono text-base">
+                {block.series.map((item, i) => (
+                  <span
+                    key={i}
+                    className="min-w-[3rem] rounded-sm border border-border/60 bg-background px-3 py-1.5 text-center"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {block.quote.length > 0 && (
+              <ul className="w-full space-y-1 rounded-md border-l-4 border-primary/50 bg-muted/40 p-3 text-sm italic">
+                {block.quote.map((line, i) => (
+                  <li key={i}>{line}</li>
+                ))}
+              </ul>
+            )}
+
 
             {img && renderImage?.(img, active.question_number)}
 
