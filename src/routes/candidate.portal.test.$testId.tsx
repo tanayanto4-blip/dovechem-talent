@@ -474,9 +474,15 @@ function TakeTest() {
               <p className="text-sm text-muted-foreground">{data.test.description}</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
-                <div className="flex items-center gap-2"><Timer className="h-4 w-4" /> <span className="font-mono text-lg">{mins}:{secs}</span></div>
-              </div>
+              {isWpt ? (
+                <div className="rounded-lg border bg-muted px-4 py-2 text-xs text-muted-foreground">
+                  Waktu berjalan otomatis
+                </div>
+              ) : (
+                <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
+                  <div className="flex items-center gap-2"><Timer className="h-4 w-4" /> <span className="font-mono text-lg">{mins}:{secs}</span></div>
+                </div>
+              )}
             </div>
           </div>
           <div className="mt-4 space-y-2">
