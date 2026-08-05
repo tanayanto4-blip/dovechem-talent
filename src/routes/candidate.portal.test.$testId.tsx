@@ -617,8 +617,20 @@ function TakeTest() {
         />
       )}
 
-      <div className={isPauli ? "hidden" : "space-y-4"}>
-        {(isPauli ? [] : data.questions).map((q: any, i: number) => (
+      {isWpt && (
+        <WptSheet
+          questions={data.questions as any}
+          answers={answers}
+          images={WPT_IMAGES}
+          onChange={handleTextChange}
+          renderImage={(img, number) => (
+            <WptImageFigure url={img.url} caption={img.caption} number={number} />
+          )}
+        />
+      )}
+
+      <div className={isPauli || isWpt ? "hidden" : "space-y-4"}>
+        {(isPauli || isWpt ? [] : data.questions).map((q: any, i: number) => (
           <TestQuestionCard
             key={q.id}
             q={q}
@@ -627,13 +639,14 @@ function TakeTest() {
             testType={data.test!.test_type as any}
             answer={answers[q.id] ?? ""}
             discPick={discPicks[q.id]}
-            wptImage={isWpt ? WPT_IMAGES[q.question_number] ?? null : null}
+            wptImage={null}
             onPickMcq={pickMcq}
             onSetDisc={setDisc}
             onChangeText={handleTextChange}
           />
         ))}
       </div>
+
 
 
       <div className="sticky bottom-4 flex justify-end">
