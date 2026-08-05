@@ -52,6 +52,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "google-site-verification", content: "Fr53bESxOjTZJxjA-u_qFchiNGWH73I5pr-_9iZ9vVU" },
       { title: "PT Dover Chemical — Portal Psikotest Rekrutmen" },
       { name: "description", content: "Portal resmi psikotest & rekrutmen PT Dover Chemical Indonesia. Kandidat login dengan kode akses, tim HR mengelola seluruh proses seleksi." },
       { property: "og:title", content: "PT Dover Chemical — Portal Psikotest Rekrutmen" },
