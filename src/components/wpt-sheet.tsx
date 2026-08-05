@@ -62,8 +62,11 @@ export function WptSheet({ questions, answers, images, onChange, renderImage }: 
 
   const active = activeIdx === null ? null : sorted[activeIdx];
   const parsed = active ? parseWptOptions(active.question_text ?? "") : null;
+  const block = parsed ? extractPairBlock(parsed.stem) : { body: "", lines: [] as string[] };
+  const longOptions = (parsed?.options ?? []).some((o) => o.label.length > 34);
   const activeAnswer = active ? (answers[active.id] ?? "") : "";
   const img = active ? images[active.question_number] : undefined;
+
 
   return (
     <div className="space-y-4">
