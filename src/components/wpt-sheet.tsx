@@ -36,6 +36,41 @@ export function extractPairBlock(text: string): { body: string; lines: string[] 
   return { body: segments.slice(0, pairIdx).join(" "), lines };
 }
 
+/** Deret angka bersampingan, mis. "1   .5   .25   .125   ?" */
+export function extractSeriesBlock(text: string): { body: string; items: string[] } {
+  const segments = (text ?? "").split(/\s{2,}/).map((s) => s.trim()).filter(Boolean);
+  const isNum = (s: string) => /^[-+]?[\d.,/]*\d[\d.,/]*[?.]?$|^\?$/.test(s);
+  const startIdx = segments.findIndex((s, i) => isNum(s) && segments.slice(i).every(isNum));
+  if (startIdx === -1) return { body: text, items: [] };
+  const items = segments.slice(startIdx);
+  if (items.length < 3) return { body: text, items: [] };
+  return { body: segments.slice(0, startIdx).join(" "), items };
+}
+
+/** Blok pernyataan dalam tanda kutip -> tiap kalimat satu baris ke bawah */
+export function extractQuoteBlock(text: string): { body: string; lines: string[] } {
+  const m = (text ?? "").match(/"([^"]+)"/);
+  if (!m) return { body: text, lines: [] };
+  const lines = m[1]
+    .split(/(?<=\.)\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (lines.length === 0) return { body: text, lines: [] };
+  return { body: (text ?? "").replace(m[0], "").replace(/\s{2,}/g, " ").trim(), lines };
+}
+
+/** Gabungan semua blok tampilan khusus WPT */
+export function extractWptBlocks(stem: string) {
+  const pair = extractPairBlock(stem);
+  if (pair.lines.length > 0) return { body: pair.body, pairs: pair.lines, series: [] as string[], quote: [] as string[] };
+  const series = extractSeriesBlock(stem);
+  if (series.items.length > 0) return { body: series.body, pairs: [] as string[], series: series.items, quote: [] as string[] };
+  const quote = extractQuoteBlock(stem);
+  if (quote.lines.length > 0) return { body: quote.body, pairs: [] as string[], series: [] as string[], quote: quote.lines };
+  return { body: stem, pairs: [] as string[], series: [] as string[], quote: [] as string[] };
+}
+
+
 /** Pisahkan teks soal dari opsi inline berformat "1. xxx  2. yyy" */
 export function parseWptOptions(text: string): { stem: string; options: { key: string; label: string }[] } {
   const raw = stripImgToken(text ?? "");
