@@ -19,6 +19,8 @@ import wptQ7 from "@/assets/wpt-q7.jpg.asset.json";
 import wptQ38 from "@/assets/wpt-q38.jpg.asset.json";
 import wptQ42 from "@/assets/wpt-q42.jpg.asset.json";
 import wptQ49 from "@/assets/wpt-q49.jpg.asset.json";
+import { WptSheet } from "@/components/wpt-sheet";
+
 
 const WPT_IMAGES: Record<number, { url: string; caption: string }> = {
   7: { url: wptQ7.url, caption: "Pilihan gambar 1–5 dan dua gambar dalam tanda kurung { } — pilih nomor gambar yang tersusun dari dua gambar di dalam tanda kurung." },
@@ -617,8 +619,20 @@ function TakeTest() {
         />
       )}
 
-      <div className={isPauli ? "hidden" : "space-y-4"}>
-        {(isPauli ? [] : data.questions).map((q: any, i: number) => (
+      {isWpt && (
+        <WptSheet
+          questions={data.questions as any}
+          answers={answers}
+          images={WPT_IMAGES}
+          onChange={handleTextChange}
+          renderImage={(img, number) => (
+            <WptImageFigure url={img.url} caption={img.caption} number={number} />
+          )}
+        />
+      )}
+
+      <div className={isPauli || isWpt ? "hidden" : "space-y-4"}>
+        {(isPauli || isWpt ? [] : data.questions).map((q: any, i: number) => (
           <TestQuestionCard
             key={q.id}
             q={q}
@@ -627,13 +641,14 @@ function TakeTest() {
             testType={data.test!.test_type as any}
             answer={answers[q.id] ?? ""}
             discPick={discPicks[q.id]}
-            wptImage={isWpt ? WPT_IMAGES[q.question_number] ?? null : null}
+            wptImage={null}
             onPickMcq={pickMcq}
             onSetDisc={setDisc}
             onChangeText={handleTextChange}
           />
         ))}
       </div>
+
 
 
       <div className="sticky bottom-4 flex justify-end">
