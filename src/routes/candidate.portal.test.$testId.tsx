@@ -478,8 +478,9 @@ function TakeTest() {
             <div className="flex items-center gap-3">
               {isWpt ? (
                 <div className="rounded-lg border bg-muted px-4 py-2 text-xs text-muted-foreground">
-                  Waktu berjalan otomatis
+                  Waktu berjalan otomatis · {data.test.duration_minutes} menit
                 </div>
+
               ) : (
                 <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
                   <div className="flex items-center gap-2"><Timer className="h-4 w-4" /> <span className="font-mono text-lg">{mins}:{secs}</span></div>
