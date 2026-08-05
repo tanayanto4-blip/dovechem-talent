@@ -88,30 +88,30 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sb = await admin();
     const codeRow = await resolveActiveCode(sb, data.code);
-    const { data: candidate, error: candErr } = await sb
+    const { data: cand, error: candErr } = await sb
       .from("candidates")
       .select("*")
       .eq("code_id", codeRow.id)
       .single();
-    if (candErr || !candidate) throw new Error("Kandidat tidak ditemukan.");
-    const candId = candidate.id;
+    if (candErr || !cand) throw new Error("Kandidat tidak ditemukan.");
     const [filesQ, testsQ, attemptsQ, accessQ] = await Promise.all([
-      sb.from("candidate_files").select("*").eq("candidate_id", candId),
+      sb.from("candidate_files").select("*").eq("candidate_id", cand.id),
       sb.from("tests").select("*").eq("active", true).order("code"),
       // Scores/results are staff-only: expose progress fields only.
-      sb.from("test_attempts").select("id, test_id, status, started_at, finished_at").eq("candidate_id", candId),
+      sb.from("test_attempts").select("id, test_id, status, started_at, finished_at").eq("candidate_id", cand.id),
       sb
         .from("candidate_test_access")
         .select("test_id, is_open, reason, retake_count, last_reopened_at")
-        .eq("candidate_id", candId),
+        .eq("candidate_id", cand.id),
     ]);
     return {
-      candidate,
+      candidate: cand,
       files: filesQ.data ?? [],
       tests: testsQ.data ?? [],
       attempts: attemptsQ.data ?? [],
       access: accessQ.data ?? [],
     };
+
   });
 
 const ProfileInput = z.object({

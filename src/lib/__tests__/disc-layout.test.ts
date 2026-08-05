@@ -21,13 +21,20 @@ const SRC = readFileSync(
   "utf8",
 );
 
+// The per-question rendering (including the DISC grid) lives in the shared
+// question card component; the route owns state + the setDisc contract.
+const CARD = readFileSync(
+  resolve(__dirname, "../../components/test-question-card.tsx"),
+  "utf8",
+);
+
 // Strip the non-DISC branches so assertions only inspect the DISC block.
 const DISC_BLOCK = (() => {
-  const start = SRC.indexOf("isDisc ? (");
-  const end = SRC.indexOf(") : (", start);
+  const start = CARD.indexOf("isDisc ? (");
+  const end = CARD.slice(start).search(/\n\s*\) : /) + start;
   expect(start, "DISC branch missing").toBeGreaterThan(-1);
   expect(end, "DISC branch not terminated").toBeGreaterThan(start);
-  return SRC.slice(start, end);
+  return CARD.slice(start, end);
 })();
 
 describe("DISC layout regression", () => {
@@ -48,10 +55,13 @@ describe("DISC layout regression", () => {
   });
 
   it("renders the M button before the L button inside every option row", () => {
-    const mostBtn = DISC_BLOCK.indexOf('setDisc(q.id, "most"');
-    const leastBtn = DISC_BLOCK.indexOf('setDisc(q.id, "least"');
+    const mostBtn = DISC_BLOCK.indexOf("handleDiscMost(opt.key)");
+    const leastBtn = DISC_BLOCK.indexOf("handleDiscLeast(opt.key)");
     expect(mostBtn).toBeGreaterThan(-1);
     expect(leastBtn).toBeGreaterThan(mostBtn);
+    // and the handlers keep the M -> most / L -> least mapping
+    expect(CARD).toMatch(/handleDiscMost\s*=[\s\S]{0,80}onSetDisc\(q\.id, "most"/);
+    expect(CARD).toMatch(/handleDiscLeast\s*=[\s\S]{0,80}onSetDisc\(q\.id, "least"/);
   });
 
   it("iterates q.options in stored order (no sort/reverse)", () => {
@@ -71,7 +81,7 @@ describe("DISC layout regression", () => {
     // Guards the scoring path in candidateSubmitTest which reads
     // JSON.parse(answer).most / .least buckets.
     const setDiscSig = SRC.match(
-      /function setDisc\(qid: string, kind: "most" \| "least", key: string\)/,
+      /setDisc = useCallback\(\(qid: string, kind: "most" \| "least", key: string\)/,
     );
     expect(setDiscSig, "setDisc signature changed").not.toBeNull();
     expect(SRC).toMatch(/JSON\.stringify\(\{ most: cur\.most, least: cur\.least \}\)/);
