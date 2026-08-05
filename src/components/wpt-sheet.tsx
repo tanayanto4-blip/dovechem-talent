@@ -36,15 +36,27 @@ export function extractPairBlock(text: string): { body: string; lines: string[] 
   return { body: segments.slice(0, pairIdx).join(" "), lines };
 }
 
-/** Deret angka bersampingan, mis. "1   .5   .25   .125   ?" */
+const isNumToken = (s: string) => /^[-+]?[\d.,/]*\d[\d.,/]*[?.]?$|^\?$/.test(s);
+
+/** Deret angka bersampingan, mis. "1   .5   .25   .125   ?" atau "8, 4, 2, 1, 1/2, ?" */
 export function extractSeriesBlock(text: string): { body: string; items: string[] } {
   const segments = (text ?? "").split(/\s{2,}/).map((s) => s.trim()).filter(Boolean);
-  const isNum = (s: string) => /^[-+]?[\d.,/]*\d[\d.,/]*[?.]?$|^\?$/.test(s);
-  const startIdx = segments.findIndex((s, i) => isNum(s) && segments.slice(i).every(isNum));
-  if (startIdx === -1) return { body: text, items: [] };
-  const items = segments.slice(startIdx);
-  if (items.length < 3) return { body: text, items: [] };
-  return { body: segments.slice(0, startIdx).join(" "), items };
+  const startIdx = segments.findIndex((s, i) => isNumToken(s) && segments.slice(i).every(isNumToken));
+  if (startIdx !== -1) {
+    const items = segments.slice(startIdx);
+    if (items.length >= 3) return { body: segments.slice(0, startIdx).join(" "), items };
+  }
+  // Deret dipisah koma di akhir kalimat: "... muncul?  8, 4, 2, 1, 1/2, 1/4, ?"
+  const tail = segments[segments.length - 1] ?? "";
+  const commaIdx = tail.search(/(?:(?<=\?|:)\s+)[\d.]/);
+  const head = commaIdx === -1 ? "" : tail.slice(0, commaIdx).trim();
+  const listPart = commaIdx === -1 ? tail : tail.slice(commaIdx).trim();
+  const parts = listPart.split(",").map((s) => s.trim()).filter(Boolean);
+  if (parts.length >= 3 && parts.every(isNumToken)) {
+    const body = [...segments.slice(0, -1), head].filter(Boolean).join(" ");
+    return { body, items: parts };
+  }
+  return { body: text, items: [] };
 }
 
 /** Blok pernyataan dalam tanda kutip -> tiap kalimat satu baris ke bawah */
@@ -61,30 +73,36 @@ export function extractQuoteBlock(text: string): { body: string; lines: string[]
 
 /** Gabungan semua blok tampilan khusus WPT */
 export function extractWptBlocks(stem: string) {
+  const empty = { pairs: [] as string[], series: [] as string[], quote: [] as string[] };
   const pair = extractPairBlock(stem);
-  if (pair.lines.length > 0) return { body: pair.body, pairs: pair.lines, series: [] as string[], quote: [] as string[] };
+  if (pair.lines.length > 0) return { ...empty, body: pair.body, pairs: pair.lines };
   const series = extractSeriesBlock(stem);
-  if (series.items.length > 0) return { body: series.body, pairs: [] as string[], series: series.items, quote: [] as string[] };
+  if (series.items.length > 0) return { ...empty, body: series.body, series: series.items };
   const quote = extractQuoteBlock(stem);
-  if (quote.lines.length > 0) return { body: quote.body, pairs: [] as string[], series: [] as string[], quote: quote.lines };
-  return { body: stem, pairs: [] as string[], series: [] as string[], quote: [] as string[] };
+  if (quote.lines.length > 0) return { ...empty, body: quote.body, quote: quote.lines };
+  return { ...empty, body: stem };
 }
 
 
 /** Pisahkan teks soal dari opsi inline berformat "1. xxx  2. yyy" */
 export function parseWptOptions(text: string): { stem: string; options: { key: string; label: string }[] } {
-  const raw = stripImgToken(text ?? "");
+  const cleaned = stripImgToken(text ?? "");
+  // Blok kutipan dipisahkan dulu agar tidak ikut terparsing sebagai opsi
+  const quoteMatch = cleaned.match(/"[^"]+"/);
+  const raw = quoteMatch ? cleaned.replace(quoteMatch[0], "").replace(/\s{2,}/g, "  ").trim() : cleaned;
+  const withQuote = (s: string) => (quoteMatch ? `${s}  ${quoteMatch[0]}`.trim() : s);
   const firstIdx = raw.search(/(^|\s)1\.\s+\S/);
-  if (firstIdx === -1) return { stem: raw, options: [] };
+  if (firstIdx === -1) return { stem: withQuote(raw), options: [] };
   const stem = raw.slice(0, firstIdx).trim();
   const rest = raw.slice(firstIdx);
   const matches = [...rest.matchAll(/(\d)\.\s*([^0-9]*?)(?=\s+\d\.\s|$)/g)];
   const options = matches
     .map((m) => ({ key: m[1], label: (m[2] ?? "").replace(/[?\s]+$/, "").trim() }))
     .filter((o) => o.label.length > 0);
-  if (options.length < 2) return { stem: raw, options: [] };
-  return { stem: stem || raw, options };
+  if (options.length < 2) return { stem: withQuote(raw), options: [] };
+  return { stem: withQuote(stem || raw), options };
 }
+
 
 
 export function WptSheet({ questions, answers, images, onChange, renderImage }: Props) {
