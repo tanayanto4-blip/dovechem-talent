@@ -326,33 +326,58 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       return { ok: true, idempotent: true };
     }
 
+    // Server-side time limit enforcement. The client countdown is advisory only;
+    // a candidate could call this function directly after the deadline. Late
+    // submits are accepted only as a "finish" action: the payload answers are
+    // discarded and scoring uses whatever was autosaved before the deadline.
+    const testRow = (attempt as any).tests;
+    const durationMinutes = Number(testRow?.duration_minutes) || 0;
+    const startedAt = (attempt as any).started_at ? new Date((attempt as any).started_at).getTime() : NaN;
+    const GRACE_MS = 60_000; // tolerate clock skew / in-flight submit
+    const isLate =
+      durationMinutes > 0 &&
+      Number.isFinite(startedAt) &&
+      Date.now() > startedAt + durationMinutes * 60_000 + GRACE_MS;
 
-    // Persist answers idempotently. Upsert on (attempt_id, question_id) so a
-    // retried submit for the same attempt cannot create duplicate rows, and
-    // delete any prior rows whose questions are no longer in the payload.
-    const questionIds = data.answers.map((a) => a.question_id);
-    if (questionIds.length > 0) {
-      const del = await sb
+    let answers = data.answers;
+
+    if (isLate) {
+      // Ignore the payload entirely; re-read the answers persisted before the deadline.
+      const saved = await sb
         .from("test_answers")
-        .delete()
-        .eq("attempt_id", data.attempt_id)
-        .not("question_id", "in", `(${questionIds.map((id) => `"${id}"`).join(",")})`);
-      if (del.error) throw new Error(del.error.message);
-      const { error } = await sb
-        .from("test_answers")
-        .upsert(
-          data.answers.map((a) => ({ attempt_id: data.attempt_id, ...a })),
-          { onConflict: "attempt_id,question_id" },
-        );
-      if (error) throw new Error(error.message);
+        .select("question_id, answer")
+        .eq("attempt_id", data.attempt_id);
+      if (saved.error) throw new Error(saved.error.message);
+      answers = (saved.data ?? []).map((a: any) => ({ question_id: a.question_id, answer: a.answer ?? "" }));
     } else {
-      const del = await sb.from("test_answers").delete().eq("attempt_id", data.attempt_id);
-      if (del.error) throw new Error(del.error.message);
+      // Persist answers idempotently. Upsert on (attempt_id, question_id) so a
+      // retried submit for the same attempt cannot create duplicate rows, and
+      // delete any prior rows whose questions are no longer in the payload.
+      const questionIds = answers.map((a) => a.question_id);
+      if (questionIds.length > 0) {
+        const del = await sb
+          .from("test_answers")
+          .delete()
+          .eq("attempt_id", data.attempt_id)
+          .not("question_id", "in", `(${questionIds.map((id) => `"${id}"`).join(",")})`);
+        if (del.error) throw new Error(del.error.message);
+        const { error } = await sb
+          .from("test_answers")
+          .upsert(
+            answers.map((a) => ({ attempt_id: data.attempt_id, ...a })),
+            { onConflict: "attempt_id,question_id" },
+          );
+        if (error) throw new Error(error.message);
+      } else {
+        const del = await sb.from("test_answers").delete().eq("attempt_id", data.attempt_id);
+        if (del.error) throw new Error(del.error.message);
+      }
     }
 
     // scoring
-    const test = (attempt as any).tests;
+    const test = testRow;
     const qs = await sb.from("test_questions").select("*").eq("test_id", test.id);
+
     let score = 0;
     let result: any = {};
     if (test.test_type === "mcq") {
