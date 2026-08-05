@@ -47,7 +47,7 @@ function TestDetail() {
         </div>
         <p className="mt-2 text-sm text-muted-foreground">{t.description}</p>
         <div className="mt-4 grid max-w-2xl gap-3 md:grid-cols-2">
-        <div className="mt-4 grid max-w-2xl gap-3 md:grid-cols-2">
+
           <TestPublishToggle testId={t.id} testName={t.name} active={!!t.active} />
           <TestDurationEditor testId={t.id} testName={t.name} value={t.duration_minutes} />
         </div>
