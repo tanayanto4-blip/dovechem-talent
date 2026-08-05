@@ -18,9 +18,27 @@ type Props = {
   renderImage?: (img: { url: string; caption: string }, number: number) => React.ReactNode;
 };
 
+/** Buang penanda gambar [IMG:...] dari teks soal */
+export function stripImgToken(text: string): string {
+  return (text ?? "").replace(/\[IMG:[^\]]*\]/g, "").trim();
+}
+
+/**
+ * Pisahkan blok data berturut ke bawah (mis. pasangan "84721 / 84721") dari teks soal.
+ * Blok dipisah oleh 2+ spasi dan setiap barisnya memuat tanda "/".
+ */
+export function extractPairBlock(text: string): { body: string; lines: string[] } {
+  const segments = (text ?? "").split(/\s{2,}/).map((s) => s.trim()).filter(Boolean);
+  const pairIdx = segments.findIndex((s) => /^[^/]+\/[^/]+$/.test(s));
+  if (pairIdx === -1) return { body: text, lines: [] };
+  const lines = segments.slice(pairIdx).filter((s) => /^[^/]+\/[^/]+$/.test(s));
+  if (lines.length < 2) return { body: text, lines: [] };
+  return { body: segments.slice(0, pairIdx).join(" "), lines };
+}
+
 /** Pisahkan teks soal dari opsi inline berformat "1. xxx  2. yyy" */
 export function parseWptOptions(text: string): { stem: string; options: { key: string; label: string }[] } {
-  const raw = text ?? "";
+  const raw = stripImgToken(text ?? "");
   const firstIdx = raw.search(/(^|\s)1\.\s+\S/);
   if (firstIdx === -1) return { stem: raw, options: [] };
   const stem = raw.slice(0, firstIdx).trim();
@@ -33,6 +51,7 @@ export function parseWptOptions(text: string): { stem: string; options: { key: s
   return { stem: stem || raw, options };
 }
 
+
 export function WptSheet({ questions, answers, images, onChange, renderImage }: Props) {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
 
@@ -43,8 +62,11 @@ export function WptSheet({ questions, answers, images, onChange, renderImage }: 
 
   const active = activeIdx === null ? null : sorted[activeIdx];
   const parsed = active ? parseWptOptions(active.question_text ?? "") : null;
+  const block = parsed ? extractPairBlock(parsed.stem) : { body: "", lines: [] as string[] };
+  const longOptions = (parsed?.options ?? []).some((o) => o.label.length > 34);
   const activeAnswer = active ? (answers[active.id] ?? "") : "";
   const img = active ? images[active.question_number] : undefined;
+
 
   return (
     <div className="space-y-4">
@@ -123,12 +145,24 @@ export function WptSheet({ questions, answers, images, onChange, renderImage }: 
               </div>
             </div>
 
-            <div className="text-base font-medium leading-snug">{parsed.stem}</div>
+            <div className="text-base font-medium leading-snug">{block.body || parsed.stem}</div>
+
+            {block.lines.length > 0 && (
+              <ul className="w-full max-w-md space-y-1 rounded-md border bg-muted/40 p-3 font-mono text-sm">
+                {block.lines.map((line, i) => (
+                  <li key={i} className="flex items-center justify-between gap-4 border-b border-dashed border-border/60 pb-1 last:border-0 last:pb-0">
+                    <span>{line.split("/")[0]?.trim()}</span>
+                    <span>{line.split("/").slice(1).join("/").trim()}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
 
             {img && renderImage?.(img, active.question_number)}
 
             {parsed.options.length > 0 ? (
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className={`grid gap-2 ${longOptions ? "" : "sm:grid-cols-2"}`}>
+
                 {parsed.options.map((opt) => {
                   const picked = activeAnswer === opt.key;
                   return (
