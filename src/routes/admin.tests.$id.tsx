@@ -68,15 +68,18 @@ function TestDetail() {
         {data.questions.map((q: any, i: number) => (
           <Card key={q.id} className={`shadow-card ${q.active === false ? "opacity-60" : ""}`}>
             <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <CardTitle className="text-sm text-muted-foreground">
-                  {isDisc ? `Kelompok ${i + 1}` : `Soal ${i + 1}`}
+                  {isDisc ? `Kelompok ${i + 1}` : `Soal ${q.question_number ?? i + 1}`}
                 </CardTitle>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {q.dimension && <Badge variant="outline">Dim: {q.dimension}</Badge>}
                   <QuestionPublishToggle id={q.id} active={q.active !== false} />
+                  <QuestionEditorDialog testId={t.id} question={q} />
+                  <QuestionDeleteButton id={q.id} number={q.question_number ?? i + 1} />
                 </div>
               </div>
+
             </CardHeader>
             <CardContent>
               {q.question_text && <div className="mb-3 font-medium">{q.question_text}</div>}
