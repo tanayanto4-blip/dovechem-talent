@@ -170,6 +170,8 @@ function TakeTest() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [discPicks, setDiscPicks] = useState<Record<string, { most?: string; least?: string }>>({});
   const [remaining, setRemaining] = useState<number>(0);
+  const [timerReady, setTimerReady] = useState(false);
+  const expiredRef = useRef(false);
   const [submitting, setSubmitting] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const hydratedRef = useRef(false);
@@ -207,20 +209,24 @@ function TakeTest() {
     const started = new Date(data.attempt.started_at).getTime();
     const left = Math.max(0, Math.floor((started + dur * 1000 - Date.now()) / 1000));
     setRemaining(left);
+    setTimerReady(true);
   }, [data]);
 
   useEffect(() => {
-    if (remaining <= 0) return;
+    if (!timerReady || remaining <= 0) return;
     const t = setInterval(() => setRemaining((r) => Math.max(0, r - 1)), 1000);
     return () => clearInterval(t);
-  }, [remaining]);
+  }, [remaining, timerReady]);
 
   useEffect(() => {
-    if (data && remaining === 0 && !submitting && Object.keys(answers).length > 0) {
+    // Waktu habis -> test otomatis dikunci & dikirim, walau belum ada jawaban.
+    if (timerReady && data && remaining === 0 && !submitting && !expiredRef.current) {
+      expiredRef.current = true;
       handleSubmit(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [remaining]);
+  }, [remaining, timerReady]);
+
 
   // --- Autosave callbacks -------------------------------------------------
   // These MUST stay above the early returns below: calling hooks after a
@@ -468,9 +474,15 @@ function TakeTest() {
               <p className="text-sm text-muted-foreground">{data.test.description}</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
-                <div className="flex items-center gap-2"><Timer className="h-4 w-4" /> <span className="font-mono text-lg">{mins}:{secs}</span></div>
-              </div>
+              {isWpt ? (
+                <div className="rounded-lg border bg-muted px-4 py-2 text-xs text-muted-foreground">
+                  Waktu berjalan otomatis
+                </div>
+              ) : (
+                <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
+                  <div className="flex items-center gap-2"><Timer className="h-4 w-4" /> <span className="font-mono text-lg">{mins}:{secs}</span></div>
+                </div>
+              )}
             </div>
           </div>
           <div className="mt-4 space-y-2">
