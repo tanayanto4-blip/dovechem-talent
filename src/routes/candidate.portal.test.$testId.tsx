@@ -23,10 +23,10 @@ import { WptSheet } from "@/components/wpt-sheet";
 
 
 const WPT_IMAGES: Record<number, { url: string; caption: string }> = {
-  7: { url: wptQ7.url, caption: "Pilihan gambar 1–5 dan dua gambar dalam tanda kurung { } — pilih nomor gambar yang tersusun dari dua gambar di dalam tanda kurung." },
-  38: { url: wptQ38.url, caption: "Bentuk geometris dengan titik-titik bernomor 1–14 — pilih dua angka yang bila dihubungkan garis lurus membagi bentuk menjadi dua bagian yang dapat disatukan menjadi bujur sangkar sempurna." },
-  42: { url: wptQ42.url, caption: "Bentuk geometris dengan titik-titik bernomor 1–24 — pilih dua angka yang bila dihubungkan garis lurus membagi bentuk menjadi dua bagian yang dapat disatukan menjadi bujur sangkar sempurna." },
-  49: { url: wptQ49.url, caption: "Lima bagian bentuk (1–5) — tentukan empat bagian yang dapat digabung menjadi sebuah segitiga." },
+  7: { url: wptQ7.url, caption: "Gambar pilihan 1–5 dan dua gambar dalam tanda kurung { }." },
+  38: { url: wptQ38.url, caption: "Bentuk geometris dengan titik bernomor 1–14." },
+  42: { url: wptQ42.url, caption: "Bentuk geometris dengan titik bernomor 1–24." },
+  49: { url: wptQ49.url, caption: "Lima bagian bentuk bernomor 1–5." },
 };
 
 
