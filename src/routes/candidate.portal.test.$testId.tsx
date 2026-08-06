@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { candidateStartTest, candidateSubmitTest, candidateSaveAnswer, candidateGetTestIntro } from "@/lib/candidate.functions";
+import { candidateStartTest, candidateSubmitTest, candidateSaveAnswer, candidateGetTestIntro, candidateGetProfile } from "@/lib/candidate.functions";
 import { VoiceInstructionPlayer } from "@/components/voice-instruction";
 import { PauliSheet, pauliFilledCount } from "@/components/pauli-sheet";
 import { TestQuestionCard } from "@/components/test-question-card";
