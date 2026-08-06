@@ -247,12 +247,17 @@ function TakeTest() {
 
   useEffect(() => {
     // Waktu habis -> test otomatis dikunci & dikirim, walau belum ada jawaban.
-    if (timerReady && data && remaining === 0 && !submitting && !expiredRef.current) {
+    // `data.expired` menutup kasus kandidat menutup browser lalu kembali setelah
+    // batas waktu server terlampaui.
+    const serverExpired = !!(data as any)?.expired && data?.attempt?.status !== "finished";
+    const timeUp = timerReady && remaining === 0;
+    if (data && (serverExpired || timeUp) && !submitting && !expiredRef.current) {
       expiredRef.current = true;
       handleSubmit(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [remaining, timerReady]);
+  }, [remaining, timerReady, data]);
+
 
 
   // --- Autosave callbacks -------------------------------------------------
