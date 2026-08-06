@@ -162,9 +162,9 @@ function AttemptDetail() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => {
+              onClick={async () => {
                 try {
-                  const res = exportPapiPdf(papiPicks, {
+                  const res = await exportPapiPdf(papiPicks, {
                     ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
                     startedAt: a.started_at,
                   });
