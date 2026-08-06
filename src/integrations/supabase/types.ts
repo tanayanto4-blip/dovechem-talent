@@ -371,6 +371,60 @@ export type Database = {
           },
         ]
       }
+      error_events: {
+        Row: {
+          actor_label: string | null
+          area: string
+          context: Json
+          id: string
+          ip: string | null
+          message: string
+          occurred_at: string
+          resolution_note: string | null
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          route: string | null
+          source: string
+          stack: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          actor_label?: string | null
+          area?: string
+          context?: Json
+          id?: string
+          ip?: string | null
+          message: string
+          occurred_at?: string
+          resolution_note?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          route?: string | null
+          source?: string
+          stack?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          actor_label?: string | null
+          area?: string
+          context?: Json
+          id?: string
+          ip?: string | null
+          message?: string
+          occurred_at?: string
+          resolution_note?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          route?: string | null
+          source?: string
+          stack?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       proctor_snapshots: {
         Row: {
           attempt_id: string | null
