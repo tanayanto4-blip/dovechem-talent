@@ -84,23 +84,39 @@ export function extractWptBlocks(stem: string) {
 }
 
 
-/** Pisahkan teks soal dari opsi inline berformat "1. xxx  2. yyy" */
+/** Pisahkan teks soal dari opsi inline berformat "1. xxx  2. yyy" atau "a. xxx  b. yyy" */
 export function parseWptOptions(text: string): { stem: string; options: { key: string; label: string }[] } {
   const cleaned = stripImgToken(text ?? "");
   // Blok kutipan dipisahkan dulu agar tidak ikut terparsing sebagai opsi
   const quoteMatch = cleaned.match(/"[^"]+"/);
   const raw = quoteMatch ? cleaned.replace(quoteMatch[0], "").replace(/\s{2,}/g, "  ").trim() : cleaned;
   const withQuote = (s: string) => (quoteMatch ? `${s}  ${quoteMatch[0]}`.trim() : s);
-  const firstIdx = raw.search(/(^|\s)1\.\s+\S/);
-  if (firstIdx === -1) return { stem: withQuote(raw), options: [] };
-  const stem = raw.slice(0, firstIdx).trim();
-  const rest = raw.slice(firstIdx);
-  const matches = [...rest.matchAll(/(\d)\.\s*([^0-9]*?)(?=\s+\d\.\s|$)/g)];
-  const options = matches
-    .map((m) => ({ key: m[1], label: (m[2] ?? "").replace(/[?\s]+$/, "").trim() }))
-    .filter((o) => o.label.length > 0);
-  if (options.length < 2) return { stem: withQuote(raw), options: [] };
-  return { stem: withQuote(stem || raw), options };
+
+  // 1) Opsi berupa angka: "1. xxx  2. yyy"
+  const numIdx = raw.search(/(^|\s)1[.)]\s+\S/);
+  if (numIdx !== -1) {
+    const stem = raw.slice(0, numIdx).trim();
+    const rest = raw.slice(numIdx);
+    const matches = [...rest.matchAll(/(\d)[.)]\s*([^0-9]*?)(?=\s+\d[.)]\s|$)/g)];
+    const options = matches
+      .map((m) => ({ key: m[1], label: (m[2] ?? "").replace(/[?\s]+$/, "").trim() }))
+      .filter((o) => o.label.length > 0);
+    if (options.length >= 2) return { stem: withQuote(stem || raw), options };
+  }
+
+  // 2) Opsi berupa huruf: "a. xxx  b. yyy" / "A) xxx  B) yyy"
+  const letIdx = raw.search(/(^|\s)[aA][.)]\s+\S/);
+  if (letIdx !== -1) {
+    const stem = raw.slice(0, letIdx).trim();
+    const rest = raw.slice(letIdx);
+    const matches = [...rest.matchAll(/([a-eA-E])[.)]\s*(.*?)(?=\s+[a-eA-E][.)]\s|$)/g)];
+    const options = matches
+      .map((m) => ({ key: m[1].toUpperCase(), label: (m[2] ?? "").replace(/[?\s]+$/, "").trim() }))
+      .filter((o) => o.label.length > 0);
+    if (options.length >= 2) return { stem: withQuote(stem || raw), options };
+  }
+
+  return { stem: withQuote(raw), options: [] };
 }
 
 
