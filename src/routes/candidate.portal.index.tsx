@@ -61,7 +61,13 @@ function PortalHome() {
         <Card>
           <CardHeader><CardTitle>Hasil Psikotest</CardTitle></CardHeader>
           <CardContent className="space-y-2">
-            {data!.attempts.map((a: any) => {
+            {[...data!.attempts]
+              .sort(
+                (x: any, y: any) =>
+                  data!.tests.findIndex((t: any) => t.id === x.test_id) -
+                  data!.tests.findIndex((t: any) => t.id === y.test_id),
+              )
+              .map((a: any) => {
               const testIdx = data!.tests.findIndex((t: any) => t.id === a.test_id);
               return (
                 <div key={a.id} className="flex items-center justify-between rounded-md border p-3">

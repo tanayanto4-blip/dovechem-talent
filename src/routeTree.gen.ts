@@ -18,15 +18,15 @@ import { Route as CandidateLoginRouteImport } from './routes/candidate.login'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminTestAccessRouteImport } from './routes/admin.test-access'
 import { Route as AdminResultsRouteImport } from './routes/admin.results'
-import { Route as AdminMbtiRouteImport } from './routes/admin.mbti'
 import { Route as AdminInstruksiRouteImport } from './routes/admin.instruksi'
 import { Route as AdminDocumentsRouteImport } from './routes/admin.documents'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminCodesRouteImport } from './routes/admin.codes'
-import { Route as AdminCandidatesRouteImport } from './routes/admin.candidates'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as CandidatePortalIndexRouteImport } from './routes/candidate.portal.index'
 import { Route as AdminTestsIndexRouteImport } from './routes/admin.tests.index'
+import { Route as AdminMbtiIndexRouteImport } from './routes/admin.mbti.index'
+import { Route as AdminCandidatesIndexRouteImport } from './routes/admin.candidates.index'
 import { Route as CandidatePortalTestsRouteImport } from './routes/candidate.portal.tests'
 import { Route as CandidatePortalDataRouteImport } from './routes/candidate.portal.data'
 import { Route as AdminTestsIdRouteImport } from './routes/admin.tests.$id'
@@ -80,11 +80,6 @@ const AdminResultsRoute = AdminResultsRouteImport.update({
   path: '/results',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminMbtiRoute = AdminMbtiRouteImport.update({
-  id: '/mbti',
-  path: '/mbti',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminInstruksiRoute = AdminInstruksiRouteImport.update({
   id: '/instruksi',
   path: '/instruksi',
@@ -105,11 +100,6 @@ const AdminCodesRoute = AdminCodesRouteImport.update({
   path: '/codes',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminCandidatesRoute = AdminCandidatesRouteImport.update({
-  id: '/candidates',
-  path: '/candidates',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminAuditRoute = AdminAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
@@ -123,6 +113,16 @@ const CandidatePortalIndexRoute = CandidatePortalIndexRouteImport.update({
 const AdminTestsIndexRoute = AdminTestsIndexRouteImport.update({
   id: '/tests/',
   path: '/tests/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMbtiIndexRoute = AdminMbtiIndexRouteImport.update({
+  id: '/mbti/',
+  path: '/mbti/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCandidatesIndexRoute = AdminCandidatesIndexRouteImport.update({
+  id: '/candidates/',
+  path: '/candidates/',
   getParentRoute: () => AdminRoute,
 } as any)
 const CandidatePortalTestsRoute = CandidatePortalTestsRouteImport.update({
@@ -141,14 +141,14 @@ const AdminTestsIdRoute = AdminTestsIdRouteImport.update({
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminMbtiPreviewRoute = AdminMbtiPreviewRouteImport.update({
-  id: '/preview',
-  path: '/preview',
-  getParentRoute: () => AdminMbtiRoute,
+  id: '/mbti/preview',
+  path: '/mbti/preview',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminCandidatesIdRoute = AdminCandidatesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AdminCandidatesRoute,
+  id: '/candidates/$id',
+  path: '/candidates/$id',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminAttemptsIdRoute = AdminAttemptsIdRouteImport.update({
   id: '/attempts/$id',
@@ -168,12 +168,10 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/audit': typeof AdminAuditRoute
-  '/admin/candidates': typeof AdminCandidatesRouteWithChildren
   '/admin/codes': typeof AdminCodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/documents': typeof AdminDocumentsRoute
   '/admin/instruksi': typeof AdminInstruksiRoute
-  '/admin/mbti': typeof AdminMbtiRouteWithChildren
   '/admin/results': typeof AdminResultsRoute
   '/admin/test-access': typeof AdminTestAccessRoute
   '/admin/users': typeof AdminUsersRoute
@@ -185,6 +183,8 @@ export interface FileRoutesByFullPath {
   '/admin/tests/$id': typeof AdminTestsIdRoute
   '/candidate/portal/data': typeof CandidatePortalDataRoute
   '/candidate/portal/tests': typeof CandidatePortalTestsRoute
+  '/admin/candidates/': typeof AdminCandidatesIndexRoute
+  '/admin/mbti/': typeof AdminMbtiIndexRoute
   '/admin/tests/': typeof AdminTestsIndexRoute
   '/candidate/portal/': typeof CandidatePortalIndexRoute
   '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
@@ -195,12 +195,10 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/audit': typeof AdminAuditRoute
-  '/admin/candidates': typeof AdminCandidatesRouteWithChildren
   '/admin/codes': typeof AdminCodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/documents': typeof AdminDocumentsRoute
   '/admin/instruksi': typeof AdminInstruksiRoute
-  '/admin/mbti': typeof AdminMbtiRouteWithChildren
   '/admin/results': typeof AdminResultsRoute
   '/admin/test-access': typeof AdminTestAccessRoute
   '/admin/users': typeof AdminUsersRoute
@@ -211,6 +209,8 @@ export interface FileRoutesByTo {
   '/admin/tests/$id': typeof AdminTestsIdRoute
   '/candidate/portal/data': typeof CandidatePortalDataRoute
   '/candidate/portal/tests': typeof CandidatePortalTestsRoute
+  '/admin/candidates': typeof AdminCandidatesIndexRoute
+  '/admin/mbti': typeof AdminMbtiIndexRoute
   '/admin/tests': typeof AdminTestsIndexRoute
   '/candidate/portal': typeof CandidatePortalIndexRoute
   '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
@@ -222,12 +222,10 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/audit': typeof AdminAuditRoute
-  '/admin/candidates': typeof AdminCandidatesRouteWithChildren
   '/admin/codes': typeof AdminCodesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/documents': typeof AdminDocumentsRoute
   '/admin/instruksi': typeof AdminInstruksiRoute
-  '/admin/mbti': typeof AdminMbtiRouteWithChildren
   '/admin/results': typeof AdminResultsRoute
   '/admin/test-access': typeof AdminTestAccessRoute
   '/admin/users': typeof AdminUsersRoute
@@ -239,6 +237,8 @@ export interface FileRoutesById {
   '/admin/tests/$id': typeof AdminTestsIdRoute
   '/candidate/portal/data': typeof CandidatePortalDataRoute
   '/candidate/portal/tests': typeof CandidatePortalTestsRoute
+  '/admin/candidates/': typeof AdminCandidatesIndexRoute
+  '/admin/mbti/': typeof AdminMbtiIndexRoute
   '/admin/tests/': typeof AdminTestsIndexRoute
   '/candidate/portal/': typeof CandidatePortalIndexRoute
   '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
@@ -251,12 +251,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/admin/audit'
-    | '/admin/candidates'
     | '/admin/codes'
     | '/admin/dashboard'
     | '/admin/documents'
     | '/admin/instruksi'
-    | '/admin/mbti'
     | '/admin/results'
     | '/admin/test-access'
     | '/admin/users'
@@ -268,6 +266,8 @@ export interface FileRouteTypes {
     | '/admin/tests/$id'
     | '/candidate/portal/data'
     | '/candidate/portal/tests'
+    | '/admin/candidates/'
+    | '/admin/mbti/'
     | '/admin/tests/'
     | '/candidate/portal/'
     | '/candidate/portal/test/$testId'
@@ -278,12 +278,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/admin/audit'
-    | '/admin/candidates'
     | '/admin/codes'
     | '/admin/dashboard'
     | '/admin/documents'
     | '/admin/instruksi'
-    | '/admin/mbti'
     | '/admin/results'
     | '/admin/test-access'
     | '/admin/users'
@@ -294,6 +292,8 @@ export interface FileRouteTypes {
     | '/admin/tests/$id'
     | '/candidate/portal/data'
     | '/candidate/portal/tests'
+    | '/admin/candidates'
+    | '/admin/mbti'
     | '/admin/tests'
     | '/candidate/portal'
     | '/candidate/portal/test/$testId'
@@ -304,12 +304,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/admin/audit'
-    | '/admin/candidates'
     | '/admin/codes'
     | '/admin/dashboard'
     | '/admin/documents'
     | '/admin/instruksi'
-    | '/admin/mbti'
     | '/admin/results'
     | '/admin/test-access'
     | '/admin/users'
@@ -321,6 +319,8 @@ export interface FileRouteTypes {
     | '/admin/tests/$id'
     | '/candidate/portal/data'
     | '/candidate/portal/tests'
+    | '/admin/candidates/'
+    | '/admin/mbti/'
     | '/admin/tests/'
     | '/candidate/portal/'
     | '/candidate/portal/test/$testId'
@@ -400,13 +400,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminResultsRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/mbti': {
-      id: '/admin/mbti'
-      path: '/mbti'
-      fullPath: '/admin/mbti'
-      preLoaderRoute: typeof AdminMbtiRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/instruksi': {
       id: '/admin/instruksi'
       path: '/instruksi'
@@ -435,13 +428,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCodesRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/candidates': {
-      id: '/admin/candidates'
-      path: '/candidates'
-      fullPath: '/admin/candidates'
-      preLoaderRoute: typeof AdminCandidatesRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/audit': {
       id: '/admin/audit'
       path: '/audit'
@@ -461,6 +447,20 @@ declare module '@tanstack/react-router' {
       path: '/tests'
       fullPath: '/admin/tests/'
       preLoaderRoute: typeof AdminTestsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/mbti/': {
+      id: '/admin/mbti/'
+      path: '/mbti'
+      fullPath: '/admin/mbti/'
+      preLoaderRoute: typeof AdminMbtiIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/candidates/': {
+      id: '/admin/candidates/'
+      path: '/candidates'
+      fullPath: '/admin/candidates/'
+      preLoaderRoute: typeof AdminCandidatesIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/candidate/portal/tests': {
@@ -486,17 +486,17 @@ declare module '@tanstack/react-router' {
     }
     '/admin/mbti/preview': {
       id: '/admin/mbti/preview'
-      path: '/preview'
+      path: '/mbti/preview'
       fullPath: '/admin/mbti/preview'
       preLoaderRoute: typeof AdminMbtiPreviewRouteImport
-      parentRoute: typeof AdminMbtiRoute
+      parentRoute: typeof AdminRoute
     }
     '/admin/candidates/$id': {
       id: '/admin/candidates/$id'
-      path: '/$id'
+      path: '/candidates/$id'
       fullPath: '/admin/candidates/$id'
       preLoaderRoute: typeof AdminCandidatesIdRouteImport
-      parentRoute: typeof AdminCandidatesRoute
+      parentRoute: typeof AdminRoute
     }
     '/admin/attempts/$id': {
       id: '/admin/attempts/$id'
@@ -515,59 +515,39 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AdminCandidatesRouteChildren {
-  AdminCandidatesIdRoute: typeof AdminCandidatesIdRoute
-}
-
-const AdminCandidatesRouteChildren: AdminCandidatesRouteChildren = {
-  AdminCandidatesIdRoute: AdminCandidatesIdRoute,
-}
-
-const AdminCandidatesRouteWithChildren = AdminCandidatesRoute._addFileChildren(
-  AdminCandidatesRouteChildren,
-)
-
-interface AdminMbtiRouteChildren {
-  AdminMbtiPreviewRoute: typeof AdminMbtiPreviewRoute
-}
-
-const AdminMbtiRouteChildren: AdminMbtiRouteChildren = {
-  AdminMbtiPreviewRoute: AdminMbtiPreviewRoute,
-}
-
-const AdminMbtiRouteWithChildren = AdminMbtiRoute._addFileChildren(
-  AdminMbtiRouteChildren,
-)
-
 interface AdminRouteChildren {
   AdminAuditRoute: typeof AdminAuditRoute
-  AdminCandidatesRoute: typeof AdminCandidatesRouteWithChildren
   AdminCodesRoute: typeof AdminCodesRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminDocumentsRoute: typeof AdminDocumentsRoute
   AdminInstruksiRoute: typeof AdminInstruksiRoute
-  AdminMbtiRoute: typeof AdminMbtiRouteWithChildren
   AdminResultsRoute: typeof AdminResultsRoute
   AdminTestAccessRoute: typeof AdminTestAccessRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminAttemptsIdRoute: typeof AdminAttemptsIdRoute
+  AdminCandidatesIdRoute: typeof AdminCandidatesIdRoute
+  AdminMbtiPreviewRoute: typeof AdminMbtiPreviewRoute
   AdminTestsIdRoute: typeof AdminTestsIdRoute
+  AdminCandidatesIndexRoute: typeof AdminCandidatesIndexRoute
+  AdminMbtiIndexRoute: typeof AdminMbtiIndexRoute
   AdminTestsIndexRoute: typeof AdminTestsIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAuditRoute: AdminAuditRoute,
-  AdminCandidatesRoute: AdminCandidatesRouteWithChildren,
   AdminCodesRoute: AdminCodesRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminDocumentsRoute: AdminDocumentsRoute,
   AdminInstruksiRoute: AdminInstruksiRoute,
-  AdminMbtiRoute: AdminMbtiRouteWithChildren,
   AdminResultsRoute: AdminResultsRoute,
   AdminTestAccessRoute: AdminTestAccessRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminAttemptsIdRoute: AdminAttemptsIdRoute,
+  AdminCandidatesIdRoute: AdminCandidatesIdRoute,
+  AdminMbtiPreviewRoute: AdminMbtiPreviewRoute,
   AdminTestsIdRoute: AdminTestsIdRoute,
+  AdminCandidatesIndexRoute: AdminCandidatesIndexRoute,
+  AdminMbtiIndexRoute: AdminMbtiIndexRoute,
   AdminTestsIndexRoute: AdminTestsIndexRoute,
 }
 
@@ -602,13 +582,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

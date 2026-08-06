@@ -20,7 +20,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export const Route = createFileRoute("/admin/candidates")({ component: CandidatesList });
+export const Route = createFileRoute("/admin/candidates/")({ component: CandidatesList });
 
 function CandidatesList() {
   const listFn = useServerFn(listCandidates);
