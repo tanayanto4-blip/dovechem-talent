@@ -27,6 +27,29 @@ async function resolveActiveCode(sb: any, code: string) {
 }
 
 /**
+ * Kandidat tidak boleh melihat identitas asli test (DISC, MBTI, WPT, dst.) —
+ * baik di layar maupun di payload jaringan. Semua endpoint kandidat memakai
+ * helper ini agar nama, kode, dan deskripsi asli diganti label generik
+ * "TEST 1", "TEST 2", ... sesuai urutan test aktif (order by code).
+ */
+async function activeTestOrder(sb: any): Promise<string[]> {
+  const { data } = await sb.from("tests").select("id").eq("active", true).order("code");
+  return ((data ?? []) as { id: string }[]).map((t) => t.id);
+}
+
+function maskTest<T extends { id: string }>(test: T, order: string[]): T {
+  const idx = order.indexOf(test.id);
+  const label = idx >= 0 ? `TEST ${idx + 1}` : "TEST";
+  return {
+    ...test,
+    name: label,
+    code: label.replace(/\s+/g, "-"),
+    description: null,
+  } as T;
+}
+
+
+/**
  * Staff can close a specific test for a candidate (or re-open it for a retake).
  * Missing row = open by default. Throws when the test is closed.
  */
@@ -125,7 +148,7 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
     return {
       candidate: cand,
       files: filesQ.data ?? [],
-      tests: testsQ.data ?? [],
+      tests: ((testsQ.data ?? []) as any[]).map((t, _i, all) => maskTest(t, all.map((x: any) => x.id))),
       attempts: attemptsQ.data ?? [],
       access: accessQ.data ?? [],
     };
@@ -264,7 +287,8 @@ export const candidateStartTest = createServerFn({ method: "POST" })
       sb.from("test_questions").select("id, question_number, question_text, options, dimension").eq("test_id", data.test_id).eq("active", true).order("question_number"),
       sb.from("test_answers").select("question_id, answer").eq("attempt_id", (attempt as any).id),
     ]);
-    return { attempt, test: test.data, questions: questions.data ?? [], answers: answers.data ?? [] };
+    const maskedTest = test.data ? maskTest(test.data as any, await activeTestOrder(sb)) : test.data;
+    return { attempt, test: maskedTest, questions: questions.data ?? [], answers: answers.data ?? [] };
   });
 
 const SaveAnswerInput = z.object({
@@ -327,7 +351,11 @@ export const candidateGetAttempt = createServerFn({ method: "POST" })
       .eq("candidate_id", cand.id)
       .single();
     if (error) throw new Error(error.message);
-    return { attempt };
+    const order = await activeTestOrder(sb);
+    const masked = attempt && (attempt as any).tests
+      ? { ...attempt, tests: maskTest((attempt as any).tests, order) }
+      : attempt;
+    return { attempt: masked };
   });
 
 
@@ -635,7 +663,7 @@ export const candidateGetTestIntro = createServerFn({ method: "POST" })
     }
     await assertTestOpen(sb, cand.id, data.test_id);
     return {
-      test: { ...test, voice_audio_url },
+      test: { ...maskTest(test as any, await activeTestOrder(sb)), voice_audio_url },
       resumed: !!attempt && attempt.status !== "finished",
       data_completed: cand.data_completed,
     };
