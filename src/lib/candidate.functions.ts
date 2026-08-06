@@ -46,6 +46,47 @@ async function assertTestOpen(sb: any, candidateId: string, testId: string) {
   }
 }
 
+/**
+ * Resolve (or auto-create) the candidate row for an access code.
+ * A brand-new code has no candidate row yet, and duplicates can appear if two
+ * tabs log in at once — both cases previously threw "Kandidat tidak ditemukan"
+ * on every candidate page. This heals both.
+ */
+async function ensureCandidate(sb: any, codeId: string) {
+  const { data: rows, error } = await sb
+    .from("candidates")
+    .select("*")
+    .eq("code_id", codeId)
+    .order("created_at", { ascending: true })
+    .limit(1);
+  if (error) throw new Error(error.message);
+  if (rows && rows.length) return rows[0];
+
+  const { data: codeRow } = await sb
+    .from("candidate_codes")
+    .select("candidate_name, candidate_email, position_applied")
+    .eq("id", codeId)
+    .maybeSingle();
+
+  const ins = await sb
+    .from("candidates")
+    .insert({
+      code_id: codeId,
+      full_name: codeRow?.candidate_name ?? null,
+      email: codeRow?.candidate_email ?? null,
+      position_applied: codeRow?.position_applied ?? null,
+    })
+    .select("*")
+    .single();
+  if (ins.error) {
+    // Lost an insert race: re-read instead of failing the page.
+    const retry = await sb.from("candidates").select("*").eq("code_id", codeId).limit(1);
+    if (retry.data && retry.data.length) return retry.data[0];
+    throw new Error(ins.error.message);
+  }
+  return ins.data;
+}
+
 /** Candidate logs in with an access code. Returns candidate id + basic info. */
 export const candidateLogin = createServerFn({ method: "POST" })
   .inputValidator((d) => CodeInput.parse(d))
@@ -59,27 +100,12 @@ export const candidateLogin = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error || !codeRow) throw new Error("Kode akses tidak ditemukan.");
 
-    // upsert candidate row
-    let { data: cand } = await sb
-      .from("candidates")
-      .select("*")
-      .eq("code_id", codeRow.id)
-      .maybeSingle();
-    if (!cand) {
-      const ins = await sb
-        .from("candidates")
-        .insert({
-          code_id: codeRow.id,
-          full_name: codeRow.candidate_name,
-          email: codeRow.candidate_email,
-          position_applied: codeRow.position_applied,
-        })
-        .select("*")
-        .single();
-      if (ins.error) throw new Error(ins.error.message);
-      cand = ins.data;
-      await sb.from("candidate_codes").update({ used_at: new Date().toISOString() }).eq("id", codeRow.id);
+    const cand = await ensureCandidate(sb, codeRow.id);
+    if (!codeRow.candidate_name && cand.full_name) {
+      // keep code label in sync, best-effort
     }
+    await sb.from("candidate_codes").update({ used_at: new Date().toISOString() }).eq("id", codeRow.id).is("used_at", null);
+
     return { candidate: cand, code: codeRow.code };
   });
 
@@ -88,12 +114,7 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sb = await admin();
     const codeRow = await resolveActiveCode(sb, data.code);
-    const { data: cand, error: candErr } = await sb
-      .from("candidates")
-      .select("*")
-      .eq("code_id", codeRow.id)
-      .single();
-    if (candErr || !cand) throw new Error("Kandidat tidak ditemukan.");
+    const cand = await ensureCandidate(sb, codeRow.id);
     const [filesQ, testsQ, attemptsQ, accessQ] = await Promise.all([
       sb.from("candidate_files").select("*").eq("candidate_id", cand.id),
       sb.from("tests").select("*").eq("active", true).order("code"),
@@ -133,6 +154,7 @@ export const candidateSaveProfile = createServerFn({ method: "POST" })
     const sb = await admin();
     const codeRow = await resolveActiveCode(sb, data.code);
     const { code: _c, ...rest } = data;
+    await ensureCandidate(sb, codeRow.id);
     const { error } = await sb.from("candidates").update({ ...rest, data_completed: true }).eq("code_id", codeRow.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -177,7 +199,7 @@ export const candidateUploadFile = createServerFn({ method: "POST" })
     }
     const sb = await admin();
     const codeRow = await resolveActiveCode(sb, data.code);
-    const { data: cand } = await sb.from("candidates").select("id").eq("code_id", codeRow.id).single();
+    const cand = await ensureCandidate(sb, codeRow.id);
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const path = `${cand.id}/${data.file_type}-${Date.now()}.${ext}`;
     const up = await sb.storage.from("candidate-files").upload(path, buf, {
@@ -229,7 +251,7 @@ export const candidateStartTest = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sb = await admin();
     const codeRow = await resolveActiveCode(sb, data.code);
-    const { data: cand } = await sb.from("candidates").select("id, data_completed").eq("code_id", codeRow.id).single();
+    const cand = await ensureCandidate(sb, codeRow.id);
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     if (!cand.data_completed) throw new Error("Lengkapi data diri terlebih dahulu.");
     await assertTestOpen(sb, cand.id, data.test_id);
@@ -260,7 +282,7 @@ export const candidateSaveAnswer = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sb = await admin();
     const codeRow = await resolveActiveCode(sb, data.code);
-    const { data: cand } = await sb.from("candidates").select("id").eq("code_id", codeRow.id).single();
+    const cand = await ensureCandidate(sb, codeRow.id);
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: attempt } = await sb
       .from("test_attempts")
@@ -299,7 +321,7 @@ export const candidateGetAttempt = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sb = await admin();
     const codeRow = await resolveActiveCode(sb, data.code);
-    const { data: cand } = await sb.from("candidates").select("id").eq("code_id", codeRow.id).single();
+    const cand = await ensureCandidate(sb, codeRow.id);
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: attempt, error } = await sb
       .from("test_attempts")
@@ -322,7 +344,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sb = await admin();
     const codeRow = await resolveActiveCode(sb, data.code);
-    const { data: cand } = await sb.from("candidates").select("id").eq("code_id", codeRow.id).single();
+    const cand = await ensureCandidate(sb, codeRow.id);
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: attempt } = await sb.from("test_attempts").select("*, tests(*)").eq("id", data.attempt_id).eq("candidate_id", cand.id).single();
     if (!attempt) throw new Error("Attempt tidak valid.");
@@ -592,7 +614,7 @@ export const candidateGetTestIntro = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sb = await admin();
     const codeRow = await resolveActiveCode(sb, data.code);
-    const { data: cand } = await sb.from("candidates").select("id, data_completed").eq("code_id", codeRow.id).single();
+    const cand = await ensureCandidate(sb, codeRow.id);
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: test, error } = await sb
       .from("tests")
