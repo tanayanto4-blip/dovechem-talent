@@ -31,9 +31,19 @@ export function TestDurationEditor({
     mutationFn: (n: number) => save({ data: { test_id: testId, duration_minutes: n } }),
     onSuccess: (_res, n) => {
       toast.success(`Waktu ${testName ?? "test"} diatur ${n} menit`);
-      for (const key of [["admin-tests"], ["admin-test"], ["voice-instructions"], ["candidate-tests"], ["admin-stats"]]) {
-        qc.invalidateQueries({ queryKey: key });
+      for (const key of [
+        ["admin-tests"],
+        ["admin-test"],
+        ["voice-instructions"],
+        ["candidate-tests"],
+        ["candidate-profile"],
+        ["test-intro"],
+        ["start-test"],
+        ["admin-stats"],
+      ]) {
+        qc.invalidateQueries({ queryKey: key, refetchType: "all" });
       }
+
     },
     onError: (e: any) => toast.error(e?.message ?? "Gagal menyimpan durasi"),
   });
