@@ -148,7 +148,7 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
     return {
       candidate: cand,
       files: filesQ.data ?? [],
-      tests: testsQ.data ?? [],
+      tests: ((testsQ.data ?? []) as any[]).map((t, i) => maskTest(t, (testsQ.data ?? []).map((x: any) => x.id))),
       attempts: attemptsQ.data ?? [],
       access: accessQ.data ?? [],
     };
@@ -350,7 +350,11 @@ export const candidateGetAttempt = createServerFn({ method: "POST" })
       .eq("candidate_id", cand.id)
       .single();
     if (error) throw new Error(error.message);
-    return { attempt };
+    const order = await activeTestOrder(sb);
+    const masked = attempt && (attempt as any).tests
+      ? { ...attempt, tests: maskTest((attempt as any).tests, order) }
+      : attempt;
+    return { attempt: masked };
   });
 
 
@@ -658,7 +662,7 @@ export const candidateGetTestIntro = createServerFn({ method: "POST" })
     }
     await assertTestOpen(sb, cand.id, data.test_id);
     return {
-      test: { ...test, voice_audio_url },
+      test: { ...maskTest(test as any, await activeTestOrder(sb)), voice_audio_url },
       resumed: !!attempt && attempt.status !== "finished",
       data_completed: cand.data_completed,
     };
