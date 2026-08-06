@@ -288,7 +288,16 @@ export const candidateStartTest = createServerFn({ method: "POST" })
       sb.from("test_answers").select("question_id, answer").eq("attempt_id", (attempt as any).id),
     ]);
     const maskedTest = test.data ? maskTest(test.data as any, await activeTestOrder(sb)) : test.data;
-    return { attempt, test: maskedTest, questions: questions.data ?? [], answers: answers.data ?? [] };
+    // server_now lets the client compute the countdown against the server clock
+    // instead of the device clock (a skewed device clock would either expire the
+    // test instantly or hand out extra time).
+    return {
+      attempt,
+      test: maskedTest,
+      questions: questions.data ?? [],
+      answers: answers.data ?? [],
+      server_now: new Date().toISOString(),
+    };
   });
 
 const SaveAnswerInput = z.object({
