@@ -101,9 +101,6 @@ export const candidateLogin = createServerFn({ method: "POST" })
     if (error || !codeRow) throw new Error("Kode akses tidak ditemukan.");
 
     const cand = await ensureCandidate(sb, codeRow.id);
-    if (!codeRow.candidate_name && cand.full_name) {
-      // keep code label in sync, best-effort
-    }
     await sb.from("candidate_codes").update({ used_at: new Date().toISOString() }).eq("id", codeRow.id).is("used_at", null);
 
     return { candidate: cand, code: codeRow.code };
