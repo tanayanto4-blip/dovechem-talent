@@ -121,20 +121,32 @@ export function QuestionEditorDialog({
       let options: unknown = null;
       if (useJson) {
         const raw = json.trim();
-        options = raw ? JSON.parse(raw) : null;
+        try {
+          options = raw ? JSON.parse(raw) : null;
+        } catch {
+          throw new Error("Format JSON belum valid — periksa tanda kurung/koma.");
+        }
       } else if (useOptions) {
         const cleaned = rows
           .map((r) => ({ key: r.key.trim(), label: r.label.trim(), dimension: r.dimension.trim() }))
           .filter((r) => r.key && r.label)
           .map((r) => (r.dimension ? r : { key: r.key, label: r.label }));
         if (cleaned.length < 2) throw new Error("Isi minimal 2 pilihan jawaban.");
+        const keys = new Set(cleaned.map((r) => r.key.toLowerCase()));
+        if (keys.size !== cleaned.length) throw new Error("Kunci pilihan (kolom kiri) tidak boleh sama.");
+        const key = correct.trim();
+        if (key && !cleaned.some((r) => r.key.toLowerCase() === key.toLowerCase())) {
+          throw new Error(`Kunci jawaban "${key}" tidak ada di daftar pilihan.`);
+        }
         options = cleaned;
       }
+      const n = Number(number);
+      if (!Number.isInteger(n) || n < 1) throw new Error("Nomor soal harus berupa angka mulai dari 1.");
       return save({
         data: {
           question_id: question?.id,
           test_id: testId,
-          question_number: Number(number) || 1,
+          question_number: n,
           question_text: text.trim(),
           dimension: dimension.trim() || null,
           correct_answer: correct.trim() || null,
@@ -142,11 +154,12 @@ export function QuestionEditorDialog({
         },
       });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success(question?.id ? "Soal diperbarui." : "Soal ditambahkan.");
-      invalidate();
+      await invalidate();
       setOpen(false);
     },
+
     onError: (e: any) => toast.error(e?.message ?? "Gagal menyimpan soal."),
   });
 
