@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { candidateStartTest, candidateSubmitTest, candidateSaveAnswer, candidateGetTestIntro } from "@/lib/candidate.functions";
+import { candidateStartTest, candidateSubmitTest, candidateSaveAnswer, candidateGetTestIntro, candidateGetProfile } from "@/lib/candidate.functions";
 import { VoiceInstructionPlayer } from "@/components/voice-instruction";
 import { PauliSheet, pauliFilledCount } from "@/components/pauli-sheet";
 import { TestQuestionCard } from "@/components/test-question-card";
@@ -150,6 +150,16 @@ function TakeTest() {
   const submit = useServerFn(candidateSubmitTest);
   const saveAnswer = useServerFn(candidateSaveAnswer);
   const getIntro = useServerFn(candidateGetTestIntro);
+  const getProfile = useServerFn(candidateGetProfile);
+
+  // Label generik: kandidat hanya melihat "TEST 1", "TEST 2", dst.
+  const profileQ = useQuery({
+    queryKey: ["candidate-profile", session?.code],
+    queryFn: () => getProfile({ data: { code: session!.code } }),
+    enabled: !!session,
+  });
+  const testIndex = ((profileQ.data?.tests ?? []) as any[]).findIndex((t: any) => t.id === testId);
+  const testLabel = testIndex >= 0 ? `TEST ${testIndex + 1}` : "TEST";
 
   // Instruction gate: the attempt (and timer) only starts after the candidate
   // has listened to / read the spoken instruction and pressed "Mulai Test".
@@ -328,13 +338,13 @@ function TakeTest() {
 
   if (!started) {
     const it: any = intro.data?.test;
-    const voiceText: string = (it?.voice_instruction?.trim() || (it ? voiceTemplateFor(it.name, it.test_type) : ""));
+    const voiceText: string = (it?.voice_instruction?.trim() || (it ? voiceTemplateFor(testLabel, it.test_type) : ""));
     const useAudio = !!(it?.voice_mode === "audio" && it?.voice_audio_url);
     return (
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle className="font-display text-xl text-primary">
-            {intro.isLoading ? "Memuat instruksi..." : it?.name ?? "Persiapan Test"}
+            {intro.isLoading ? "Memuat instruksi..." : testLabel}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -347,14 +357,12 @@ function TakeTest() {
             <>
               <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-1"><Timer className="h-4 w-4" /> {it.duration_minutes} menit</span>
-                <span className="uppercase">{it.test_type}</span>
                 {intro.data?.resumed && <span className="rounded bg-accent px-2 py-0.5 text-xs">Melanjutkan pengerjaan</span>}
               </div>
-              {it.description && <p className="text-sm text-muted-foreground">{it.description}</p>}
               {useAudio ? (
                 <div className="space-y-2 rounded-lg border bg-accent/40 p-4">
                   <span className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
-                    <Volume2 className="h-4 w-4" /> Instruksi Suara — {it.name}
+                    <Volume2 className="h-4 w-4" /> Instruksi Suara — {testLabel}
                   </span>
                   <audio
                     controls
@@ -377,7 +385,7 @@ function TakeTest() {
                   lang={it.voice_lang}
                   rate={Number(it.voice_rate)}
                   autoplay={it.voice_enabled !== false && !!it.voice_autoplay}
-                  title={`Instruksi Suara — ${it.name}`}
+                  title={`Instruksi Suara — ${testLabel}`}
                   replayRef={replayVoiceRef}
                 />
               )}
@@ -472,8 +480,7 @@ function TakeTest() {
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <CardTitle className="font-display text-2xl text-primary">{data.test.name}</CardTitle>
-              <p className="text-sm text-muted-foreground">{data.test.description}</p>
+              <CardTitle className="font-display text-2xl text-primary">{testLabel}</CardTitle>
             </div>
             <div className="flex items-center gap-3">
               {isWpt ? (

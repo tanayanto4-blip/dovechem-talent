@@ -57,7 +57,12 @@ function TestsPage() {
                     <Lock className="mr-1 inline h-3.5 w-3.5" />
                     Test ditutup
                   </div>
-                ) : done ? null : (
+                ) : done ? (
+                  <div className="rounded-md border border-success/40 bg-success/10 p-3 text-center text-xs font-semibold text-success">
+                    <Lock className="mr-1 inline h-3.5 w-3.5" />
+                    TEST SUDAH SELESAI DAN TERKUNCI
+                  </div>
+                ) : (
                   <Button
                     className="w-full"
                     disabled={!data?.candidate?.data_completed}
