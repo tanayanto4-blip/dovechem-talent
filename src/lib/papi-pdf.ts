@@ -28,167 +28,229 @@ const fmtDate = (v?: string | null) => (v ? new Date(v).toLocaleDateString("id-I
 export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) {
   const s = papiScore(picks);
   const doc = new jsPDF({ unit: "pt", format: "a4", orientation: "landscape" });
-  const pw = doc.internal.pageSize.getWidth();
-  const ph = doc.internal.pageSize.getHeight();
 
-  // Bingkai lembar
-  doc.setDrawColor(30);
-  doc.setLineWidth(1.2);
-  doc.rect(24, 24, pw - 48, ph - 48);
+  /* --------------------------------------------------------------------
+   * Semua koordinat di bawah diukur langsung dari lembar jawaban PAPI asli
+   * (scan 150 dpi, 1755 x 1240 px = A4 landscape). Faktor P mengonversi
+   * piksel referensi -> point PDF sehingga posisi garis, kotak, huruf,
+   * angka, dan panah sama persis dengan lembar aslinya.
+   * ------------------------------------------------------------------ */
+  const P = (px: number) => px * 0.48;
 
-  // ---------- Header kiri ----------
+  const line = (x1: number, y1: number, x2: number, y2: number) =>
+    doc.line(P(x1), P(y1), P(x2), P(y2));
+  const rect = (x: number, y: number, w: number, h: number, style?: "S" | "F") =>
+    doc.rect(P(x), P(y), P(w), P(h), style);
+  const text = (
+    t: string,
+    x: number,
+    y: number,
+    align?: "center" | "right",
+  ) => doc.text(t, P(x), P(y), align ? { align } : undefined);
+
+  const dashOn = () => doc.setLineDashPattern([0.9, 2.2], 0);
+  const dashOff = () => doc.setLineDashPattern([], 0);
+
+  // ---------- Bingkai lembar ----------
+  doc.setDrawColor(20);
+  doc.setLineWidth(1.1);
+  rect(122, 28, 1510, 1103);
+
+  // ---------- Header kiri (identik lembar asli) ----------
+  doc.setTextColor(15);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(40);
-  doc.setTextColor(20);
-  doc.text("PAPI", 52, 78);
-  doc.setFontSize(11);
-  doc.text("PA Preference Inventory", 52, 98);
+  doc.setFontSize(46);
+  text("PAPI", 150, 118);
+  doc.setFontSize(13);
+  text("PA Preference Inventory", 150, 158);
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  doc.setLineWidth(0.8);
-  const field = (label: string, value: string, y: number, boxed: boolean) => {
-    doc.text(label, 52, y);
-    if (boxed) {
-      doc.rect(170, y - 13, 62, 20);
-      doc.text(value, 201, y, { align: "center" });
-    } else {
-      doc.line(52, y + 4, 262, y + 4);
-      doc.text(value, 110, y);
-    }
-  };
-  field("Time started", fmtTime(meta.startedAt), 132, true);
-  field("Time finished", fmtTime(meta.finishedAt), 170, true);
-  field("Name", meta.candidateName || "", 210, false);
-  field("Date", fmtDate(meta.finishedAt ?? meta.startedAt), 248, false);
+  doc.setFontSize(11);
+  doc.setLineWidth(0.9);
+  text("Time started", 150, 222);
+  rect(420, 197, 72, 35);
+  text(fmtTime(meta.startedAt), 456, 221, "center");
+  text("Time finished", 150, 289);
+  rect(420, 264, 72, 35);
+  text(fmtTime(meta.finishedAt), 456, 288, "center");
+
+  text("Name", 150, 353);
+  line(150, 365, 492, 365);
+  text(meta.candidateName || "", 240, 359);
+  text("Date", 150, 417);
+  line(150, 429, 492, 429);
+  text(fmtDate(meta.finishedAt ?? meta.startedAt) || "", 240, 423);
+
   doc.setFontSize(8.5);
-  doc.setTextColor(90);
-  doc.text(`Kode  : ${meta.candidateCode || "-"}`, 52, 282);
-  doc.text(`Posisi: ${meta.position || "-"}`, 52, 298);
-  doc.text(`Terjawab: ${s.answered}/${s.total}`, 52, 314);
+  doc.setTextColor(105);
+  text(`Kode   : ${meta.candidateCode || "-"}`, 150, 480);
+  text(`Posisi : ${meta.position || "-"}`, 150, 502);
+  text(`Terjawab : ${s.answered}/${s.total}`, 150, 524);
+  doc.setTextColor(15);
 
-  // ---------- Grid ----------
-  const cols = 9;
-  const rows = 10;
-  const cellW = 48;
-  const cellH = 36;
-  const gridX = 322;
-  const gridY = 128;
-  const gridW = cols * cellW;
-  const gridH = rows * cellH;
-  const boxW = 26;
-  const boxH = 20;
+  // ---------- Geometri grid ----------
+  const colX = (c: number) => 1387 - (c - 1) * 85.4; // c = 1 (kanan) .. 9 (kiri)
+  const rowY = (r: number) => 295 + (r - 1) * 77.2; // r = 1 (atas) .. 10 (bawah)
+  const topBoxX = (i: number) => 729.5 + i * 85.4; // pusat kotak G..E
+  const botBoxX = (i: number) => 701 + i * 83.4; // pusat kotak N..W
+  const TOP_BOX_Y = 191;
+  const BOT_BOX_Y = 1040;
+  const BOX_H = 37;
+  const BOX_W = 34;
 
-  const letterX = (i: number) => gridX + i * cellW; // 10 titik untuk 10 skala
+  // ---------- Garis batas grid + diagonal tebal pemisah ----------
+  doc.setLineWidth(1.1);
+  line(615, 228, 615, 1047); // vertikal kiri
+  line(1487, 240, 1580, 240); // takik kanan atas
+  line(1580, 240, 1580, 1047); // vertikal kanan
+  line(1487, 240, 615, 1047); // diagonal tebal role / need
 
-  // Kotak skala atas
-  doc.setDrawColor(30);
+  // ---------- Kotak skala atas (G L I T V S R D C E) ----------
   doc.setLineWidth(0.9);
   PAPI_TOP_ORDER.forEach((letter, i) => {
-    const cx = letterX(i);
+    const cx = topBoxX(i);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.setTextColor(20);
-    doc.text(letter, cx, gridY - boxH - 12, { align: "center" });
-    doc.rect(cx - boxW / 2, gridY - boxH - 6, boxW, boxH);
-    doc.setFontSize(11);
-    doc.text(String(s.scales[letter] ?? 0), cx, gridY - 11, { align: "center" });
+    doc.setFontSize(17);
+    text(letter, cx, 180, "center");
+    rect(cx - BOX_W / 2, TOP_BOX_Y, BOX_W, BOX_H);
+    doc.setFontSize(14);
+    text(String(s.scales[letter] ?? 0), cx, TOP_BOX_Y + 27, "center");
   });
-  // Total atas
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(40);
-  doc.text("Total", gridX - 78, gridY - boxH - 12);
-  doc.rect(gridX - 86, gridY - boxH - 6, 44, boxH);
-  doc.setFontSize(11);
-  doc.text(String(s.totalTop), gridX - 64, gridY - 11, { align: "center" });
+  doc.setFontSize(10);
+  text("Total", 648, 180, "center");
+  rect(615, TOP_BOX_Y, 67, BOX_H);
+  doc.setFontSize(14);
+  text(String(s.totalTop), 648, TOP_BOX_Y + 27, "center");
 
-  // Panah
-  const arrow = (x1: number, y1: number, x2: number, y2: number, active: boolean) => {
+  // ---------- Kotak skala bawah (N A P X B O Z K F W) ----------
+  PAPI_BOTTOM_ORDER.forEach((letter, i) => {
+    const cx = botBoxX(i);
+    doc.setLineWidth(0.9);
+    rect(cx - 18, BOT_BOX_Y, 36, BOX_H);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    text(String(s.scales[letter] ?? 0), cx, BOT_BOX_Y + 27, "center");
+    doc.setFontSize(17);
+    text(letter, cx, BOT_BOX_Y + 72, "center");
+  });
+  doc.setLineWidth(0.9);
+  rect(1517, BOT_BOX_Y, 116, BOX_H);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  text(String(s.totalBottom), 1575, BOT_BOX_Y + 27, "center");
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  text("Total", 1575, BOT_BOX_Y + 66, "center");
+
+  // ---------- Rantai titik-titik diagonal (opsi B) ----------
+  const anchor = (c: number, r: number): [number, number] => [colX(c) + 30, rowY(r) + 20];
+  doc.setDrawColor(45);
+  doc.setLineWidth(0.55);
+  dashOn();
+  for (let k = 0; k <= 8; k++) {
+    // wilayah atas: sel (r, c = r + k), r = 1..9-k  -> kotak atas index 9-k
+    const last = 9 - k;
+    const [x1, y1] = anchor(1 + k, 1);
+    const [x2, y2] = anchor(last + k, last);
+    line(x1, y1, x2 + 42, y2 + 38);
+    line(x1, y1, topBoxX(9 - k), TOP_BOX_Y + BOX_H + 4);
+  }
+  for (let k = 1; k <= 9; k++) {
+    // wilayah bawah: sel (c, r = c + k), c = 1..10-k -> kotak bawah index k-1
+    const last = 10 - k;
+    const [x1, y1] = anchor(1, 1 + k);
+    const [x2, y2] = anchor(last, last + k);
+    line(x1 - 42, y1 - 38, x2, y2);
+    line(x2, y2, botBoxX(k - 1), BOT_BOX_Y - 4);
+  }
+  dashOff();
+
+  // ---------- Panah ----------
+  const arrow = (
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    active: boolean,
+  ) => {
     if (active) {
-      doc.setDrawColor(15, 55, 110);
-      doc.setLineWidth(1.6);
+      doc.setDrawColor(12, 52, 110);
+      doc.setLineWidth(2);
     } else {
-      doc.setDrawColor(120);
-      doc.setLineWidth(0.5);
+      doc.setDrawColor(20);
+      doc.setLineWidth(1);
     }
-    doc.line(x1, y1, x2, y2);
+    line(x1, y1, x2, y2);
     const ang = Math.atan2(y2 - y1, x2 - x1);
-    const h = active ? 5 : 3.6;
-    doc.line(x2, y2, x2 - h * Math.cos(ang - 0.5), y2 - h * Math.sin(ang - 0.5));
-    doc.line(x2, y2, x2 - h * Math.cos(ang + 0.5), y2 - h * Math.sin(ang + 0.5));
-    doc.setLineWidth(0.8);
+    const h = active ? 13 : 11;
+    line(x2, y2, x2 - h * Math.cos(ang - 0.45), y2 - h * Math.sin(ang - 0.45));
+    line(x2, y2, x2 - h * Math.cos(ang + 0.45), y2 - h * Math.sin(ang + 0.45));
+    doc.setDrawColor(20);
+    doc.setLineWidth(0.9);
   };
 
+  // ---------- Sel item 1..90 ----------
   for (let n = 1; n <= 90; n++) {
-    const col = Math.floor((n - 1) / 10) + 1; // 1 = paling kanan
-    const row = ((n - 1) % 10) + 1;
-    const x = gridX + (cols - col) * cellW;
-    const y = gridY + (row - 1) * cellH;
-    const cx = x + cellW / 2;
-    const cy = y + cellH / 2;
+    const c = Math.floor((n - 1) / 10) + 1;
+    const r = ((n - 1) % 10) + 1;
+    const x = colX(c);
+    const y = rowY(r);
+    const top = r <= c;
     const pick = (picks[n] ?? "").toUpperCase();
-    const topRegion = row <= col;
+    const uy = y - 16;
+    const ly = y + 13;
 
-    // garis bantu titik-titik searah diagonal
-    doc.setLineDashPattern([1, 2.2], 0);
-    doc.setDrawColor(175);
-    doc.setLineWidth(0.4);
-    if (topRegion) doc.line(x + 4, y + cellH - 4, x + cellW - 4, y + 4);
-    else doc.line(x + 4, y + 4, x + cellW - 4, y + cellH - 4);
-    doc.setLineDashPattern([], 0);
+    // garis titik-titik horizontal (rantai opsi A sepanjang baris)
+    doc.setDrawColor(45);
+    doc.setLineWidth(0.55);
+    dashOn();
+    if (top ? c < 9 : c < r - 1) line(x - 48, uy, x + 6, uy);
+    line(x - 22, ly, x + 14, ly);
+    dashOff();
+    doc.setDrawColor(20);
 
     // nomor item
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(60);
-    doc.text(String(n), cx - 15, cy + 2.5);
+    doc.setFontSize(11.5);
+    doc.setTextColor(15);
+    text(String(n), x, y + 5, "center");
 
-    // A = panah atas, B = panah bawah
-    if (topRegion) {
-      arrow(cx - 2, cy - 5, cx - 16, cy - 10, pick === "A"); // ke kiri-atas
-      arrow(cx - 2, cy + 9, cx + 12, cy + 2, pick === "B"); // ke kanan-atas
+    // opsi A = panah atas, opsi B = panah bawah
+    if (top) {
+      arrow(x + 28, uy, x + 12, uy, pick === "A");
+      arrow(x + 13, ly + 3, x + 31, ly - 11, pick === "B");
     } else {
-      arrow(cx - 2, cy - 5, cx + 12, cy - 10, pick === "A"); // ke kanan-atas/kanan
-      arrow(cx - 2, cy + 8, cx - 16, cy + 13, pick === "B"); // ke kiri-bawah
+      arrow(x + 12, uy, x + 28, uy, pick === "A");
+      arrow(x + 31, ly - 11, x + 13, ly + 3, pick === "B");
     }
 
-    if (pick === "A" || pick === "B") {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(6.5);
-      doc.setTextColor(15, 55, 110);
-      doc.text(pick, cx + 18, pick === "A" ? cy - 6 : cy + 11);
-      doc.setTextColor(60);
-    }
+    // label opsi A / B agar mudah dipindahkan ke Excel skoring
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(pick === "A" ? 12 : 130, pick === "A" ? 52 : 130, pick === "A" ? 110 : 130);
+    text("A", x + 42, uy + 4);
+    doc.setTextColor(pick === "B" ? 12 : 130, pick === "B" ? 52 : 130, pick === "B" ? 110 : 130);
+    text("B", x + 42, ly + 6);
+    doc.setTextColor(15);
   }
 
-  // Garis diagonal tebal pemisah role / need
-  doc.setDrawColor(30);
-  doc.setLineWidth(1.2);
-  doc.line(gridX + gridW, gridY, gridX, gridY + gridH);
-  // Siku kiri-bawah & kanan-atas seperti lembar asli
-  doc.line(gridX, gridY + 12, gridX, gridY + gridH);
-  doc.line(gridX + gridW, gridY, gridX + gridW, gridY + gridH - 12);
+  // ---------- Kepala panah tepi kiri (baris 1..9) ----------
+  doc.setDrawColor(20);
+  doc.setLineWidth(1.1);
+  for (let r = 1; r <= 9; r++) {
+    const vy = rowY(r) - 14;
+    line(678, vy, 724, vy - 44);
+    line(678, vy, 698, vy);
+  }
+  // ---------- Kepala panah tepi kanan (baris 2..10) ----------
+  for (let r = 2; r <= 10; r++) {
+    const uy = rowY(r) - 16;
+    line(1462, uy, 1518, uy);
+    line(1518, uy, 1534, uy - 16);
+    line(1534, uy - 16, 1520, uy - 14);
+  }
 
-  // Kotak skala bawah
-  const bottomY = gridY + gridH + 8;
-  doc.setLineWidth(0.9);
-  PAPI_BOTTOM_ORDER.forEach((letter, i) => {
-    const cx = letterX(i);
-    doc.rect(cx - boxW / 2, bottomY, boxW, boxH);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(20);
-    doc.text(String(s.scales[letter] ?? 0), cx, bottomY + 14, { align: "center" });
-    doc.setFontSize(13);
-    doc.text(letter, cx, bottomY + boxH + 15, { align: "center" });
-  });
-  doc.rect(gridX + gridW + 22, bottomY, 44, boxH);
-  doc.setFontSize(11);
-  doc.text(String(s.totalBottom), gridX + gridW + 44, bottomY + 14, { align: "center" });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.text("Total", gridX + gridW + 44, bottomY + boxH + 12, { align: "center" });
 
   // ---------- Halaman lanjutan bergaya lembar acuan (mono, berbingkai) ----------
   const sheetHeader = (subtitle: string) => {
