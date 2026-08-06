@@ -36,7 +36,7 @@ export function extractPairBlock(text: string): { body: string; lines: string[] 
   const pairIdx = segments.findIndex((s) => /^[^/]+\/[^/]+$/.test(s));
   if (pairIdx === -1) return { body: text, lines: [] };
   const lines = segments.slice(pairIdx).filter((s) => /^[^/]+\/[^/]+$/.test(s));
-  if (lines.length < 1) return { body: text, lines: [] };
+  if (lines.length < 2) return { body: text, lines: [] };
   return { body: segments.slice(0, pairIdx).join(" "), lines };
 }
 
