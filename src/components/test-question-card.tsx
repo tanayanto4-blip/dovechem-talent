@@ -33,7 +33,7 @@ function WptImageFigure({ url, caption, number }: { url: string; caption: string
     <figure className="mt-3 w-full overflow-hidden rounded-md border bg-white p-2 sm:p-3">
       <img
         src={url}
-        alt={`Ilustrasi soal WPT nomor ${number}`}
+        alt={`Ilustrasi soal nomor ${number}`}
         className="mx-auto block h-auto w-full max-w-full object-contain sm:max-h-[60vh] sm:w-auto"
         loading="lazy"
       />

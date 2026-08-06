@@ -12,6 +12,9 @@ import { Beaker, ArrowLeft, Lock } from "lucide-react";
 import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/auth")({
+  // Login state lives in browser storage only; rendering this page on the
+  // server produced a hydration mismatch that surfaced in the error monitor.
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Login Admin HR — PT Dover Chemical" },
