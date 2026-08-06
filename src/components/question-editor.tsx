@@ -30,12 +30,26 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Pencil, Plus, Trash2, X, Settings2 } from "lucide-react";
 
-const KEYS = [["admin-tests"], ["admin-test"], ["mbti-questions"], ["candidate-tests"], ["admin-stats"]];
+const KEYS = [
+  ["admin-tests"],
+  ["admin-test"],
+  ["admin-mbti"],
+  ["mbti-questions"],
+  ["candidate-tests"],
+  ["candidate-profile"],
+  ["test-intro"],
+  ["start-test"],
+  ["admin-stats"],
+];
 
 function useInvalidate() {
   const qc = useQueryClient();
-  return () => KEYS.forEach((queryKey) => qc.invalidateQueries({ queryKey }));
+  // refetchType "all" agar halaman kandidat/bank soal yang masih terbuka
+  // langsung menarik versi soal terbaru, bukan menunggu remount.
+  return () =>
+    Promise.all(KEYS.map((queryKey) => qc.invalidateQueries({ queryKey, refetchType: "all" })));
 }
+
 
 export type EditableQuestion = {
   id?: string;
