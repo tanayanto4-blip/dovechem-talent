@@ -618,7 +618,12 @@ function TakeTest() {
 
 
 
+      {isPapi && (
+        <PapiSheet questions={data.questions as any} answers={answers} onPick={pickMcq} />
+      )}
+
       {isPauli && (
+
         <PauliSheet
           questions={data.questions as any}
           answers={answers}
