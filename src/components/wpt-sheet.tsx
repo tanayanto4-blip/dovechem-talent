@@ -256,33 +256,39 @@ export function WptSheet({ questions, answers, images, onChange, renderImage }: 
             {img && renderImage?.(img, active.question_number)}
 
             {parsed.options.length > 0 ? (
-              <div className={`grid gap-2 ${longOptions ? "" : "sm:grid-cols-2"}`}>
-
-                {parsed.options.map((opt) => {
-                  const picked = activeAnswer === opt.key;
-                  return (
-                    <button
-                      key={opt.key}
-                      type="button"
-                      onClick={() => onChange(active.id, picked ? "" : opt.key)}
-                      aria-pressed={picked}
-                      className={`flex items-center gap-3 rounded-md border px-3 py-2.5 text-left text-sm transition ${
-                        picked ? "border-primary bg-primary/10" : "hover:bg-accent"
-                      }`}
-                    >
-                      <span
-                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${
-                          picked
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-input bg-background text-muted-foreground"
-                        }`}
-                      >
-                        {opt.key}
-                      </span>
+              <div className="space-y-3">
+                <ol className="space-y-1 rounded-md border bg-muted/40 p-3 text-sm">
+                  {parsed.options.map((opt) => (
+                    <li key={opt.key} className="flex gap-2">
+                      <span className="font-semibold text-primary">{opt.key}.</span>
                       <span className="min-w-0 break-words">{opt.label}</span>
-                    </button>
-                  );
-                })}
+                    </li>
+                  ))}
+                </ol>
+                <div className="space-y-2">
+                  <div className="text-xs text-muted-foreground">Pilih jawaban Anda</div>
+                  <div className="flex flex-wrap gap-2">
+                    {parsed.options.map((opt) => {
+                      const picked = activeAnswer === opt.key;
+                      return (
+                        <button
+                          key={opt.key}
+                          type="button"
+                          onClick={() => onChange(active.id, picked ? "" : opt.key)}
+                          aria-pressed={picked}
+                          aria-label={`Pilih jawaban ${opt.key}`}
+                          className={`flex h-11 w-11 items-center justify-center rounded-md border text-base font-bold transition ${
+                            picked
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-input bg-background hover:bg-accent"
+                          }`}
+                        >
+                          {opt.key}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="space-y-1">
@@ -294,22 +300,6 @@ export function WptSheet({ questions, answers, images, onChange, renderImage }: 
                   value={activeAnswer}
                   onChange={(e) => onChange(active.id, e.target.value)}
                   placeholder="Ketik jawaban di sini"
-                  maxLength={60}
-                  className="max-w-sm"
-                />
-              </div>
-            )}
-
-            {parsed.options.length > 0 && (
-              <div className="space-y-1">
-                <label htmlFor={`wpt-other-${active.id}`} className="text-xs text-muted-foreground">
-                  Atau isi jawaban sendiri (bila jawaban Anda tidak ada pada pilihan)
-                </label>
-                <Input
-                  id={`wpt-other-${active.id}`}
-                  value={parsed.options.some((o) => o.key === activeAnswer) ? "" : activeAnswer}
-                  onChange={(e) => onChange(active.id, e.target.value)}
-                  placeholder="Jawaban isian bebas"
                   maxLength={60}
                   className="max-w-sm"
                 />
