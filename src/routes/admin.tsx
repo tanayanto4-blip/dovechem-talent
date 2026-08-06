@@ -107,7 +107,13 @@ function AdminLayout() {
             const active = pathname.startsWith(it.to);
             return (
               <Link key={it.to} to={it.to} className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`}>
-                <it.icon className="h-4 w-4" />{it.label}
+                <it.icon className="h-4 w-4" />
+                <span className="flex-1">{it.label}</span>
+                {"badge" in it && (it as { badge?: number }).badge ? (
+                  <span className="rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-destructive-foreground">
+                    {(it as { badge?: number }).badge}
+                  </span>
+                ) : null}
               </Link>
             );
           })}
