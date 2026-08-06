@@ -60,26 +60,26 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
   doc.setTextColor(15);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(46);
-  text("PAPI", 150, 118);
+  text("PAPI", 151, 115);
   doc.setFontSize(13);
-  text("PA Preference Inventory", 150, 158);
+  text("PA Preference Inventory", 151, 155);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setLineWidth(0.9);
-  text("Time started", 150, 222);
-  rect(420, 197, 72, 35);
-  text(fmtTime(meta.startedAt), 456, 221, "center");
-  text("Time finished", 150, 289);
-  rect(420, 264, 72, 35);
-  text(fmtTime(meta.finishedAt), 456, 288, "center");
+  text("Time started", 151, 219);
+  rect(421, 194, 72, 35);
+  text(fmtTime(meta.startedAt), 457, 218, "center");
+  text("Time finished", 151, 286);
+  rect(421, 261, 72, 35);
+  text(fmtTime(meta.finishedAt), 457, 285, "center");
 
-  text("Name", 150, 353);
-  line(150, 365, 492, 365);
-  text(meta.candidateName || "", 240, 359);
-  text("Date", 150, 417);
-  line(150, 429, 492, 429);
-  text(fmtDate(meta.finishedAt ?? meta.startedAt) || "", 240, 423);
+  text("Name", 151, 350);
+  line(151, 362, 493, 362);
+  text(meta.candidateName || "", 241, 356);
+  text("Date", 151, 414);
+  line(151, 426, 493, 426);
+  text(fmtDate(meta.finishedAt ?? meta.startedAt) || "", 241, 420);
 
   doc.setFontSize(8.5);
   doc.setTextColor(105);
