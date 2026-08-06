@@ -411,6 +411,32 @@ function TakeTest() {
   }
 
 
+  // Error must be checked BEFORE the loading branch: when the server rejects
+  // the request (e.g. biodata belum lengkap) `data` stays undefined and the
+  // page previously hung forever on "Memuat test...".
+  if (error || (!isLoading && (!data || !data.test || !data.attempt))) {
+    const msg = (error as any)?.message || "Test tidak dapat dimuat. Periksa koneksi Anda atau hubungi admin.";
+    const needsBiodata = /data diri|biodata/i.test(msg);
+    return (
+      <Card className="border-destructive/40">
+        <CardContent className="space-y-3 py-8 text-center">
+          <AlertCircle className="mx-auto h-8 w-8 text-destructive" />
+          <div className="font-medium text-destructive">
+            {needsBiodata ? "Data diri belum lengkap" : "Gagal memuat test"}
+          </div>
+          <p className="text-sm text-muted-foreground">{msg}</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {needsBiodata ? (
+              <Button onClick={() => nav({ to: "/candidate/portal/data" })}>Lengkapi Data Diri</Button>
+            ) : (
+              <Button variant="outline" onClick={() => refetch()}>Coba lagi</Button>
+            )}
+            <Button variant="outline" onClick={() => nav({ to: "/candidate/portal/tests" })}>Kembali ke daftar test</Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   if (isLoading || !data) {
     return (
       <Card>
@@ -420,20 +446,16 @@ function TakeTest() {
       </Card>
     );
   }
-  if (error || !data || !data.test || !data.attempt) {
-    const msg = (error as any)?.message || "Test tidak dapat dimuat. Periksa koneksi Anda atau hubungi admin.";
+  if (!data.test || !data.attempt) {
     return (
       <Card className="border-destructive/40">
         <CardContent className="space-y-3 py-8 text-center">
           <AlertCircle className="mx-auto h-8 w-8 text-destructive" />
           <div className="font-medium text-destructive">Gagal memuat test</div>
-          <p className="text-sm text-muted-foreground">{msg}</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            <Button variant="outline" onClick={() => refetch()}>Coba lagi</Button>
-            <Button onClick={() => nav({ to: "/candidate/portal/tests" })}>Kembali ke daftar test</Button>
-          </div>
+          <Button onClick={() => nav({ to: "/candidate/portal/tests" })}>Kembali ke daftar test</Button>
         </CardContent>
       </Card>
+
     );
   }
   if (data.attempt.status === "finished") {
