@@ -62,11 +62,11 @@ function PortalHome() {
           <CardHeader><CardTitle>Hasil Psikotest</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {data!.attempts.map((a: any) => {
-              const test = data!.tests.find((t: any) => t.id === a.test_id);
+              const testIdx = data!.tests.findIndex((t: any) => t.id === a.test_id);
               return (
                 <div key={a.id} className="flex items-center justify-between rounded-md border p-3">
                   <div>
-                    <div className="font-medium">{test?.name ?? "Test"}</div>
+                    <div className="font-medium">{testIdx >= 0 ? `TEST ${testIdx + 1}` : "TEST"}</div>
                     <div className="text-xs text-muted-foreground">{a.status === "finished" ? "Selesai" : "Sedang berlangsung"}</div>
                   </div>
                   <Badge variant={a.status === "finished" ? "default" : "secondary"}>
