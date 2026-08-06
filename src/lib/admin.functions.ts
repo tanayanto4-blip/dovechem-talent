@@ -726,23 +726,76 @@ export const upsertMbtiQuestion = createServerFn({ method: "POST" })
 
 
 
+/**
+ * Normalisasi & validasi opsi jawaban agar bentuknya selalu aman dibaca
+ * halaman kandidat (array of { key, label, dimension? }) atau format khusus
+ * (mis. Pauli: { digits: "..." }) yang dibiarkan apa adanya.
+ */
+function normalizeQuestionOptions(raw: unknown, testType: string): unknown {
+  if (raw == null) return null;
+  if (Array.isArray(raw)) {
+    const rows = raw
+      .filter((o) => o && typeof o === "object")
+      .map((o: any) => {
+        const key = String(o.key ?? "").trim();
+        const label = String(o.label ?? "").trim();
+        const dimension = o.dimension != null ? String(o.dimension).trim() : "";
+        return dimension ? { key, label, dimension } : { key, label };
+      })
+      .filter((o) => o.key && o.label);
+    if (rows.length === 0) return null;
+    if (rows.length < 2) throw new Error("Pilihan jawaban minimal 2 opsi.");
+    const keys = new Set(rows.map((r) => r.key.toLowerCase()));
+    if (keys.size !== rows.length) throw new Error("Kunci pilihan (key) tidak boleh sama.");
+    if (testType === "disc" && rows.some((r) => !(r as any).dimension)) {
+      throw new Error("Setiap pilihan DISC wajib punya dimensi (D/I/S/C).");
+    }
+    return rows;
+  }
+  if (typeof raw === "object") return raw;
+  throw new Error("Format pilihan jawaban tidak valid.");
+}
+
 /** Create or update ANY test question (multiple choice, DISC, free text, Pauli, dll). */
 export const upsertTestQuestion = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .inputValidator((d) => QuestionUpsertInput.parse(d))
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const t = await supabaseAdmin.from("tests").select("id").eq("id", data.test_id).maybeSingle();
+    const t = await supabaseAdmin
+      .from("tests")
+      .select("id, test_type")
+      .eq("id", data.test_id)
+      .maybeSingle();
     if (t.error || !t.data) throw new Error("Test tidak ditemukan.");
+    const testType = String((t.data as any).test_type ?? "");
+
+    const options = normalizeQuestionOptions(data.options ?? null, testType);
+    const correct = data.correct_answer?.trim() ? data.correct_answer.trim() : null;
+    if (correct && Array.isArray(options)) {
+      const ok = (options as any[]).some((o) => String(o.key).toLowerCase() === correct.toLowerCase());
+      if (!ok) throw new Error(`Kunci jawaban "${correct}" tidak ada di daftar pilihan.`);
+    }
+
+    // Nomor soal harus unik per test agar urutan di halaman kandidat tetap rapi.
+    const dupe = await supabaseAdmin
+      .from("test_questions")
+      .select("id")
+      .eq("test_id", data.test_id)
+      .eq("question_number", data.question_number)
+      .limit(2);
+    const clash = (dupe.data ?? []).some((r: any) => r.id !== data.question_id);
+    if (clash) throw new Error(`Nomor ${data.question_number} sudah dipakai soal lain pada test ini.`);
 
     const payload: Record<string, unknown> = {
       test_id: data.test_id,
       question_number: data.question_number,
       question_text: data.question_text,
       dimension: data.dimension?.trim() ? data.dimension.trim() : null,
-      correct_answer: data.correct_answer?.trim() ? data.correct_answer.trim() : null,
-      options: data.options ?? null,
+      correct_answer: correct,
+      options,
     };
+
     if (typeof data.active === "boolean") payload.active = data.active;
 
     if (data.question_id) {
