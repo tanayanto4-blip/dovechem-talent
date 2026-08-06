@@ -148,7 +148,7 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
     return {
       candidate: cand,
       files: filesQ.data ?? [],
-      tests: ((testsQ.data ?? []) as any[]).map((t, i) => maskTest(t, (testsQ.data ?? []).map((x: any) => x.id))),
+      tests: ((testsQ.data ?? []) as any[]).map((t, _i, all) => maskTest(t, all.map((x: any) => x.id))),
       attempts: attemptsQ.data ?? [],
       access: accessQ.data ?? [],
     };
@@ -287,7 +287,8 @@ export const candidateStartTest = createServerFn({ method: "POST" })
       sb.from("test_questions").select("id, question_number, question_text, options, dimension").eq("test_id", data.test_id).eq("active", true).order("question_number"),
       sb.from("test_answers").select("question_id, answer").eq("attempt_id", (attempt as any).id),
     ]);
-    return { attempt, test: test.data, questions: questions.data ?? [], answers: answers.data ?? [] };
+    const maskedTest = test.data ? maskTest(test.data as any, await activeTestOrder(sb)) : test.data;
+    return { attempt, test: maskedTest, questions: questions.data ?? [], answers: answers.data ?? [] };
   });
 
 const SaveAnswerInput = z.object({
