@@ -150,6 +150,16 @@ function TakeTest() {
   const submit = useServerFn(candidateSubmitTest);
   const saveAnswer = useServerFn(candidateSaveAnswer);
   const getIntro = useServerFn(candidateGetTestIntro);
+  const getProfile = useServerFn(candidateGetProfile);
+
+  // Label generik: kandidat hanya melihat "TEST 1", "TEST 2", dst.
+  const profileQ = useQuery({
+    queryKey: ["candidate-profile", session?.code],
+    queryFn: () => getProfile({ data: { code: session!.code } }),
+    enabled: !!session,
+  });
+  const testIndex = ((profileQ.data?.tests ?? []) as any[]).findIndex((t: any) => t.id === testId);
+  const testLabel = testIndex >= 0 ? `TEST ${testIndex + 1}` : "TEST";
 
   // Instruction gate: the attempt (and timer) only starts after the candidate
   // has listened to / read the spoken instruction and pressed "Mulai Test".
