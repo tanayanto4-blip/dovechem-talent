@@ -239,16 +239,16 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
   doc.setDrawColor(20);
   doc.setLineWidth(1.1);
   for (let r = 1; r <= 9; r++) {
-    const vy = rowY(r) - 14;
+    const vy = rowY(r) - 16;
     line(678, vy, 724, vy - 44);
     line(678, vy, 698, vy);
   }
   // ---------- Kepala panah tepi kanan (baris 2..10) ----------
   for (let r = 2; r <= 10; r++) {
-    const uy = rowY(r) - 16;
-    line(1462, uy, 1518, uy);
-    line(1518, uy, 1534, uy - 16);
-    line(1534, uy - 16, 1520, uy - 14);
+    const uy = rowY(r) - 20;
+    line(1462, uy, 1508, uy);
+    line(1508, uy, 1525, uy - 15);
+    line(1525, uy - 15, 1512, uy - 13);
   }
 
 
