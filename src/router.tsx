@@ -8,8 +8,13 @@ export const getRouter = () => {
     // Data fetch/mutation failures on any page are notified + logged to the
     // admin "Monitor Error" panel.
     queryCache: new QueryCache({
-      onError: (error, query) =>
-        captureAppError(error, { source: "query", key: JSON.stringify(query.queryKey).slice(0, 200) }),
+      onError: (error, query) => {
+        // Expired/invalid candidate codes are handled with an inline message —
+        // not an app error worth toasting and logging.
+        const key = JSON.stringify(query.queryKey).slice(0, 200);
+        if (key.includes("candidate-profile")) return;
+        captureAppError(error, { source: "query", key });
+      },
     }),
     mutationCache: new MutationCache({
       onError: (error, _vars, _ctx, mutation) =>

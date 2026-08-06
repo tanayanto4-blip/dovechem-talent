@@ -22,7 +22,9 @@ export const Route = createFileRoute("/candidate/login")({
     ],
     links: [{ rel: "canonical", href: "https://test-dovechem.lovable.app/candidate/login" }],
   }),
-
+  // Rendered after hydration only: prevents a native form submit (and lost
+  // input) when a candidate clicks "Masuk" before JS finishes loading.
+  ssr: false,
   component: CandidateLogin,
 });
 

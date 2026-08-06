@@ -60,7 +60,7 @@ describe("candidateUploadFile — static ownership guarantees", () => {
     // must precede both the storage upload and the DB insert.
     const resolveIdx = body.search(/resolveActiveCode\s*\(/);
     const candFetchIdx = body.search(
-      /\.from\(["']candidates["']\)[\s\S]{0,120}\.eq\(["']code_id["']/,
+      /ensureCandidate\s*\(\s*sb\s*,\s*codeRow\.id\s*\)|\.from\(["']candidates["']\)[\s\S]{0,120}\.eq\(["']code_id["']/,
     );
     const uploadIdx = body.search(/storage\.from\(["']candidate-files["']\)\.upload\(/);
     const insertIdx = body.search(/\.from\(["']candidate_files["']\)\.insert\(/);

@@ -67,7 +67,7 @@ describe("candidate RLS — static scope checks", () => {
       expect(
         h.body,
         `${h.name} must resolve candidate row from code_id`,
-      ).toMatch(/\.from\(["']candidates["']\)[\s\S]*?\.eq\(["']code_id["']/);
+      ).toMatch(/ensureCandidate\s*\(\s*sb\s*,\s*codeRow\.id\s*\)|\.from\(["']candidates["']\)[\s\S]*?\.eq\(["']code_id["']/);
     }
   });
 
