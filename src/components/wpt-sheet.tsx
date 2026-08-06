@@ -63,7 +63,11 @@ export function extractSeriesBlock(text: string): { body: string; items: string[
   return { body: text, items: [] };
 }
 
-/** Blok pernyataan dalam tanda kutip -> tiap kalimat satu baris ke bawah */
+/**
+ * Blok pernyataan dalam tanda kutip -> tiap kalimat satu baris ke bawah.
+ * Hanya dipisah bila kutipan benar-benar berisi 2+ kalimat (mis. soal silogisme).
+ * Kutipan pendek/satu frasa dibiarkan menyatu dengan teks soal agar tidak terbaca dua kali.
+ */
 export function extractQuoteBlock(text: string): { body: string; lines: string[] } {
   const m = (text ?? "").match(/"([^"]+)"/);
   if (!m) return { body: text, lines: [] };
@@ -71,7 +75,7 @@ export function extractQuoteBlock(text: string): { body: string; lines: string[]
     .split(/(?<=\.)\s+/)
     .map((s) => s.trim())
     .filter(Boolean);
-  if (lines.length === 0) return { body: text, lines: [] };
+  if (lines.length < 2) return { body: text, lines: [] };
   return { body: (text ?? "").replace(m[0], "").replace(/\s{2,}/g, " ").trim(), lines };
 }
 
