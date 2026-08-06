@@ -136,7 +136,7 @@ export function WptSheet({ questions, answers, images, onChange, renderImage }: 
     ? extractWptBlocks(parsed.stem)
     : { body: "", pairs: [] as string[], series: [] as string[], quote: [] as string[] };
 
-  const longOptions = (parsed?.options ?? []).some((o) => o.label.length > 34);
+  
   const activeAnswer = active ? (answers[active.id] ?? "") : "";
   const img = active ? images[active.question_number] : undefined;
 
