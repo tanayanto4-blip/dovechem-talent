@@ -42,6 +42,16 @@ function AdminLayout() {
   }, [pathname, logAccess]);
 
   const isAdmin = !!roles?.roles?.includes("admin");
+
+  // Monitoring: hitung error yang belum ditangani untuk badge sidebar.
+  const countFn = useServerFn(countOpenErrors);
+  const { data: openErrors } = useQuery({
+    queryKey: ["error-open-count"],
+    queryFn: () => countFn({ data: {} as never }),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+
   const items = [
     { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/admin/codes", label: "Kode Kandidat", icon: KeyRound },
@@ -51,6 +61,7 @@ function AdminLayout() {
     { to: "/admin/instruksi", label: "Instruksi Suara", icon: Volume2 },
     { to: "/admin/test-access", label: "Kontrol Test", icon: Unlock },
     { to: "/admin/results", label: "Bank Data Hasil", icon: BarChart3 },
+    { to: "/admin/monitoring", label: "Monitor Error", icon: AlertTriangle, badge: openErrors?.open ?? 0 },
     ...(isAdmin ? [
       { to: "/admin/users", label: "User Admin/HR", icon: UserCog },
       { to: "/admin/audit", label: "Audit Log", icon: ShieldCheck },
