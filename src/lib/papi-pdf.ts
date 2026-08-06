@@ -89,8 +89,8 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
   doc.setTextColor(15);
 
   // ---------- Geometri grid ----------
-  const colX = (c: number) => 1382 - (c - 1) * 85.4; // c = 1 (kanan) .. 9 (kiri)
-  const rowY = (r: number) => 299 + (r - 1) * 77.2; // r = 1 (atas) .. 10 (bawah)
+  const colX = (c: number) => 1381 - (c - 1) * 85.4; // c = 1 (kanan) .. 9 (kiri)
+  const rowY = (r: number) => 298 + (r - 1) * 77.2; // r = 1 (atas) .. 10 (bawah)
   const topBoxX = (i: number) => 729.5 + i * 85.4; // pusat kotak G..E
   const botBoxX = (i: number) => 696 + i * 83.4; // pusat kotak N..W
   const TOP_BOX_Y = 191;
