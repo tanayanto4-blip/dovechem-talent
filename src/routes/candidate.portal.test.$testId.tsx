@@ -480,8 +480,7 @@ function TakeTest() {
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <CardTitle className="font-display text-2xl text-primary">{data.test.name}</CardTitle>
-              <p className="text-sm text-muted-foreground">{data.test.description}</p>
+              <CardTitle className="font-display text-2xl text-primary">{testLabel}</CardTitle>
             </div>
             <div className="flex items-center gap-3">
               {isWpt ? (
