@@ -16,8 +16,8 @@ import { toast } from "sonner";
 import { Timer, Check, Loader2, AlertCircle, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import wptQ7 from "@/assets/wpt-q7.jpg.asset.json";
-import wptQ38 from "@/assets/wpt-q38.jpg.asset.json";
-import wptQ42 from "@/assets/wpt-q42.jpg.asset.json";
+import wptQ38 from "@/assets/wpt-q38.png.asset.json";
+import wptQ42 from "@/assets/wpt-q42.png.asset.json";
 import wptQ49 from "@/assets/wpt-q49.jpg.asset.json";
 import { WptSheet } from "@/components/wpt-sheet";
 
