@@ -34,7 +34,7 @@ function WptImageFigure({ url, caption, number }: { url: string; caption: string
   const [zoom, setZoom] = useState(1);
   const [failed, setFailed] = useState(false);
   const [dialogFailed, setDialogFailed] = useState(false);
-  const alt = `Ilustrasi soal WPT nomor ${number}`;
+  const alt = `Ilustrasi soal nomor ${number}`;
 
   if (failed) {
     return (
@@ -88,7 +88,7 @@ function WptImageFigure({ url, caption, number }: { url: string; caption: string
           </button>
         </DialogTrigger>
         <DialogContent className="max-w-[95vw] p-3 sm:max-w-4xl">
-          <DialogTitle className="text-sm">Ilustrasi Soal WPT No. {number}</DialogTitle>
+          <DialogTitle className="text-sm">Ilustrasi Soal No. {number}</DialogTitle>
           <DialogDescription className="text-xs leading-snug">{caption}</DialogDescription>
           <div className="mt-2 flex items-center justify-center gap-2">
             <Button type="button" size="sm" variant="outline" onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))} disabled={zoom <= 0.5 || dialogFailed}>
@@ -411,6 +411,32 @@ function TakeTest() {
   }
 
 
+  // Error must be checked BEFORE the loading branch: when the server rejects
+  // the request (e.g. biodata belum lengkap) `data` stays undefined and the
+  // page previously hung forever on "Memuat test...".
+  if (error || (!isLoading && (!data || !data.test || !data.attempt))) {
+    const msg = (error as any)?.message || "Test tidak dapat dimuat. Periksa koneksi Anda atau hubungi admin.";
+    const needsBiodata = /data diri|biodata/i.test(msg);
+    return (
+      <Card className="border-destructive/40">
+        <CardContent className="space-y-3 py-8 text-center">
+          <AlertCircle className="mx-auto h-8 w-8 text-destructive" />
+          <div className="font-medium text-destructive">
+            {needsBiodata ? "Data diri belum lengkap" : "Gagal memuat test"}
+          </div>
+          <p className="text-sm text-muted-foreground">{msg}</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {needsBiodata ? (
+              <Button onClick={() => nav({ to: "/candidate/portal/data" })}>Lengkapi Data Diri</Button>
+            ) : (
+              <Button variant="outline" onClick={() => refetch()}>Coba lagi</Button>
+            )}
+            <Button variant="outline" onClick={() => nav({ to: "/candidate/portal/tests" })}>Kembali ke daftar test</Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   if (isLoading || !data) {
     return (
       <Card>
@@ -420,20 +446,16 @@ function TakeTest() {
       </Card>
     );
   }
-  if (error || !data || !data.test || !data.attempt) {
-    const msg = (error as any)?.message || "Test tidak dapat dimuat. Periksa koneksi Anda atau hubungi admin.";
+  if (!data.test || !data.attempt) {
     return (
       <Card className="border-destructive/40">
         <CardContent className="space-y-3 py-8 text-center">
           <AlertCircle className="mx-auto h-8 w-8 text-destructive" />
           <div className="font-medium text-destructive">Gagal memuat test</div>
-          <p className="text-sm text-muted-foreground">{msg}</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            <Button variant="outline" onClick={() => refetch()}>Coba lagi</Button>
-            <Button onClick={() => nav({ to: "/candidate/portal/tests" })}>Kembali ke daftar test</Button>
-          </div>
+          <Button onClick={() => nav({ to: "/candidate/portal/tests" })}>Kembali ke daftar test</Button>
         </CardContent>
       </Card>
+
     );
   }
   if (data.attempt.status === "finished") {
@@ -483,16 +505,9 @@ function TakeTest() {
               <CardTitle className="font-display text-2xl text-primary">{testLabel}</CardTitle>
             </div>
             <div className="flex items-center gap-3">
-              {isWpt ? (
-                <div className="rounded-lg border bg-muted px-4 py-2 text-xs text-muted-foreground">
-                  Waktu berjalan otomatis · {data.test.duration_minutes} menit
-                </div>
-
-              ) : (
-                <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
-                  <div className="flex items-center gap-2"><Timer className="h-4 w-4" /> <span className="font-mono text-lg">{mins}:{secs}</span></div>
-                </div>
-              )}
+              <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
+                <div className="flex items-center gap-2"><Timer className="h-4 w-4" /> <span className="font-mono text-lg">{mins}:{secs}</span></div>
+              </div>
             </div>
           </div>
           <div className="mt-4 space-y-2">
@@ -516,7 +531,7 @@ function TakeTest() {
       {isDisc && (
         <Card className="border-primary/30 bg-primary/5 shadow-card">
           <CardContent className="space-y-2 p-6 text-sm">
-            <div className="font-semibold text-primary">Petunjuk Pengisian DISC</div>
+            <div className="font-semibold text-primary">Petunjuk Pengisian</div>
             <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
               <li>Setiap kelompok berisi 4 pernyataan.</li>
               <li>Pilih <b className="text-foreground">M (Most)</b> pada pernyataan yang <b>paling menggambarkan</b> diri Anda.</li>
@@ -543,7 +558,7 @@ function TakeTest() {
         <Card className="border-primary/30 bg-primary/5 shadow-card">
           <CardContent className="space-y-4 p-6 text-sm">
             <div>
-              <div className="font-semibold text-primary">Petunjuk Pengisian EQ (Emotional Quotient)</div>
+              <div className="font-semibold text-primary">Petunjuk Pengisian</div>
               <p className="mt-1 text-muted-foreground">
                 Baca setiap pernyataan lalu nilai seberapa <b className="text-foreground">kuat pernyataan itu berlaku untuk Anda</b> pada skala <b className="text-foreground">1 sampai 5</b>.
                 Tidak ada jawaban benar/salah — jawablah spontan dan jujur sesuai keseharian Anda.
@@ -564,7 +579,7 @@ function TakeTest() {
               ))}
             </div>
             <div className="rounded-md border border-primary/20 bg-background p-3 text-xs text-muted-foreground">
-              Kuesioner ini mengukur 5 dimensi kecerdasan emosional: <b className="text-foreground">Kesadaran Diri, Pengelolaan Emosi, Motivasi, Empati,</b> dan <b className="text-foreground">Keterampilan Sosial</b>.
+              Jawablah seluruh pernyataan tanpa ada nomor yang terlewat.
             </div>
           </CardContent>
         </Card>
@@ -573,7 +588,7 @@ function TakeTest() {
       {isPapi && (
         <Card className="border-primary/30 bg-primary/5 shadow-card">
           <CardContent className="space-y-3 p-6 text-sm">
-            <div className="font-semibold text-primary">Petunjuk Pengisian PAPI Kostick</div>
+            <div className="font-semibold text-primary">Petunjuk Pengisian</div>
             <p className="text-muted-foreground">
               Terdapat <b className="text-foreground">90 pasang pernyataan</b>. Untuk setiap nomor, pilih
               <b className="text-foreground"> satu pernyataan saja</b> (opsi <b className="text-foreground">A</b> di atas atau
@@ -592,7 +607,7 @@ function TakeTest() {
       {isWpt && (
         <Card className="border-primary/30 bg-primary/5 shadow-card">
           <CardContent className="space-y-3 p-6 text-sm">
-            <div className="font-semibold text-primary">Konsep Wonderlic Personnel Test (WPT) — Form A</div>
+            <div className="font-semibold text-primary">Petunjuk Pengisian</div>
             <p className="text-muted-foreground">
               Tes ini mengukur <b className="text-foreground">kemampuan memecahkan masalah</b> secara umum: verbal, numerik, logika, dan spasial.
               Berisi <b className="text-foreground">50 soal</b> yang secara bertahap semakin sulit. Anda memiliki

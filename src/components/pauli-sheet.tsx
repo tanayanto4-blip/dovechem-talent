@@ -87,7 +87,7 @@ export function PauliSheet({
   if (!q || gaps === 0) {
     return (
       <div className="rounded-lg border bg-card p-6 text-center text-sm text-muted-foreground">
-        Deret angka Pauli belum tersedia untuk tes ini.
+        Deret angka belum tersedia untuk tes ini.
       </div>
     );
   }

@@ -1,0 +1,13 @@
+UPDATE public.tests SET voice_instruction = 'Selamat datang. Anda akan melihat kelompok pernyataan. Pada setiap kelompok, pilih satu pernyataan yang PALING menggambarkan diri Anda pada kolom Most, dan satu yang PALING TIDAK menggambarkan diri Anda pada kolom Least. Tidak ada jawaban benar atau salah. Waktu pengerjaan mengikuti hitung mundur di layar. Tekan tombol Mulai Test bila Anda sudah siap.' WHERE test_type = 'disc';
+
+UPDATE public.tests SET voice_instruction = 'Selamat datang. Terdapat lima puluh pernyataan tentang cara Anda mengenali dan mengelola emosi. Jawablah sejujurnya sesuai kebiasaan Anda sehari-hari, bukan sesuai yang dianggap ideal. Jawaban tersimpan otomatis. Waktu pengerjaan mengikuti hitung mundur di layar. Tekan tombol Mulai Test bila Anda sudah siap.' WHERE test_type = 'eq';
+
+UPDATE public.tests SET voice_instruction = 'Selamat datang. Terdapat enam puluh nomor, masing-masing berisi dua pilihan A dan B. Pilih satu yang paling mendekati diri Anda yang sebenarnya. Tidak ada jawaban benar atau salah, jangan terlalu lama berpikir pada satu nomor. Waktu pengerjaan mengikuti hitung mundur di layar. Tekan tombol Mulai Test bila Anda sudah siap.' WHERE test_type = 'mbti';
+
+UPDATE public.tests SET voice_instruction = 'Selamat datang. Terdapat lima puluh soal dan waktu pengerjaan mengikuti hitung mundur di layar, jadi kerjakan secepat mungkin. Soal tersusun makin lama makin sulit. Jika satu soal terasa sulit, lewati dan lanjut ke soal berikutnya. Tuliskan jawaban Anda pada kolom yang tersedia. Tekan tombol Mulai Test bila Anda sudah siap.' WHERE test_type = 'wpt';
+
+UPDATE public.tests SET voice_instruction = 'Selamat datang. Di dalam tes ini terdapat sembilan puluh pasang pernyataan. Pilihlah satu pernyataan dari setiap pasangan yang paling mendekati gambaran diri Anda. Tidak ada jawaban benar atau salah. Bekerjalah dengan cepat dan jangan sampai ada nomor yang terlewat. Waktu pengerjaan mengikuti hitung mundur di layar. Tekan tombol Mulai Test bila Anda sudah siap.' WHERE test_type = 'papi';
+
+UPDATE public.tests SET voice_instruction = 'Selamat datang. Jumlahkan dua angka yang berdekatan secepat dan seteliti mungkin, lalu tuliskan angka satuannya saja. Kerjakan terus tanpa berhenti. Kecepatan dan ketelitian sama pentingnya. Waktu pengerjaan mengikuti hitung mundur di layar. Tekan tombol Mulai Test bila Anda sudah siap.' WHERE test_type IN ('pauli','kraepelin');
+
+UPDATE public.tests SET voice_instruction = 'Selamat datang. Setiap soal memiliki satu jawaban yang paling tepat. Kerjakan soal yang mudah lebih dahulu, lalu kembali ke soal yang sulit. Jawaban terkirim otomatis saat waktu habis. Tekan tombol Mulai Test bila Anda sudah siap.' WHERE test_type = 'mcq';
