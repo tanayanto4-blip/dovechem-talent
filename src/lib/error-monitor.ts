@@ -1,0 +1,94 @@
+import { toast } from "sonner";
+import { reportClientError } from "@/lib/monitoring.functions";
+
+type Area = "admin" | "hr" | "candidate" | "public";
+
+function areaFromPath(pathname: string): Area {
+  if (pathname.startsWith("/admin")) return "admin";
+  if (pathname.startsWith("/candidate")) return "candidate";
+  return "public";
+}
+
+function describe(error: unknown): { message: string; stack?: string } {
+  if (error instanceof Response) {
+    return { message: `Response ${error.status}${error.url ? ` at ${error.url}` : ""}` };
+  }
+  if (error instanceof Error) return { message: error.message, stack: error.stack };
+  if (typeof error === "string") return { message: error };
+  try {
+    return { message: JSON.stringify(error).slice(0, 500) };
+  } catch {
+    return { message: String(error) };
+  }
+}
+
+/** Dedupe identical failures inside the same session so users see one toast. */
+const seen = new Map<string, number>();
+function shouldEmit(key: string) {
+  const now = Date.now();
+  const last = seen.get(key);
+  if (last && now - last < 30_000) return false;
+  seen.set(key, now);
+  return true;
+}
+
+/** Label shown to staff in the monitor list ("HR — Bank Soal", etc.). */
+function actorLabel(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const raw = window.sessionStorage.getItem("dover_candidate_session");
+    if (raw) {
+      const s = JSON.parse(raw) as { candidate_name?: string; code?: string };
+      return s.code ? `Kandidat ${s.code}` : "Kandidat";
+    }
+  } catch {
+    /* ignore */
+  }
+  return undefined;
+}
+
+export function captureAppError(error: unknown, context: Record<string, unknown> = {}) {
+  if (typeof window === "undefined") return;
+  const { message, stack } = describe(error);
+  if (!message) return;
+  const route = window.location.pathname;
+  if (!shouldEmit(`${route}|${message}`)) return;
+
+  const area = areaFromPath(route);
+  const notify = (context["silent"] as boolean) !== true;
+  if (notify) {
+    toast.error("Terjadi kesalahan pada halaman ini", {
+      description: message.slice(0, 160),
+      duration: 8000,
+    });
+  }
+
+  void reportClientError({
+    data: {
+      area,
+      route: route.slice(0, 300),
+      source: String(context["source"] ?? "runtime"),
+      message: message.slice(0, 1000),
+      stack: stack?.slice(0, 6000),
+      actor_label: actorLabel(),
+      context: { ...context, ua_route: route },
+    },
+  }).catch(() => {
+    /* never let monitoring break the page */
+  });
+}
+
+let installed = false;
+
+/** Install global browser error listeners once (client only). */
+export function installErrorMonitor() {
+  if (installed || typeof window === "undefined") return;
+  installed = true;
+
+  window.addEventListener("error", (e) => {
+    captureAppError(e.error ?? e.message, { source: "window.onerror", filename: e.filename });
+  });
+  window.addEventListener("unhandledrejection", (e) => {
+    captureAppError(e.reason, { source: "unhandledrejection" });
+  });
+}

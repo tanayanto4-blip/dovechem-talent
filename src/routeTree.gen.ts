@@ -18,6 +18,7 @@ import { Route as CandidateLoginRouteImport } from './routes/candidate.login'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminTestAccessRouteImport } from './routes/admin.test-access'
 import { Route as AdminResultsRouteImport } from './routes/admin.results'
+import { Route as AdminMonitoringRouteImport } from './routes/admin.monitoring'
 import { Route as AdminInstruksiRouteImport } from './routes/admin.instruksi'
 import { Route as AdminDocumentsRouteImport } from './routes/admin.documents'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
@@ -78,6 +79,11 @@ const AdminTestAccessRoute = AdminTestAccessRouteImport.update({
 const AdminResultsRoute = AdminResultsRouteImport.update({
   id: '/results',
   path: '/results',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMonitoringRoute = AdminMonitoringRouteImport.update({
+  id: '/monitoring',
+  path: '/monitoring',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminInstruksiRoute = AdminInstruksiRouteImport.update({
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/documents': typeof AdminDocumentsRoute
   '/admin/instruksi': typeof AdminInstruksiRoute
+  '/admin/monitoring': typeof AdminMonitoringRoute
   '/admin/results': typeof AdminResultsRoute
   '/admin/test-access': typeof AdminTestAccessRoute
   '/admin/users': typeof AdminUsersRoute
@@ -199,6 +206,7 @@ export interface FileRoutesByTo {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/documents': typeof AdminDocumentsRoute
   '/admin/instruksi': typeof AdminInstruksiRoute
+  '/admin/monitoring': typeof AdminMonitoringRoute
   '/admin/results': typeof AdminResultsRoute
   '/admin/test-access': typeof AdminTestAccessRoute
   '/admin/users': typeof AdminUsersRoute
@@ -226,6 +234,7 @@ export interface FileRoutesById {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/documents': typeof AdminDocumentsRoute
   '/admin/instruksi': typeof AdminInstruksiRoute
+  '/admin/monitoring': typeof AdminMonitoringRoute
   '/admin/results': typeof AdminResultsRoute
   '/admin/test-access': typeof AdminTestAccessRoute
   '/admin/users': typeof AdminUsersRoute
@@ -255,6 +264,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/documents'
     | '/admin/instruksi'
+    | '/admin/monitoring'
     | '/admin/results'
     | '/admin/test-access'
     | '/admin/users'
@@ -282,6 +292,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/documents'
     | '/admin/instruksi'
+    | '/admin/monitoring'
     | '/admin/results'
     | '/admin/test-access'
     | '/admin/users'
@@ -308,6 +319,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/documents'
     | '/admin/instruksi'
+    | '/admin/monitoring'
     | '/admin/results'
     | '/admin/test-access'
     | '/admin/users'
@@ -398,6 +410,13 @@ declare module '@tanstack/react-router' {
       path: '/results'
       fullPath: '/admin/results'
       preLoaderRoute: typeof AdminResultsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/monitoring': {
+      id: '/admin/monitoring'
+      path: '/monitoring'
+      fullPath: '/admin/monitoring'
+      preLoaderRoute: typeof AdminMonitoringRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/instruksi': {
@@ -521,6 +540,7 @@ interface AdminRouteChildren {
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminDocumentsRoute: typeof AdminDocumentsRoute
   AdminInstruksiRoute: typeof AdminInstruksiRoute
+  AdminMonitoringRoute: typeof AdminMonitoringRoute
   AdminResultsRoute: typeof AdminResultsRoute
   AdminTestAccessRoute: typeof AdminTestAccessRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -539,6 +559,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDashboardRoute: AdminDashboardRoute,
   AdminDocumentsRoute: AdminDocumentsRoute,
   AdminInstruksiRoute: AdminInstruksiRoute,
+  AdminMonitoringRoute: AdminMonitoringRoute,
   AdminResultsRoute: AdminResultsRoute,
   AdminTestAccessRoute: AdminTestAccessRoute,
   AdminUsersRoute: AdminUsersRoute,

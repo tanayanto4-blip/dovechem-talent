@@ -4,9 +4,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef } from "react";
 import { getMyRoles, logStaffAccess } from "@/lib/admin.functions";
+import { countOpenErrors } from "@/lib/monitoring.functions";
 import { useCandidatesRealtime } from "@/hooks/use-candidates-realtime";
 import { Button } from "@/components/ui/button";
-import { Beaker, LayoutDashboard, KeyRound, Users, LogOut, UserCog, ClipboardList, ShieldCheck, FolderOpen, BarChart3, Volume2, Unlock } from "lucide-react";
+import { Beaker, LayoutDashboard, KeyRound, Users, LogOut, UserCog, ClipboardList, ShieldCheck, FolderOpen, BarChart3, Volume2, Unlock, AlertTriangle } from "lucide-react";
 import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/admin")({
@@ -42,6 +43,16 @@ function AdminLayout() {
   }, [pathname, logAccess]);
 
   const isAdmin = !!roles?.roles?.includes("admin");
+
+  // Monitoring: hitung error yang belum ditangani untuk badge sidebar.
+  const countFn = useServerFn(countOpenErrors);
+  const { data: openErrors } = useQuery({
+    queryKey: ["error-open-count"],
+    queryFn: () => countFn({ data: {} as never }),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+
   const items = [
     { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/admin/codes", label: "Kode Kandidat", icon: KeyRound },
@@ -51,6 +62,7 @@ function AdminLayout() {
     { to: "/admin/instruksi", label: "Instruksi Suara", icon: Volume2 },
     { to: "/admin/test-access", label: "Kontrol Test", icon: Unlock },
     { to: "/admin/results", label: "Bank Data Hasil", icon: BarChart3 },
+    { to: "/admin/monitoring", label: "Monitor Error", icon: AlertTriangle, badge: openErrors?.open ?? 0 },
     ...(isAdmin ? [
       { to: "/admin/users", label: "User Admin/HR", icon: UserCog },
       { to: "/admin/audit", label: "Audit Log", icon: ShieldCheck },
@@ -95,7 +107,13 @@ function AdminLayout() {
             const active = pathname.startsWith(it.to);
             return (
               <Link key={it.to} to={it.to} className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`}>
-                <it.icon className="h-4 w-4" />{it.label}
+                <it.icon className="h-4 w-4" />
+                <span className="flex-1">{it.label}</span>
+                {"badge" in it && (it as { badge?: number }).badge ? (
+                  <span className="rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-destructive-foreground">
+                    {(it as { badge?: number }).badge}
+                  </span>
+                ) : null}
               </Link>
             );
           })}
