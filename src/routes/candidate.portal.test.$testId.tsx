@@ -5,6 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { candidateStartTest, candidateSubmitTest, candidateSaveAnswer, candidateGetTestIntro, candidateGetProfile } from "@/lib/candidate.functions";
 import { VoiceInstructionPlayer } from "@/components/voice-instruction";
 import { PauliSheet, pauliFilledCount } from "@/components/pauli-sheet";
+import { PapiSheet } from "@/components/papi-sheet";
+
 import { TestQuestionCard } from "@/components/test-question-card";
 import { voiceTemplateFor } from "@/lib/voice-templates";
 import { RotateCcw, Volume2 } from "lucide-react";
@@ -616,7 +618,12 @@ function TakeTest() {
 
 
 
+      {isPapi && (
+        <PapiSheet questions={data.questions as any} answers={answers} onPick={pickMcq} />
+      )}
+
       {isPauli && (
+
         <PauliSheet
           questions={data.questions as any}
           answers={answers}
