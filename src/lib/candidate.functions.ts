@@ -27,6 +27,29 @@ async function resolveActiveCode(sb: any, code: string) {
 }
 
 /**
+ * Kandidat tidak boleh melihat identitas asli test (DISC, MBTI, WPT, dst.) —
+ * baik di layar maupun di payload jaringan. Semua endpoint kandidat memakai
+ * helper ini agar nama, kode, dan deskripsi asli diganti label generik
+ * "TEST 1", "TEST 2", ... sesuai urutan test aktif (order by code).
+ */
+async function activeTestOrder(sb: any): Promise<string[]> {
+  const { data } = await sb.from("tests").select("id").eq("active", true).order("code");
+  return ((data ?? []) as { id: string }[]).map((t) => t.id);
+}
+
+function maskTest<T extends { id: string }>(test: T, order: string[]): T {
+  const idx = order.indexOf(test.id);
+  const label = idx >= 0 ? `TEST ${idx + 1}` : "TEST";
+  return {
+    ...test,
+    name: label,
+    code: label.replace(/\s+/g, "-"),
+    description: null,
+  } as T;
+}
+
+
+/**
  * Staff can close a specific test for a candidate (or re-open it for a retake).
  * Missing row = open by default. Throws when the test is closed.
  */
