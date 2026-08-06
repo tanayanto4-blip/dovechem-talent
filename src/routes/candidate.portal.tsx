@@ -1,5 +1,8 @@
 import { createFileRoute, Link, useNavigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { candidateGetProfile } from "@/lib/candidate.functions";
 import { useCandidateSession, setCandidateSession } from "@/lib/candidate-session";
 import { Button } from "@/components/ui/button";
 import { Beaker, LogOut, User, ClipboardList, Home } from "lucide-react";
@@ -23,6 +26,16 @@ function PortalLayout() {
       nav({ to: "/candidate/login" });
     }
   }, [hydrated, session, nav]);
+
+  const getProfile = useServerFn(candidateGetProfile);
+  // One shared session check: children reuse this cache entry, so an invalid /
+  // expired code shows one clear message instead of an error on every page.
+  const { error: sessionError } = useQuery({
+    queryKey: ["candidate-profile", session?.code],
+    queryFn: () => getProfile({ data: { code: session!.code } }),
+    enabled: !!session,
+    retry: false,
+  });
 
   if (!session) return null;
 
@@ -67,7 +80,24 @@ function PortalLayout() {
             );
           })}
         </aside>
-        <main><Outlet /></main>
+        <main>
+          {sessionError ? (
+            <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-6 text-center">
+              <div className="font-semibold text-destructive">Sesi kandidat tidak dapat digunakan</div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {(sessionError as Error).message || "Kode akses tidak lagi berlaku."}
+              </p>
+              <Button
+                className="mt-4"
+                onClick={() => { setCandidateSession(null); nav({ to: "/candidate/login" }); }}
+              >
+                Masuk ulang dengan kode lain
+              </Button>
+            </div>
+          ) : (
+            <Outlet />
+          )}
+        </main>
       </div>
     </div>
   );
