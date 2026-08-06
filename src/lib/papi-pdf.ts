@@ -246,9 +246,9 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
   // ---------- Kepala panah tepi kanan (baris 2..10) ----------
   for (let r = 2; r <= 10; r++) {
     const uy = rowY(r) - 20;
-    line(1462, uy, 1508, uy);
-    line(1508, uy, 1525, uy - 15);
-    line(1525, uy - 15, 1512, uy - 13);
+    line(1467, uy, 1513, uy);
+    line(1513, uy, 1530, uy - 15);
+    line(1530, uy - 15, 1517, uy - 13);
   }
 
 
