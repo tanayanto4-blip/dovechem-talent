@@ -36,7 +36,7 @@ function shouldEmit(key: string) {
 function actorLabel(): string | undefined {
   if (typeof window === "undefined") return undefined;
   try {
-    const raw = window.localStorage.getItem("dover_candidate_session");
+    const raw = window.sessionStorage.getItem("dover_candidate_session");
     if (raw) {
       const s = JSON.parse(raw) as { candidate_name?: string; code?: string };
       return s.code ? `Kandidat ${s.code}` : "Kandidat";
