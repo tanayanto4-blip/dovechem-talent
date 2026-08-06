@@ -215,20 +215,35 @@ function TakeTest() {
     }
   }, [data]);
 
+  // Durasi selalu mengikuti pengaturan admin/HR (tests.duration_minutes) dan
+  // dihitung terhadap jam SERVER, bukan jam perangkat kandidat.
+  const deadlineRef = useRef<number | null>(null);
   useEffect(() => {
     if (!data?.test || !data?.attempt) return;
-    const dur = data.test.duration_minutes * 60;
-    const started = new Date(data.attempt.started_at).getTime();
-    const left = Math.max(0, Math.floor((started + dur * 1000 - Date.now()) / 1000));
-    setRemaining(left);
+    const durMin = Number((data.test as any).duration_minutes);
+    const startedAt = new Date(data.attempt.started_at).getTime();
+    if (!Number.isFinite(durMin) || durMin <= 0 || !Number.isFinite(startedAt)) {
+      // Durasi belum diatur -> jangan pernah auto-submit karena timer.
+      deadlineRef.current = null;
+      setRemaining(0);
+      setTimerReady(false);
+      return;
+    }
+    const serverNow = new Date((data as any).server_now ?? Date.now()).getTime();
+    const skew = Number.isFinite(serverNow) ? Date.now() - serverNow : 0;
+    deadlineRef.current = startedAt + durMin * 60_000 + skew;
+    setRemaining(Math.max(0, Math.ceil((deadlineRef.current - Date.now()) / 1000)));
     setTimerReady(true);
   }, [data]);
 
   useEffect(() => {
-    if (!timerReady || remaining <= 0) return;
-    const t = setInterval(() => setRemaining((r) => Math.max(0, r - 1)), 1000);
+    if (!timerReady || deadlineRef.current === null) return;
+    const tick = () =>
+      setRemaining(Math.max(0, Math.ceil(((deadlineRef.current ?? 0) - Date.now()) / 1000)));
+    tick();
+    const t = setInterval(tick, 1000);
     return () => clearInterval(t);
-  }, [remaining, timerReady]);
+  }, [timerReady]);
 
   useEffect(() => {
     // Waktu habis -> test otomatis dikunci & dikirim, walau belum ada jawaban.
