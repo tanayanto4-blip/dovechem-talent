@@ -60,26 +60,26 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
   doc.setTextColor(15);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(46);
-  text("PAPI", 150, 118);
+  text("PAPI", 151, 115);
   doc.setFontSize(13);
-  text("PA Preference Inventory", 150, 158);
+  text("PA Preference Inventory", 151, 155);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setLineWidth(0.9);
-  text("Time started", 150, 222);
-  rect(420, 197, 72, 35);
-  text(fmtTime(meta.startedAt), 456, 221, "center");
-  text("Time finished", 150, 289);
-  rect(420, 264, 72, 35);
-  text(fmtTime(meta.finishedAt), 456, 288, "center");
+  text("Time started", 151, 219);
+  rect(421, 194, 72, 35);
+  text(fmtTime(meta.startedAt), 457, 218, "center");
+  text("Time finished", 151, 286);
+  rect(421, 261, 72, 35);
+  text(fmtTime(meta.finishedAt), 457, 285, "center");
 
-  text("Name", 150, 353);
-  line(150, 365, 492, 365);
-  text(meta.candidateName || "", 240, 359);
-  text("Date", 150, 417);
-  line(150, 429, 492, 429);
-  text(fmtDate(meta.finishedAt ?? meta.startedAt) || "", 240, 423);
+  text("Name", 151, 350);
+  line(151, 362, 493, 362);
+  text(meta.candidateName || "", 241, 356);
+  text("Date", 151, 414);
+  line(151, 426, 493, 426);
+  text(fmtDate(meta.finishedAt ?? meta.startedAt) || "", 241, 420);
 
   doc.setFontSize(8.5);
   doc.setTextColor(105);
@@ -89,12 +89,12 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
   doc.setTextColor(15);
 
   // ---------- Geometri grid ----------
-  const colX = (c: number) => 1387 - (c - 1) * 85.4; // c = 1 (kanan) .. 9 (kiri)
-  const rowY = (r: number) => 295 + (r - 1) * 77.2; // r = 1 (atas) .. 10 (bawah)
+  const colX = (c: number) => 1381 - (c - 1) * 85.4; // c = 1 (kanan) .. 9 (kiri)
+  const rowY = (r: number) => 298 + (r - 1) * 77.2; // r = 1 (atas) .. 10 (bawah)
   const topBoxX = (i: number) => 729.5 + i * 85.4; // pusat kotak G..E
-  const botBoxX = (i: number) => 701 + i * 83.4; // pusat kotak N..W
+  const botBoxX = (i: number) => 696 + i * 83.4; // pusat kotak N..W
   const TOP_BOX_Y = 191;
-  const BOT_BOX_Y = 1040;
+  const BOT_BOX_Y = 1036;
   const BOX_H = 37;
   const BOX_W = 34;
 
@@ -239,16 +239,16 @@ export function exportPapiPdf(picks: Record<number, string>, meta: PapiPdfMeta) 
   doc.setDrawColor(20);
   doc.setLineWidth(1.1);
   for (let r = 1; r <= 9; r++) {
-    const vy = rowY(r) - 14;
+    const vy = rowY(r) - 16;
     line(678, vy, 724, vy - 44);
     line(678, vy, 698, vy);
   }
   // ---------- Kepala panah tepi kanan (baris 2..10) ----------
   for (let r = 2; r <= 10; r++) {
-    const uy = rowY(r) - 16;
-    line(1462, uy, 1518, uy);
-    line(1518, uy, 1534, uy - 16);
-    line(1534, uy - 16, 1520, uy - 14);
+    const uy = rowY(r) - 20;
+    line(1467, uy, 1513, uy);
+    line(1513, uy, 1530, uy - 15);
+    line(1530, uy - 15, 1517, uy - 13);
   }
 
 
