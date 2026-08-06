@@ -18,9 +18,13 @@ type Props = {
   renderImage?: (img: { url: string; caption: string }, number: number) => React.ReactNode;
 };
 
-/** Buang penanda gambar [IMG:...] dari teks soal */
+/** Buang penanda gambar [IMG:...] dan catatan "(lihat gambar ...)" dari teks soal */
 export function stripImgToken(text: string): string {
-  return (text ?? "").replace(/\[IMG:[^\]]*\]/g, "").trim();
+  return (text ?? "")
+    .replace(/\[IMG:[^\]]*\]/g, "")
+    .replace(/\(\s*lihat gambar[^)]*\)/gi, "")
+    .replace(/\s{3,}/g, "  ")
+    .trim();
 }
 
 /**
