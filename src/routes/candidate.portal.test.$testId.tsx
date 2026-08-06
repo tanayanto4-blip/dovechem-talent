@@ -521,7 +521,7 @@ function TakeTest() {
             </div>
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
-                <div className="flex items-center gap-2"><Timer className="h-4 w-4" /> <span className="font-mono text-lg">{mins}:{secs}</span></div>
+                <div className="flex items-center gap-2"><Timer className="h-4 w-4" /> <span className="font-mono text-lg">{timerReady ? `${mins}:${secs}` : "--:--"}</span></div>
               </div>
             </div>
           </div>
