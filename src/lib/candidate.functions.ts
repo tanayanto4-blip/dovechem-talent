@@ -288,6 +288,16 @@ export const candidateStartTest = createServerFn({ method: "POST" })
       sb.from("test_answers").select("question_id, answer").eq("attempt_id", (attempt as any).id),
     ]);
     const maskedTest = test.data ? maskTest(test.data as any, await activeTestOrder(sb)) : test.data;
+    // Auto-lock: an in-progress attempt whose allotted duration has elapsed can
+    // no longer be worked on. The client finalises it immediately (late submits
+    // are scored from answers autosaved before the deadline).
+    const durMin = Number((test.data as any)?.duration_minutes) || 0;
+    const startedMs = (attempt as any)?.started_at ? new Date((attempt as any).started_at).getTime() : NaN;
+    const expired =
+      (attempt as any)?.status !== "finished" &&
+      durMin > 0 &&
+      Number.isFinite(startedMs) &&
+      Date.now() > startedMs + durMin * 60_000;
     // server_now lets the client compute the countdown against the server clock
     // instead of the device clock (a skewed device clock would either expire the
     // test instantly or hand out extra time).
@@ -296,8 +306,10 @@ export const candidateStartTest = createServerFn({ method: "POST" })
       test: maskedTest,
       questions: questions.data ?? [],
       answers: answers.data ?? [],
+      expired,
       server_now: new Date().toISOString(),
     };
+
   });
 
 const SaveAnswerInput = z.object({

@@ -247,12 +247,17 @@ function TakeTest() {
 
   useEffect(() => {
     // Waktu habis -> test otomatis dikunci & dikirim, walau belum ada jawaban.
-    if (timerReady && data && remaining === 0 && !submitting && !expiredRef.current) {
+    // `data.expired` menutup kasus kandidat menutup browser lalu kembali setelah
+    // batas waktu server terlampaui.
+    const serverExpired = !!(data as any)?.expired && data?.attempt?.status !== "finished";
+    const timeUp = timerReady && remaining === 0;
+    if (data && (serverExpired || timeUp) && !submitting && !expiredRef.current) {
       expiredRef.current = true;
       handleSubmit(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [remaining, timerReady]);
+  }, [remaining, timerReady, data]);
+
 
 
   // --- Autosave callbacks -------------------------------------------------
@@ -485,6 +490,29 @@ function TakeTest() {
       </Card>
     );
   }
+
+  // Waktu habis -> halaman langsung terkunci (tidak bisa diisi lagi) sambil
+  // jawaban terakhir dikirim otomatis.
+  const timeUp = !!(data as any).expired || (timerReady && remaining === 0);
+  if (timeUp) {
+    return (
+      <Card className="border-destructive/40">
+        <CardContent className="space-y-3 py-10 text-center">
+          <AlertCircle className="mx-auto h-8 w-8 text-destructive" />
+          <div className="font-display text-lg font-semibold text-destructive">WAKTU HABIS — TEST TERKUNCI</div>
+          <p className="text-sm text-muted-foreground">
+            {submitting
+              ? "Menyimpan dan mengunci jawaban Anda..."
+              : "Waktu pengerjaan sudah berakhir. Jawaban yang tersimpan otomatis telah dikirim ke tim HR."}
+          </p>
+          <Button onClick={() => nav({ to: "/candidate/portal/tests" })} disabled={submitting}>
+            Kembali ke daftar test
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
 
 
 
