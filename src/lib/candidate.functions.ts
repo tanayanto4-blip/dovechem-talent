@@ -1,16 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { papiScore } from "@/lib/papi-key";
+import { DEVICE_CONFLICT_MESSAGE } from "@/lib/candidate-session";
 
 
 const CodeInput = z.object({
   code: z.string().trim().min(3).max(64),
   device: z.string().trim().max(128).optional(),
 });
-
-/** Message the client uses to detect a forced logout by another device. */
-export const DEVICE_CONFLICT_MESSAGE =
-  "Kode akses ini sedang digunakan di perangkat lain. Anda otomatis keluar dari sesi ini.";
 
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

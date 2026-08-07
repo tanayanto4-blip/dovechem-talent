@@ -2,9 +2,9 @@ import { createFileRoute, Link, useNavigate, Outlet, useRouterState } from "@tan
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { candidateGetProfile, DEVICE_CONFLICT_MESSAGE } from "@/lib/candidate.functions";
+import { candidateGetProfile } from "@/lib/candidate.functions";
 import { toast } from "sonner";
-import { useCandidateSession, setCandidateSession } from "@/lib/candidate-session";
+import { useCandidateSession, setCandidateSession, DEVICE_CONFLICT_MESSAGE } from "@/lib/candidate-session";
 import { Button } from "@/components/ui/button";
 import { Beaker, LogOut, User, ClipboardList, Home } from "lucide-react";
 import doverLogo from "@/assets/dover-logo.jpg.asset.json";
@@ -44,6 +44,9 @@ function PortalLayout() {
     queryFn: () => getProfile({ data: { code: session!.code, device: session!.device } }),
     enabled: !!session,
     retry: false,
+    // Poll so a takeover from another device logs this one out promptly.
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
   });
 
   // One code = one device. If another device logged in with the same code,
