@@ -9,7 +9,15 @@ import { Beaker, LogOut, User, ClipboardList, Home } from "lucide-react";
 import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/candidate/portal")({
-  head: () => ({ meta: [{ title: "Portal Kandidat — PT Dover Chemical" }] }),
+  head: () => ({ meta: [
+    { title: "Portal Kandidat — PT Dover Chemical" },
+    { name: "description", content: "Portal kandidat PT Dover Chemical: lengkapi data diri, dengarkan instruksi, lalu kerjakan rangkaian psikotest online sesuai jadwal HR." },
+    { property: "og:title", content: "Portal Kandidat — PT Dover Chemical" },
+    { property: "og:description", content: "Portal kandidat PT Dover Chemical: lengkapi data diri, dengarkan instruksi, lalu kerjakan rangkaian psikotest online sesuai jadwal HR." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
   component: PortalLayout,
 });
 

@@ -32,7 +32,12 @@ export const Route = createFileRoute("/admin/audit")({
     meta: [
       { title: "Audit Log — Admin PT Dover Chemical" },
       { name: "description", content: "Jejak aktivitas admin/HR: aktivasi kode kandidat, akses lembar jawaban, dan penolakan RBAC." },
-    ],
+          { property: "og:title", content: "Audit Log — Admin PT Dover Chemical" },
+      { property: "og:description", content: "Jejak aktivitas admin/HR: aktivasi kode kandidat, akses lembar jawaban, dan penolakan RBAC." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
+],
   }),
   component: AuditPage,
 });

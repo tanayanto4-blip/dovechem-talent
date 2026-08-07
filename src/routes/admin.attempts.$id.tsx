@@ -18,7 +18,16 @@ import { papiScore, PAPI_SCALE_LABEL, PAPI_TOP_ORDER, PAPI_BOTTOM_ORDER } from "
 import { buildCandidateMeta } from "@/lib/candidate-meta";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/admin/attempts/$id")({ component: AttemptDetail });
+export const Route = createFileRoute("/admin/attempts/$id")({ head: () => ({ meta: [
+    { title: "Lembar Jawaban Kandidat — Admin Dover Chemical" },
+    { name: "description", content: "Tinjau lembar jawaban dan skor satu sesi pengerjaan psikotest kandidat PT Dover Chemical." },
+    { property: "og:title", content: "Lembar Jawaban Kandidat — Admin Dover Chemical" },
+    { property: "og:description", content: "Tinjau lembar jawaban dan skor satu sesi pengerjaan psikotest kandidat PT Dover Chemical." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
+  component: AttemptDetail });
 
 function AttemptDetail() {
   const { id } = Route.useParams();

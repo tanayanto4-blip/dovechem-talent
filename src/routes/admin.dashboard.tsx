@@ -5,7 +5,16 @@ import { dashboardStats } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, KeyRound, ClipboardCheck, TrendingUp } from "lucide-react";
 
-export const Route = createFileRoute("/admin/dashboard")({ component: Dashboard });
+export const Route = createFileRoute("/admin/dashboard")({ head: () => ({ meta: [
+    { title: "Dashboard Admin — PT Dover Chemical" },
+    { name: "description", content: "Ringkasan kandidat aktif, kode akses, dan progres pengerjaan psikotest PT Dover Chemical." },
+    { property: "og:title", content: "Dashboard Admin — PT Dover Chemical" },
+    { property: "og:description", content: "Ringkasan kandidat aktif, kode akses, dan progres pengerjaan psikotest PT Dover Chemical." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
+  component: Dashboard });
 
 function Dashboard() {
   const stats = useServerFn(dashboardStats);

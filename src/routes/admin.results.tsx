@@ -36,7 +36,8 @@ export const Route = createFileRoute("/admin/results")({
       { property: "og:description", content: "Rekap seluruh hasil psikotest kandidat PT Dover Chemical untuk admin dan HR." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-    ],
+        { name: "robots", content: "noindex" },
+  ],
   }),
 });
 

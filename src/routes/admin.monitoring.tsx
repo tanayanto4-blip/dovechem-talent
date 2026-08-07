@@ -32,7 +32,12 @@ export const Route = createFileRoute("/admin/monitoring")({
         content:
           "Pantau kegagalan yang terjadi di halaman Admin, HR, dan Kandidat secara real-time beserta status penanganannya.",
       },
-    ],
+          { property: "og:title", content: "Monitor Error — Admin PT Dover Chemical" },
+      { property: "og:description", content: "Pantau kegagalan di halaman Admin, HR, dan Kandidat secara real-time beserta status penanganannya." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
+],
   }),
   component: MonitoringPage,
 });

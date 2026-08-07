@@ -11,6 +11,15 @@ import { Beaker, LayoutDashboard, KeyRound, Users, LogOut, UserCog, ClipboardLis
 import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/admin")({
+  head: () => ({ meta: [
+    { title: "Panel Admin & HR — PT Dover Chemical" },
+    { name: "description", content: "Area kerja tim HR PT Dover Chemical untuk mengelola kandidat, kode akses, bank soal, dan hasil psikotest." },
+    { property: "og:title", content: "Panel Admin & HR — PT Dover Chemical" },
+    { property: "og:description", content: "Area kerja tim HR PT Dover Chemical untuk mengelola kandidat, kode akses, bank soal, dan hasil psikotest." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
   ssr: false,
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();

@@ -8,7 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Lock, RotateCcw } from "lucide-react";
 
-export const Route = createFileRoute("/candidate/portal/tests")({ component: TestsPage });
+export const Route = createFileRoute("/candidate/portal/tests")({ head: () => ({ meta: [
+    { title: "Daftar Test Kandidat — Dover Chemical" },
+    { name: "description", content: "Daftar psikotest yang harus dikerjakan kandidat PT Dover Chemical beserta status pengerjaannya." },
+    { property: "og:title", content: "Daftar Test Kandidat — Dover Chemical" },
+    { property: "og:description", content: "Daftar psikotest yang harus dikerjakan kandidat PT Dover Chemical beserta status pengerjaannya." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
+  component: TestsPage });
 
 function TestsPage() {
   const session = useCandidateSession();
@@ -24,6 +33,7 @@ function TestsPage() {
 
   return (
     <div className="space-y-6">
+      <h1 className="font-display text-3xl font-bold text-primary">Daftar Test</h1>
       {!data?.candidate?.data_completed && (
         <Card className="border-warning/40 bg-warning/10">
           <CardContent className="py-4 text-sm">Lengkapi <b>Data Diri</b> terlebih dahulu sebelum mengerjakan test.</CardContent>

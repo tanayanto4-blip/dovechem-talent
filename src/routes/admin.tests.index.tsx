@@ -12,7 +12,16 @@ import { ClipboardList, ArrowRight, Timer, Search, X } from "lucide-react";
 import { TestDurationEditor } from "@/components/test-duration-editor";
 import { TestPublishToggle } from "@/components/publish-toggle";
 
-export const Route = createFileRoute("/admin/tests/")({ component: TestsList });
+export const Route = createFileRoute("/admin/tests/")({ head: () => ({ meta: [
+    { title: "Bank Soal Psikotest — Admin Dover Chemical" },
+    { name: "description", content: "Kelola daftar psikotest, durasi pengerjaan, serta status publish bank soal PT Dover Chemical." },
+    { property: "og:title", content: "Bank Soal Psikotest — Admin Dover Chemical" },
+    { property: "og:description", content: "Kelola daftar psikotest, durasi pengerjaan, serta status publish bank soal PT Dover Chemical." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
+  component: TestsList });
 
 function TestsList() {
   const fn = useServerFn(listTests);

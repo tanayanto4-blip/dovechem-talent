@@ -11,7 +11,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/candidate/portal/data")({ component: DataForm });
+export const Route = createFileRoute("/candidate/portal/data")({ head: () => ({ meta: [
+    { title: "Data Diri Kandidat — Dover Chemical" },
+    { name: "description", content: "Lengkapi biodata kandidat PT Dover Chemical sebelum mengerjakan rangkaian psikotest online." },
+    { property: "og:title", content: "Data Diri Kandidat — Dover Chemical" },
+    { property: "og:description", content: "Lengkapi biodata kandidat PT Dover Chemical sebelum mengerjakan rangkaian psikotest online." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
+  component: DataForm });
 
 function DataForm() {
   const session = useCandidateSession();

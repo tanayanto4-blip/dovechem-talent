@@ -91,11 +91,11 @@ function WptImageFigure({ url, caption, number }: { url: string; caption: string
           <DialogTitle className="text-sm">Ilustrasi Soal No. {number}</DialogTitle>
           <DialogDescription className="text-xs leading-snug">{caption}</DialogDescription>
           <div className="mt-2 flex items-center justify-center gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))} disabled={zoom <= 0.5 || dialogFailed}>
+            <Button type="button" size="sm" variant="outline" onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))} aria-label="Perkecil gambar" disabled={zoom <= 0.5 || dialogFailed}>
               <ZoomOut className="h-4 w-4" />
             </Button>
             <span className="min-w-[3rem] text-center text-xs tabular-nums text-muted-foreground">{Math.round(zoom * 100)}%</span>
-            <Button type="button" size="sm" variant="outline" onClick={() => setZoom((z) => Math.min(4, +(z + 0.25).toFixed(2)))} disabled={zoom >= 4 || dialogFailed}>
+            <Button type="button" size="sm" variant="outline" onClick={() => setZoom((z) => Math.min(4, +(z + 0.25).toFixed(2)))} aria-label="Perbesar gambar" disabled={zoom >= 4 || dialogFailed}>
               <ZoomIn className="h-4 w-4" />
             </Button>
             <Button type="button" size="sm" variant="ghost" onClick={() => setZoom(1)} disabled={dialogFailed}>Reset</Button>
@@ -139,7 +139,16 @@ function WptImageFigure({ url, caption, number }: { url: string; caption: string
 }
 
 
-export const Route = createFileRoute("/candidate/portal/test/$testId")({ component: TakeTest });
+export const Route = createFileRoute("/candidate/portal/test/$testId")({ head: () => ({ meta: [
+    { title: "Pengerjaan Test — Portal Kandidat Dover Chemical" },
+    { name: "description", content: "Halaman pengerjaan psikotest kandidat PT Dover Chemical dengan timer dan penyimpanan jawaban otomatis." },
+    { property: "og:title", content: "Pengerjaan Test — Portal Kandidat Dover Chemical" },
+    { property: "og:description", content: "Halaman pengerjaan psikotest kandidat PT Dover Chemical dengan timer dan penyimpanan jawaban otomatis." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
+  component: TakeTest });
 
 function TakeTest() {
   const { testId } = Route.useParams();
@@ -363,9 +372,9 @@ function TakeTest() {
     return (
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle className="font-display text-xl text-primary">
+          <h1 className="font-display text-xl font-semibold leading-none tracking-tight text-primary">
             {intro.isLoading ? "Memuat instruksi..." : testLabel}
-          </CardTitle>
+          </h1>
         </CardHeader>
         <CardContent className="space-y-4">
           {intro.error && (
@@ -545,7 +554,7 @@ function TakeTest() {
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <CardTitle className="font-display text-2xl text-primary">{testLabel}</CardTitle>
+              <h1 className="font-display text-2xl font-semibold leading-none tracking-tight text-primary">{testLabel}</h1>
             </div>
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">

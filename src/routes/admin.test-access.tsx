@@ -21,7 +21,8 @@ export const Route = createFileRoute("/admin/test-access")({
       { property: "og:description", content: "Kelola akses buka/tutup test dan permintaan ulang test kandidat." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-    ],
+        { name: "robots", content: "noindex" },
+  ],
   }),
 });
 

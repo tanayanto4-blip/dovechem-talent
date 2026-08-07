@@ -12,7 +12,16 @@ import { TestPublishToggle, QuestionPublishToggle, BulkQuestionPublish } from "@
 import { QuestionEditorDialog, QuestionDeleteButton, TestMetaEditor } from "@/components/question-editor";
 
 
-export const Route = createFileRoute("/admin/tests/$id")({ component: TestDetail });
+export const Route = createFileRoute("/admin/tests/$id")({ head: () => ({ meta: [
+    { title: "Detail Bank Soal — Admin Dover Chemical" },
+    { name: "description", content: "Edit item soal, opsi jawaban, durasi, dan status publish satu paket psikotest PT Dover Chemical." },
+    { property: "og:title", content: "Detail Bank Soal — Admin Dover Chemical" },
+    { property: "og:description", content: "Edit item soal, opsi jawaban, durasi, dan status publish satu paket psikotest PT Dover Chemical." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
+  component: TestDetail });
 
 function TestDetail() {
   const { id } = Route.useParams();

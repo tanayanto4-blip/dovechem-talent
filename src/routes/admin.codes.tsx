@@ -14,7 +14,16 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Plus, Copy, Trash2, Layers, Power, PowerOff, Zap, CalendarClock } from "lucide-react";
 
-export const Route = createFileRoute("/admin/codes")({ component: CodesPage });
+export const Route = createFileRoute("/admin/codes")({ head: () => ({ meta: [
+    { title: "Kode Akses Kandidat — Admin Dover Chemical" },
+    { name: "description", content: "Buat, aktifkan, dan atur masa berlaku kode akses login kandidat psikotest PT Dover Chemical." },
+    { property: "og:title", content: "Kode Akses Kandidat — Admin Dover Chemical" },
+    { property: "og:description", content: "Buat, aktifkan, dan atur masa berlaku kode akses login kandidat psikotest PT Dover Chemical." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
+  component: CodesPage });
 
 function CodesPage() {
   const qc = useQueryClient();

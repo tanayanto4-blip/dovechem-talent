@@ -9,6 +9,7 @@ export const Route = createFileRoute("/admin/mbti/")({
     { property: "og:description", content: "Kelola 60 item soal MBTI: pasangan A/B, dimensi, dan status publish." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
   ]}),
   component: MbtiAdmin,
 });
