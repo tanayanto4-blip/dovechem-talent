@@ -46,9 +46,10 @@ function PortalLayout() {
     retry: false,
   });
 
-  // One code = one device. Heartbeat cepat: kalau kode dipakai perangkat lain,
-  // perangkat ini langsung keluar (maks. ~5 detik).
+  // One code = one device. Deteksi real-time via SSE (push dari server, ~1-2
+  // detik) dengan fallback polling kalau koneksi stream terputus/diblokir.
   const sessionStatus = useServerFn(candidateSessionStatus);
+  const [streamConflict, setStreamConflict] = useState(false);
   const { data: status } = useQuery({
     queryKey: ["candidate-session-status", session?.code, session?.device],
     queryFn: () => sessionStatus({ data: { code: session!.code, device: session!.device } }),
@@ -61,13 +62,30 @@ function PortalLayout() {
     gcTime: 0,
   });
 
-  const takenOver = status?.status === "conflict";
+  useEffect(() => {
+    if (!session?.code || typeof window === "undefined" || !("EventSource" in window)) return;
+    const url = `/api/public/candidate-session-stream?code=${encodeURIComponent(session.code)}&device=${encodeURIComponent(session.device ?? "")}`;
+    const es = new EventSource(url);
+    es.onmessage = (ev) => {
+      try {
+        const payload = JSON.parse(ev.data) as { status?: string };
+        if (payload.status === "conflict") {
+          setStreamConflict(true);
+          es.close();
+        }
+      } catch { /* ignore malformed frame */ }
+    };
+    return () => es.close();
+  }, [session?.code, session?.device]);
+
+  const takenOver = streamConflict || status?.status === "conflict";
   useEffect(() => {
     if (!takenOver) return;
     toast.error(DEVICE_CONFLICT_MESSAGE);
     setCandidateSession(null);
     nav({ to: "/candidate/login" });
   }, [takenOver, nav]);
+
 
   if (!session) return null;
 

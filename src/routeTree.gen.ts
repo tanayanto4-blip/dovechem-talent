@@ -30,6 +30,7 @@ import { Route as AdminMbtiIndexRouteImport } from './routes/admin.mbti.index'
 import { Route as AdminCandidatesIndexRouteImport } from './routes/admin.candidates.index'
 import { Route as CandidatePortalTestsRouteImport } from './routes/candidate.portal.tests'
 import { Route as CandidatePortalDataRouteImport } from './routes/candidate.portal.data'
+import { Route as ApiPublicCandidateSessionStreamRouteImport } from './routes/api/public/candidate-session-stream'
 import { Route as AdminTestsIdRouteImport } from './routes/admin.tests.$id'
 import { Route as AdminMbtiPreviewRouteImport } from './routes/admin.mbti.preview'
 import { Route as AdminCandidatesIdRouteImport } from './routes/admin.candidates.$id'
@@ -141,6 +142,12 @@ const CandidatePortalDataRoute = CandidatePortalDataRouteImport.update({
   path: '/data',
   getParentRoute: () => CandidatePortalRoute,
 } as any)
+const ApiPublicCandidateSessionStreamRoute =
+  ApiPublicCandidateSessionStreamRouteImport.update({
+    id: '/api/public/candidate-session-stream',
+    path: '/api/public/candidate-session-stream',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminTestsIdRoute = AdminTestsIdRouteImport.update({
   id: '/tests/$id',
   path: '/tests/$id',
@@ -188,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/admin/candidates/$id': typeof AdminCandidatesIdRoute
   '/admin/mbti/preview': typeof AdminMbtiPreviewRoute
   '/admin/tests/$id': typeof AdminTestsIdRoute
+  '/api/public/candidate-session-stream': typeof ApiPublicCandidateSessionStreamRoute
   '/candidate/portal/data': typeof CandidatePortalDataRoute
   '/candidate/portal/tests': typeof CandidatePortalTestsRoute
   '/admin/candidates/': typeof AdminCandidatesIndexRoute
@@ -215,6 +223,7 @@ export interface FileRoutesByTo {
   '/admin/candidates/$id': typeof AdminCandidatesIdRoute
   '/admin/mbti/preview': typeof AdminMbtiPreviewRoute
   '/admin/tests/$id': typeof AdminTestsIdRoute
+  '/api/public/candidate-session-stream': typeof ApiPublicCandidateSessionStreamRoute
   '/candidate/portal/data': typeof CandidatePortalDataRoute
   '/candidate/portal/tests': typeof CandidatePortalTestsRoute
   '/admin/candidates': typeof AdminCandidatesIndexRoute
@@ -244,6 +253,7 @@ export interface FileRoutesById {
   '/admin/candidates/$id': typeof AdminCandidatesIdRoute
   '/admin/mbti/preview': typeof AdminMbtiPreviewRoute
   '/admin/tests/$id': typeof AdminTestsIdRoute
+  '/api/public/candidate-session-stream': typeof ApiPublicCandidateSessionStreamRoute
   '/candidate/portal/data': typeof CandidatePortalDataRoute
   '/candidate/portal/tests': typeof CandidatePortalTestsRoute
   '/admin/candidates/': typeof AdminCandidatesIndexRoute
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/admin/candidates/$id'
     | '/admin/mbti/preview'
     | '/admin/tests/$id'
+    | '/api/public/candidate-session-stream'
     | '/candidate/portal/data'
     | '/candidate/portal/tests'
     | '/admin/candidates/'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/admin/candidates/$id'
     | '/admin/mbti/preview'
     | '/admin/tests/$id'
+    | '/api/public/candidate-session-stream'
     | '/candidate/portal/data'
     | '/candidate/portal/tests'
     | '/admin/candidates'
@@ -329,6 +341,7 @@ export interface FileRouteTypes {
     | '/admin/candidates/$id'
     | '/admin/mbti/preview'
     | '/admin/tests/$id'
+    | '/api/public/candidate-session-stream'
     | '/candidate/portal/data'
     | '/candidate/portal/tests'
     | '/admin/candidates/'
@@ -345,6 +358,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   CandidateLoginRoute: typeof CandidateLoginRoute
   CandidatePortalRoute: typeof CandidatePortalRouteWithChildren
+  ApiPublicCandidateSessionStreamRoute: typeof ApiPublicCandidateSessionStreamRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -496,6 +510,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CandidatePortalDataRouteImport
       parentRoute: typeof CandidatePortalRoute
     }
+    '/api/public/candidate-session-stream': {
+      id: '/api/public/candidate-session-stream'
+      path: '/api/public/candidate-session-stream'
+      fullPath: '/api/public/candidate-session-stream'
+      preLoaderRoute: typeof ApiPublicCandidateSessionStreamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/tests/$id': {
       id: '/admin/tests/$id'
       path: '/tests/$id'
@@ -599,6 +620,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   CandidateLoginRoute: CandidateLoginRoute,
   CandidatePortalRoute: CandidatePortalRouteWithChildren,
+  ApiPublicCandidateSessionStreamRoute: ApiPublicCandidateSessionStreamRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
