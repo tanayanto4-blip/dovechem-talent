@@ -60,8 +60,8 @@ function DataForm() {
     ["phone", "Telp / HP"],
     ["email", "Email"],
     ["position_applied", "Posisi dilamar"],
-  ]"age", "Usia
-    "
+  ];
+
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
