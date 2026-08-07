@@ -33,6 +33,7 @@ function TestsPage() {
 
   return (
     <div className="space-y-6">
+      <h1 className="font-display text-3xl font-bold text-primary">Daftar Test</h1>
       {!data?.candidate?.data_completed && (
         <Card className="border-warning/40 bg-warning/10">
           <CardContent className="py-4 text-sm">Lengkapi <b>Data Diri</b> terlebih dahulu sebelum mengerjakan test.</CardContent>

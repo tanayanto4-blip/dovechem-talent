@@ -372,8 +372,8 @@ function TakeTest() {
     return (
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle className="font-display text-xl text-primary">
-            {intro.isLoading ? "Memuat instruksi..." : testLabel}
+          <CardTitle asChild className="font-display text-xl text-primary">
+            <h1>{intro.isLoading ? "Memuat instruksi..." : testLabel}</h1>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -554,7 +554,7 @@ function TakeTest() {
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <CardTitle className="font-display text-2xl text-primary">{testLabel}</CardTitle>
+              <CardTitle asChild className="font-display text-2xl text-primary"><h1>{testLabel}</h1></CardTitle>
             </div>
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">

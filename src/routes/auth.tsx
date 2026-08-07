@@ -81,8 +81,8 @@ function AuthPage() {
         <Card className="shadow-elegant">
           <CardHeader className="text-center">
             <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="mx-auto h-12 w-auto object-contain" />
-            <CardTitle className="mt-3 font-display text-2xl">
-              {needsBootstrap ? "Setup Super Admin" : "Portal Admin HR"}
+            <CardTitle asChild className="mt-3 font-display text-2xl">
+              <h1>{needsBootstrap ? "Setup Super Admin" : "Portal Admin HR"}</h1>
             </CardTitle>
             <CardDescription>PT Dover Chemical — Recruitment Management</CardDescription>
           </CardHeader>
