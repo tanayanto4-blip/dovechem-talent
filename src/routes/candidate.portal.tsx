@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate, Outlet, useRouterState } from "@tan
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { candidateGetProfile } from "@/lib/candidate.functions";
+import { candidateGetProfile, candidateSessionStatus } from "@/lib/candidate.functions";
 import { toast } from "sonner";
 import { useCandidateSession, setCandidateSession, DEVICE_CONFLICT_MESSAGE } from "@/lib/candidate-session";
 import { Button } from "@/components/ui/button";
