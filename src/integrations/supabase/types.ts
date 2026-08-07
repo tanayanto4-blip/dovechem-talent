@@ -53,6 +53,8 @@ export type Database = {
       candidate_codes: {
         Row: {
           active: boolean
+          active_device_at: string | null
+          active_device_token: string | null
           candidate_email: string | null
           candidate_name: string
           code: string
@@ -65,6 +67,8 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          active_device_at?: string | null
+          active_device_token?: string | null
           candidate_email?: string | null
           candidate_name: string
           code: string
@@ -77,6 +81,8 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          active_device_at?: string | null
+          active_device_token?: string | null
           candidate_email?: string | null
           candidate_name?: string
           code?: string
