@@ -131,7 +131,9 @@ export const candidateLogin = createServerFn({ method: "POST" })
   .inputValidator((d) => CodeInput.parse(d))
   .handler(async ({ data }) => {
     const sb = await admin();
-    await resolveActiveCode(sb, data.code, (data as any).device);
+    // Login intentionally skips the device check: a new login always wins and
+    // takes over the code, forcing the previously logged-in device out.
+    await resolveActiveCode(sb, data.code);
     const { data: codeRow, error } = await sb
       .from("candidate_codes")
       .select("id, code, candidate_name, candidate_email, position_applied, active, expires_at")
@@ -140,10 +142,19 @@ export const candidateLogin = createServerFn({ method: "POST" })
     if (error || !codeRow) throw new Error("Kode akses tidak ditemukan.");
 
     const cand = await ensureCandidate(sb, codeRow.id);
-    await sb.from("candidate_codes").update({ used_at: new Date().toISOString() }).eq("id", codeRow.id).is("used_at", null);
+    const device = crypto.randomUUID();
+    await sb
+      .from("candidate_codes")
+      .update({
+        active_device_token: device,
+        active_device_at: new Date().toISOString(),
+        ...(codeRow as any).used_at ? {} : { used_at: new Date().toISOString() },
+      })
+      .eq("id", codeRow.id);
 
-    return { candidate: cand, code: codeRow.code };
+    return { candidate: cand, code: codeRow.code, device };
   });
+
 
 export const candidateGetProfile = createServerFn({ method: "POST" })
   .inputValidator((d) => CodeInput.parse(d))
