@@ -3,18 +3,30 @@ import { z } from "zod";
 import { papiScore } from "@/lib/papi-key";
 
 
-const CodeInput = z.object({ code: z.string().trim().min(3).max(64) });
+const CodeInput = z.object({
+  code: z.string().trim().min(3).max(64),
+  device: z.string().trim().max(128).optional(),
+});
+
+/** Message the client uses to detect a forced logout by another device. */
+export const DEVICE_CONFLICT_MESSAGE =
+  "Kode akses ini sedang digunakan di perangkat lain. Anda otomatis keluar dari sesi ini.";
 
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
 }
 
-/** Look up a candidate code and enforce active + not-expired. Returns {id}. */
-async function resolveActiveCode(sb: any, code: string) {
+/**
+ * Look up a candidate code and enforce active + not-expired + single device.
+ * Every candidate request carries the device token minted at login; if the
+ * stored token differs, another device took over the code and this session is
+ * rejected (the client then logs out automatically).
+ */
+async function resolveActiveCode(sb: any, code: string, device?: string) {
   const { data: row, error } = await sb
     .from("candidate_codes")
-    .select("id, active, expires_at")
+    .select("id, active, expires_at, active_device_token")
     .eq("code", code.toUpperCase())
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -23,8 +35,12 @@ async function resolveActiveCode(sb: any, code: string) {
   if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) {
     throw new Error("Kode akses sudah melewati masa berlaku.");
   }
+  if (row.active_device_token && device && row.active_device_token !== device) {
+    throw new Error(DEVICE_CONFLICT_MESSAGE);
+  }
   return row as { id: string; active: boolean; expires_at: string | null };
 }
+
 
 /**
  * Kandidat tidak boleh melihat identitas asli test (DISC, MBTI, WPT, dst.) —
