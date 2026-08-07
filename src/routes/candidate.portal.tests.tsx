@@ -25,7 +25,7 @@ function TestsPage() {
   const getProfile = useServerFn(candidateGetProfile);
   const { data } = useQuery({
     queryKey: ["candidate-profile", session?.code],
-    queryFn: () => getProfile({ data: { code: session!.code } }),
+    queryFn: () => getProfile({ data: { code: session!.code, device: session!.device } }),
     enabled: !!session,
   });
   const attempts = new Map((data?.attempts ?? []).map((a: any) => [a.test_id, a]));

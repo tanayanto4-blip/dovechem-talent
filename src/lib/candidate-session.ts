@@ -2,10 +2,16 @@ import { useSyncExternalStore } from "react";
 
 const KEY = "dover_candidate_session";
 
+/** Message the server returns when the same code was claimed by another device. */
+export const DEVICE_CONFLICT_MESSAGE =
+  "Kode akses ini sedang digunakan di perangkat lain. Anda otomatis keluar dari sesi ini.";
+
 export type CandidateSession = {
   code: string;
   candidate_id: string;
   candidate_name: string;
+  /** Single-device token minted at login; invalidated when the code is used elsewhere. */
+  device?: string;
 };
 
 const listeners = new Set<() => void>();

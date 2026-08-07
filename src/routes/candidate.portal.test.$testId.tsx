@@ -164,7 +164,7 @@ function TakeTest() {
   // Label generik: kandidat hanya melihat "TEST 1", "TEST 2", dst.
   const profileQ = useQuery({
     queryKey: ["candidate-profile", session?.code],
-    queryFn: () => getProfile({ data: { code: session!.code } }),
+    queryFn: () => getProfile({ data: { code: session!.code, device: session!.device } }),
     enabled: !!session,
   });
   const testIndex = ((profileQ.data?.tests ?? []) as any[]).findIndex((t: any) => t.id === testId);
@@ -175,14 +175,14 @@ function TakeTest() {
   const [started, setStarted] = useState(false);
   const intro = useQuery({
     queryKey: ["test-intro", testId, session?.code],
-    queryFn: () => getIntro({ data: { code: session!.code, test_id: testId } }),
+    queryFn: () => getIntro({ data: { code: session!.code, device: session!.device, test_id: testId } }),
     enabled: !!session && !started,
     staleTime: Infinity,
   });
 
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["start-test", testId, session?.code],
-    queryFn: () => start({ data: { code: session!.code, test_id: testId } }),
+    queryFn: () => start({ data: { code: session!.code, device: session!.device, test_id: testId } }),
     enabled: !!session && started,
     staleTime: Infinity,
     retry: 1,
@@ -284,7 +284,7 @@ function TakeTest() {
     inflight.current += 1;
     setSaveState("saving");
     try {
-      await saveAnswer({ data: { code: s.code, attempt_id: d.attempt.id, question_id: qid, answer } });
+      await saveAnswer({ data: { code: s.code, device: s.device, attempt_id: d.attempt.id, question_id: qid, answer } });
       inflight.current -= 1;
       if (inflight.current <= 0) { inflight.current = 0; setSaveState("saved"); }
     } catch {
@@ -343,7 +343,7 @@ function TakeTest() {
     setSubmitting(true);
     try {
       const payload = Object.entries(answers).map(([question_id, answer]) => ({ question_id, answer }));
-      await submit({ data: { code: session!.code, attempt_id: data.attempt.id, answers: payload } });
+      await submit({ data: { code: session!.code, device: session!.device, attempt_id: data.attempt.id, answers: payload } });
       toast.success("Jawaban terkirim. Hasil penilaian diproses oleh tim HR.");
       qc.invalidateQueries({ queryKey: ["candidate-profile"] });
       qc.removeQueries({ queryKey: ["start-test", testId, session?.code] });

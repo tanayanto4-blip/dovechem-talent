@@ -1,20 +1,29 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { papiScore } from "@/lib/papi-key";
+import { DEVICE_CONFLICT_MESSAGE } from "@/lib/candidate-session";
 
 
-const CodeInput = z.object({ code: z.string().trim().min(3).max(64) });
+const CodeInput = z.object({
+  code: z.string().trim().min(3).max(64),
+  device: z.string().trim().max(128).optional(),
+});
 
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
 }
 
-/** Look up a candidate code and enforce active + not-expired. Returns {id}. */
-async function resolveActiveCode(sb: any, code: string) {
+/**
+ * Look up a candidate code and enforce active + not-expired + single device.
+ * Every candidate request carries the device token minted at login; if the
+ * stored token differs, another device took over the code and this session is
+ * rejected (the client then logs out automatically).
+ */
+async function resolveActiveCode(sb: any, code: string, device?: string) {
   const { data: row, error } = await sb
     .from("candidate_codes")
-    .select("id, active, expires_at")
+    .select("id, active, expires_at, active_device_token")
     .eq("code", code.toUpperCase())
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -23,8 +32,12 @@ async function resolveActiveCode(sb: any, code: string) {
   if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) {
     throw new Error("Kode akses sudah melewati masa berlaku.");
   }
+  if (row.active_device_token && device && row.active_device_token !== device) {
+    throw new Error(DEVICE_CONFLICT_MESSAGE);
+  }
   return row as { id: string; active: boolean; expires_at: string | null };
 }
+
 
 /**
  * Kandidat tidak boleh melihat identitas asli test (DISC, MBTI, WPT, dst.) —
@@ -115,6 +128,8 @@ export const candidateLogin = createServerFn({ method: "POST" })
   .inputValidator((d) => CodeInput.parse(d))
   .handler(async ({ data }) => {
     const sb = await admin();
+    // Login intentionally skips the device check: a new login always wins and
+    // takes over the code, forcing the previously logged-in device out.
     await resolveActiveCode(sb, data.code);
     const { data: codeRow, error } = await sb
       .from("candidate_codes")
@@ -124,16 +139,25 @@ export const candidateLogin = createServerFn({ method: "POST" })
     if (error || !codeRow) throw new Error("Kode akses tidak ditemukan.");
 
     const cand = await ensureCandidate(sb, codeRow.id);
-    await sb.from("candidate_codes").update({ used_at: new Date().toISOString() }).eq("id", codeRow.id).is("used_at", null);
+    const device = crypto.randomUUID();
+    await sb
+      .from("candidate_codes")
+      .update({
+        active_device_token: device,
+        active_device_at: new Date().toISOString(),
+        ...(codeRow as any).used_at ? {} : { used_at: new Date().toISOString() },
+      })
+      .eq("id", codeRow.id);
 
-    return { candidate: cand, code: codeRow.code };
+    return { candidate: cand, code: codeRow.code, device };
   });
+
 
 export const candidateGetProfile = createServerFn({ method: "POST" })
   .inputValidator((d) => CodeInput.parse(d))
   .handler(async ({ data }) => {
     const sb = await admin();
-    const codeRow = await resolveActiveCode(sb, data.code);
+    const codeRow = await resolveActiveCode(sb, data.code, (data as any).device);
     const cand = await ensureCandidate(sb, codeRow.id);
     const [filesQ, testsQ, attemptsQ, accessQ] = await Promise.all([
       sb.from("candidate_files").select("*").eq("candidate_id", cand.id),
@@ -157,6 +181,7 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
 
 const ProfileInput = z.object({
   code: z.string().trim().min(3),
+  device: z.string().trim().max(128).optional(),
   full_name: z.string().trim().min(2, "Nama lengkap wajib diisi").max(120),
   school_name: z.string().trim().min(2, "Nama sekolah/universitas wajib diisi").max(160),
   gender: z.enum(["Laki-laki", "Perempuan"], { message: "Jenis kelamin wajib dipilih" }),
@@ -172,8 +197,8 @@ export const candidateSaveProfile = createServerFn({ method: "POST" })
   .inputValidator((d) => ProfileInput.parse(d))
   .handler(async ({ data }) => {
     const sb = await admin();
-    const codeRow = await resolveActiveCode(sb, data.code);
-    const { code: _c, ...rest } = data;
+    const codeRow = await resolveActiveCode(sb, data.code, (data as any).device);
+    const { code: _c, device: _d, ...rest } = data;
     await ensureCandidate(sb, codeRow.id);
     const { error } = await sb.from("candidates").update({ ...rest, data_completed: true }).eq("code_id", codeRow.id);
     if (error) throw new Error(error.message);
@@ -192,6 +217,7 @@ const ALLOWED_EXT = new Set(["pdf", "jpg", "jpeg", "png", "webp"]);
 
 const UploadInput = z.object({
   code: z.string().trim().min(3),
+  device: z.string().trim().max(128).optional(),
   file_type: z.enum(["ktp", "kk", "cv", "ijazah", "transkrip", "foto", "npwp"]),
   file_name: z.string().min(1).max(200),
   mime_type: z.string().max(120),
@@ -218,7 +244,7 @@ export const candidateUploadFile = createServerFn({ method: "POST" })
       throw new Error("Ukuran file tidak sesuai dengan konten.");
     }
     const sb = await admin();
-    const codeRow = await resolveActiveCode(sb, data.code);
+    const codeRow = await resolveActiveCode(sb, data.code, (data as any).device);
     const cand = await ensureCandidate(sb, codeRow.id);
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const path = `${cand.id}/${data.file_type}-${Date.now()}.${ext}`;
@@ -265,12 +291,12 @@ export const candidateUploadFile = createServerFn({ method: "POST" })
     return { ok: true, path, version: nextVersion };
   });
 
-const StartTestInput = z.object({ code: z.string().min(3), test_id: z.string().uuid() });
+const StartTestInput = z.object({ code: z.string().min(3), device: z.string().trim().max(128).optional(), test_id: z.string().uuid() });
 export const candidateStartTest = createServerFn({ method: "POST" })
   .inputValidator((d) => StartTestInput.parse(d))
   .handler(async ({ data }) => {
     const sb = await admin();
-    const codeRow = await resolveActiveCode(sb, data.code);
+    const codeRow = await resolveActiveCode(sb, data.code, (data as any).device);
     const cand = await ensureCandidate(sb, codeRow.id);
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     if (!cand.data_completed) throw new Error("Lengkapi data diri terlebih dahulu.");
@@ -314,6 +340,7 @@ export const candidateStartTest = createServerFn({ method: "POST" })
 
 const SaveAnswerInput = z.object({
   code: z.string().min(3),
+  device: z.string().trim().max(128).optional(),
   attempt_id: z.string().uuid(),
   question_id: z.string().uuid(),
   answer: z.string().max(500),
@@ -323,7 +350,7 @@ export const candidateSaveAnswer = createServerFn({ method: "POST" })
   .inputValidator((d) => SaveAnswerInput.parse(d))
   .handler(async ({ data }) => {
     const sb = await admin();
-    const codeRow = await resolveActiveCode(sb, data.code);
+    const codeRow = await resolveActiveCode(sb, data.code, (data as any).device);
     const cand = await ensureCandidate(sb, codeRow.id);
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: attempt } = await sb
@@ -352,7 +379,7 @@ export const candidateSaveAnswer = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-const AttemptInput = z.object({ code: z.string().min(3), attempt_id: z.string().uuid() });
+const AttemptInput = z.object({ code: z.string().min(3), device: z.string().trim().max(128).optional(), attempt_id: z.string().uuid() });
 /**
  * Candidate-facing attempt view. Scoring output (score / result payload) is
  * intentionally NEVER returned here: psikotest results are visible to HR/Admin
@@ -362,7 +389,7 @@ export const candidateGetAttempt = createServerFn({ method: "POST" })
   .inputValidator((d) => AttemptInput.parse(d))
   .handler(async ({ data }) => {
     const sb = await admin();
-    const codeRow = await resolveActiveCode(sb, data.code);
+    const codeRow = await resolveActiveCode(sb, data.code, (data as any).device);
     const cand = await ensureCandidate(sb, codeRow.id);
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: attempt, error } = await sb
@@ -382,6 +409,7 @@ export const candidateGetAttempt = createServerFn({ method: "POST" })
 
 const SubmitTestInput = z.object({
   code: z.string().min(3),
+  device: z.string().trim().max(128).optional(),
   attempt_id: z.string().uuid(),
   answers: z.array(z.object({ question_id: z.string().uuid(), answer: z.string().max(500) })),
 });
@@ -389,7 +417,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
   .inputValidator((d) => SubmitTestInput.parse(d))
   .handler(async ({ data }) => {
     const sb = await admin();
-    const codeRow = await resolveActiveCode(sb, data.code);
+    const codeRow = await resolveActiveCode(sb, data.code, (data as any).device);
     const cand = await ensureCandidate(sb, codeRow.id);
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: attempt } = await sb.from("test_attempts").select("*, tests(*)").eq("id", data.attempt_id).eq("candidate_id", cand.id).single();
@@ -656,10 +684,10 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
  * only begins once the candidate presses "Mulai".
  */
 export const candidateGetTestIntro = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ code: z.string().trim().min(3).max(64), test_id: z.string().uuid() }).parse(d))
+  .inputValidator((d) => z.object({ code: z.string().trim().min(3).max(64), device: z.string().trim().max(128).optional(), test_id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
     const sb = await admin();
-    const codeRow = await resolveActiveCode(sb, data.code);
+    const codeRow = await resolveActiveCode(sb, data.code, (data as any).device);
     const cand = await ensureCandidate(sb, codeRow.id);
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: test, error } = await sb
