@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate, Outlet, useRouterState } from "@tan
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { candidateGetProfile } from "@/lib/candidate.functions";
+import { candidateGetProfile, DEVICE_CONFLICT_MESSAGE } from "@/lib/candidate.functions";
+import { toast } from "sonner";
 import { useCandidateSession, setCandidateSession } from "@/lib/candidate-session";
 import { Button } from "@/components/ui/button";
 import { Beaker, LogOut, User, ClipboardList, Home } from "lucide-react";
@@ -44,6 +45,17 @@ function PortalLayout() {
     enabled: !!session,
     retry: false,
   });
+
+  // One code = one device. If another device logged in with the same code,
+  // the server rejects this session and we sign this device out immediately.
+  const takenOver =
+    !!sessionError && (sessionError as Error).message === DEVICE_CONFLICT_MESSAGE;
+  useEffect(() => {
+    if (!takenOver) return;
+    toast.error(DEVICE_CONFLICT_MESSAGE);
+    setCandidateSession(null);
+    nav({ to: "/candidate/login" });
+  }, [takenOver, nav]);
 
   if (!session) return null;
 
