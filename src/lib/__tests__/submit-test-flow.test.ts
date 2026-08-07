@@ -55,7 +55,7 @@ describe("candidateSubmitTest — static guarantees", () => {
   const body = extractHandler("candidateSubmitTest");
 
   it("resolves the active access code before any write", () => {
-    const resolveIdx = body.search(/resolveActiveCode\(sb,\s*data\.code\)/);
+    const resolveIdx = body.search(/resolveActiveCode\(sb,\s*data\.code[^)]*\)/);
     const answersDeleteIdx = body.search(/from\(["']test_answers["']\)[\s\S]{0,40}\.delete\(\)/);
     const answersWriteIdx = body.search(/from\(["']test_answers["']\)[\s\S]{0,40}\.(insert|upsert)\(/);
     const attemptUpdateIdx = body.search(/from\(["']test_attempts["']\)\.update\(/);
