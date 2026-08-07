@@ -372,9 +372,9 @@ function TakeTest() {
     return (
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle asChild className="font-display text-xl text-primary">
-            <h1>{intro.isLoading ? "Memuat instruksi..." : testLabel}</h1>
-          </CardTitle>
+          <h1 className="font-display text-xl font-semibold leading-none tracking-tight text-primary">
+            {intro.isLoading ? "Memuat instruksi..." : testLabel}
+          </h1>
         </CardHeader>
         <CardContent className="space-y-4">
           {intro.error && (
@@ -554,7 +554,7 @@ function TakeTest() {
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <CardTitle asChild className="font-display text-2xl text-primary"><h1>{testLabel}</h1></CardTitle>
+              <h1 className="font-display text-2xl font-semibold leading-none tracking-tight text-primary">{testLabel}</h1>
             </div>
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
