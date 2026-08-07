@@ -201,7 +201,7 @@ export const candidateSaveProfile = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sb = await admin();
     const codeRow = await resolveActiveCode(sb, data.code, (data as any).device);
-    const { code: _c, ...rest } = data;
+    const { code: _c, device: _d, ...rest } = data;
     await ensureCandidate(sb, codeRow.id);
     const { error } = await sb.from("candidates").update({ ...rest, data_completed: true }).eq("code_id", codeRow.id);
     if (error) throw new Error(error.message);
