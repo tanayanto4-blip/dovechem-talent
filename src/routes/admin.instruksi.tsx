@@ -15,7 +15,16 @@ import { Volume2, Save, Loader2, Upload, Trash2, Mic } from "lucide-react";
 import { VoiceInstructionPlayer } from "@/components/voice-instruction";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/admin/instruksi")({ component: VoiceAdmin });
+export const Route = createFileRoute("/admin/instruksi")({ head: () => ({ meta: [
+    { title: "Instruksi Suara Test — Admin Dover Chemical" },
+    { name: "description", content: "Susun dan unggah instruksi suara yang diputar kandidat sebelum memulai setiap psikotest." },
+    { property: "og:title", content: "Instruksi Suara Test — Admin Dover Chemical" },
+    { property: "og:description", content: "Susun dan unggah instruksi suara yang diputar kandidat sebelum memulai setiap psikotest." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
+  component: VoiceAdmin });
 
 type Row = {
   id: string; code: string; name: string; test_type: string;

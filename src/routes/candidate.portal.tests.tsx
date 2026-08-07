@@ -8,7 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Lock, RotateCcw } from "lucide-react";
 
-export const Route = createFileRoute("/candidate/portal/tests")({ component: TestsPage });
+export const Route = createFileRoute("/candidate/portal/tests")({ head: () => ({ meta: [
+    { title: "Daftar Test Kandidat — Dover Chemical" },
+    { name: "description", content: "Daftar psikotest yang harus dikerjakan kandidat PT Dover Chemical beserta status pengerjaannya." },
+    { property: "og:title", content: "Daftar Test Kandidat — Dover Chemical" },
+    { property: "og:description", content: "Daftar psikotest yang harus dikerjakan kandidat PT Dover Chemical beserta status pengerjaannya." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
+  component: TestsPage });
 
 function TestsPage() {
   const session = useCandidateSession();

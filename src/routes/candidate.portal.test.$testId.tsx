@@ -139,7 +139,16 @@ function WptImageFigure({ url, caption, number }: { url: string; caption: string
 }
 
 
-export const Route = createFileRoute("/candidate/portal/test/$testId")({ component: TakeTest });
+export const Route = createFileRoute("/candidate/portal/test/$testId")({ head: () => ({ meta: [
+    { title: "Pengerjaan Test — Portal Kandidat Dover Chemical" },
+    { name: "description", content: "Halaman pengerjaan psikotest kandidat PT Dover Chemical dengan timer dan penyimpanan jawaban otomatis." },
+    { property: "og:title", content: "Pengerjaan Test — Portal Kandidat Dover Chemical" },
+    { property: "og:description", content: "Halaman pengerjaan psikotest kandidat PT Dover Chemical dengan timer dan penyimpanan jawaban otomatis." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
+  component: TakeTest });
 
 function TakeTest() {
   const { testId } = Route.useParams();

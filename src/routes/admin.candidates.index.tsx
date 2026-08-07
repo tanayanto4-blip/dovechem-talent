@@ -20,7 +20,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export const Route = createFileRoute("/admin/candidates/")({ component: CandidatesList });
+export const Route = createFileRoute("/admin/candidates/")({ head: () => ({ meta: [
+    { title: "Daftar Kandidat — Admin Dover Chemical" },
+    { name: "description", content: "Kelola daftar kandidat rekrutmen PT Dover Chemical beserta biodata dan status pengerjaan test." },
+    { property: "og:title", content: "Daftar Kandidat — Admin Dover Chemical" },
+    { property: "og:description", content: "Kelola daftar kandidat rekrutmen PT Dover Chemical beserta biodata dan status pengerjaan test." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
+  component: CandidatesList });
 
 function CandidatesList() {
   const listFn = useServerFn(listCandidates);

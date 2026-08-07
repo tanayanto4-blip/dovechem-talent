@@ -10,6 +10,15 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, User, ClipboardList, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/candidate/portal/")({
+  head: () => ({ meta: [
+    { title: "Beranda Portal Kandidat — Dover Chemical" },
+    { name: "description", content: "Ringkasan tahapan seleksi kandidat PT Dover Chemical: kelengkapan data diri dan progres psikotest." },
+    { property: "og:title", content: "Beranda Portal Kandidat — Dover Chemical" },
+    { property: "og:description", content: "Ringkasan tahapan seleksi kandidat PT Dover Chemical: kelengkapan data diri dan progres psikotest." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
   component: PortalHome,
 });
 

@@ -9,7 +9,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle2, Download, History, XCircle } from "lucide-react";
 
-export const Route = createFileRoute("/admin/candidates/$id")({ component: CandidateDetail });
+export const Route = createFileRoute("/admin/candidates/$id")({ head: () => ({ meta: [
+    { title: "Detail Kandidat — Admin Dover Chemical" },
+    { name: "description", content: "Lihat biodata lengkap, riwayat pengerjaan, dan hasil psikotest satu kandidat PT Dover Chemical." },
+    { property: "og:title", content: "Detail Kandidat — Admin Dover Chemical" },
+    { property: "og:description", content: "Lihat biodata lengkap, riwayat pengerjaan, dan hasil psikotest satu kandidat PT Dover Chemical." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
+  component: CandidateDetail });
 
 function CandidateDetail() {
   const { id } = Route.useParams();

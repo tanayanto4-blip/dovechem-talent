@@ -15,7 +15,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Plus, Trash2, KeyRound } from "lucide-react";
 
-export const Route = createFileRoute("/admin/users")({ component: UsersPage });
+export const Route = createFileRoute("/admin/users")({ head: () => ({ meta: [
+    { title: "Manajemen Akun HR — Admin Dover Chemical" },
+    { name: "description", content: "Kelola akun Super Admin dan tim HR yang berhak mengakses portal rekrutmen PT Dover Chemical." },
+    { property: "og:title", content: "Manajemen Akun HR — Admin Dover Chemical" },
+    { property: "og:description", content: "Kelola akun Super Admin dan tim HR yang berhak mengakses portal rekrutmen PT Dover Chemical." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+    { name: "robots", content: "noindex" },
+  ] }),
+  component: UsersPage });
 
 function UsersPage() {
   const qc = useQueryClient();
