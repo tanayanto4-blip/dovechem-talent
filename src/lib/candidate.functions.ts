@@ -179,6 +179,32 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
 
   });
 
+/**
+ * Heartbeat sesi kandidat. Tidak pernah throw supaya pesan tidak tertelan /
+ * tersamarkan oleh transport error — client cukup membaca `status`.
+ */
+export const candidateSessionStatus = createServerFn({ method: "POST" })
+  .inputValidator((d) => CodeInput.parse(d))
+  .handler(async ({ data }) => {
+    const sb = await admin();
+    const { data: row } = await sb
+      .from("candidate_codes")
+      .select("active, expires_at, active_device_token")
+      .eq("code", data.code.toUpperCase())
+      .maybeSingle();
+    if (!row) return { status: "invalid" as const, message: "Kode akses tidak ditemukan." };
+    if (!row.active) return { status: "invalid" as const, message: "Kode akses sudah dinonaktifkan." };
+    if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) {
+      return { status: "invalid" as const, message: "Kode akses sudah melewati masa berlaku." };
+    }
+    // Token berbeda (atau sesi lama tanpa token) = kode dipakai perangkat lain.
+    if (row.active_device_token && row.active_device_token !== (data.device ?? "")) {
+      return { status: "conflict" as const, message: DEVICE_CONFLICT_MESSAGE };
+    }
+    return { status: "ok" as const, message: "" };
+  });
+
+
 const ProfileInput = z.object({
   code: z.string().trim().min(3),
   device: z.string().trim().max(128).optional(),
