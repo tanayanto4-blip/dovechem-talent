@@ -91,11 +91,11 @@ function WptImageFigure({ url, caption, number }: { url: string; caption: string
           <DialogTitle className="text-sm">Ilustrasi Soal No. {number}</DialogTitle>
           <DialogDescription className="text-xs leading-snug">{caption}</DialogDescription>
           <div className="mt-2 flex items-center justify-center gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))} disabled={zoom <= 0.5 || dialogFailed}>
+            <Button type="button" size="sm" variant="outline" onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))} aria-label="Perkecil gambar" disabled={zoom <= 0.5 || dialogFailed}>
               <ZoomOut className="h-4 w-4" />
             </Button>
             <span className="min-w-[3rem] text-center text-xs tabular-nums text-muted-foreground">{Math.round(zoom * 100)}%</span>
-            <Button type="button" size="sm" variant="outline" onClick={() => setZoom((z) => Math.min(4, +(z + 0.25).toFixed(2)))} disabled={zoom >= 4 || dialogFailed}>
+            <Button type="button" size="sm" variant="outline" onClick={() => setZoom((z) => Math.min(4, +(z + 0.25).toFixed(2)))} aria-label="Perbesar gambar" disabled={zoom >= 4 || dialogFailed}>
               <ZoomIn className="h-4 w-4" />
             </Button>
             <Button type="button" size="sm" variant="ghost" onClick={() => setZoom(1)} disabled={dialogFailed}>Reset</Button>

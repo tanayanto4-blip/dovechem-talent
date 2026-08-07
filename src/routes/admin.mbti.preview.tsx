@@ -16,7 +16,12 @@ export const Route = createFileRoute("/admin/mbti/preview")({
     meta: [
       { title: "Preview Set Soal MBTI — Admin" },
       { name: "description", content: "Ringkasan set soal MBTI yang sedang berstatus publish beserta preview tampilan kandidat." },
-    ],
+          { property: "og:title", content: "Preview Set Soal MBTI — Admin" },
+      { property: "og:description", content: "Ringkasan set soal MBTI yang sedang berstatus publish beserta preview tampilan kandidat." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
+],
   }),
   component: MbtiPreview,
 });

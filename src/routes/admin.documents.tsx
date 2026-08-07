@@ -30,7 +30,12 @@ export const Route = createFileRoute("/admin/documents")({
     meta: [
       { title: "Bank Dokumen Kandidat — Dover Chemical HR" },
       { name: "description", content: "Pusat berkas seluruh kandidat: KTP, KK, CV, ijazah, transkrip, dan dokumen pendukung lainnya." },
-    ],
+          { property: "og:title", content: "Bank Dokumen Kandidat — Dover Chemical HR" },
+      { property: "og:description", content: "Pusat berkas seluruh kandidat: KTP, KK, CV, ijazah, transkrip, dan dokumen pendukung lainnya." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
+],
   }),
 });
 
