@@ -27,7 +27,7 @@ function PortalHome() {
   const getProfile = useServerFn(candidateGetProfile);
   const { data, isLoading } = useQuery({
     queryKey: ["candidate-profile", session?.code],
-    queryFn: () => getProfile({ data: { code: session!.code } }),
+    queryFn: () => getProfile({ data: { code: session!.code, device: session!.device } }),
     enabled: !!session,
   });
 

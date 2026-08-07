@@ -6,6 +6,8 @@ export type CandidateSession = {
   code: string;
   candidate_id: string;
   candidate_name: string;
+  /** Single-device token minted at login; invalidated when the code is used elsewhere. */
+  device?: string;
 };
 
 const listeners = new Set<() => void>();

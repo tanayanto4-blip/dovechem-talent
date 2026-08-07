@@ -40,7 +40,7 @@ function PortalLayout() {
   // expired code shows one clear message instead of an error on every page.
   const { error: sessionError } = useQuery({
     queryKey: ["candidate-profile", session?.code],
-    queryFn: () => getProfile({ data: { code: session!.code } }),
+    queryFn: () => getProfile({ data: { code: session!.code, device: session!.device } }),
     enabled: !!session,
     retry: false,
   });

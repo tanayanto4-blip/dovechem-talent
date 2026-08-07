@@ -29,7 +29,7 @@ function DataForm() {
   const save = useServerFn(candidateSaveProfile);
   const { data } = useQuery({
     queryKey: ["candidate-profile", session?.code],
-    queryFn: () => getProfile({ data: { code: session!.code } }),
+    queryFn: () => getProfile({ data: { code: session!.code, device: session!.device } }),
     enabled: !!session,
   });
   const c = data?.candidate;
@@ -71,7 +71,7 @@ function DataForm() {
     }
     setSaving(true);
     try {
-      await save({ data: { code: session!.code, ...form } });
+      await save({ data: { code: session!.code, device: session!.device, ...form } });
       toast.success("Data tersimpan");
       qc.invalidateQueries({ queryKey: ["candidate-profile"] });
     } catch (e: any) { toast.error(e.message); }
