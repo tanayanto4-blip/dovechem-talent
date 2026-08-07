@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate, Outlet, useRouterState } from "@tan
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { candidateGetProfile } from "@/lib/candidate.functions";
+import { candidateGetProfile, candidateSessionStatus } from "@/lib/candidate.functions";
 import { toast } from "sonner";
 import { useCandidateSession, setCandidateSession, DEVICE_CONFLICT_MESSAGE } from "@/lib/candidate-session";
 import { Button } from "@/components/ui/button";
@@ -44,15 +44,24 @@ function PortalLayout() {
     queryFn: () => getProfile({ data: { code: session!.code, device: session!.device } }),
     enabled: !!session,
     retry: false,
-    // Poll so a takeover from another device logs this one out promptly.
-    refetchInterval: 20_000,
-    refetchOnWindowFocus: true,
   });
 
-  // One code = one device. If another device logged in with the same code,
-  // the server rejects this session and we sign this device out immediately.
-  const takenOver =
-    !!sessionError && (sessionError as Error).message === DEVICE_CONFLICT_MESSAGE;
+  // One code = one device. Heartbeat cepat: kalau kode dipakai perangkat lain,
+  // perangkat ini langsung keluar (maks. ~5 detik).
+  const sessionStatus = useServerFn(candidateSessionStatus);
+  const { data: status } = useQuery({
+    queryKey: ["candidate-session-status", session?.code, session?.device],
+    queryFn: () => sessionStatus({ data: { code: session!.code, device: session!.device } }),
+    enabled: !!session,
+    retry: false,
+    refetchInterval: 5_000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+    gcTime: 0,
+  });
+
+  const takenOver = status?.status === "conflict";
   useEffect(() => {
     if (!takenOver) return;
     toast.error(DEVICE_CONFLICT_MESSAGE);
@@ -61,6 +70,7 @@ function PortalLayout() {
   }, [takenOver, nav]);
 
   if (!session) return null;
+
 
 
   const nav_items = [
