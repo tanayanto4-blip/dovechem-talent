@@ -165,6 +165,7 @@ export function BiodataBank() {
             </span>
             Sinkron otomatis
           </span>
+          <TrackTabs value={track} onChange={(t) => { setTrack(t); setSelected([]); }} counts={trackCounts} />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {selected.length > 0 && (
