@@ -205,6 +205,11 @@ export const candidateSessionStatus = createServerFn({ method: "POST" })
   });
 
 
+const WORK_EXPERIENCE_VALUES = new Set(["Belum bekerja", ...Array.from({ length: 21 }, (_, i) => String(i))]);
+const WorkExperienceSchema = z.string().trim().refine((v) => WORK_EXPERIENCE_VALUES.has(v), {
+  message: "Pengalaman kerja harus salah satu pilihan yang tersedia",
+});
+
 const ProfileInput = z.object({
   code: z.string().trim().min(3),
   device: z.string().trim().max(128).optional(),
@@ -213,7 +218,7 @@ const ProfileInput = z.object({
   gender: z.enum(["Laki-laki", "Perempuan"], { message: "Jenis kelamin wajib dipilih" }),
   education: z.string().trim().min(1, "Pendidikan wajib dipilih").max(120),
   major: z.string().trim().min(1, "Jurusan wajib diisi").max(120),
-  work_experience: z.string().trim().min(1, "Pengalaman kerja wajib diisi").max(120),
+  work_experience: WorkExperienceSchema,
   age: z.coerce.number().int().min(15, "Usia wajib dipilih").max(70),
   phone: z.string().trim().min(6, "Nomor telepon wajib diisi").max(30),
   email: z.string().trim().email("Email tidak valid").max(200),
@@ -230,6 +235,45 @@ export const candidateSaveProfile = createServerFn({ method: "POST" })
     const { error } = await sb.from("candidates").update({ ...rest, data_completed: true }).eq("code_id", codeRow.id);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+const ProfileAutosaveInput = z.object({
+  code: z.string().trim().min(3),
+  device: z.string().trim().max(128).optional(),
+  full_name: z.string().trim().max(120).optional(),
+  school_name: z.string().trim().max(160).optional(),
+  gender: z.enum(["Laki-laki", "Perempuan"]).optional(),
+  education: z.string().trim().max(120).optional(),
+  major: z.string().trim().max(120).optional(),
+  work_experience: WorkExperienceSchema.optional(),
+  age: z.coerce.number().int().min(15).max(70).optional(),
+  phone: z.string().trim().max(30).optional(),
+  email: z.string().trim().email("Email tidak valid").max(200).optional(),
+  position_applied: z.string().trim().max(120).optional(),
+});
+
+export const candidateAutosaveProfile = createServerFn({ method: "POST" })
+  .inputValidator((d) => ProfileAutosaveInput.parse(d))
+  .handler(async ({ data }) => {
+    const sb = await admin();
+    const codeRow = await resolveActiveCode(sb, data.code, (data as any).device);
+    await ensureCandidate(sb, codeRow.id);
+    const { code: _c, device: _d, ...raw } = data;
+    const update: any = {};
+    if (raw.full_name?.trim()) update.full_name = raw.full_name.trim();
+    if (raw.gender) update.gender = raw.gender;
+    if (raw.school_name?.trim()) update.school_name = raw.school_name.trim();
+    if (raw.education?.trim()) update.education = raw.education.trim();
+    if (raw.major?.trim()) update.major = raw.major.trim();
+    if (raw.work_experience?.trim()) update.work_experience = raw.work_experience.trim();
+    if (raw.age != null) update.age = raw.age;
+    if (raw.phone?.trim()) update.phone = raw.phone.trim();
+    if (raw.email?.trim()) update.email = raw.email.trim();
+    if (raw.position_applied?.trim()) update.position_applied = raw.position_applied.trim();
+    if (Object.keys(update).length === 0) return { ok: true, saved: [] };
+    const { error } = await sb.from("candidates").update(update).eq("code_id", codeRow.id);
+    if (error) throw new Error(error.message);
+    return { ok: true, saved: Object.keys(update) };
   });
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
