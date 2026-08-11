@@ -23,7 +23,7 @@ async function admin() {
 async function resolveActiveCode(sb: any, code: string, device?: string) {
   const { data: row, error } = await sb
     .from("candidate_codes")
-    .select("id, active, expires_at, active_device_token")
+    .select("id, active, expires_at, active_device_token, candidate_type")
     .eq("code", code.toUpperCase())
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -35,7 +35,7 @@ async function resolveActiveCode(sb: any, code: string, device?: string) {
   if (row.active_device_token && device && row.active_device_token !== device) {
     throw new Error(DEVICE_CONFLICT_MESSAGE);
   }
-  return row as { id: string; active: boolean; expires_at: string | null };
+  return row as { id: string; active: boolean; expires_at: string | null; candidate_type: string };
 }
 
 
@@ -44,11 +44,20 @@ async function resolveActiveCode(sb: any, code: string, device?: string) {
  * baik di layar maupun di payload jaringan. Semua endpoint kandidat memakai
  * helper ini agar nama, kode, dan deskripsi asli diganti label generik
  * "TEST 1", "TEST 2", ... sesuai urutan test aktif (order by code).
+ *
+ * Urutan dihitung per jalur kandidat (magang / karyawan) karena paket testnya
+ * berbeda — nomor test harus runtut untuk masing-masing jalur.
  */
-async function activeTestOrder(sb: any): Promise<string[]> {
-  const { data } = await sb.from("tests").select("id").eq("active", true).order("code");
+async function activeTestOrder(sb: any, type: string): Promise<string[]> {
+  const { data } = await sb
+    .from("tests")
+    .select("id, audience")
+    .eq("active", true)
+    .in("audience", ["both", type])
+    .order("code");
   return ((data ?? []) as { id: string }[]).map((t) => t.id);
 }
+
 
 function maskTest<T extends { id: string }>(test: T, order: string[]): T {
   const idx = order.indexOf(test.id);
