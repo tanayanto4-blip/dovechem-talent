@@ -103,15 +103,18 @@ export function PauliSheet({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 text-xs text-muted-foreground">
-        <span>
-          Deret <b className="text-foreground">{col + 1}</b>/{questions.length} · baris{" "}
-          <b className="text-foreground">{row + 1}</b>/{gaps}
-        </span>
-        <span>
-          Terisi <b className="text-foreground">{totalFilled}</b>/{totalGaps}
-        </span>
-      </div>
+      {showGuide && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 text-xs text-muted-foreground">
+          <span>
+            Deret <b className="text-foreground">{col + 1}</b>/{questions.length} · baris{" "}
+            <b className="text-foreground">{row + 1}</b>/{gaps}
+          </span>
+          <span>
+            Terisi <b className="text-foreground">{totalFilled}</b>/{totalGaps}
+          </span>
+        </div>
+      )}
+
 
       <div
         className="rounded-lg border bg-card p-8"
