@@ -176,7 +176,12 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
     const cand = await ensureCandidate(sb, codeRow.id);
     const [filesQ, testsQ, attemptsQ, accessQ] = await Promise.all([
       sb.from("candidate_files").select("*").eq("candidate_id", cand.id),
-      sb.from("tests").select("*").eq("active", true).order("code"),
+      sb
+        .from("tests")
+        .select("*")
+        .eq("active", true)
+        .in("audience", ["both", codeRow.candidate_type])
+        .order("code"),
       // Scores/results are staff-only: expose progress fields only.
       sb.from("test_attempts").select("id, test_id, status, started_at, finished_at").eq("candidate_id", cand.id),
       sb
@@ -399,7 +404,7 @@ export const candidateStartTest = createServerFn({ method: "POST" })
       sb.from("test_questions").select("id, question_number, question_text, options, dimension").eq("test_id", data.test_id).eq("active", true).order("question_number"),
       sb.from("test_answers").select("question_id, answer").eq("attempt_id", (attempt as any).id),
     ]);
-    const maskedTest = test.data ? maskTest(test.data as any, await activeTestOrder(sb)) : test.data;
+    const maskedTest = test.data ? maskTest(test.data as any, await activeTestOrder(sb, codeRow.candidate_type)) : test.data;
     // Auto-lock: an in-progress attempt whose allotted duration has elapsed can
     // no longer be worked on. The client finalises it immediately (late submits
     // are scored from answers autosaved before the deadline).
@@ -485,7 +490,7 @@ export const candidateGetAttempt = createServerFn({ method: "POST" })
       .eq("candidate_id", cand.id)
       .single();
     if (error) throw new Error(error.message);
-    const order = await activeTestOrder(sb);
+    const order = await activeTestOrder(sb, codeRow.candidate_type);
     const masked = attempt && (attempt as any).tests
       ? { ...attempt, tests: maskTest((attempt as any).tests, order) }
       : attempt;
@@ -798,7 +803,7 @@ export const candidateGetTestIntro = createServerFn({ method: "POST" })
     }
     await assertTestOpen(sb, cand.id, data.test_id);
     return {
-      test: { ...maskTest(test as any, await activeTestOrder(sb)), voice_audio_url },
+      test: { ...maskTest(test as any, await activeTestOrder(sb, codeRow.candidate_type)), voice_audio_url },
       resumed: !!attempt && attempt.status !== "finished",
       data_completed: cand.data_completed,
     };
