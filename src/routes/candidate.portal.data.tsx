@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateAutosaveProfile, candidateGetProfile, candidateSaveProfile } from "@/lib/candidate.functions";
 import { useCandidateSession } from "@/lib/candidate-session";
+import { candidateTypeLabel } from "@/lib/candidate-type";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,18 +33,26 @@ export const Route = createFileRoute("/candidate/portal/data")({
   component: DataForm,
 });
 
-const requiredFields: [string, string][] = [
+const baseFields: [string, string][] = [
   ["full_name", "Nama lengkap"],
   ["gender", "Jenis kelamin"],
   ["age", "Usia"],
   ["school_name", "Nama sekolah / universitas"],
   ["education", "Pendidikan"],
   ["major", "Jurusan"],
-  ["work_experience", "Pengalaman kerja"],
   ["phone", "Telp / HP"],
   ["email", "Email"],
   ["position_applied", "Posisi dilamar"],
 ];
+
+/** Magang mengisi semester berjalan; karyawan mengisi lama pengalaman kerja. */
+function fieldsFor(type: string): [string, string][] {
+  return type === "magang"
+    ? [...baseFields, ["semester", "Semester saat ini"]]
+    : [...baseFields, ["work_experience", "Pengalaman kerja"]];
+}
+
+const semesterOptions = Array.from({ length: 14 }, (_, i) => String(i + 1));
 
 const ageOptions = Array.from({ length: 56 }, (_, i) => String(i + 15));
 const workOptions = ["Belum bekerja", ...Array.from({ length: 21 }, (_, i) => String(i))];
@@ -63,6 +72,9 @@ function DataForm() {
     enabled: !!session,
   });
   const c = data?.candidate;
+  const candidateType = (data as any)?.candidate_type ?? session?.type ?? "karyawan";
+  const isMagang = candidateType === "magang";
+  const requiredFields = fieldsFor(candidateType);
   const [form, setForm] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -80,6 +92,7 @@ function DataForm() {
         education: c.education ?? "",
         major: c.major ?? "",
         work_experience: c.work_experience ?? "",
+        semester: (c as any).semester ?? "",
         phone: c.phone ?? "",
         email: c.email ?? "",
         position_applied: c.position_applied ?? "",
@@ -118,7 +131,7 @@ function DataForm() {
         setSaveStatus("error");
       }
     },
-    [session, autosave],
+    [session, autosave, requiredFields],
   );
 
   useEffect(() => {
@@ -140,7 +153,15 @@ function DataForm() {
     }
     setSaving(true);
     try {
-      await save({ data: { code: session!.code, device: session!.device, ...form } });
+      const { work_experience, semester, ...common } = form;
+      await save({
+        data: {
+          code: session!.code,
+          device: session!.device,
+          ...common,
+          ...(isMagang ? { semester } : { work_experience }),
+        } as any,
+      });
       toast.success("Data tersimpan — lanjut ke psikotest");
       await qc.invalidateQueries({ queryKey: ["candidate-profile"] });
       nav({ to: "/candidate/portal/tests" });
@@ -162,7 +183,9 @@ function DataForm() {
   return (
     <Card className="shadow-card">
       <CardHeader>
-        <h1 className="font-display text-2xl font-semibold leading-none tracking-tight">Biodata Kandidat</h1>
+        <h1 className="font-display text-2xl font-semibold leading-none tracking-tight">
+          Biodata {candidateTypeLabel(candidateType)}
+        </h1>
         <p className="text-sm text-muted-foreground">
           Seluruh kolom wajib diisi. Data diri harus dilengkapi terlebih dahulu sebelum Anda dapat mengerjakan
           psikotest. Setiap kolom yang terisi akan otomatis tersimpan.
@@ -235,23 +258,40 @@ function DataForm() {
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Pernah Bekerja Berapa Lama" required>
-            <Select
-              value={form.work_experience ?? ""}
-              onValueChange={(v) => setForm({ ...form, work_experience: v })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih lama bekerja" />
-              </SelectTrigger>
-              <SelectContent className="max-h-64">
-                {workOptions.map((v) => (
-                  <SelectItem key={v} value={v}>
-                    {v}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
+          {isMagang ? (
+            <Field label="Semester Saat Ini" required>
+              <Select value={form.semester ?? ""} onValueChange={(v) => setForm({ ...form, semester: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih semester" />
+                </SelectTrigger>
+                <SelectContent className="max-h-64">
+                  {semesterOptions.map((v) => (
+                    <SelectItem key={v} value={v}>
+                      Semester {v}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          ) : (
+            <Field label="Pernah Bekerja Berapa Lama" required>
+              <Select
+                value={form.work_experience ?? ""}
+                onValueChange={(v) => setForm({ ...form, work_experience: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih lama bekerja" />
+                </SelectTrigger>
+                <SelectContent className="max-h-64">
+                  {workOptions.map((v) => (
+                    <SelectItem key={v} value={v}>
+                      {v}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
 
           <Field label="Telp / HP" required>
             <Input
