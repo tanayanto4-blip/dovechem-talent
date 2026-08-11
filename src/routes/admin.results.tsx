@@ -10,6 +10,8 @@ import { exportPapiExcel } from "@/lib/papi-excel";
 import { exportDiscExcel } from "@/lib/disc-excel";
 
 import { toast } from "sonner";
+import { TrackTabs } from "@/components/track-tabs";
+import { candidateTrackOf, type CandidateType } from "@/lib/candidate-type";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -72,6 +74,7 @@ function ResultsBank() {
   const { data, isLoading } = useQuery({ queryKey: ["admin-all-attempts"], queryFn: () => fn({ data: { limit: 1000 } }) });
   const [q, setQ] = useState("");
   const [type, setType] = useState("all");
+  const [track, setTrack] = useState<CandidateType>("magang");
   const [status, setStatus] = useState("all");
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const qc = useQueryClient();
@@ -170,6 +173,7 @@ function ResultsBank() {
     const all = (data?.attempts ?? []) as any[];
     const needle = q.trim().toLowerCase();
     return all.filter((a) => {
+      if (candidateTrackOf(a.candidates) !== track) return false;
       if (type !== "all" && a.tests?.test_type !== type) return false;
       if (status !== "all" && a.status !== status) return false;
       if (!needle) return true;
@@ -177,7 +181,7 @@ function ResultsBank() {
         .filter(Boolean)
         .some((v: string) => v.toLowerCase().includes(needle));
     });
-  }, [data, q, type, status]);
+  }, [data, q, type, status, track]);
 
   // Kelompokkan per nama kandidat, urut test dari awal sampai akhir
   const groups = useMemo<Group[]>(() => {
@@ -209,6 +213,14 @@ function ResultsBank() {
     list.sort((a, b) => a.name.localeCompare(b.name, "id"));
     return list;
   }, [rows]);
+
+  const trackCounts = useMemo(() => {
+    const all = (data?.attempts ?? []) as any[];
+    return {
+      magang: all.filter((a) => candidateTrackOf(a.candidates) === "magang").length,
+      karyawan: all.filter((a) => candidateTrackOf(a.candidates) === "karyawan").length,
+    };
+  }, [data]);
 
   const types = useMemo(
     () => Array.from(new Set(((data?.attempts ?? []) as any[]).map((a) => a.tests?.test_type).filter(Boolean))),
@@ -246,7 +258,7 @@ function ResultsBank() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `bank-hasil-psikotest-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `bank-hasil-psikotest-${track}-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -257,8 +269,9 @@ function ResultsBank() {
         <div>
           <h1 className="font-display text-3xl font-bold text-primary">Bank Data Hasil</h1>
           <p className="text-sm text-muted-foreground">
-            Tersimpan per nama kandidat — seluruh riwayat test dari awal sampai akhir. Hanya Admin &amp; HR yang dapat melihat skor.
+            Tersimpan terpisah per jalur kandidat (Magang / Karyawan). Hanya Admin &amp; HR yang dapat melihat skor.
           </p>
+          <TrackTabs value={track} onChange={setTrack} counts={trackCounts} className="mt-4" />
         </div>
         <Button size="sm" variant="secondary" onClick={exportCsv} disabled={!groups.length}>
           <FileDown className="mr-2 h-4 w-4" /> Ekspor CSV
