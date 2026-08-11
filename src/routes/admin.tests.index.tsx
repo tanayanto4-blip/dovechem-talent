@@ -12,7 +12,9 @@ import { ClipboardList, ArrowRight, Timer, Search, X } from "lucide-react";
 import { TestDurationEditor } from "@/components/test-duration-editor";
 import { TestPublishToggle } from "@/components/publish-toggle";
 import { TestAudienceEditor } from "@/components/test-audience-editor";
-import { testAudienceLabel } from "@/lib/candidate-type";
+import { TrackTabs } from "@/components/track-tabs";
+import { audienceMatches, testAudienceLabel, type CandidateType } from "@/lib/candidate-type";
+
 
 export const Route = createFileRoute("/admin/tests/")({ head: () => ({ meta: [
     { title: "Bank Soal Psikotest — Admin Dover Chemical" },
