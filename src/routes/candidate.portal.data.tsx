@@ -83,8 +83,9 @@ function DataForm() {
     setSaving(true);
     try {
       await save({ data: { code: session!.code, device: session!.device, ...form } });
-      toast.success("Data tersimpan");
-      qc.invalidateQueries({ queryKey: ["candidate-profile"] });
+      toast.success("Data tersimpan — lanjut ke psikotest");
+      await qc.invalidateQueries({ queryKey: ["candidate-profile"] });
+      nav({ to: "/candidate/portal/tests" });
     } catch (e: any) {
       toast.error(e.message);
     } finally {
