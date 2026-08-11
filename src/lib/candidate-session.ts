@@ -12,6 +12,8 @@ export type CandidateSession = {
   candidate_name: string;
   /** Single-device token minted at login; invalidated when the code is used elsewhere. */
   device?: string;
+  /** Jalur kandidat: "magang" atau "karyawan" (ditentukan saat kode dibuat). */
+  type?: string;
 };
 
 const listeners = new Set<() => void>();
