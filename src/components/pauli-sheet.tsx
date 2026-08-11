@@ -24,11 +24,15 @@ export function PauliSheet({
   questions,
   answers,
   onChange,
+  showGuide = false,
 }: {
   questions: PauliQuestion[];
   answers: Record<string, string>;
   onChange: (questionId: string, value: string) => void;
+  /** Tampilkan status deret/baris & petunjuk (hanya untuk halaman latihan). */
+  showGuide?: boolean;
 }) {
+
   // Cursor = posisi soal aktif (kolom + celah antar dua angka)
   const [col, setCol] = useState(0);
   const [row, setRow] = useState(0);
