@@ -52,6 +52,7 @@ function DataForm() {
       setForm({
         full_name: c.full_name ?? "",
         gender: c.gender ?? "",
+        age: c.age != null ? String(c.age) : "",
         school_name: c.school_name ?? "",
         education: c.education ?? "",
         major: c.major ?? "",
@@ -65,6 +66,7 @@ function DataForm() {
   const requiredFields: [string, string][] = [
     ["full_name", "Nama lengkap"],
     ["gender", "Jenis kelamin"],
+    ["age", "Usia"],
     ["school_name", "Nama sekolah / universitas"],
     ["education", "Pendidikan"],
     ["major", "Jurusan"],
@@ -73,6 +75,15 @@ function DataForm() {
     ["email", "Email"],
     ["position_applied", "Posisi dilamar"],
   ];
+
+  const ageOptions = Array.from({ length: 56 }, (_, i) => String(i + 15));
+  const workOptions = [
+    "Belum pernah bekerja",
+    "Kurang dari 1 tahun",
+    ...Array.from({ length: 10 }, (_, i) => `${i + 1} tahun`),
+    "Lebih dari 10 tahun",
+  ];
+
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
