@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Download, ExternalLink, Eye, FileArchive, FileText, FolderOpen, Search } from "lucide-react";
 import { toast } from "sonner";
 import { BiodataBank } from "@/components/biodata-bank";
+import { TrackTabs } from "@/components/track-tabs";
+import { candidateTrackOf, type CandidateType } from "@/lib/candidate-type";
 
 function mimeKind(name: string, mime?: string | null): "image" | "pdf" | "other" {
   const m = (mime ?? "").toLowerCase();
@@ -56,8 +58,20 @@ function DocumentsBank() {
 
   const [q, setQ] = useState("");
   const [type, setType] = useState<string>("all");
+  const [track, setTrack] = useState<CandidateType>("magang");
 
-  const files = (data?.files ?? []) as any[];
+  const allFiles = (data?.files ?? []) as any[];
+  const trackCounts = useMemo(
+    () => ({
+      magang: allFiles.filter((f) => candidateTrackOf(f.candidates) === "magang").length,
+      karyawan: allFiles.filter((f) => candidateTrackOf(f.candidates) === "karyawan").length,
+    }),
+    [allFiles],
+  );
+  const files = useMemo(
+    () => allFiles.filter((f) => candidateTrackOf(f.candidates) === track),
+    [allFiles, track],
+  );
   const types = useMemo(() => {
     const s = new Set<string>();
     files.forEach((f) => f.file_type && s.add(f.file_type));
@@ -181,7 +195,7 @@ function DocumentsBank() {
     try {
       const count = await buildZip(
         filtered,
-        `bank-dokumen-kandidat_${new Date().toISOString().slice(0, 10)}.zip`,
+        `bank-dokumen-${track}_${new Date().toISOString().slice(0, 10)}.zip`,
         setZipProgress,
       );
       toast.success(`ZIP siap · ${count} berkas`);
@@ -220,8 +234,9 @@ function DocumentsBank() {
         <div>
           <h1 className="font-display text-3xl font-bold text-primary">Bank Dokumen Kandidat</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Seluruh berkas yang diunggah kandidat (KTP, KK, CV, ijazah, transkrip, dll.) tersedia otomatis di sini.
+            Bank data dipisah per jalur kandidat. Pilih jalur untuk melihat biodata dan berkasnya.
           </p>
+          <TrackTabs value={track} onChange={setTrack} counts={trackCounts} className="mt-4" />
         </div>
         <div className="flex flex-wrap items-center gap-3 text-xs">
           <Badge variant="secondary" className="gap-1"><FolderOpen className="h-3 w-3" /> {filtered.length} berkas</Badge>
@@ -238,7 +253,7 @@ function DocumentsBank() {
         </div>
       </div>
 
-      <BiodataBank />
+      <BiodataBank track={track} />
 
       <Card className="shadow-card">
         <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
