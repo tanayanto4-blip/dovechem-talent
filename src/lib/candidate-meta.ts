@@ -49,7 +49,7 @@ export function buildCandidateMeta(c: any, extra?: Partial<CandidateMeta>): Cand
     gender: cand.gender ?? null,
     birthPlace: cand.birth_place ?? null,
     birthDate: cand.birth_date ?? null,
-    age: ageFromBirthDate(cand.birth_date),
+    age: cand.age ?? ageFromBirthDate(cand.birth_date),
     maritalStatus: cand.marital_status ?? null,
     ...extra,
   };
