@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Circle, User, ClipboardList, ArrowRight } from "lucide-react";
+import { CheckCircle2, Circle, User, ClipboardList, ArrowRight, Info } from "lucide-react";
 
 export const Route = createFileRoute("/candidate/portal/")({
   head: () => ({ meta: [
