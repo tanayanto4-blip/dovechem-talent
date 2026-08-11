@@ -76,11 +76,12 @@ function TestsPage() {
                   <Button
                     className="w-full"
                     disabled={!data?.candidate?.data_completed}
-                    onClick={() => nav({ to: "/candidate/portal/test/$testId", params: { testId: t.id } })}
+                    onClick={() => nav({ to: "/candidate/portal/latihan/$testId", params: { testId: t.id } })}
                   >
                     {retake ? "Ulangi" : "Mulai"} <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 )}
+
               </CardContent>
             </Card>
           );
