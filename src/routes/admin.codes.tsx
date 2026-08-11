@@ -116,7 +116,7 @@ function CodesPage() {
       toast.success(`Kode dibuat: ${res.code.code}`);
       qc.invalidateQueries({ queryKey: ["codes"] });
       setOpen(false);
-      setForm({ candidate_name: "", candidate_email: "", position_applied: "", code: "", expires_at: "" });
+      setForm({ candidate_name: "", candidate_email: "", position_applied: "", code: "", expires_at: "", candidate_type: form.candidate_type });
     } catch (e: any) { toast.error(e.message); }
     finally { setSaving(false); }
   }
