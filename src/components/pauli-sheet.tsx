@@ -24,11 +24,15 @@ export function PauliSheet({
   questions,
   answers,
   onChange,
+  showGuide = false,
 }: {
   questions: PauliQuestion[];
   answers: Record<string, string>;
   onChange: (questionId: string, value: string) => void;
+  /** Tampilkan status deret/baris & petunjuk (hanya untuk halaman latihan). */
+  showGuide?: boolean;
 }) {
+
   // Cursor = posisi soal aktif (kolom + celah antar dua angka)
   const [col, setCol] = useState(0);
   const [row, setRow] = useState(0);
@@ -99,15 +103,18 @@ export function PauliSheet({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 text-xs text-muted-foreground">
-        <span>
-          Deret <b className="text-foreground">{col + 1}</b>/{questions.length} · baris{" "}
-          <b className="text-foreground">{row + 1}</b>/{gaps}
-        </span>
-        <span>
-          Terisi <b className="text-foreground">{totalFilled}</b>/{totalGaps}
-        </span>
-      </div>
+      {showGuide && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 text-xs text-muted-foreground">
+          <span>
+            Deret <b className="text-foreground">{col + 1}</b>/{questions.length} · baris{" "}
+            <b className="text-foreground">{row + 1}</b>/{gaps}
+          </span>
+          <span>
+            Terisi <b className="text-foreground">{totalFilled}</b>/{totalGaps}
+          </span>
+        </div>
+      )}
+
 
       <div
         className="rounded-lg border bg-card p-8"
@@ -161,10 +168,13 @@ export function PauliSheet({
           </div>
         </div>
 
-        <p className="mt-6 text-center text-[11px] text-muted-foreground">
-          Jumlahkan dua angka pada kotak, tulis <b>angka terakhir</b> hasilnya. Contoh: 7 + 8 = 15 → tulis{" "}
-          <b>5</b>. Setelah menjawab, otomatis bergeser ke pasangan berikutnya.
-        </p>
+        {showGuide && (
+          <p className="mt-6 text-center text-[11px] text-muted-foreground">
+            Jumlahkan dua angka pada kotak, tulis <b>angka terakhir</b> hasilnya. Contoh: 7 + 8 = 15 → tulis{" "}
+            <b>5</b>. Setelah menjawab, otomatis bergeser ke pasangan berikutnya.
+          </p>
+        )}
+
       </div>
     </div>
   );
