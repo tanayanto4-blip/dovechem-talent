@@ -28,3 +28,10 @@ export function audienceMatches(audience: string | null | undefined, type: strin
   const a = audience ?? "both";
   return a === "both" || a === (type ?? "karyawan");
 }
+
+/** Jalur kandidat dari relasi kode akses (kode lama tanpa tipe = Karyawan). */
+export function candidateTrackOf(candidate: any): CandidateType {
+  const t = candidate?.candidate_codes?.candidate_type ?? candidate?.candidate_type;
+  return t === "magang" ? "magang" : "karyawan";
+}
+
