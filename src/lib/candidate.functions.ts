@@ -204,6 +204,7 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
     ]);
     return {
       candidate: cand,
+      candidate_type: codeRow.candidate_type ?? "karyawan",
       files: filesQ.data ?? [],
       tests: ((testsQ.data ?? []) as any[]).map((t, _i, all) => maskTest(t, all.map((x: any) => x.id))),
       attempts: attemptsQ.data ?? [],
