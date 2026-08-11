@@ -265,11 +265,21 @@ export const candidateSaveProfile = createServerFn({ method: "POST" })
     const sb = await admin();
     const codeRow = await resolveActiveCode(sb, data.code, (data as any).device);
     const { code: _c, device: _d, ...rest } = data;
+    // Field wajib berbeda per jalur: magang mengisi semester, karyawan mengisi
+    // lama pengalaman kerja.
+    if (codeRow.candidate_type === "magang") {
+      if (!rest.semester?.trim()) throw new Error("Semester saat ini wajib diisi.");
+      delete (rest as any).work_experience;
+    } else {
+      if (!rest.work_experience?.trim()) throw new Error("Pengalaman kerja wajib dipilih.");
+      delete (rest as any).semester;
+    }
     await ensureCandidate(sb, codeRow.id);
     const { error } = await sb.from("candidates").update({ ...rest, data_completed: true }).eq("code_id", codeRow.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 const ProfileAutosaveInput = z.object({
   code: z.string().trim().min(3),
