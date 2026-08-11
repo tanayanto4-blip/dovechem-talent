@@ -142,7 +142,7 @@ export const candidateLogin = createServerFn({ method: "POST" })
     await resolveActiveCode(sb, data.code);
     const { data: codeRow, error } = await sb
       .from("candidate_codes")
-      .select("id, code, candidate_name, candidate_email, position_applied, active, expires_at")
+      .select("id, code, candidate_name, candidate_email, position_applied, active, expires_at, candidate_type")
       .eq("code", data.code.toUpperCase())
       .maybeSingle();
     if (error || !codeRow) throw new Error("Kode akses tidak ditemukan.");
@@ -158,8 +158,14 @@ export const candidateLogin = createServerFn({ method: "POST" })
       })
       .eq("id", codeRow.id);
 
-    return { candidate: cand, code: codeRow.code, device };
+    return {
+      candidate: cand,
+      code: codeRow.code,
+      device,
+      candidate_type: (codeRow as any).candidate_type ?? "karyawan",
+    };
   });
+
 
 
 export const candidateGetProfile = createServerFn({ method: "POST" })
