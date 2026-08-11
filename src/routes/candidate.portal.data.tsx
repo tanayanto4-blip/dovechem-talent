@@ -34,6 +34,7 @@ export const Route = createFileRoute("/candidate/portal/data")({
 
 function DataForm() {
   const session = useCandidateSession();
+  const nav = useNavigate();
   const qc = useQueryClient();
   const getProfile = useServerFn(candidateGetProfile);
   const save = useServerFn(candidateSaveProfile);
