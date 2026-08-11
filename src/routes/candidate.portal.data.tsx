@@ -77,12 +77,7 @@ function DataForm() {
   ];
 
   const ageOptions = Array.from({ length: 56 }, (_, i) => String(i + 15));
-  const workOptions = [
-    "Belum pernah bekerja",
-    "Kurang dari 1 tahun",
-    ...Array.from({ length: 10 }, (_, i) => `${i + 1} tahun`),
-    "Lebih dari 10 tahun",
-  ];
+  const workOptions = ["Belum bekerja", ...Array.from({ length: 21 }, (_, i) => String(i))];
 
 
   async function onSubmit(e: React.FormEvent) {
