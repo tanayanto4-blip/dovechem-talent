@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -34,6 +34,7 @@ export const Route = createFileRoute("/candidate/portal/data")({
 
 function DataForm() {
   const session = useCandidateSession();
+  const nav = useNavigate();
   const qc = useQueryClient();
   const getProfile = useServerFn(candidateGetProfile);
   const save = useServerFn(candidateSaveProfile);
@@ -71,7 +72,6 @@ function DataForm() {
     ["phone", "Telp / HP"],
     ["email", "Email"],
     ["position_applied", "Posisi dilamar"],
-    ["age", "Usia"],
   ];
 
   async function onSubmit(e: React.FormEvent) {
@@ -84,8 +84,9 @@ function DataForm() {
     setSaving(true);
     try {
       await save({ data: { code: session!.code, device: session!.device, ...form } });
-      toast.success("Data tersimpan");
-      qc.invalidateQueries({ queryKey: ["candidate-profile"] });
+      toast.success("Data tersimpan — lanjut ke psikotest");
+      await qc.invalidateQueries({ queryKey: ["candidate-profile"] });
+      nav({ to: "/candidate/portal/tests" });
     } catch (e: any) {
       toast.error(e.message);
     } finally {
