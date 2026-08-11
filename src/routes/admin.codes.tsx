@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { CANDIDATE_TYPES, candidateTypeShort, type CandidateType } from "@/lib/candidate-type";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { bulkCreateCandidateCodes, bulkSetCodesActive, bulkSetCodesExpiry, createCandidateCode, deleteAllCodes, deleteCode, listCandidateCodes, setCodeExpiry, toggleCode } from "@/lib/admin.functions";
@@ -44,9 +45,9 @@ function CodesPage() {
   const [expiryOpen, setExpiryOpen] = useState(false);
   const [expiryValue, setExpiryValue] = useState("");
   const [editExpiry, setEditExpiry] = useState<{ id: string; value: string } | null>(null);
-  const [form, setForm] = useState({ candidate_name: "", candidate_email: "", position_applied: "", code: "", expires_at: "" });
-  const [bulkForm, setBulkForm] = useState({ count: 300, prefix: "DOV", name_prefix: "Kandidat", position_applied: "", start_number: 1, expires_at: "" });
-  const [autoForm, setAutoForm] = useState({ count: 300, expires_at: "" });
+  const [form, setForm] = useState({ candidate_name: "", candidate_email: "", position_applied: "", code: "", expires_at: "", candidate_type: "karyawan" as CandidateType });
+  const [bulkForm, setBulkForm] = useState({ count: 300, prefix: "DOV", name_prefix: "Kandidat", position_applied: "", start_number: 1, expires_at: "", candidate_type: "karyawan" as CandidateType });
+  const [autoForm, setAutoForm] = useState({ count: 300, expires_at: "", candidate_type: "karyawan" as CandidateType });
   const [saving, setSaving] = useState(false);
   const [bulkSaving, setBulkSaving] = useState(false);
   const [autoSaving, setAutoSaving] = useState(false);
@@ -97,6 +98,7 @@ function CodesPage() {
         count: n, prefix: "DOV", name_prefix: "Kandidat",
         position_applied: null, start_number: 1,
         expires_at: toIso(autoForm.expires_at),
+        candidate_type: autoForm.candidate_type,
       }});
       toast.success(`${res.created} kode otomatis dibuat & aktif — siap login`);
       qc.invalidateQueries({ queryKey: ["codes"] });
@@ -130,6 +132,7 @@ function CodesPage() {
         position_applied: bulkForm.position_applied || null,
         start_number: Number(bulkForm.start_number) || 1,
         expires_at: toIso(bulkForm.expires_at),
+        candidate_type: bulkForm.candidate_type,
       }});
       toast.success(`${res.created} kode dibuat & aktif`);
       qc.invalidateQueries({ queryKey: ["codes"] });
@@ -237,6 +240,7 @@ function CodesPage() {
               </div>
               {createMode === "single" ? (
                 <form onSubmit={onCreate} className="space-y-4">
+                  <div className="space-y-2"><Label>Tipe Kandidat *</Label><TypePicker value={form.candidate_type} onChange={(v) => setForm({ ...form, candidate_type: v })} /></div>
                   <div className="space-y-2"><Label>Nama Kandidat *</Label><Input required value={form.candidate_name} onChange={(e) => setForm({ ...form, candidate_name: e.target.value })} /></div>
                   <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.candidate_email} onChange={(e) => setForm({ ...form, candidate_email: e.target.value })} /></div>
                   <div className="space-y-2"><Label>Posisi Dilamar</Label><Input value={form.position_applied} onChange={(e) => setForm({ ...form, position_applied: e.target.value })} /></div>
@@ -250,6 +254,7 @@ function CodesPage() {
                     <div className="space-y-2"><Label>Jumlah *</Label><Input type="number" min={1} max={1000} required value={bulkForm.count} onChange={(e) => setBulkForm({ ...bulkForm, count: Number(e.target.value) })} /></div>
                     <div className="space-y-2"><Label>Mulai Nomor</Label><Input type="number" min={1} value={bulkForm.start_number} onChange={(e) => setBulkForm({ ...bulkForm, start_number: Number(e.target.value) })} /></div>
                   </div>
+                  <div className="space-y-2"><Label>Tipe Kandidat *</Label><TypePicker value={bulkForm.candidate_type} onChange={(v) => setBulkForm({ ...bulkForm, candidate_type: v })} /></div>
                   <div className="space-y-2"><Label>Prefix Kode</Label><Input value={bulkForm.prefix} onChange={(e) => setBulkForm({ ...bulkForm, prefix: e.target.value.toUpperCase() })} placeholder="DOV" /></div>
                   <div className="space-y-2"><Label>Prefix Nama Kandidat</Label><Input value={bulkForm.name_prefix} onChange={(e) => setBulkForm({ ...bulkForm, name_prefix: e.target.value })} placeholder="Kandidat" /></div>
                   <div className="space-y-2"><Label>Posisi Dilamar</Label><Input value={bulkForm.position_applied} onChange={(e) => setBulkForm({ ...bulkForm, position_applied: e.target.value })} /></div>
@@ -269,6 +274,7 @@ function CodesPage() {
           <DialogHeader><DialogTitle>Otomatis Buat Kode</DialogTitle></DialogHeader>
           <form onSubmit={onAuto} className="space-y-4">
             <div className="space-y-2"><Label>Jumlah Kode *</Label><Input type="number" min={1} max={1000} required value={autoForm.count} onChange={(e) => setAutoForm({ ...autoForm, count: Number(e.target.value) })} /></div>
+            <div className="space-y-2"><Label>Tipe Kandidat *</Label><TypePicker value={autoForm.candidate_type} onChange={(v) => setAutoForm({ ...autoForm, candidate_type: v })} /></div>
             <div className="space-y-2"><Label>Masa Berlaku (opsional)</Label><Input type="datetime-local" value={autoForm.expires_at} onChange={(e) => setAutoForm({ ...autoForm, expires_at: e.target.value })} /><p className="text-[11px] text-muted-foreground">Kosongkan untuk tanpa batas waktu.</p></div>
             <p className="text-xs text-muted-foreground">Kode akan dibuat dengan prefix <b>DOV</b>, nama <b>Kandidat 001..</b>, dan langsung aktif.</p>
             <DialogFooter><Button type="submit" disabled={autoSaving}>{autoSaving ? "Membuat..." : `Buat ${autoForm.count} Kode`}</Button></DialogFooter>
@@ -316,6 +322,7 @@ function CodesPage() {
                     <div className="truncate text-sm font-medium">{c.candidate_name}</div>
                     <div className="truncate text-xs text-muted-foreground">{c.candidate_email}</div>
                     <div className="truncate text-xs text-muted-foreground">{c.position_applied ?? "-"}</div>
+                    <Badge variant="outline" className="mt-1">{candidateTypeShort(c.candidate_type)}</Badge>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-2">
                     <div className="flex items-center gap-2">
@@ -353,6 +360,7 @@ function CodesPage() {
                   <TableHead className="w-10">#</TableHead>
                   <TableHead>Kode</TableHead>
                   <TableHead>Kandidat</TableHead>
+                  <TableHead>Tipe</TableHead>
                   <TableHead>Posisi</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Digunakan</TableHead>
@@ -377,6 +385,7 @@ function CodesPage() {
                       <div className="truncate font-medium">{c.candidate_name}</div>
                       <div className="truncate text-xs text-muted-foreground">{c.candidate_email}</div>
                     </TableCell>
+                    <TableCell><Badge variant="outline">{candidateTypeShort(c.candidate_type)}</Badge></TableCell>
                     <TableCell>{c.position_applied ?? "-"}</TableCell>
                     <TableCell>
                       {c.candidates?.data_completed ? <Badge className="bg-success">Data lengkap</Badge> : c.candidates ? <Badge variant="secondary">Data belum lengkap</Badge> : <Badge variant="outline">Belum login</Badge>}
@@ -413,6 +422,27 @@ function CodesPage() {
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+
+/** Pemilih jalur kandidat (Magang / Karyawan) untuk pembuatan kode. */
+function TypePicker({ value, onChange }: { value: CandidateType; onChange: (v: CandidateType) => void }) {
+  return (
+    <div className="flex gap-2">
+      {CANDIDATE_TYPES.map((t) => (
+        <Button
+          key={t}
+          type="button"
+          size="sm"
+          variant={value === t ? "default" : "outline"}
+          className="flex-1"
+          onClick={() => onChange(t)}
+        >
+          {candidateTypeShort(t)}
+        </Button>
+      ))}
     </div>
   );
 }
