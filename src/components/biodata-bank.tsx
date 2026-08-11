@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Download, Search, IdCard, FileSpreadsheet, FileText, ChevronDown, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { candidateTrackOf } from "@/lib/candidate-type";
 import {
   BIODATA_FIELDS as FIELDS,
   exportAllBiodataPdf,
@@ -59,7 +60,7 @@ function downloadCsv(rows: string[][], filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function BiodataBank() {
+export function BiodataBank({ track }: { track?: "magang" | "karyawan" }) {
   const listFn = useServerFn(listCandidates);
   const { data, isLoading } = useQuery({
     queryKey: ["biodata-bank-candidates"],
@@ -72,7 +73,9 @@ export function BiodataBank() {
   const qc = useQueryClient();
   const clearFn = useServerFn(clearCandidateBiodata);
 
-  const candidates = ((data?.candidates ?? []) as any[]).filter((c) => c.full_name || c.data_completed);
+  const candidates = ((data?.candidates ?? []) as any[])
+    .filter((c) => c.full_name || c.data_completed)
+    .filter((c) => !track || candidateTrackOf(c) === track);
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return candidates;
@@ -149,7 +152,9 @@ export function BiodataBank() {
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           <IdCard className="h-4 w-4 text-primary" />
-          <CardTitle className="text-base">Rekap Biodata Kandidat</CardTitle>
+          <CardTitle className="text-base">
+            Rekap Biodata Kandidat{track ? ` — ${track === "magang" ? "Magang" : "Karyawan"}` : ""}
+          </CardTitle>
           <Badge variant="secondary">{filtered.length}</Badge>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/5 px-2 py-0.5 text-[11px] font-medium text-primary">
             <span className="relative flex h-1.5 w-1.5">

@@ -12,7 +12,9 @@ import { ClipboardList, ArrowRight, Timer, Search, X } from "lucide-react";
 import { TestDurationEditor } from "@/components/test-duration-editor";
 import { TestPublishToggle } from "@/components/publish-toggle";
 import { TestAudienceEditor } from "@/components/test-audience-editor";
-import { testAudienceLabel } from "@/lib/candidate-type";
+import { TrackTabs } from "@/components/track-tabs";
+import { audienceMatches, testAudienceLabel, type CandidateType } from "@/lib/candidate-type";
+
 
 export const Route = createFileRoute("/admin/tests/")({ head: () => ({ meta: [
     { title: "Bank Soal Psikotest — Admin Dover Chemical" },
@@ -29,12 +31,21 @@ function TestsList() {
   const fn = useServerFn(listTests);
   const { data, isLoading } = useQuery({ queryKey: ["admin-tests"], queryFn: () => fn({ data: {} as never }) });
 
+  const [track, setTrack] = useState<CandidateType>("magang");
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
   const [testId, setTestId] = useState<string>("all");
 
-  const tests = (data?.tests ?? []) as any[];
+  const allTests = (data?.tests ?? []) as any[];
+  const trackCounts = useMemo(
+    () => ({
+      magang: allTests.filter((t) => audienceMatches(t.audience, "magang")).length,
+      karyawan: allTests.filter((t) => audienceMatches(t.audience, "karyawan")).length,
+    }),
+    [allTests],
+  );
+  const tests = useMemo(() => allTests.filter((t) => audienceMatches(t.audience, track)), [allTests, track]);
   const categories = useMemo(() => Array.from(new Set(tests.map((t) => t.test_type))).sort(), [tests]);
   const idOptions = useMemo(() => {
     const src = category === "all" ? tests : tests.filter((t) => t.test_type === category);
@@ -59,7 +70,10 @@ function TestsList() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl font-bold text-primary">Bank Soal Psikotest</h1>
-        <p className="text-sm text-muted-foreground">Lihat seluruh soal, kunci jawaban, dan dimensi test.</p>
+        <p className="text-sm text-muted-foreground">
+          Bank soal dipisah per jalur kandidat. Pilih jalur untuk melihat paket test-nya.
+        </p>
+        <TrackTabs value={track} onChange={(v) => { setTrack(v); setTestId("all"); }} counts={trackCounts} className="mt-4" />
       </div>
 
       <Card className="shadow-card">
