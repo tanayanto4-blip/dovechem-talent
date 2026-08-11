@@ -70,6 +70,19 @@ function maskTest<T extends { id: string }>(test: T, order: string[]): T {
   } as T;
 }
 
+/**
+ * Paket test berbeda per jalur kandidat (magang / karyawan). Test yang tidak
+ * diperuntukkan bagi jalur kandidat ini tidak boleh dibuka walaupun ID-nya
+ * ditebak.
+ */
+async function assertTestForType(sb: any, testId: string, type: string) {
+  const { data } = await sb.from("tests").select("audience").eq("id", testId).maybeSingle();
+  const audience = (data?.audience as string | undefined) ?? "both";
+  if (audience !== "both" && audience !== type) {
+    throw new Error("Test ini tidak diperuntukkan bagi jalur kandidat Anda.");
+  }
+}
+
 
 /**
  * Staff can close a specific test for a candidate (or re-open it for a retake).
