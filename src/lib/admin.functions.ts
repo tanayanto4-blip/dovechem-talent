@@ -274,7 +274,7 @@ export const listCandidates = createServerFn({ method: "POST" })
     const { data: rows, error, count } = await context.supabase
       .from("candidates")
       .select(
-        "*, candidate_codes(code, active, candidate_type), candidate_files(id, file_type), test_attempts(id, score, status, tests(name, test_type))",
+        "*, candidate_codes(code, active), candidate_files(id, file_type), test_attempts(id, score, status, tests(name, test_type))",
         { count: "exact" },
       )
       .order("created_at", { ascending: false })
@@ -1085,7 +1085,7 @@ export const listAllAttempts = createServerFn({ method: "POST" })
     const { data: rows, error, count } = await context.supabase
       .from("test_attempts")
       .select(
-        "id, status, score, result, started_at, finished_at, test_id, candidate_id, tests(id, code, name, test_type), candidates(id, full_name, position_applied, code_snapshot, candidate_codes(code, candidate_type))",
+        "id, status, score, result, started_at, finished_at, test_id, candidate_id, tests(id, code, name, test_type), candidates(id, full_name, position_applied, code_snapshot, candidate_codes(code))",
         { count: "exact" },
       )
       .order("finished_at", { ascending: false, nullsFirst: false })

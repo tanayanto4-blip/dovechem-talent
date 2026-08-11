@@ -35,7 +35,6 @@ import {
   exportCandidateBiodataPdf,
   safeName,
 } from "@/lib/biodata-export";
-import { TrackTabs, candidateTrack, type Track } from "@/components/track-tabs";
 
 
 function fmtWhen(v: unknown) {
@@ -67,19 +66,13 @@ export function BiodataBank() {
     queryFn: () => listFn({ data: {} as never }),
   });
   const [q, setQ] = useState("");
-  const [track, setTrack] = useState<Track>("karyawan");
   const [selected, setSelected] = useState<string[]>([]);
   const [toDelete, setToDelete] = useState<any | null>(null);
   const [deleting, setDeleting] = useState(false);
   const qc = useQueryClient();
   const clearFn = useServerFn(clearCandidateBiodata);
 
-  const allCandidates = ((data?.candidates ?? []) as any[]).filter((c) => c.full_name || c.data_completed);
-  const trackCounts = {
-    magang: allCandidates.filter((c) => candidateTrack(c) === "magang").length,
-    karyawan: allCandidates.filter((c) => candidateTrack(c) === "karyawan").length,
-  };
-  const candidates = allCandidates.filter((c) => candidateTrack(c) === track);
+  const candidates = ((data?.candidates ?? []) as any[]).filter((c) => c.full_name || c.data_completed);
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return candidates;
@@ -165,7 +158,6 @@ export function BiodataBank() {
             </span>
             Sinkron otomatis
           </span>
-          <TrackTabs value={track} onChange={(t) => { setTrack(t); setSelected([]); }} counts={trackCounts} />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {selected.length > 0 && (

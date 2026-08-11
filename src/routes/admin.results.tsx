@@ -25,7 +25,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { TrackTabs, candidateTrack, type Track } from "@/components/track-tabs";
 
 export const Route = createFileRoute("/admin/results")({
   component: ResultsBank,
@@ -74,7 +73,6 @@ function ResultsBank() {
   const [q, setQ] = useState("");
   const [type, setType] = useState("all");
   const [status, setStatus] = useState("all");
-  const [track, setTrack] = useState<Track>("karyawan");
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const qc = useQueryClient();
   const deleteResultsFn = useServerFn(deleteCandidateResults);
@@ -172,7 +170,6 @@ function ResultsBank() {
     const all = (data?.attempts ?? []) as any[];
     const needle = q.trim().toLowerCase();
     return all.filter((a) => {
-      if (candidateTrack(a.candidates) !== track) return false;
       if (type !== "all" && a.tests?.test_type !== type) return false;
       if (status !== "all" && a.status !== status) return false;
       if (!needle) return true;
@@ -180,7 +177,7 @@ function ResultsBank() {
         .filter(Boolean)
         .some((v: string) => v.toLowerCase().includes(needle));
     });
-  }, [data, q, type, status, track]);
+  }, [data, q, type, status]);
 
   // Kelompokkan per nama kandidat, urut test dari awal sampai akhir
   const groups = useMemo<Group[]>(() => {
@@ -249,7 +246,7 @@ function ResultsBank() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `bank-hasil-psikotest-${track}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `bank-hasil-psikotest-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -260,18 +257,8 @@ function ResultsBank() {
         <div>
           <h1 className="font-display text-3xl font-bold text-primary">Bank Data Hasil</h1>
           <p className="text-sm text-muted-foreground">
-            Tersimpan per nama kandidat dan dipisah per jalur (Magang / Karyawan). Hanya Admin &amp; HR yang dapat melihat skor.
+            Tersimpan per nama kandidat — seluruh riwayat test dari awal sampai akhir. Hanya Admin &amp; HR yang dapat melihat skor.
           </p>
-          <div className="mt-3">
-            <TrackTabs
-              value={track}
-              onChange={setTrack}
-              counts={{
-                magang: new Set(((data?.attempts ?? []) as any[]).filter((a) => candidateTrack(a.candidates) === "magang").map((a) => a.candidate_id)).size,
-                karyawan: new Set(((data?.attempts ?? []) as any[]).filter((a) => candidateTrack(a.candidates) === "karyawan").map((a) => a.candidate_id)).size,
-              }}
-            />
-          </div>
         </div>
         <Button size="sm" variant="secondary" onClick={exportCsv} disabled={!groups.length}>
           <FileDown className="mr-2 h-4 w-4" /> Ekspor CSV
@@ -337,7 +324,7 @@ function ResultsBank() {
           {isLoading ? (
             <div className="py-8 text-center text-sm text-muted-foreground">Memuat...</div>
           ) : !groups.length ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">Belum ada hasil psikotest untuk jalur ini.</div>
+            <div className="py-8 text-center text-sm text-muted-foreground">Belum ada hasil psikotest.</div>
           ) : (
             <div className="space-y-3">
               {groups.map((g, gi) => {
