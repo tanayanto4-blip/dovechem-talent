@@ -303,6 +303,7 @@ export type Database = {
       candidates: {
         Row: {
           address: string | null
+          age: number | null
           birth_date: string | null
           birth_place: string | null
           code_id: string | null
@@ -325,6 +326,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          age?: number | null
           birth_date?: string | null
           birth_place?: string | null
           code_id?: string | null
@@ -347,6 +349,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          age?: number | null
           birth_date?: string | null
           birth_place?: string | null
           code_id?: string | null
