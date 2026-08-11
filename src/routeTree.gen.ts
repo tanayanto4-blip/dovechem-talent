@@ -36,6 +36,7 @@ import { Route as AdminMbtiPreviewRouteImport } from './routes/admin.mbti.previe
 import { Route as AdminCandidatesIdRouteImport } from './routes/admin.candidates.$id'
 import { Route as AdminAttemptsIdRouteImport } from './routes/admin.attempts.$id'
 import { Route as CandidatePortalTestTestIdRouteImport } from './routes/candidate.portal.test.$testId'
+import { Route as CandidatePortalLatihanTestIdRouteImport } from './routes/candidate.portal.latihan.$testId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -174,6 +175,12 @@ const CandidatePortalTestTestIdRoute =
     path: '/test/$testId',
     getParentRoute: () => CandidatePortalRoute,
   } as any)
+const CandidatePortalLatihanTestIdRoute =
+  CandidatePortalLatihanTestIdRouteImport.update({
+    id: '/latihan/$testId',
+    path: '/latihan/$testId',
+    getParentRoute: () => CandidatePortalRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -202,6 +209,7 @@ export interface FileRoutesByFullPath {
   '/admin/mbti/': typeof AdminMbtiIndexRoute
   '/admin/tests/': typeof AdminTestsIndexRoute
   '/candidate/portal/': typeof CandidatePortalIndexRoute
+  '/candidate/portal/latihan/$testId': typeof CandidatePortalLatihanTestIdRoute
   '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
 }
 export interface FileRoutesByTo {
@@ -230,6 +238,7 @@ export interface FileRoutesByTo {
   '/admin/mbti': typeof AdminMbtiIndexRoute
   '/admin/tests': typeof AdminTestsIndexRoute
   '/candidate/portal': typeof CandidatePortalIndexRoute
+  '/candidate/portal/latihan/$testId': typeof CandidatePortalLatihanTestIdRoute
   '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
 }
 export interface FileRoutesById {
@@ -260,6 +269,7 @@ export interface FileRoutesById {
   '/admin/mbti/': typeof AdminMbtiIndexRoute
   '/admin/tests/': typeof AdminTestsIndexRoute
   '/candidate/portal/': typeof CandidatePortalIndexRoute
+  '/candidate/portal/latihan/$testId': typeof CandidatePortalLatihanTestIdRoute
   '/candidate/portal/test/$testId': typeof CandidatePortalTestTestIdRoute
 }
 export interface FileRouteTypes {
@@ -291,6 +301,7 @@ export interface FileRouteTypes {
     | '/admin/mbti/'
     | '/admin/tests/'
     | '/candidate/portal/'
+    | '/candidate/portal/latihan/$testId'
     | '/candidate/portal/test/$testId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -319,6 +330,7 @@ export interface FileRouteTypes {
     | '/admin/mbti'
     | '/admin/tests'
     | '/candidate/portal'
+    | '/candidate/portal/latihan/$testId'
     | '/candidate/portal/test/$testId'
   id:
     | '__root__'
@@ -348,6 +360,7 @@ export interface FileRouteTypes {
     | '/admin/mbti/'
     | '/admin/tests/'
     | '/candidate/portal/'
+    | '/candidate/portal/latihan/$testId'
     | '/candidate/portal/test/$testId'
   fileRoutesById: FileRoutesById
 }
@@ -552,6 +565,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CandidatePortalTestTestIdRouteImport
       parentRoute: typeof CandidatePortalRoute
     }
+    '/candidate/portal/latihan/$testId': {
+      id: '/candidate/portal/latihan/$testId'
+      path: '/latihan/$testId'
+      fullPath: '/candidate/portal/latihan/$testId'
+      preLoaderRoute: typeof CandidatePortalLatihanTestIdRouteImport
+      parentRoute: typeof CandidatePortalRoute
+    }
   }
 }
 
@@ -599,6 +619,7 @@ interface CandidatePortalRouteChildren {
   CandidatePortalDataRoute: typeof CandidatePortalDataRoute
   CandidatePortalTestsRoute: typeof CandidatePortalTestsRoute
   CandidatePortalIndexRoute: typeof CandidatePortalIndexRoute
+  CandidatePortalLatihanTestIdRoute: typeof CandidatePortalLatihanTestIdRoute
   CandidatePortalTestTestIdRoute: typeof CandidatePortalTestTestIdRoute
 }
 
@@ -606,6 +627,7 @@ const CandidatePortalRouteChildren: CandidatePortalRouteChildren = {
   CandidatePortalDataRoute: CandidatePortalDataRoute,
   CandidatePortalTestsRoute: CandidatePortalTestsRoute,
   CandidatePortalIndexRoute: CandidatePortalIndexRoute,
+  CandidatePortalLatihanTestIdRoute: CandidatePortalLatihanTestIdRoute,
   CandidatePortalTestTestIdRoute: CandidatePortalTestTestIdRoute,
 }
 

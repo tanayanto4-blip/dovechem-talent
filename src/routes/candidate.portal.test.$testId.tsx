@@ -529,13 +529,10 @@ function TakeTest() {
   const mins = Math.floor(remaining / 60).toString().padStart(2, "0");
   const secs = (remaining % 60).toString().padStart(2, "0");
   const total = data.questions.length;
-  const isKraepelin = data.test.test_type === "kraepelin";
   const isDisc = data.test.test_type === "disc";
-  const isMbti = data.test.test_type === "mbti";
-  const isEq = data.test.test_type === "eq";
   const isWpt = data.test.test_type === "wpt";
   const isPauli = data.test.test_type === "pauli";
-  const isPapi = data.test.test_type === "papi";
+
   const answered = isDisc
     ? Object.values(discPicks).filter((p) => p.most && p.least && p.most !== p.least).length
     : isPauli
@@ -580,104 +577,8 @@ function TakeTest() {
         </CardHeader>
       </Card>
 
-      {isDisc && (
-        <Card className="border-primary/30 bg-primary/5 shadow-card">
-          <CardContent className="space-y-2 p-6 text-sm">
-            <div className="font-semibold text-primary">Petunjuk Pengisian</div>
-            <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
-              <li>Setiap kelompok berisi 4 pernyataan.</li>
-              <li>Pilih <b className="text-foreground">M (Most)</b> pada pernyataan yang <b>paling menggambarkan</b> diri Anda.</li>
-              <li>Pilih <b className="text-foreground">L (Least)</b> pada pernyataan yang <b>paling tidak menggambarkan</b> diri Anda.</li>
-              <li>Hanya boleh 1 M dan 1 L per kelompok, dan tidak boleh pada pernyataan yang sama.</li>
-              <li>Jawablah spontan sesuai diri Anda — tidak ada jawaban benar/salah.</li>
-            </ol>
-          </CardContent>
-        </Card>
-      )}
+      {/* Tanpa petunjuk apa pun: seluruh petunjuk & contoh soal ada di halaman latihan terpisah. */}
 
-      {isMbti && (
-        <Card className="border-primary/30 bg-primary/5 shadow-card">
-          <CardContent className="p-6 text-sm">
-            <p className="text-muted-foreground">
-              Pilih salah satu pernyataan (A atau B) yang <b className="text-foreground">paling menggambarkan</b> diri Anda.
-              Tidak ada jawaban benar/salah; jawablah spontan sesuai diri Anda sehari-hari.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {isEq && (
-        <Card className="border-primary/30 bg-primary/5 shadow-card">
-          <CardContent className="space-y-4 p-6 text-sm">
-            <div>
-              <div className="font-semibold text-primary">Petunjuk Pengisian</div>
-              <p className="mt-1 text-muted-foreground">
-                Baca setiap pernyataan lalu nilai seberapa <b className="text-foreground">kuat pernyataan itu berlaku untuk Anda</b> pada skala <b className="text-foreground">1 sampai 5</b>.
-                Tidak ada jawaban benar/salah — jawablah spontan dan jujur sesuai keseharian Anda.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
-              {[
-                { k: "1", t: "Tidak Terjadi" },
-                { k: "2", t: "Jarang Terjadi" },
-                { k: "3", t: "Kadang Terjadi" },
-                { k: "4", t: "Kebiasaan" },
-                { k: "5", t: "Selalu Terjadi" },
-              ].map((s) => (
-                <div key={s.k} className="rounded-md border bg-background p-2 text-center">
-                  <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">{s.k}</div>
-                  <div className="mt-1 text-[11px] text-muted-foreground">{s.t}</div>
-                </div>
-              ))}
-            </div>
-            <div className="rounded-md border border-primary/20 bg-background p-3 text-xs text-muted-foreground">
-              Jawablah seluruh pernyataan tanpa ada nomor yang terlewat.
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {isPapi && (
-        <Card className="border-primary/30 bg-primary/5 shadow-card">
-          <CardContent className="space-y-3 p-6 text-sm">
-            <div className="font-semibold text-primary">Petunjuk Pengisian</div>
-            <p className="text-muted-foreground">
-              Terdapat <b className="text-foreground">90 pasang pernyataan</b>. Untuk setiap nomor, pilih
-              <b className="text-foreground"> satu pernyataan saja</b> (opsi <b className="text-foreground">A</b> di atas atau
-              <b className="text-foreground"> B</b> di bawah) yang paling mendekati gambaran diri Anda dalam pekerjaan atau yang paling menunjukkan perasaan Anda.
-            </p>
-            <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
-              <li>Klik lingkaran pada baris pernyataan yang Anda pilih — pernyataan tampil di samping pilihannya.</li>
-              <li>Kadang kedua pernyataan terasa kurang sesuai, tetapi Anda tetap harus memilih salah satu.</li>
-              <li>Bekerjalah cepat dan jangan sampai ada nomor yang terlewat.</li>
-              <li>Tidak ada jawaban benar atau salah. Autosave aktif.</li>
-            </ol>
-          </CardContent>
-        </Card>
-      )}
-
-      {isWpt && (
-        <Card className="border-primary/30 bg-primary/5 shadow-card">
-          <CardContent className="space-y-3 p-6 text-sm">
-            <div className="font-semibold text-primary">Petunjuk Pengisian</div>
-            <p className="text-muted-foreground">
-              Tes ini mengukur <b className="text-foreground">kemampuan memecahkan masalah</b> secara umum: verbal, numerik, logika, dan spasial.
-              Berisi <b className="text-foreground">50 soal</b> yang secara bertahap semakin sulit. Anda memiliki
-              waktu <b className="text-foreground">{data.test.duration_minutes} menit</b> (sesuai pengaturan HR) untuk menjawab sebanyak mungkin dengan benar.
-            </p>
-            <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
-              <li>Kerjakan tanpa alat bantu (kalkulator, kamus, dll.).</li>
-              <li>Bacalah tiap soal dengan teliti; jangan menghabiskan waktu terlalu lama pada satu soal — lewati bila perlu, lalu kembali.</li>
-              <li><b className="text-foreground">Kolom jawaban dibiarkan kosong</b> — tulis sendiri jawaban Anda pada tanda kurung di sisi kanan setiap soal (boleh angka, huruf, kata, YA/TIDAK, dsb. sesuai perintah soal).</li>
-              <li>Contoh: <i>MENUAI adalah lawan kata dari 1. mendapat  2. bersorak  3. melanjutkan  4. berada  5. menabur</i> → jawaban: <b className="text-foreground">5</b>.</li>
-              <li>Autosave aktif. Anda tidak mungkin menyelesaikan semuanya — kerjakan semampu Anda.</li>
-            </ol>
-            <div className="rounded-md border border-primary/20 bg-background p-3 text-xs text-muted-foreground">
-              Penilaian dilakukan secara manual oleh tim HR berdasarkan jumlah jawaban yang benar dalam batas waktu.
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
 
 
