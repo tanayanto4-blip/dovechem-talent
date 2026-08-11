@@ -44,6 +44,7 @@ function CandidateLogin() {
         candidate_id: res.candidate.id,
         candidate_name: res.candidate.full_name ?? "Kandidat",
         device: res.device,
+        type: res.candidate_type,
       });
       toast.success(`Selamat datang, ${res.candidate.full_name ?? "kandidat"}`);
       navigate({ to: "/candidate/portal" });

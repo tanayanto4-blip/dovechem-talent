@@ -82,6 +82,7 @@ const CreateCodeInput = z.object({
   position_applied: z.string().max(120).optional().nullable(),
   code: z.string().trim().min(4).max(32).optional().nullable(),
   expires_at: z.string().datetime().optional().nullable(),
+  candidate_type: z.enum(["magang", "karyawan"]).default("karyawan"),
 });
 
 function randomCode() {
@@ -104,6 +105,7 @@ export const createCandidateCode = createServerFn({ method: "POST" })
         candidate_email: data.candidate_email || null,
         position_applied: data.position_applied || null,
         expires_at: data.expires_at || null,
+        candidate_type: data.candidate_type,
         created_by: context.userId,
       })
       .select()
@@ -119,6 +121,7 @@ const BulkInput = z.object({
   name_prefix: z.string().trim().max(60).optional().nullable(),
   start_number: z.number().int().min(1).max(100000).optional().nullable(),
   expires_at: z.string().datetime().optional().nullable(),
+  candidate_type: z.enum(["magang", "karyawan"]).default("karyawan"),
 });
 
 export const bulkCreateCandidateCodes = createServerFn({ method: "POST" })
@@ -146,6 +149,7 @@ export const bulkCreateCandidateCodes = createServerFn({ method: "POST" })
         position_applied: data.position_applied || null,
         active: true,
         expires_at: data.expires_at || null,
+        candidate_type: data.candidate_type,
         created_by: context.userId,
       });
     }
@@ -439,6 +443,19 @@ export const listTests = createServerFn({ method: "GET" })
       .order("code");
     if (error) throw new Error(error.message);
     return { tests: (data ?? []).map((t: any) => ({ ...t, question_count: t.test_questions?.length ?? 0 })) };
+  });
+
+/** Super Admin menentukan paket test: khusus magang, khusus karyawan, atau keduanya. */
+export const setTestAudience = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) =>
+    z.object({ id: z.string().uuid(), audience: z.enum(["magang", "karyawan", "both"]) }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase.from("tests").update({ audience: data.audience }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await logAudit(context, "test.audience", "test", data.id, { audience: data.audience });
+    return { ok: true };
   });
 
 export const getTestWithQuestions = createServerFn({ method: "POST" })

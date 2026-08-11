@@ -57,6 +57,7 @@ export type Database = {
           active_device_token: string | null
           candidate_email: string | null
           candidate_name: string
+          candidate_type: string
           code: string
           created_at: string
           created_by: string | null
@@ -71,6 +72,7 @@ export type Database = {
           active_device_token?: string | null
           candidate_email?: string | null
           candidate_name: string
+          candidate_type?: string
           code: string
           created_at?: string
           created_by?: string | null
@@ -85,6 +87,7 @@ export type Database = {
           active_device_token?: string | null
           candidate_email?: string | null
           candidate_name?: string
+          candidate_type?: string
           code?: string
           created_at?: string
           created_by?: string | null
@@ -321,6 +324,7 @@ export type Database = {
           phone: string | null
           position_applied: string | null
           school_name: string | null
+          semester: string | null
           updated_at: string
           work_experience: string | null
         }
@@ -344,6 +348,7 @@ export type Database = {
           phone?: string | null
           position_applied?: string | null
           school_name?: string | null
+          semester?: string | null
           updated_at?: string
           work_experience?: string | null
         }
@@ -367,6 +372,7 @@ export type Database = {
           phone?: string | null
           position_applied?: string | null
           school_name?: string | null
+          semester?: string | null
           updated_at?: string
           work_experience?: string | null
         }
@@ -619,6 +625,7 @@ export type Database = {
       tests: {
         Row: {
           active: boolean
+          audience: string
           code: string
           created_at: string
           description: string | null
@@ -638,6 +645,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          audience?: string
           code: string
           created_at?: string
           description?: string | null
@@ -657,6 +665,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          audience?: string
           code?: string
           created_at?: string
           description?: string | null

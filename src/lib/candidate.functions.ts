@@ -23,7 +23,7 @@ async function admin() {
 async function resolveActiveCode(sb: any, code: string, device?: string) {
   const { data: row, error } = await sb
     .from("candidate_codes")
-    .select("id, active, expires_at, active_device_token")
+    .select("id, active, expires_at, active_device_token, candidate_type")
     .eq("code", code.toUpperCase())
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -35,7 +35,7 @@ async function resolveActiveCode(sb: any, code: string, device?: string) {
   if (row.active_device_token && device && row.active_device_token !== device) {
     throw new Error(DEVICE_CONFLICT_MESSAGE);
   }
-  return row as { id: string; active: boolean; expires_at: string | null };
+  return row as { id: string; active: boolean; expires_at: string | null; candidate_type: string };
 }
 
 
@@ -44,11 +44,20 @@ async function resolveActiveCode(sb: any, code: string, device?: string) {
  * baik di layar maupun di payload jaringan. Semua endpoint kandidat memakai
  * helper ini agar nama, kode, dan deskripsi asli diganti label generik
  * "TEST 1", "TEST 2", ... sesuai urutan test aktif (order by code).
+ *
+ * Urutan dihitung per jalur kandidat (magang / karyawan) karena paket testnya
+ * berbeda — nomor test harus runtut untuk masing-masing jalur.
  */
-async function activeTestOrder(sb: any): Promise<string[]> {
-  const { data } = await sb.from("tests").select("id").eq("active", true).order("code");
+async function activeTestOrder(sb: any, type: string): Promise<string[]> {
+  const { data } = await sb
+    .from("tests")
+    .select("id, audience")
+    .eq("active", true)
+    .in("audience", ["both", type])
+    .order("code");
   return ((data ?? []) as { id: string }[]).map((t) => t.id);
 }
+
 
 function maskTest<T extends { id: string }>(test: T, order: string[]): T {
   const idx = order.indexOf(test.id);
@@ -59,6 +68,19 @@ function maskTest<T extends { id: string }>(test: T, order: string[]): T {
     code: label.replace(/\s+/g, "-"),
     description: null,
   } as T;
+}
+
+/**
+ * Paket test berbeda per jalur kandidat (magang / karyawan). Test yang tidak
+ * diperuntukkan bagi jalur kandidat ini tidak boleh dibuka walaupun ID-nya
+ * ditebak.
+ */
+async function assertTestForType(sb: any, testId: string, type: string) {
+  const { data } = await sb.from("tests").select("audience").eq("id", testId).maybeSingle();
+  const audience = (data?.audience as string | undefined) ?? "both";
+  if (audience !== "both" && audience !== type) {
+    throw new Error("Test ini tidak diperuntukkan bagi jalur kandidat Anda.");
+  }
 }
 
 
@@ -133,7 +155,7 @@ export const candidateLogin = createServerFn({ method: "POST" })
     await resolveActiveCode(sb, data.code);
     const { data: codeRow, error } = await sb
       .from("candidate_codes")
-      .select("id, code, candidate_name, candidate_email, position_applied, active, expires_at")
+      .select("id, code, candidate_name, candidate_email, position_applied, active, expires_at, candidate_type")
       .eq("code", data.code.toUpperCase())
       .maybeSingle();
     if (error || !codeRow) throw new Error("Kode akses tidak ditemukan.");
@@ -149,8 +171,14 @@ export const candidateLogin = createServerFn({ method: "POST" })
       })
       .eq("id", codeRow.id);
 
-    return { candidate: cand, code: codeRow.code, device };
+    return {
+      candidate: cand,
+      code: codeRow.code,
+      device,
+      candidate_type: (codeRow as any).candidate_type ?? "karyawan",
+    };
   });
+
 
 
 export const candidateGetProfile = createServerFn({ method: "POST" })
@@ -161,7 +189,12 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
     const cand = await ensureCandidate(sb, codeRow.id);
     const [filesQ, testsQ, attemptsQ, accessQ] = await Promise.all([
       sb.from("candidate_files").select("*").eq("candidate_id", cand.id),
-      sb.from("tests").select("*").eq("active", true).order("code"),
+      sb
+        .from("tests")
+        .select("*")
+        .eq("active", true)
+        .in("audience", ["both", codeRow.candidate_type])
+        .order("code"),
       // Scores/results are staff-only: expose progress fields only.
       sb.from("test_attempts").select("id, test_id, status, started_at, finished_at").eq("candidate_id", cand.id),
       sb
@@ -171,6 +204,7 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
     ]);
     return {
       candidate: cand,
+      candidate_type: codeRow.candidate_type ?? "karyawan",
       files: filesQ.data ?? [],
       tests: ((testsQ.data ?? []) as any[]).map((t, _i, all) => maskTest(t, all.map((x: any) => x.id))),
       attempts: attemptsQ.data ?? [],
@@ -218,7 +252,8 @@ const ProfileInput = z.object({
   gender: z.enum(["Laki-laki", "Perempuan"], { message: "Jenis kelamin wajib dipilih" }),
   education: z.string().trim().min(1, "Pendidikan wajib dipilih").max(120),
   major: z.string().trim().min(1, "Jurusan wajib diisi").max(120),
-  work_experience: WorkExperienceSchema,
+  work_experience: WorkExperienceSchema.optional(),
+  semester: z.string().trim().max(40).optional(),
   age: z.coerce.number().int().min(15, "Usia wajib dipilih").max(70),
   phone: z.string().trim().min(6, "Nomor telepon wajib diisi").max(30),
   email: z.string().trim().email("Email tidak valid").max(200),
@@ -231,11 +266,21 @@ export const candidateSaveProfile = createServerFn({ method: "POST" })
     const sb = await admin();
     const codeRow = await resolveActiveCode(sb, data.code, (data as any).device);
     const { code: _c, device: _d, ...rest } = data;
+    // Field wajib berbeda per jalur: magang mengisi semester, karyawan mengisi
+    // lama pengalaman kerja.
+    if (codeRow.candidate_type === "magang") {
+      if (!rest.semester?.trim()) throw new Error("Semester saat ini wajib diisi.");
+      delete (rest as any).work_experience;
+    } else {
+      if (!rest.work_experience?.trim()) throw new Error("Pengalaman kerja wajib dipilih.");
+      delete (rest as any).semester;
+    }
     await ensureCandidate(sb, codeRow.id);
     const { error } = await sb.from("candidates").update({ ...rest, data_completed: true }).eq("code_id", codeRow.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 const ProfileAutosaveInput = z.object({
   code: z.string().trim().min(3),
@@ -246,6 +291,7 @@ const ProfileAutosaveInput = z.object({
   education: z.string().trim().max(120).optional(),
   major: z.string().trim().max(120).optional(),
   work_experience: WorkExperienceSchema.optional(),
+  semester: z.string().trim().max(40).optional(),
   age: z.coerce.number().int().min(15).max(70).optional(),
   phone: z.string().trim().max(30).optional(),
   email: z.string().trim().email("Email tidak valid").max(200).optional(),
@@ -266,6 +312,7 @@ export const candidateAutosaveProfile = createServerFn({ method: "POST" })
     if (raw.education?.trim()) update.education = raw.education.trim();
     if (raw.major?.trim()) update.major = raw.major.trim();
     if (raw.work_experience?.trim()) update.work_experience = raw.work_experience.trim();
+    if (raw.semester?.trim()) update.semester = raw.semester.trim();
     if (raw.age != null) update.age = raw.age;
     if (raw.phone?.trim()) update.phone = raw.phone.trim();
     if (raw.email?.trim()) update.email = raw.email.trim();
@@ -371,6 +418,7 @@ export const candidateStartTest = createServerFn({ method: "POST" })
     const cand = await ensureCandidate(sb, codeRow.id);
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     if (!cand.data_completed) throw new Error("Lengkapi data diri terlebih dahulu.");
+    await assertTestForType(sb, data.test_id, codeRow.candidate_type);
     await assertTestOpen(sb, cand.id, data.test_id);
 
     let { data: attempt } = await sb.from("test_attempts").select("*").eq("candidate_id", cand.id).eq("test_id", data.test_id).maybeSingle();
@@ -384,7 +432,7 @@ export const candidateStartTest = createServerFn({ method: "POST" })
       sb.from("test_questions").select("id, question_number, question_text, options, dimension").eq("test_id", data.test_id).eq("active", true).order("question_number"),
       sb.from("test_answers").select("question_id, answer").eq("attempt_id", (attempt as any).id),
     ]);
-    const maskedTest = test.data ? maskTest(test.data as any, await activeTestOrder(sb)) : test.data;
+    const maskedTest = test.data ? maskTest(test.data as any, await activeTestOrder(sb, codeRow.candidate_type)) : test.data;
     // Auto-lock: an in-progress attempt whose allotted duration has elapsed can
     // no longer be worked on. The client finalises it immediately (late submits
     // are scored from answers autosaved before the deadline).
@@ -470,7 +518,7 @@ export const candidateGetAttempt = createServerFn({ method: "POST" })
       .eq("candidate_id", cand.id)
       .single();
     if (error) throw new Error(error.message);
-    const order = await activeTestOrder(sb);
+    const order = await activeTestOrder(sb, codeRow.candidate_type);
     const masked = attempt && (attempt as any).tests
       ? { ...attempt, tests: maskTest((attempt as any).tests, order) }
       : attempt;
@@ -781,9 +829,10 @@ export const candidateGetTestIntro = createServerFn({ method: "POST" })
         .createSignedUrl((test as any).voice_audio_path, 60 * 60);
       voice_audio_url = signed?.signedUrl ?? null;
     }
+    await assertTestForType(sb, data.test_id, codeRow.candidate_type);
     await assertTestOpen(sb, cand.id, data.test_id);
     return {
-      test: { ...maskTest(test as any, await activeTestOrder(sb)), voice_audio_url },
+      test: { ...maskTest(test as any, await activeTestOrder(sb, codeRow.candidate_type)), voice_audio_url },
       resumed: !!attempt && attempt.status !== "finished",
       data_completed: cand.data_completed,
     };

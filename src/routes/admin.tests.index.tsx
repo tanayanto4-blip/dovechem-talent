@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ClipboardList, ArrowRight, Timer, Search, X } from "lucide-react";
 import { TestDurationEditor } from "@/components/test-duration-editor";
 import { TestPublishToggle } from "@/components/publish-toggle";
+import { TestAudienceEditor } from "@/components/test-audience-editor";
+import { testAudienceLabel } from "@/lib/candidate-type";
 
 export const Route = createFileRoute("/admin/tests/")({ head: () => ({ meta: [
     { title: "Bank Soal Psikotest — Admin Dover Chemical" },
@@ -132,10 +134,14 @@ function TestsList() {
                     <span className="uppercase">{t.test_type}</span>
                     <span className="inline-flex items-center gap-1"><Timer className="h-3.5 w-3.5" /> {t.duration_minutes} menit</span>
                     <span>{t.question_count} soal</span>
+                    <span>{testAudienceLabel(t.audience)}</span>
                     <span className="font-mono text-[10px] opacity-70">ID: {t.id.slice(0, 8)}…</span>
                   </div>
                   <div className="mt-4">
                     <TestPublishToggle testId={t.id} testName={t.name} active={!!t.active} />
+                  </div>
+                  <div className="mt-3">
+                    <TestAudienceEditor testId={t.id} testName={t.name} value={t.audience} />
                   </div>
                   <div className="mt-3">
                     <TestDurationEditor testId={t.id} testName={t.name} value={t.duration_minutes} />

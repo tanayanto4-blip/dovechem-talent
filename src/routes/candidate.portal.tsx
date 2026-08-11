@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { candidateGetProfile, candidateSessionStatus } from "@/lib/candidate.functions";
 import { toast } from "sonner";
 import { useCandidateSession, setCandidateSession, DEVICE_CONFLICT_MESSAGE } from "@/lib/candidate-session";
+import { candidateTypeLabel } from "@/lib/candidate-type";
 import { Button } from "@/components/ui/button";
 import { Beaker, LogOut, User, ClipboardList, Home } from "lucide-react";
 import doverLogo from "@/assets/dover-logo.jpg.asset.json";
@@ -106,7 +107,7 @@ function PortalLayout() {
             <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="h-8 w-auto rounded p-0.5 object-contain" />
             <div>
               <div className="font-display text-sm font-bold">PT DOVER CHEMICAL</div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Portal Kandidat</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{candidateTypeLabel(session?.type)}</div>
             </div>
           </Link>
           <div className="flex items-center gap-3">
