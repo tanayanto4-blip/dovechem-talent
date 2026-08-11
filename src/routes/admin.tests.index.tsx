@@ -13,6 +13,7 @@ import { TestDurationEditor } from "@/components/test-duration-editor";
 import { TestPublishToggle } from "@/components/publish-toggle";
 import { TestAudienceEditor } from "@/components/test-audience-editor";
 import { testAudienceLabel } from "@/lib/candidate-type";
+import { TrackTabs, type Track } from "@/components/track-tabs";
 
 export const Route = createFileRoute("/admin/tests/")({ head: () => ({ meta: [
     { title: "Bank Soal Psikotest — Admin Dover Chemical" },
@@ -33,8 +34,18 @@ function TestsList() {
   const [category, setCategory] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
   const [testId, setTestId] = useState<string>("all");
+  const [track, setTrack] = useState<Track>("karyawan");
 
-  const tests = (data?.tests ?? []) as any[];
+  const allTests = (data?.tests ?? []) as any[];
+  const inTrack = (t: any, tr: Track) => (t.audience ?? "both") === "both" || t.audience === tr;
+  const tests = useMemo(() => allTests.filter((t) => inTrack(t, track)), [allTests, track]);
+  const trackCounts = useMemo(
+    () => ({
+      magang: allTests.filter((t) => inTrack(t, "magang")).length,
+      karyawan: allTests.filter((t) => inTrack(t, "karyawan")).length,
+    }),
+    [allTests],
+  );
   const categories = useMemo(() => Array.from(new Set(tests.map((t) => t.test_type))).sort(), [tests]);
   const idOptions = useMemo(() => {
     const src = category === "all" ? tests : tests.filter((t) => t.test_type === category);
@@ -59,7 +70,12 @@ function TestsList() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl font-bold text-primary">Bank Soal Psikotest</h1>
-        <p className="text-sm text-muted-foreground">Lihat seluruh soal, kunci jawaban, dan dimensi test.</p>
+        <p className="text-sm text-muted-foreground">
+          Bank soal dipisah per jalur kandidat — pilih tab Magang atau Karyawan.
+        </p>
+        <div className="mt-3">
+          <TrackTabs value={track} onChange={(t) => { setTrack(t); setTestId("all"); }} counts={trackCounts} />
+        </div>
       </div>
 
       <Card className="shadow-card">
@@ -113,7 +129,7 @@ function TestsList() {
         <div className="text-muted-foreground">Memuat...</div>
       ) : filtered.length === 0 ? (
         <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
-          Tidak ada bank soal yang cocok dengan filter.
+          Tidak ada bank soal jalur ini yang cocok dengan filter.
         </div>
       ) : (
         <>
