@@ -66,33 +66,27 @@ function PortalHome() {
       </div>
 
 
-      {(data?.attempts?.length ?? 0) > 0 && (
-        <Card>
-          <CardHeader><CardTitle>Hasil Psikotest</CardTitle></CardHeader>
-          <CardContent className="space-y-2">
-            {[...data!.attempts]
-              .sort(
-                (x: any, y: any) =>
-                  data!.tests.findIndex((t: any) => t.id === x.test_id) -
-                  data!.tests.findIndex((t: any) => t.id === y.test_id),
-              )
-              .map((a: any) => {
-              const testIdx = data!.tests.findIndex((t: any) => t.id === a.test_id);
-              return (
-                <div key={a.id} className="flex items-center justify-between rounded-md border p-3">
-                  <div>
-                    <div className="font-medium">{testIdx >= 0 ? `TEST ${testIdx + 1}` : "TEST"}</div>
-                    <div className="text-xs text-muted-foreground">{a.status === "finished" ? "Selesai" : "Sedang berlangsung"}</div>
-                  </div>
-                  <Badge variant={a.status === "finished" ? "default" : "secondary"}>
-                    {a.status === "finished" ? "Selesai" : "In progress"}
-                  </Badge>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
+      <Card className="border-primary/20 bg-primary/5 shadow-none">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Info className="h-5 w-5 text-primary" />
+            Petunjuk Pelaksanaan
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <p>
+            <strong className="text-primary">1. Lengkapi Data Diri terlebih dahulu.</strong>
+            {" "}Klik tombol <em>Mulai</em> pada kartu Data Diri, isi seluruh informasi yang diminta, lalu simpan.
+          </p>
+          <p>
+            <strong className="text-primary">2. Ikuti petunjuk Psikotest.</strong>
+            {" "}Setelah data diri tersimpan, petunjuk untuk mengerjakan psikotest akan muncul. Kerjakan setiap bagian sesuai arahan yang diberikan.
+          </p>
+          <p>
+            Pastikan koneksi internet stabil dan kerjakan tes secara mandiri. Jika mengalami kendala, hubungi tim HRD Dover Chemical.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
