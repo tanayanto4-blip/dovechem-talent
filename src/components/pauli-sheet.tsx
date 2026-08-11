@@ -165,10 +165,13 @@ export function PauliSheet({
           </div>
         </div>
 
-        <p className="mt-6 text-center text-[11px] text-muted-foreground">
-          Jumlahkan dua angka pada kotak, tulis <b>angka terakhir</b> hasilnya. Contoh: 7 + 8 = 15 → tulis{" "}
-          <b>5</b>. Setelah menjawab, otomatis bergeser ke pasangan berikutnya.
-        </p>
+        {showGuide && (
+          <p className="mt-6 text-center text-[11px] text-muted-foreground">
+            Jumlahkan dua angka pada kotak, tulis <b>angka terakhir</b> hasilnya. Contoh: 7 + 8 = 15 → tulis{" "}
+            <b>5</b>. Setelah menjawab, otomatis bergeser ke pasangan berikutnya.
+          </p>
+        )}
+
       </div>
     </div>
   );
