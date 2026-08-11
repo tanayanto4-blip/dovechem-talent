@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { candidateGetProfile, candidateSaveProfile } from "@/lib/candidate.functions";
+import { candidateAutosaveProfile, candidateGetProfile, candidateSaveProfile } from "@/lib/candidate.functions";
 import { useCandidateSession } from "@/lib/candidate-session";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,24 +32,47 @@ export const Route = createFileRoute("/candidate/portal/data")({
   component: DataForm,
 });
 
+const requiredFields: [string, string][] = [
+  ["full_name", "Nama lengkap"],
+  ["gender", "Jenis kelamin"],
+  ["age", "Usia"],
+  ["school_name", "Nama sekolah / universitas"],
+  ["education", "Pendidikan"],
+  ["major", "Jurusan"],
+  ["work_experience", "Pengalaman kerja"],
+  ["phone", "Telp / HP"],
+  ["email", "Email"],
+  ["position_applied", "Posisi dilamar"],
+];
+
+const ageOptions = Array.from({ length: 56 }, (_, i) => String(i + 15));
+const workOptions = ["Belum bekerja", ...Array.from({ length: 21 }, (_, i) => String(i))];
+
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+
 function DataForm() {
   const session = useCandidateSession();
   const nav = useNavigate();
   const qc = useQueryClient();
   const getProfile = useServerFn(candidateGetProfile);
   const save = useServerFn(candidateSaveProfile);
-  const { data } = useQuery({
+  const autosave = useServerFn(candidateAutosaveProfile);
+  const { data, isLoading } = useQuery({
     queryKey: ["candidate-profile", session?.code],
     queryFn: () => getProfile({ data: { code: session!.code, device: session!.device } }),
     enabled: !!session,
   });
   const c = data?.candidate;
-  const [form, setForm] = useState<any>({});
+  const [form, setForm] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const initialFormRef = useRef<Record<string, string> | null>(null);
+  const lastSavedRef = useRef<Record<string, string> | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (c)
-      setForm({
+    if (c) {
+      const init: Record<string, string> = {
         full_name: c.full_name ?? "",
         gender: c.gender ?? "",
         age: c.age != null ? String(c.age) : "",
@@ -60,25 +83,53 @@ function DataForm() {
         phone: c.phone ?? "",
         email: c.email ?? "",
         position_applied: c.position_applied ?? "",
-      });
+      };
+      setForm(init);
+      initialFormRef.current = init;
+      lastSavedRef.current = init;
+    }
   }, [c]);
 
-  const requiredFields: [string, string][] = [
-    ["full_name", "Nama lengkap"],
-    ["gender", "Jenis kelamin"],
-    ["age", "Usia"],
-    ["school_name", "Nama sekolah / universitas"],
-    ["education", "Pendidikan"],
-    ["major", "Jurusan"],
-    ["work_experience", "Pengalaman kerja"],
-    ["phone", "Telp / HP"],
-    ["email", "Email"],
-    ["position_applied", "Posisi dilamar"],
-  ];
+  const doAutosave = useCallback(
+    async (currentForm: Record<string, string>) => {
+      if (!session) return;
+      if (lastSavedRef.current && JSON.stringify(lastSavedRef.current) === JSON.stringify(currentForm)) return;
 
-  const ageOptions = Array.from({ length: 56 }, (_, i) => String(i + 15));
-  const workOptions = ["Belum bekerja", ...Array.from({ length: 21 }, (_, i) => String(i))];
+      const payload: Record<string, string> = { code: session.code, device: session.device ?? "" };
+      let hasValue = false;
+      for (const [key] of requiredFields) {
+        const value = currentForm[key];
+        if (value != null && String(value).trim() !== "") {
+          payload[key] = value;
+          hasValue = true;
+        }
+      }
+      if (!hasValue) {
+        setSaveStatus("idle");
+        return;
+      }
 
+      setSaveStatus("saving");
+      try {
+        await autosave({ data: payload });
+        lastSavedRef.current = { ...currentForm };
+        setSaveStatus("saved");
+      } catch (e: any) {
+        setSaveStatus("error");
+      }
+    },
+    [session, autosave],
+  );
+
+  useEffect(() => {
+    if (!c || !session) return;
+    if (JSON.stringify(form) === JSON.stringify(initialFormRef.current)) return;
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => doAutosave(form), 1000);
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [form, c, session, doAutosave]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -100,13 +151,21 @@ function DataForm() {
     }
   }
 
+  if (isLoading || !session) {
+    return (
+      <Card className="shadow-card">
+        <CardContent className="py-10 text-center text-muted-foreground">Memuat data diri…</CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-card">
       <CardHeader>
         <h1 className="font-display text-2xl font-semibold leading-none tracking-tight">Biodata Kandidat</h1>
         <p className="text-sm text-muted-foreground">
           Seluruh kolom wajib diisi. Data diri harus dilengkapi terlebih dahulu sebelum Anda dapat mengerjakan
-          psikotest.
+          psikotest. Setiap kolom yang terisi akan otomatis tersimpan.
         </p>
       </CardHeader>
       <CardContent>
@@ -217,10 +276,15 @@ function DataForm() {
               required
             />
           </Field>
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 flex flex-wrap items-center gap-3">
             <Button type="submit" disabled={saving}>
-              {saving ? "Menyimpan..." : "Simpan Data"}
+              {saving ? "Menyimpan…" : "Simpan Data"}
             </Button>
+            {saveStatus === "saving" && (
+              <span className="text-sm text-muted-foreground">Menyimpan otomatis…</span>
+            )}
+            {saveStatus === "saved" && <span className="text-sm text-green-600">Tersimpan otomatis</span>}
+            {saveStatus === "error" && <span className="text-sm text-destructive">Gagal menyimpan otomatis</span>}
           </div>
         </form>
       </CardContent>
