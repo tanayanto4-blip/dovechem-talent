@@ -167,14 +167,38 @@ function DataForm() {
               required
             />
           </Field>
-          <Field label="Pernah Bekerja Berapa Lama" required>
-            <Input
-              value={form.work_experience ?? ""}
-              onChange={(e) => setForm({ ...form, work_experience: e.target.value })}
-              placeholder="2 tahun 6 bulan / Belum pernah"
-              required
-            />
+          <Field label="Usia" required>
+            <Select value={form.age ?? ""} onValueChange={(v) => setForm({ ...form, age: v })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih usia" />
+              </SelectTrigger>
+              <SelectContent className="max-h-64">
+                {ageOptions.map((v) => (
+                  <SelectItem key={v} value={v}>
+                    {v} tahun
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
+          <Field label="Pernah Bekerja Berapa Lama" required>
+            <Select
+              value={form.work_experience ?? ""}
+              onValueChange={(v) => setForm({ ...form, work_experience: v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih lama bekerja" />
+              </SelectTrigger>
+              <SelectContent className="max-h-64">
+                {workOptions.map((v) => (
+                  <SelectItem key={v} value={v}>
+                    {v}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+
           <Field label="Telp / HP" required>
             <Input
               value={form.phone ?? ""}
