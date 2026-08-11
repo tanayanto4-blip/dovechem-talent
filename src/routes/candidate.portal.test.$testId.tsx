@@ -529,13 +529,10 @@ function TakeTest() {
   const mins = Math.floor(remaining / 60).toString().padStart(2, "0");
   const secs = (remaining % 60).toString().padStart(2, "0");
   const total = data.questions.length;
-  const isKraepelin = data.test.test_type === "kraepelin";
   const isDisc = data.test.test_type === "disc";
-  const isMbti = data.test.test_type === "mbti";
-  const isEq = data.test.test_type === "eq";
   const isWpt = data.test.test_type === "wpt";
   const isPauli = data.test.test_type === "pauli";
-  const isPapi = data.test.test_type === "papi";
+
   const answered = isDisc
     ? Object.values(discPicks).filter((p) => p.most && p.least && p.most !== p.least).length
     : isPauli
