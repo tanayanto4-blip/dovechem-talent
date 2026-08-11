@@ -251,7 +251,8 @@ const ProfileInput = z.object({
   gender: z.enum(["Laki-laki", "Perempuan"], { message: "Jenis kelamin wajib dipilih" }),
   education: z.string().trim().min(1, "Pendidikan wajib dipilih").max(120),
   major: z.string().trim().min(1, "Jurusan wajib diisi").max(120),
-  work_experience: WorkExperienceSchema,
+  work_experience: WorkExperienceSchema.optional(),
+  semester: z.string().trim().max(40).optional(),
   age: z.coerce.number().int().min(15, "Usia wajib dipilih").max(70),
   phone: z.string().trim().min(6, "Nomor telepon wajib diisi").max(30),
   email: z.string().trim().email("Email tidak valid").max(200),
@@ -279,6 +280,7 @@ const ProfileAutosaveInput = z.object({
   education: z.string().trim().max(120).optional(),
   major: z.string().trim().max(120).optional(),
   work_experience: WorkExperienceSchema.optional(),
+  semester: z.string().trim().max(40).optional(),
   age: z.coerce.number().int().min(15).max(70).optional(),
   phone: z.string().trim().max(30).optional(),
   email: z.string().trim().email("Email tidak valid").max(200).optional(),
@@ -299,6 +301,7 @@ export const candidateAutosaveProfile = createServerFn({ method: "POST" })
     if (raw.education?.trim()) update.education = raw.education.trim();
     if (raw.major?.trim()) update.major = raw.major.trim();
     if (raw.work_experience?.trim()) update.work_experience = raw.work_experience.trim();
+    if (raw.semester?.trim()) update.semester = raw.semester.trim();
     if (raw.age != null) update.age = raw.age;
     if (raw.phone?.trim()) update.phone = raw.phone.trim();
     if (raw.email?.trim()) update.email = raw.email.trim();
@@ -404,6 +407,7 @@ export const candidateStartTest = createServerFn({ method: "POST" })
     const cand = await ensureCandidate(sb, codeRow.id);
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     if (!cand.data_completed) throw new Error("Lengkapi data diri terlebih dahulu.");
+    await assertTestForType(sb, data.test_id, codeRow.candidate_type);
     await assertTestOpen(sb, cand.id, data.test_id);
 
     let { data: attempt } = await sb.from("test_attempts").select("*").eq("candidate_id", cand.id).eq("test_id", data.test_id).maybeSingle();
@@ -814,6 +818,7 @@ export const candidateGetTestIntro = createServerFn({ method: "POST" })
         .createSignedUrl((test as any).voice_audio_path, 60 * 60);
       voice_audio_url = signed?.signedUrl ?? null;
     }
+    await assertTestForType(sb, data.test_id, codeRow.candidate_type);
     await assertTestOpen(sb, cand.id, data.test_id);
     return {
       test: { ...maskTest(test as any, await activeTestOrder(sb, codeRow.candidate_type)), voice_audio_url },
