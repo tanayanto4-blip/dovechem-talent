@@ -52,6 +52,7 @@ function DataForm() {
       setForm({
         full_name: c.full_name ?? "",
         gender: c.gender ?? "",
+        age: c.age != null ? String(c.age) : "",
         school_name: c.school_name ?? "",
         education: c.education ?? "",
         major: c.major ?? "",
@@ -65,6 +66,7 @@ function DataForm() {
   const requiredFields: [string, string][] = [
     ["full_name", "Nama lengkap"],
     ["gender", "Jenis kelamin"],
+    ["age", "Usia"],
     ["school_name", "Nama sekolah / universitas"],
     ["education", "Pendidikan"],
     ["major", "Jurusan"],
@@ -73,6 +75,15 @@ function DataForm() {
     ["email", "Email"],
     ["position_applied", "Posisi dilamar"],
   ];
+
+  const ageOptions = Array.from({ length: 56 }, (_, i) => String(i + 15));
+  const workOptions = [
+    "Belum pernah bekerja",
+    "Kurang dari 1 tahun",
+    ...Array.from({ length: 10 }, (_, i) => `${i + 1} tahun`),
+    "Lebih dari 10 tahun",
+  ];
+
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -156,14 +167,38 @@ function DataForm() {
               required
             />
           </Field>
-          <Field label="Pernah Bekerja Berapa Lama" required>
-            <Input
-              value={form.work_experience ?? ""}
-              onChange={(e) => setForm({ ...form, work_experience: e.target.value })}
-              placeholder="2 tahun 6 bulan / Belum pernah"
-              required
-            />
+          <Field label="Usia" required>
+            <Select value={form.age ?? ""} onValueChange={(v) => setForm({ ...form, age: v })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih usia" />
+              </SelectTrigger>
+              <SelectContent className="max-h-64">
+                {ageOptions.map((v) => (
+                  <SelectItem key={v} value={v}>
+                    {v} tahun
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
+          <Field label="Pernah Bekerja Berapa Lama" required>
+            <Select
+              value={form.work_experience ?? ""}
+              onValueChange={(v) => setForm({ ...form, work_experience: v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih lama bekerja" />
+              </SelectTrigger>
+              <SelectContent className="max-h-64">
+                {workOptions.map((v) => (
+                  <SelectItem key={v} value={v}>
+                    {v}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+
           <Field label="Telp / HP" required>
             <Input
               value={form.phone ?? ""}

@@ -214,6 +214,7 @@ const ProfileInput = z.object({
   education: z.string().trim().min(1, "Pendidikan wajib dipilih").max(120),
   major: z.string().trim().min(1, "Jurusan wajib diisi").max(120),
   work_experience: z.string().trim().min(1, "Pengalaman kerja wajib diisi").max(120),
+  age: z.coerce.number().int().min(15, "Usia wajib dipilih").max(70),
   phone: z.string().trim().min(6, "Nomor telepon wajib diisi").max(30),
   email: z.string().trim().email("Email tidak valid").max(200),
   position_applied: z.string().trim().min(2, "Posisi yang dilamar wajib diisi").max(120),
