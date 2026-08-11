@@ -4,7 +4,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { candidateGetProfile } from "@/lib/candidate.functions";
 import { useCandidateSession } from "@/lib/candidate-session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, User, ClipboardList, ArrowRight, Info } from "lucide-react";
