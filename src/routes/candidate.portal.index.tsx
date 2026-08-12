@@ -100,7 +100,7 @@ function StepCard({ title, desc, icon: Icon, done, to }: any) {
           <Icon className="h-6 w-6 text-primary-glow" />
           {done ? <CheckCircle2 className="h-5 w-5 text-success" /> : <Circle className="h-5 w-5 text-muted-foreground" />}
         </div>
-        <div className="font-semibold text-primary">{title}</div>
+        <h2 className="font-semibold text-primary">{title}</h2>
         <div className="mt-1 text-xs text-muted-foreground">{desc}</div>
         <Button asChild size="sm" variant={done ? "outline" : "default"} className="mt-4 w-full">
           <Link to={to}>{done ? "Lihat" : "Mulai"} <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
