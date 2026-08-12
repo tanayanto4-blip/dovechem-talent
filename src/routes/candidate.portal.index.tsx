@@ -44,12 +44,14 @@ function PortalHome() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-bold text-primary">Halo, {data?.candidate?.full_name ?? session.candidate_name}</h1>
-        <p className="text-muted-foreground">Ikuti tahapan berikut untuk menyelesaikan proses seleksi Anda.</p>
+        <h1 className="font-display text-3xl font-bold text-primary">Status Rekrutmen Kandidat</h1>
+        <p className="text-muted-foreground">
+          Halo, {data?.candidate?.full_name ?? session.candidate_name}. Ikuti tahapan berikut untuk menyelesaikan proses seleksi Anda.
+        </p>
       </div>
 
       <Card className="shadow-card">
-        <CardHeader><CardTitle>Progress Keseluruhan</CardTitle></CardHeader>
+        <CardHeader><CardTitle asChild><h2>Progress Keseluruhan</h2></CardTitle></CardHeader>
         <CardContent>
           <div className="mb-2 flex items-baseline justify-between">
             <span className="text-3xl font-bold text-primary">{progress}%</span>
