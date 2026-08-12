@@ -51,7 +51,7 @@ function PortalHome() {
       </div>
 
       <Card className="shadow-card">
-        <CardHeader><CardTitle asChild><h2>Progress Keseluruhan</h2></CardTitle></CardHeader>
+        <CardHeader><h2 className="text-lg font-semibold leading-none tracking-tight">Progress Keseluruhan</h2></CardHeader>
         <CardContent>
           <div className="mb-2 flex items-baseline justify-between">
             <span className="text-3xl font-bold text-primary">{progress}%</span>
