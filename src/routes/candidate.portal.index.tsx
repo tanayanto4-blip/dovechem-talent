@@ -69,10 +69,10 @@ function PortalHome() {
 
       <Card className="border-primary/20 bg-primary/5 shadow-none">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+          <h2 className="flex items-center gap-2 text-base font-semibold leading-none tracking-tight">
             <Info className="h-5 w-5 text-primary" />
             Petunjuk Pelaksanaan
-          </CardTitle>
+          </h2>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>
