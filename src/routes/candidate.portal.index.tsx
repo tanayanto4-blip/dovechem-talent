@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateGetProfile } from "@/lib/candidate.functions";
 import { useCandidateSession } from "@/lib/candidate-session";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, User, ClipboardList, ArrowRight, Info } from "lucide-react";
@@ -44,12 +44,14 @@ function PortalHome() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-bold text-primary">Halo, {data?.candidate?.full_name ?? session.candidate_name}</h1>
-        <p className="text-muted-foreground">Ikuti tahapan berikut untuk menyelesaikan proses seleksi Anda.</p>
+        <h1 className="font-display text-3xl font-bold text-primary">Status Rekrutmen Kandidat</h1>
+        <p className="text-muted-foreground">
+          Halo, {data?.candidate?.full_name ?? session.candidate_name}. Ikuti tahapan berikut untuk menyelesaikan proses seleksi Anda.
+        </p>
       </div>
 
       <Card className="shadow-card">
-        <CardHeader><CardTitle>Progress Keseluruhan</CardTitle></CardHeader>
+        <CardHeader><h2 className="text-lg font-semibold leading-none tracking-tight">Progress Keseluruhan</h2></CardHeader>
         <CardContent>
           <div className="mb-2 flex items-baseline justify-between">
             <span className="text-3xl font-bold text-primary">{progress}%</span>
@@ -67,10 +69,10 @@ function PortalHome() {
 
       <Card className="border-primary/20 bg-primary/5 shadow-none">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+          <h2 className="flex items-center gap-2 text-base font-semibold leading-none tracking-tight">
             <Info className="h-5 w-5 text-primary" />
             Petunjuk Pelaksanaan
-          </CardTitle>
+          </h2>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>
@@ -98,7 +100,7 @@ function StepCard({ title, desc, icon: Icon, done, to }: any) {
           <Icon className="h-6 w-6 text-primary-glow" />
           {done ? <CheckCircle2 className="h-5 w-5 text-success" /> : <Circle className="h-5 w-5 text-muted-foreground" />}
         </div>
-        <div className="font-semibold text-primary">{title}</div>
+        <h2 className="font-semibold text-primary">{title}</h2>
         <div className="mt-1 text-xs text-muted-foreground">{desc}</div>
         <Button asChild size="sm" variant={done ? "outline" : "default"} className="mt-4 w-full">
           <Link to={to}>{done ? "Lihat" : "Mulai"} <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
