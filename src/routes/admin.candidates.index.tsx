@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listCandidates, deleteCandidate } from "@/lib/admin.functions";
@@ -7,8 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Trash2, Search, X } from "lucide-react";
 import { toast } from "sonner";
+import { TrackTabs } from "@/components/track-tabs";
+import { candidateTrackOf, candidateTypeShort, type CandidateType } from "@/lib/candidate-type";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
 
 export const Route = createFileRoute("/admin/candidates/")({ head: () => ({ meta: [
     { title: "Daftar Kandidat — Admin Dover Chemical" },
