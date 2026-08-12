@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listCandidates, deleteCandidate } from "@/lib/admin.functions";
@@ -7,8 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Trash2, Search, X } from "lucide-react";
 import { toast } from "sonner";
+import { TrackTabs } from "@/components/track-tabs";
+import { candidateTrackOf, candidateTypeShort, type CandidateType } from "@/lib/candidate-type";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
 
 export const Route = createFileRoute("/admin/candidates/")({ head: () => ({ meta: [
     { title: "Daftar Kandidat — Admin Dover Chemical" },
@@ -38,6 +42,32 @@ function CandidatesList() {
   const { data } = useQuery({ queryKey: ["candidates"], queryFn: () => listFn({ data: { limit: 1000 } }) });
   const [toDelete, setToDelete] = useState<any | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [track, setTrack] = useState<CandidateType>("magang");
+  const [search, setSearch] = useState("");
+
+  const all = (data?.candidates ?? []) as any[];
+  const counts = useMemo(
+    () => ({
+      magang: all.filter((c) => candidateTrackOf(c) === "magang").length,
+      karyawan: all.filter((c) => candidateTrackOf(c) === "karyawan").length,
+    }),
+    [all],
+  );
+  const rows = useMemo(() => {
+    const s = search.trim().toLowerCase();
+    return all
+      .filter((c) => candidateTrackOf(c) === track)
+      .filter((c) =>
+        !s
+          ? true
+          : `${c.full_name ?? ""} ${c.email ?? ""} ${c.candidate_codes?.code ?? c.code_snapshot ?? ""} ${c.position_applied ?? ""} ${c.school_name ?? ""}`
+              .toLowerCase()
+              .includes(s),
+      );
+  }, [all, track, search]);
+
+  const isMagang = track === "magang";
+  const colCount = 8;
 
   async function confirmDelete() {
     if (!toDelete) return;
@@ -59,28 +89,51 @@ function CandidatesList() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl font-bold text-primary">Kandidat</h1>
-        <p className="text-muted-foreground">Daftar seluruh kandidat yang telah login menggunakan kode akses.</p>
+        <p className="text-muted-foreground">
+          Data kandidat dipisah per jalur. Pilih jalur untuk melihat daftarnya.
+        </p>
+        <TrackTabs value={track} onChange={setTrack} counts={counts} className="mt-4" />
       </div>
+
       <Card className="shadow-card">
-        <CardHeader><CardTitle>Semua Kandidat</CardTitle></CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle>Kandidat {candidateTypeShort(track)}</CardTitle>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cari nama, email, kode…"
+                className="w-64 pl-8"
+              />
+            </div>
+            <Button variant="ghost" size="icon" disabled={!search} onClick={() => setSearch("")} aria-label="Reset pencarian">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
         <CardContent>
+          <div className="mb-3 text-xs text-muted-foreground">
+            Menampilkan {rows.length} dari {counts[track]} kandidat {candidateTypeShort(track).toLowerCase()}.
+          </div>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Nama</TableHead>
                   <TableHead>Kode</TableHead>
-                  <TableHead>NIK</TableHead>
                   <TableHead>No. HP</TableHead>
                   <TableHead>Pendidikan</TableHead>
-                  <TableHead>Posisi</TableHead>
+                  <TableHead>{isMagang ? "Sekolah / Kampus" : "Posisi"}</TableHead>
+                  <TableHead>{isMagang ? "Semester" : "Lama Bekerja"}</TableHead>
                   <TableHead>Biodata</TableHead>
                   <TableHead>Test</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(data?.candidates ?? []).map((c: any) => {
+                {rows.map((c: any) => {
                   const finished = (c.test_attempts ?? []).filter((a: any) => a.status === "finished").length;
                   return (
                     <TableRow key={c.id}>
@@ -88,13 +141,13 @@ function CandidatesList() {
                         <div className="font-medium">{c.full_name ?? "-"}</div>
                         <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
                       </TableCell>
-                      <TableCell className="font-mono">{c.candidate_codes?.code ?? c.code_snapshot ?? "-"}</TableCell>
-                      <TableCell className="font-mono text-xs">{c.nik ?? "-"}</TableCell>
+                      <TableCell className="font-mono text-xs">{c.candidate_codes?.code ?? c.code_snapshot ?? "-"}</TableCell>
                       <TableCell className="text-sm">{c.phone ?? "-"}</TableCell>
                       <TableCell className="text-sm">{c.education ?? "-"}</TableCell>
-                      <TableCell>{c.position_applied ?? "-"}</TableCell>
+                      <TableCell className="text-sm">{(isMagang ? c.school_name : c.position_applied) ?? "-"}</TableCell>
+                      <TableCell className="text-sm">{(isMagang ? c.semester : c.work_experience) ?? "-"}</TableCell>
                       <TableCell>{c.data_completed ? <Badge className="bg-success">Lengkap</Badge> : <Badge variant="secondary">Belum</Badge>}</TableCell>
-                      <TableCell>{finished} selesai</TableCell>
+                      <TableCell className="whitespace-nowrap text-sm">{finished} selesai</TableCell>
                       <TableCell>
                         <div className="flex justify-end gap-2">
                           <Button asChild size="sm" variant="outline"><Link to="/admin/candidates/$id" params={{ id: c.id }}>Detail</Link></Button>
@@ -114,11 +167,16 @@ function CandidatesList() {
                   );
                 })}
 
-                {(data?.candidates ?? []).length === 0 && (
-                  <TableRow><TableCell colSpan={9} className="py-8 text-center text-muted-foreground">Belum ada kandidat yang login.</TableCell></TableRow>
+                {rows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={colCount + 1} className="py-8 text-center text-muted-foreground">
+                      Belum ada kandidat {candidateTypeShort(track).toLowerCase()}.
+                    </TableCell>
+                  </TableRow>
                 )}
               </TableBody>
             </Table>
+
           </div>
         </CardContent>
       </Card>
