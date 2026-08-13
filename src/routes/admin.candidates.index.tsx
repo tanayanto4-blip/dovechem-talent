@@ -68,7 +68,7 @@ function CandidatesList() {
   }, [all, track, search]);
 
   const isMagang = track === "magang";
-  const colCount = 8;
+  const colCount = 9;
 
   async function confirmDelete() {
     if (!toDelete) return;
