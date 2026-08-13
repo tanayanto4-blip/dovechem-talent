@@ -2,6 +2,7 @@ import { QueryClient, QueryCache, MutationCache } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import { captureAppError } from "./lib/error-monitor";
+import { isAuthExpiredError, handleExpiredStaffSession } from "./lib/session-expiry";
 
 export const getRouter = () => {
   const queryClient = new QueryClient({
@@ -13,17 +14,28 @@ export const getRouter = () => {
         // not an app error worth toasting and logging.
         const key = JSON.stringify(query.queryKey).slice(0, 200);
         if (key.includes("candidate-profile")) return;
+        // Sesi staf habis: keluarkan dengan pesan jelas, jangan spam monitor.
+        if (isAuthExpiredError(error)) {
+          void handleExpiredStaffSession();
+          return;
+        }
         captureAppError(error, { source: "query", key });
       },
     }),
     mutationCache: new MutationCache({
-      onError: (error, _vars, _ctx, mutation) =>
+      onError: (error, _vars, _ctx, mutation) => {
+        if (isAuthExpiredError(error)) {
+          void handleExpiredStaffSession();
+          return;
+        }
         captureAppError(error, {
           source: "mutation",
           key: JSON.stringify(mutation.options.mutationKey ?? []).slice(0, 200),
           silent: true, // mutations already surface their own toast
-        }),
+        });
+      },
     }),
+
     defaultOptions: {
       queries: {
         // Dashboard lists feel instant: cache stays fresh for 5 minutes and
