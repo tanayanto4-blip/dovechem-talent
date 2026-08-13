@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { PresenceBadge, isCandidateOnline } from "@/components/presence-badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Plus, Copy, Trash2, Layers, Power, PowerOff, Zap, CalendarClock } from "lucide-react";
