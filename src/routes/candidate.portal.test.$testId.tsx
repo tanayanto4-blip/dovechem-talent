@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { reportIncident } from "@/lib/error-monitor";
 import { Timer, Check, Loader2, AlertCircle, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import wptQ7 from "@/assets/wpt-q7.jpg.asset.json";
@@ -262,6 +263,11 @@ function TakeTest() {
     const timeUp = timerReady && remaining === 0;
     if (data && (serverExpired || timeUp) && !submitting && !expiredRef.current) {
       expiredRef.current = true;
+      reportIncident(
+        "test-auto-submit",
+        `Test dikirim otomatis karena waktu habis (${testLabel})`,
+        { test_id: testId, code: session?.code, answered: Object.keys(answers).length, server_expired: serverExpired },
+      );
       handleSubmit(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -287,9 +293,14 @@ function TakeTest() {
       await saveAnswer({ data: { code: s.code, device: s.device, attempt_id: d.attempt.id, question_id: qid, answer } });
       inflight.current -= 1;
       if (inflight.current <= 0) { inflight.current = 0; setSaveState("saved"); }
-    } catch {
+    } catch (err) {
       inflight.current = Math.max(0, inflight.current - 1);
       setSaveState("error");
+      reportIncident("autosave-gagal", "Jawaban gagal tersimpan (kemungkinan sinyal lemah)", {
+        test_id: testId,
+        question_id: qid,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }, [saveAnswer]);
 
@@ -348,7 +359,14 @@ function TakeTest() {
       qc.invalidateQueries({ queryKey: ["candidate-profile"] });
       qc.removeQueries({ queryKey: ["start-test", testId, session?.code] });
       nav({ to: "/candidate/portal/tests", replace: true });
-    } catch (e: any) { toast.error(e?.message || "Gagal mengirim jawaban. Coba lagi."); }
+    } catch (e: any) {
+      toast.error(e?.message || "Gagal mengirim jawaban. Coba lagi.");
+      reportIncident("kirim-jawaban-gagal", `Gagal mengirim jawaban (${testLabel}): ${e?.message ?? "koneksi bermasalah"}`, {
+        test_id: testId,
+        auto,
+        code: session?.code,
+      });
+    }
     finally { setSubmitting(false); }
   }
 
