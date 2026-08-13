@@ -62,6 +62,24 @@ type Row = {
   resolution_note: string | null;
 };
 
+const INCIDENT_LABEL: Record<string, string> = {
+  "koneksi-terputus": "Sinyal kandidat terputus",
+  "koneksi-pulih": "Sinyal kandidat pulih",
+  "autosave-gagal": "Jawaban gagal tersimpan",
+  "logout-perangkat-lain": "Terlogout (kode dipakai perangkat lain)",
+  "sesi-tidak-valid": "Sesi kandidat ditolak",
+  "test-auto-submit": "Test terkirim otomatis (waktu habis)",
+  "kirim-jawaban-gagal": "Gagal kirim jawaban",
+};
+
+function sourceLabel(source: string) {
+  if (source.startsWith("insiden:")) {
+    const kind = source.slice("insiden:".length);
+    return INCIDENT_LABEL[kind] ?? `Insiden: ${kind}`;
+  }
+  return source;
+}
+
 function MonitoringPage() {
   const qc = useQueryClient();
   const listFn = useServerFn(listErrorEvents);
@@ -115,7 +133,7 @@ function MonitoringPage() {
       new Date(r.occurred_at).toLocaleString("id-ID"),
       AREA_LABEL[r.area] ?? r.area,
       r.route ?? "",
-      r.source,
+      sourceLabel(r.source),
       r.actor_label ?? "",
       r.message,
       r.resolved ? "Ditangani" : "Terbuka",
@@ -218,9 +236,13 @@ function MonitoringPage() {
                 {r.actor_label && (
                   <span className="text-xs text-muted-foreground">· {r.actor_label}</span>
                 )}
-                <span className="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">
-                  {r.source}
-                </span>
+                {r.source.startsWith("insiden:") ? (
+                  <Badge className="ml-auto" variant="secondary">{sourceLabel(r.source)}</Badge>
+                ) : (
+                  <span className="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {r.source}
+                  </span>
+                )}
               </div>
               <div className="mt-2 text-sm font-medium">{r.message}</div>
               {r.stack && (
