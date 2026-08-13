@@ -387,6 +387,7 @@ function CodesPage() {
                       <div className="truncate text-xs text-muted-foreground">{c.candidate_email}</div>
                     </TableCell>
                     <TableCell><Badge variant="outline">{candidateTypeShort(c.candidate_type)}</Badge></TableCell>
+                    <TableCell><PresenceBadge lastSeenAt={c.last_seen_at} /></TableCell>
                     <TableCell>{c.position_applied ?? "-"}</TableCell>
                     <TableCell>
                       {c.candidates?.data_completed ? <Badge className="bg-success">Data lengkap</Badge> : c.candidates ? <Badge variant="secondary">Data belum lengkap</Badge> : <Badge variant="outline">Belum login</Badge>}
