@@ -382,8 +382,9 @@ export const getCandidateDetail = createServerFn({ method: "POST" })
       .from("candidates")
       .select("*, candidate_codes(*), candidate_files(*), test_attempts(*, tests(*))")
       .eq("id", data.id)
-      .single();
+      .maybeSingle();
     if (error) throw new Error(error.message);
+    if (!cand) throw new Error("Data kandidat tidak ditemukan atau sudah dihapus.");
     return { candidate: cand };
   });
 
