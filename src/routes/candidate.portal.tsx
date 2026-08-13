@@ -83,12 +83,49 @@ function PortalLayout() {
   useEffect(() => {
     if (!takenOver) return;
     toast.error(DEVICE_CONFLICT_MESSAGE);
+    reportIncident("logout-perangkat-lain", "Kandidat keluar otomatis: kode dipakai di perangkat lain", {
+      code: session?.code,
+      candidate: session?.candidate_name,
+    });
     setCandidateSession(null);
     nav({ to: "/candidate/login" });
-  }, [takenOver, nav]);
+  }, [takenOver, nav, session?.code, session?.candidate_name]);
 
+  // Sinyal kandidat putus/pulih -> tercatat di Monitor Error untuk tim HC.
+  const [offline, setOffline] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const goOffline = () => {
+      setOffline(true);
+      toast.error("Koneksi internet terputus. Jawaban akan tersimpan lagi saat sinyal kembali.");
+      reportIncident("koneksi-terputus", "Koneksi internet kandidat terputus", { code: session?.code });
+    };
+    const goOnline = () => {
+      setOffline(false);
+      toast.success("Koneksi internet kembali normal.");
+      reportIncident("koneksi-pulih", "Koneksi internet kandidat kembali normal", { code: session?.code });
+    };
+    window.addEventListener("offline", goOffline);
+    window.addEventListener("online", goOnline);
+    setOffline(!navigator.onLine);
+    return () => {
+      window.removeEventListener("offline", goOffline);
+      window.removeEventListener("online", goOnline);
+    };
+  }, [session?.code]);
+
+  // Sesi kandidat ditolak server (kode kedaluwarsa/nonaktif) -> catat sekali.
+  const reportedSessionErr = useRef(false);
+  useEffect(() => {
+    if (!sessionError || reportedSessionErr.current) return;
+    reportedSessionErr.current = true;
+    reportIncident("sesi-tidak-valid", `Sesi kandidat ditolak: ${(sessionError as Error).message}`, {
+      code: session?.code,
+    });
+  }, [sessionError, session?.code]);
 
   if (!session) return null;
+
 
 
 
