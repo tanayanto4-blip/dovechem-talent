@@ -38,7 +38,13 @@ function CodesPage() {
   const toggle = useServerFn(toggleCode);
   const del = useServerFn(deleteCode);
   const purgeAll = useServerFn(deleteAllCodes);
-  const { data } = useQuery({ queryKey: ["codes"], queryFn: () => list({ data: { limit: 1000 } }) });
+  // Status online kandidat harus terlihat real-time -> refetch tiap 10 detik.
+  const { data } = useQuery({
+    queryKey: ["codes"],
+    queryFn: () => list({ data: { limit: 1000 } }),
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: true,
+  });
   const [open, setOpen] = useState(false);
   const [createMode, setCreateMode] = useState<"single" | "bulk">("single");
 
