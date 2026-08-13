@@ -167,6 +167,7 @@ export const candidateLogin = createServerFn({ method: "POST" })
       .update({
         active_device_token: device,
         active_device_at: new Date().toISOString(),
+        last_seen_at: new Date().toISOString(),
         ...(codeRow as any).used_at ? {} : { used_at: new Date().toISOString() },
       })
       .eq("id", codeRow.id);
@@ -235,6 +236,12 @@ export const candidateSessionStatus = createServerFn({ method: "POST" })
     if (row.active_device_token && row.active_device_token !== (data.device ?? "")) {
       return { status: "conflict" as const, message: DEVICE_CONFLICT_MESSAGE };
     }
+    // Presence: heartbeat ini dipanggil tiap 5 detik selama kandidat membuka
+    // portal, jadi last_seen_at = penanda online/offline di dashboard staff.
+    await sb
+      .from("candidate_codes")
+      .update({ last_seen_at: new Date().toISOString() })
+      .eq("code", data.code.toUpperCase());
     return { status: "ok" as const, message: "" };
   });
 

@@ -63,6 +63,7 @@ export type Database = {
           created_by: string | null
           expires_at: string | null
           id: string
+          last_seen_at: string | null
           position_applied: string | null
           used_at: string | null
         }
@@ -78,6 +79,7 @@ export type Database = {
           created_by?: string | null
           expires_at?: string | null
           id?: string
+          last_seen_at?: string | null
           position_applied?: string | null
           used_at?: string | null
         }
@@ -93,6 +95,7 @@ export type Database = {
           created_by?: string | null
           expires_at?: string | null
           id?: string
+          last_seen_at?: string | null
           position_applied?: string | null
           used_at?: string | null
         }

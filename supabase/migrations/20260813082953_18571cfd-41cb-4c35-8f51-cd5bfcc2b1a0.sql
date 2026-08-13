@@ -1,0 +1,2 @@
+ALTER TABLE public.candidate_codes ADD COLUMN IF NOT EXISTS last_seen_at timestamp with time zone;
+CREATE INDEX IF NOT EXISTS candidate_codes_last_seen_at_idx ON public.candidate_codes (last_seen_at DESC);

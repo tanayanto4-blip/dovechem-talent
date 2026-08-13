@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { PresenceBadge, isCandidateOnline } from "@/components/presence-badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Plus, Copy, Trash2, Layers, Power, PowerOff, Zap, CalendarClock } from "lucide-react";
@@ -37,7 +38,13 @@ function CodesPage() {
   const toggle = useServerFn(toggleCode);
   const del = useServerFn(deleteCode);
   const purgeAll = useServerFn(deleteAllCodes);
-  const { data } = useQuery({ queryKey: ["codes"], queryFn: () => list({ data: { limit: 1000 } }) });
+  // Status online kandidat harus terlihat real-time -> refetch tiap 10 detik.
+  const { data } = useQuery({
+    queryKey: ["codes"],
+    queryFn: () => list({ data: { limit: 1000 } }),
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: true,
+  });
   const [open, setOpen] = useState(false);
   const [createMode, setCreateMode] = useState<"single" | "bulk">("single");
 
@@ -304,7 +311,13 @@ function CodesPage() {
 
 
       <Card className="shadow-card">
-        <CardHeader><CardTitle>Daftar Kode</CardTitle></CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
+          <CardTitle>Daftar Kode</CardTitle>
+          <span className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-success" aria-hidden />
+            {codes.filter((c: any) => isCandidateOnline(c.last_seen_at)).length} kandidat online
+          </span>
+        </CardHeader>
         <CardContent>
           {/* Mobile: kartu per kode */}
           <div className="space-y-3 md:hidden">
@@ -335,6 +348,7 @@ function CodesPage() {
                   </div>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2 border-t pt-2 text-xs">
+                  <PresenceBadge lastSeenAt={c.last_seen_at} />
                   {c.candidates?.data_completed ? <Badge className="bg-success">Data lengkap</Badge> : c.candidates ? <Badge variant="secondary">Data belum lengkap</Badge> : <Badge variant="outline">Belum login</Badge>}
                   <span className="text-muted-foreground">Digunakan: {c.used_at ? new Date(c.used_at).toLocaleDateString("id-ID") : "-"}</span>
                   <button onClick={() => onEditExpiry(c.id, c.expires_at)} className="hover:underline">
@@ -361,6 +375,7 @@ function CodesPage() {
                   <TableHead>Kode</TableHead>
                   <TableHead>Kandidat</TableHead>
                   <TableHead>Tipe</TableHead>
+                  <TableHead>Kehadiran</TableHead>
                   <TableHead>Posisi</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Digunakan</TableHead>
@@ -386,6 +401,7 @@ function CodesPage() {
                       <div className="truncate text-xs text-muted-foreground">{c.candidate_email}</div>
                     </TableCell>
                     <TableCell><Badge variant="outline">{candidateTypeShort(c.candidate_type)}</Badge></TableCell>
+                    <TableCell><PresenceBadge lastSeenAt={c.last_seen_at} /></TableCell>
                     <TableCell>{c.position_applied ?? "-"}</TableCell>
                     <TableCell>
                       {c.candidates?.data_completed ? <Badge className="bg-success">Data lengkap</Badge> : c.candidates ? <Badge variant="secondary">Data belum lengkap</Badge> : <Badge variant="outline">Belum login</Badge>}

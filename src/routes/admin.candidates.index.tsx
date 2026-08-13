@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { PresenceBadge } from "@/components/presence-badge";
 import { useServerFn } from "@tanstack/react-start";
 import { listCandidates, deleteCandidate } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,7 +40,7 @@ function CandidatesList() {
   const listFn = useServerFn(listCandidates);
   const deleteFn = useServerFn(deleteCandidate);
   const qc = useQueryClient();
-  const { data } = useQuery({ queryKey: ["candidates"], queryFn: () => listFn({ data: { limit: 1000 } }) });
+  const { data } = useQuery({ queryKey: ["candidates"], queryFn: () => listFn({ data: { limit: 1000 } }), refetchInterval: 10_000, refetchIntervalInBackground: true });
   const [toDelete, setToDelete] = useState<any | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [track, setTrack] = useState<CandidateType>("magang");
@@ -67,7 +68,7 @@ function CandidatesList() {
   }, [all, track, search]);
 
   const isMagang = track === "magang";
-  const colCount = 8;
+  const colCount = 9;
 
   async function confirmDelete() {
     if (!toDelete) return;
@@ -123,6 +124,7 @@ function CandidatesList() {
                 <TableRow>
                   <TableHead>Nama</TableHead>
                   <TableHead>Kode</TableHead>
+                  <TableHead>Kehadiran</TableHead>
                   <TableHead>No. HP</TableHead>
                   <TableHead>Pendidikan</TableHead>
                   <TableHead>{isMagang ? "Sekolah / Kampus" : "Posisi"}</TableHead>
@@ -142,6 +144,7 @@ function CandidatesList() {
                         <div className="text-xs text-muted-foreground">{c.email ?? ""}</div>
                       </TableCell>
                       <TableCell className="font-mono text-xs">{c.candidate_codes?.code ?? c.code_snapshot ?? "-"}</TableCell>
+                      <TableCell><PresenceBadge lastSeenAt={c.candidate_codes?.last_seen_at} /></TableCell>
                       <TableCell className="text-sm">{c.phone ?? "-"}</TableCell>
                       <TableCell className="text-sm">{c.education ?? "-"}</TableCell>
                       <TableCell className="text-sm">{(isMagang ? c.school_name : c.position_applied) ?? "-"}</TableCell>
