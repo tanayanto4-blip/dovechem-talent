@@ -342,6 +342,7 @@ function CodesPage() {
                   </div>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2 border-t pt-2 text-xs">
+                  <PresenceBadge lastSeenAt={c.last_seen_at} />
                   {c.candidates?.data_completed ? <Badge className="bg-success">Data lengkap</Badge> : c.candidates ? <Badge variant="secondary">Data belum lengkap</Badge> : <Badge variant="outline">Belum login</Badge>}
                   <span className="text-muted-foreground">Digunakan: {c.used_at ? new Date(c.used_at).toLocaleDateString("id-ID") : "-"}</span>
                   <button onClick={() => onEditExpiry(c.id, c.expires_at)} className="hover:underline">
