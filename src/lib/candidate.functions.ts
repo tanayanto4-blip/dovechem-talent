@@ -167,6 +167,7 @@ export const candidateLogin = createServerFn({ method: "POST" })
       .update({
         active_device_token: device,
         active_device_at: new Date().toISOString(),
+        last_seen_at: new Date().toISOString(),
         ...(codeRow as any).used_at ? {} : { used_at: new Date().toISOString() },
       })
       .eq("id", codeRow.id);
