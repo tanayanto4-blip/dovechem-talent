@@ -361,6 +361,7 @@ function CodesPage() {
                   <TableHead>Kode</TableHead>
                   <TableHead>Kandidat</TableHead>
                   <TableHead>Tipe</TableHead>
+                  <TableHead>Kehadiran</TableHead>
                   <TableHead>Posisi</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Digunakan</TableHead>
