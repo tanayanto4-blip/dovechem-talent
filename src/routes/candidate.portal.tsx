@@ -159,6 +159,12 @@ function PortalLayout() {
           </div>
         </div>
       </header>
+      {offline && (
+        <div className="bg-destructive px-6 py-2 text-center text-sm font-medium text-destructive-foreground">
+          Koneksi internet terputus. Jangan tutup halaman — jawaban tersimpan otomatis saat sinyal kembali.
+        </div>
+      )}
+
       <div className="mx-auto grid max-w-7xl gap-6 px-6 py-8 md:grid-cols-[220px_1fr]">
         <aside className="space-y-1">
           {nav_items.map((it) => {
