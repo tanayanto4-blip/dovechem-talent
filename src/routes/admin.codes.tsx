@@ -311,7 +311,13 @@ function CodesPage() {
 
 
       <Card className="shadow-card">
-        <CardHeader><CardTitle>Daftar Kode</CardTitle></CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
+          <CardTitle>Daftar Kode</CardTitle>
+          <span className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-success" aria-hidden />
+            {codes.filter((c: any) => isCandidateOnline(c.last_seen_at)).length} kandidat online
+          </span>
+        </CardHeader>
         <CardContent>
           {/* Mobile: kartu per kode */}
           <div className="space-y-3 md:hidden">
