@@ -78,7 +78,43 @@ export function captureAppError(error: unknown, context: Record<string, unknown>
   });
 }
 
+/**
+ * Insiden non-teknis yang perlu diketahui tim HC / Super Admin:
+ * sinyal putus, kandidat terlogout otomatis, test selesai sendiri, dll.
+ * Selalu tercatat (tanpa dedupe agresif) dan bisa disertai toast ke kandidat.
+ */
+export type IncidentKind =
+  | "koneksi-terputus"
+  | "koneksi-pulih"
+  | "autosave-gagal"
+  | "logout-perangkat-lain"
+  | "sesi-tidak-valid"
+  | "test-auto-submit"
+  | "kirim-jawaban-gagal";
+
+export function reportIncident(
+  kind: IncidentKind,
+  message: string,
+  detail: Record<string, unknown> = {},
+) {
+  if (typeof window === "undefined") return;
+  const route = window.location.pathname;
+  void reportClientError({
+    data: {
+      area: areaFromPath(route),
+      route: route.slice(0, 300),
+      source: `insiden:${kind}`,
+      message: message.slice(0, 1000),
+      actor_label: actorLabel(),
+      context: { ...detail, kind, online: navigator.onLine, ua: navigator.userAgent.slice(0, 200) },
+    },
+  }).catch(() => {
+    /* monitoring tidak boleh mengganggu kandidat */
+  });
+}
+
 let installed = false;
+
 
 /** Install global browser error listeners once (client only). */
 export function installErrorMonitor() {
