@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate, Outlet, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateGetProfile, candidateSessionStatus } from "@/lib/candidate.functions";
 import { toast } from "sonner";
 import { useCandidateSession, setCandidateSession, DEVICE_CONFLICT_MESSAGE } from "@/lib/candidate-session";
 import { candidateTypeLabel } from "@/lib/candidate-type";
+import { reportIncident } from "@/lib/error-monitor";
 import { Button } from "@/components/ui/button";
 import { Beaker, LogOut, User, ClipboardList, Home } from "lucide-react";
 import doverLogo from "@/assets/dover-logo.jpg.asset.json";
