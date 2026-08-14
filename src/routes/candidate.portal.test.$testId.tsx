@@ -15,6 +15,11 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { reportIncident } from "@/lib/error-monitor";
 import { Timer, Check, Loader2, AlertCircle, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import wptQ7 from "@/assets/wpt-q7.jpg.asset.json";
 import wptQ38 from "@/assets/wpt-q38.png.asset.json";
@@ -196,6 +201,7 @@ function TakeTest() {
   const [timerReady, setTimerReady] = useState(false);
   const expiredRef = useRef(false);
   const [submitting, setSubmitting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const hydratedRef = useRef(false);
   const inflight = useRef(0);
@@ -666,7 +672,7 @@ function TakeTest() {
             <AlertDialogFooter>
               <AlertDialogCancel disabled={submitting}>Periksa lagi</AlertDialogCancel>
               <AlertDialogAction
-                onClick={(e) => { e.preventDefault(); setConfirmOpen(false); void handleSubmit(true); }}
+                onClick={(e: React.MouseEvent) => { e.preventDefault(); setConfirmOpen(false); void handleSubmit(true); }}
                 disabled={submitting}
               >
                 Ya, kirim jawaban
