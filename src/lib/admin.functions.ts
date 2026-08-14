@@ -310,6 +310,8 @@ export const clearCandidateBiodata = createServerFn({ method: "POST" })
         school_name: null,
         major: null,
         work_experience: null,
+        job_position: null,
+        job_level: null,
         data_completed: false,
       })
       .eq("id", data.id);
@@ -450,7 +452,7 @@ export const listTests = createServerFn({ method: "GET" })
 export const setTestAudience = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .inputValidator((d) =>
-    z.object({ id: z.string().uuid(), audience: z.enum(["magang", "karyawan", "both"]) }).parse(d),
+    z.object({ id: z.string().uuid(), audience: z.enum(["magang", "karyawan", "karyawan_staff", "karyawan_spv", "both"]) }).parse(d),
   )
   .handler(async ({ context, data }) => {
     const { error } = await context.supabase.from("tests").update({ audience: data.audience }).eq("id", data.id);
@@ -480,7 +482,7 @@ export const getAttemptDetail = createServerFn({ method: "POST" })
     const { data: attempt, error } = await supabaseAdmin
       .from("test_attempts")
       .select(
-        "*, tests(*), candidates(id, full_name, code_snapshot, age, semester, school_name, education, major, work_experience, phone, email, position_applied, gender, birth_date, birth_place, nik, address, marital_status, candidate_codes(code)), test_answers(*)",
+        "*, tests(*), candidates(id, full_name, code_snapshot, age, semester, school_name, education, major, work_experience, job_position, job_level, phone, email, position_applied, gender, birth_date, birth_place, nik, address, marital_status, candidate_codes(code)), test_answers(*)",
       )
       .eq("id", data.id)
       .single();
@@ -1086,7 +1088,7 @@ export const listAllAttempts = createServerFn({ method: "POST" })
     const { data: rows, error, count } = await context.supabase
       .from("test_attempts")
       .select(
-        "id, status, score, result, started_at, finished_at, test_id, candidate_id, tests(id, code, name, test_type), candidates(id, full_name, position_applied, code_snapshot, candidate_codes(code, candidate_type))",
+        "id, status, score, result, started_at, finished_at, test_id, candidate_id, tests(id, code, name, test_type), candidates(id, full_name, position_applied, job_position, job_level, code_snapshot, candidate_codes(code, candidate_type))",
         { count: "exact" },
       )
       .order("finished_at", { ascending: false, nullsFirst: false })
