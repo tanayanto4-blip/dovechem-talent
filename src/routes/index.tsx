@@ -75,15 +75,15 @@ const STEPS = [
 
 function Home() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen overflow-x-hidden bg-background">
       {/* Nav */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-card shadow-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link to="/" className="flex items-center gap-2.5">
-            <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="h-9 w-auto object-contain" />
-            <div className="leading-tight">
-              <div className="font-display text-base font-bold text-primary">PT DOVER CHEMICAL</div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Recruitment Portal</div>
+        <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:px-6 sm:py-4 md:flex md:justify-between">
+          <Link to="/" className="flex min-w-0 items-center gap-2.5">
+            <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="h-8 w-auto shrink-0 object-contain sm:h-9" />
+            <div className="min-w-0 leading-tight">
+              <div className="truncate font-display text-sm font-bold text-primary sm:text-base">PT DOVER CHEMICAL</div>
+              <div className="truncate text-[10px] uppercase tracking-widest text-muted-foreground">Recruitment Portal</div>
             </div>
           </Link>
           <nav className="hidden items-center gap-8 md:flex">
@@ -91,8 +91,8 @@ function Home() {
             <a href="#proses" className="text-sm text-muted-foreground hover:text-primary">Proses Seleksi</a>
             <a href="#kontak" className="text-sm text-muted-foreground hover:text-primary">Kontak</a>
           </nav>
-          <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm"><Link to="/auth">Login Admin</Link></Button>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex"><Link to="/auth">Login Admin</Link></Button>
             <Button asChild size="sm" className="bg-primary hover:bg-primary/90"><Link to="/candidate/login">Login Kandidat</Link></Button>
           </div>
         </div>
@@ -101,29 +101,29 @@ function Home() {
       {/* Hero */}
       <section className="relative overflow-hidden bg-hero text-primary-foreground">
         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 20%, white 0, transparent 40%), radial-gradient(circle at 80% 60%, white 0, transparent 40%)" }} />
-        <div className="relative mx-auto grid max-w-7xl gap-12 px-6 py-24 md:grid-cols-2 md:items-center md:py-32">
-          <div>
+        <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 sm:py-20 md:grid-cols-2 md:items-center md:gap-12 md:py-32">
+          <div className="min-w-0">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur">
               <span className="h-1.5 w-1.5 rounded-full bg-primary-glow" /> Portal Rekrutmen Resmi
             </div>
-            <h1 className="mt-6 font-display text-5xl font-bold leading-tight md:text-6xl">
+            <h1 className="mt-5 font-display text-3xl font-bold leading-tight sm:text-4xl md:text-6xl">
               Portal Psikotest &amp; Rekrutmen<br />
               <span className="text-primary-glow">PT Dover Chemical</span>
             </h1>
-            <p className="mt-6 max-w-lg text-lg text-white/80">
+            <p className="mt-4 max-w-lg text-base text-white/80 sm:mt-6 sm:text-lg">
               Platform psikotest &amp; administrasi rekrutmen untuk calon karyawan.
               Kandidat login dengan kode akses dari tim HR, mengisi biodata, lalu mengerjakan
               rangkaian psikotest resmi secara online.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild size="lg" className="bg-primary-glow text-primary-foreground hover:bg-primary-glow/90">
+            <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap">
+              <Button asChild size="lg" className="w-full bg-primary-glow text-primary-foreground hover:bg-primary-glow/90 sm:w-auto">
                 <Link to="/candidate/login">Mulai Test <ArrowRight className="ml-2 h-4 w-4" /></Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/40 bg-transparent text-primary-foreground hover:bg-white/10 hover:text-primary-foreground">
+              <Button asChild size="lg" variant="outline" className="w-full border-white/40 bg-transparent text-primary-foreground hover:bg-white/10 hover:text-primary-foreground sm:w-auto">
                 <Link to="/auth">Panel Admin HR</Link>
               </Button>
             </div>
-            <div className="mt-8 flex flex-wrap gap-2">
+            <div className="mt-6 flex flex-wrap gap-2 sm:mt-8">
               {["Industri Kimia", "Resin & Hardener", "Sejak 1984", "Berorientasi Mutu"].map((t) => (
                 <span key={t} className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur">
                   {t}
