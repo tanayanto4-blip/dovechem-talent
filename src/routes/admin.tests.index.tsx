@@ -13,7 +13,8 @@ import { TestDurationEditor } from "@/components/test-duration-editor";
 import { TestPublishToggle } from "@/components/publish-toggle";
 import { TestAudienceEditor } from "@/components/test-audience-editor";
 import { TrackTabs } from "@/components/track-tabs";
-import { audienceMatches, testAudienceLabel, type CandidateType } from "@/lib/candidate-type";
+import { audienceMatches, testAudienceLabel, jobLevelLabel, type CandidateType } from "@/lib/candidate-type";
+import { LevelTabs, type LevelFilter } from "@/components/level-tabs";
 
 
 export const Route = createFileRoute("/admin/tests/")({ head: () => ({ meta: [
@@ -33,6 +34,7 @@ function TestsList() {
 
   const [track, setTrack] = useState<CandidateType>("magang");
   const [search, setSearch] = useState("");
+  const [level, setLevel] = useState<LevelFilter>("all");
   const [category, setCategory] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
   const [testId, setTestId] = useState<string>("all");
@@ -45,7 +47,21 @@ function TestsList() {
     }),
     [allTests],
   );
-  const tests = useMemo(() => allTests.filter((t) => audienceMatches(t.audience, track)), [allTests, track]);
+  const levelCounts = useMemo(
+    () => ({
+      all: allTests.filter((t) => audienceMatches(t.audience, "karyawan")).length,
+      staff: allTests.filter((t) => audienceMatches(t.audience, "karyawan", "staff")).length,
+      spv_up: allTests.filter((t) => audienceMatches(t.audience, "karyawan", "spv_up")).length,
+    }),
+    [allTests],
+  );
+  const tests = useMemo(
+    () =>
+      allTests.filter((t) =>
+        audienceMatches(t.audience, track, track === "karyawan" && level !== "all" ? level : null),
+      ),
+    [allTests, track, level],
+  );
   const categories = useMemo(() => Array.from(new Set(tests.map((t) => t.test_type))).sort(), [tests]);
   const idOptions = useMemo(() => {
     const src = category === "all" ? tests : tests.filter((t) => t.test_type === category);
