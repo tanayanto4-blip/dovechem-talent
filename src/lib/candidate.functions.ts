@@ -758,6 +758,19 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
       score = accuracy;
       result = { attempted, correct, wrong: attempted - correct, accuracy, perColumn };
+    } else if (test.test_type === "ishihara") {
+      // Tes buta warna: cukup hitung berapa benar dan berapa salah.
+      const map = new Map(answers.map((a) => [a.question_id, (a.answer ?? "").trim().toLowerCase()]));
+      const list = qs.data ?? [];
+      let correct = 0;
+      for (const q of list) {
+        const key = String(q.correct_answer ?? "").trim().toLowerCase();
+        const ans = map.get(q.id) ?? "";
+        if (key && ans && ans === key) correct++;
+      }
+      const total = list.length || 14;
+      score = correct;
+      result = { correct, wrong: total - correct, total };
     }
 
     const finishedAt = new Date().toISOString();
