@@ -182,6 +182,12 @@ export async function computeWptScore(answers: WptExcelAnswer[]) {
   setCached("F11", iq);
   setCached("F12", category);
 
+  return { wb, ws, filled, total, iq, category, lastAnswered, valid: filled > 0 };
+}
+
+export async function exportWptExcel(answers: WptExcelAnswer[], meta: WptExcelMeta = {}) {
+  const { wb, ws, filled, total, iq, category, lastAnswered } = await computeWptScore(answers);
+
   // Identitas kandidat
   const nama = [meta.candidateName, meta.candidateCode].filter(Boolean).join(" — ") || "-";
   ws.getCell("B5").value = `Nama : ${nama}   |   Jabatan : ${meta.position ?? "-"}`;
@@ -205,3 +211,4 @@ export async function computeWptScore(answers: WptExcelAnswer[]) {
 
   return { filled, total, iq, category, lastAnswered, valid: filled > 0 };
 }
+
