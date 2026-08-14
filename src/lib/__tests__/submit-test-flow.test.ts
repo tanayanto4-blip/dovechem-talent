@@ -93,7 +93,7 @@ describe("candidateSubmitTest — static guarantees", () => {
 
   it("updates the attempt row with status/finished_at/score/result", () => {
     expect(body).toMatch(
-      /from\(["']test_attempts["']\)\s*\.\s*update\(\{[\s\S]*status:\s*["']finished["'][\s\S]*finished_at[\s\S]*score,[\s\S]*result,?[\s\S]*\}\)\.eq\(["']id["'],\s*data\.attempt_id\)/,
+      /from\(["']test_attempts["']\)\s*\.\s*update\(\{[\s\S]*?status:\s*["']finished["'][\s\S]*?finished_at[\s\S]*?score,[\s\S]*?result,?[\s\S]*?\}\)\s*\.\s*eq\(["']id["'],\s*data\.attempt_id\)/,
     );
   });
 
