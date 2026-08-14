@@ -10,6 +10,7 @@ import { reportIncident } from "@/lib/error-monitor";
 import { Button } from "@/components/ui/button";
 import { Beaker, LogOut, User, ClipboardList, Home } from "lucide-react";
 import doverLogo from "@/assets/dover-logo.jpg.asset.json";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
 export const Route = createFileRoute("/candidate/portal")({
   head: () => ({ meta: [
@@ -159,21 +160,6 @@ function PortalLayout() {
             </Button>
           </div>
         </div>
-        <nav className="flex gap-2 overflow-x-auto border-t px-4 py-2.5 md:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {nav_items.map((it) => {
-            const active = it.exact ? pathname === it.to : pathname.startsWith(it.to);
-            return (
-              <Link
-                key={it.to}
-                to={it.to}
-                className={`flex shrink-0 items-center gap-1.5 min-h-11 rounded-full border px-4 py-2 text-sm font-medium ${active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"}`}
-              >
-                <it.icon className="h-3.5 w-3.5" />
-                {it.label}
-              </Link>
-            );
-          })}
-        </nav>
       </header>
       {offline && (
         <div className="bg-destructive px-4 py-2 text-center text-xs font-medium text-destructive-foreground sm:px-6 sm:text-sm">
@@ -192,7 +178,7 @@ function PortalLayout() {
             );
           })}
         </aside>
-        <main className="min-w-0">
+        <main className="min-w-0 pb-20 md:pb-0">
           {sessionError ? (
             <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-6 text-center">
               <div className="font-semibold text-destructive">Sesi kandidat tidak dapat digunakan</div>
@@ -211,6 +197,7 @@ function PortalLayout() {
           )}
         </main>
       </div>
+      <MobileBottomNav items={nav_items} pathname={pathname} />
     </div>
   );
 }
