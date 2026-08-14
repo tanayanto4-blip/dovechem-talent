@@ -8,6 +8,8 @@ import { exportEqExcel } from "@/lib/eq-excel";
 import { exportWptExcel } from "@/lib/wpt-excel";
 import { exportPapiExcel } from "@/lib/papi-excel";
 import { exportDiscExcel } from "@/lib/disc-excel";
+import { exportResultSheetPdf } from "@/lib/result-sheet-pdf";
+import { buildCandidateMeta } from "@/lib/candidate-meta";
 
 import { toast } from "sonner";
 import { TrackTabs } from "@/components/track-tabs";
@@ -458,6 +460,22 @@ function ResultsBank() {
                                       <Button asChild size="sm" variant="outline">
                                         <Link to="/admin/attempts/$id" params={{ id: r.id }}><Eye className="mr-1 h-3.5 w-3.5" /> Detail</Link>
                                       </Button>
+                                      {!["mbti", "eq", "wpt", "disc", "papi"].includes(String(r.tests?.test_type)) && (
+                                        <Button
+                                          size="sm"
+                                          variant="secondary"
+                                          onClick={async () => {
+                                            try {
+                                              await exportGenericSheet(r);
+                                              toast.success("Lembar hasil PDF diunduh");
+                                            } catch (e: any) {
+                                              toast.error(e?.message ?? "Gagal membuat lembar hasil");
+                                            }
+                                          }}
+                                        >
+                                          <FileSpreadsheet className="mr-1 h-3.5 w-3.5" /> Lembar Hasil
+                                        </Button>
+                                      )}
                                       {r.tests?.test_type === "mbti" && (
                                         <Button
                                           size="sm"
