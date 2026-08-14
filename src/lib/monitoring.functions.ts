@@ -127,3 +127,116 @@ export const clearResolvedErrors = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/**
+ * Pusat monitoring live untuk Super Admin & HR:
+ * siapa yang sedang online, test yang sedang berjalan (termasuk yang macet /
+ * melewati durasi), kode terkunci di perangkat lain, dan insiden terbaru.
+ */
+export const liveMonitorOverview = createServerFn({ method: "POST" })
+  .middleware([requireStaff])
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const [codesRes, candRes, attemptsRes, incidentRes] = await Promise.all([
+      supabaseAdmin
+        .from("candidate_codes")
+        .select(
+          "id, code, candidate_name, candidate_type, active, expires_at, last_seen_at, active_device_token, active_device_at",
+        )
+        .order("last_seen_at", { ascending: false, nullsFirst: false })
+        .limit(200),
+      supabaseAdmin.from("candidates").select("id, code_id, full_name, job_level"),
+      supabaseAdmin
+        .from("test_attempts")
+        .select("id, candidate_id, test_id, status, started_at, tests(name, duration_minutes)")
+        .eq("status", "in_progress")
+        .order("started_at", { ascending: false })
+        .limit(200),
+      supabaseAdmin
+        .from("error_events")
+        .select("id, occurred_at, source, message, actor_label, route, resolved")
+        .like("source", "insiden:%")
+        .order("occurred_at", { ascending: false })
+        .limit(50),
+    ]);
+
+    const candidates = candRes.data ?? [];
+    const byCodeId = new Map(candidates.map((c) => [c.code_id, c]));
+    const byCandidateId = new Map(candidates.map((c) => [c.id, c]));
+
+    const now = Date.now();
+    const codes = (codesRes.data ?? []).map((c) => {
+      const cand = c.id ? byCodeId.get(c.id) : undefined;
+      const seen = c.last_seen_at ? new Date(c.last_seen_at).getTime() : 0;
+      return {
+        code_id: c.id,
+        code: c.code,
+        name: cand?.full_name ?? c.candidate_name,
+        candidate_id: cand?.id ?? null,
+        candidate_type: c.candidate_type,
+        job_level: cand?.job_level ?? null,
+        active: c.active,
+        expires_at: c.expires_at,
+        last_seen_at: c.last_seen_at,
+        online: seen > 0 && now - seen < 30_000,
+        device_locked: !!c.active_device_token,
+        active_device_at: c.active_device_at,
+      };
+    });
+
+    const running = (attemptsRes.data ?? []).map((a) => {
+      const cand = byCandidateId.get(a.candidate_id);
+      const test = a.tests as unknown as { name: string; duration_minutes: number } | null;
+      const started = a.started_at ? new Date(a.started_at).getTime() : now;
+      const elapsedMin = Math.floor((now - started) / 60_000);
+      const duration = test?.duration_minutes ?? 0;
+      return {
+        attempt_id: a.id,
+        candidate_id: a.candidate_id,
+        test_id: a.test_id,
+        candidate_name: cand?.full_name ?? "(tanpa nama)",
+        test_name: test?.name ?? "Test",
+        started_at: a.started_at,
+        elapsed_minutes: elapsedMin,
+        duration_minutes: duration,
+        overdue: duration > 0 && elapsedMin > duration + 2,
+      };
+    });
+
+    return {
+      codes,
+      running,
+      incidents: incidentRes.data ?? [],
+      summary: {
+        online: codes.filter((c) => c.online).length,
+        running: running.length,
+        stuck: running.filter((r) => r.overdue).length,
+        openIncidents: (incidentRes.data ?? []).filter((i) => !i.resolved).length,
+      },
+    };
+  });
+
+/**
+ * Perbaikan cepat: lepaskan kunci perangkat pada kode kandidat sehingga
+ * kandidat yang terlogout / ganti HP bisa masuk kembali seketika.
+ */
+export const resetCandidateDevice = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d: unknown) => z.object({ code_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("candidate_codes")
+      .update({ active_device_token: null, active_device_at: null })
+      .eq("id", data.code_id);
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "candidate.device.reset",
+      target_type: "candidate_code",
+      target_id: data.code_id,
+      metadata: {},
+    });
+    return { ok: true };
+  });

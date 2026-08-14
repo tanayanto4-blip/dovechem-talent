@@ -21,6 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LiveMonitor } from "@/components/live-monitor";
 import { AlertTriangle, CheckCircle2, RefreshCw, Trash2, Download } from "lucide-react";
 
 export const Route = createFileRoute("/admin/monitoring")({
@@ -160,9 +162,10 @@ function MonitoringPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold text-primary">Monitor Error</h1>
+          <h1 className="font-display text-2xl font-bold text-primary">Pusat Monitoring</h1>
           <p className="text-sm text-muted-foreground">
-            Setiap kegagalan di halaman Admin, HR, dan Kandidat tercatat otomatis di sini.
+            Pantau aktivitas kandidat secara langsung dan tangani setiap kegagalan dari satu
+            halaman.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -185,110 +188,121 @@ function MonitoringPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">
-              Belum ditangani
-            </div>
-            <div className="text-3xl font-bold text-destructive">{data?.openCount ?? 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">
-              Tampil sekarang
-            </div>
-            <div className="text-3xl font-bold text-primary">{rows.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col justify-center gap-3 p-4">
-            <div className="flex items-center gap-2">
-              <Switch id="only-open" checked={onlyOpen} onCheckedChange={setOnlyOpen} />
-              <Label htmlFor="only-open" className="text-sm">
-                Hanya yang belum ditangani
-              </Label>
-            </div>
-            <Select value={area} onValueChange={setArea}>
-              <SelectTrigger className="h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua area</SelectItem>
-                <SelectItem value="admin">Admin/HR</SelectItem>
-                <SelectItem value="candidate">Kandidat</SelectItem>
-                <SelectItem value="public">Halaman Publik</SelectItem>
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
-      </div>
+      <Tabs defaultValue="live">
+        <TabsList>
+          <TabsTrigger value="live">Live Kandidat</TabsTrigger>
+          <TabsTrigger value="error">Monitor Error</TabsTrigger>
+        </TabsList>
+        <TabsContent value="live" className="mt-4">
+          <LiveMonitor isAdmin={isAdmin} />
+        </TabsContent>
+        <TabsContent value="error" className="mt-4 space-y-6">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Belum ditangani
+                </div>
+                <div className="text-3xl font-bold text-destructive">{data?.openCount ?? 0}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Tampil sekarang
+                </div>
+                <div className="text-3xl font-bold text-primary">{rows.length}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex flex-col justify-center gap-3 p-4">
+                <div className="flex items-center gap-2">
+                  <Switch id="only-open" checked={onlyOpen} onCheckedChange={setOnlyOpen} />
+                  <Label htmlFor="only-open" className="text-sm">
+                    Hanya yang belum ditangani
+                  </Label>
+                </div>
+                <Select value={area} onValueChange={setArea}>
+                  <SelectTrigger className="h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua area</SelectItem>
+                    <SelectItem value="admin">Admin/HR</SelectItem>
+                    <SelectItem value="candidate">Kandidat</SelectItem>
+                    <SelectItem value="public">Halaman Publik</SelectItem>
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+          </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <AlertTriangle className="h-4 w-4 text-destructive" /> Daftar Error
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {!rows.length && (
-            <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
-              Tidak ada error tercatat. Semua halaman berjalan normal.
-            </div>
-          )}
-          {rows.map((r) => (
-            <div key={r.id} className="rounded-md border p-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant={r.resolved ? "secondary" : "destructive"}>
-                  {r.resolved ? "Ditangani" : "Terbuka"}
-                </Badge>
-                <Badge variant="outline">{AREA_LABEL[r.area] ?? r.area}</Badge>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(r.occurred_at).toLocaleString("id-ID")}
-                </span>
-                <span className="text-xs text-muted-foreground">· {r.route}</span>
-                {r.actor_label && (
-                  <span className="text-xs text-muted-foreground">· {r.actor_label}</span>
-                )}
-                {r.source.startsWith("insiden:") ? (
-                  <Badge className="ml-auto" variant="secondary">
-                    {sourceLabel(r.source)}
-                  </Badge>
-                ) : (
-                  <span className="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">
-                    {r.source}
-                  </span>
-                )}
-              </div>
-              <div className="mt-2 text-sm font-medium">{r.message}</div>
-              {r.stack && (
-                <details className="mt-2">
-                  <summary className="cursor-pointer text-xs text-muted-foreground">
-                    Detail teknis
-                  </summary>
-                  <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded bg-muted p-2 text-[11px]">
-                    {r.stack}
-                  </pre>
-                </details>
-              )}
-              {isAdmin && (
-                <div className="mt-3">
-                  <Button
-                    size="sm"
-                    variant={r.resolved ? "outline" : "default"}
-                    onClick={() => resolveM.mutate({ id: r.id, resolved: !r.resolved })}
-                    disabled={resolveM.isPending}
-                  >
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    {r.resolved ? "Buka kembali" : "Tandai sudah ditangani"}
-                  </Button>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <AlertTriangle className="h-4 w-4 text-destructive" /> Daftar Error
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {!rows.length && (
+                <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
+                  Tidak ada error tercatat. Semua halaman berjalan normal.
                 </div>
               )}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+              {rows.map((r) => (
+                <div key={r.id} className="rounded-md border p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={r.resolved ? "secondary" : "destructive"}>
+                      {r.resolved ? "Ditangani" : "Terbuka"}
+                    </Badge>
+                    <Badge variant="outline">{AREA_LABEL[r.area] ?? r.area}</Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(r.occurred_at).toLocaleString("id-ID")}
+                    </span>
+                    <span className="text-xs text-muted-foreground">· {r.route}</span>
+                    {r.actor_label && (
+                      <span className="text-xs text-muted-foreground">· {r.actor_label}</span>
+                    )}
+                    {r.source.startsWith("insiden:") ? (
+                      <Badge className="ml-auto" variant="secondary">
+                        {sourceLabel(r.source)}
+                      </Badge>
+                    ) : (
+                      <span className="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">
+                        {r.source}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-2 text-sm font-medium">{r.message}</div>
+                  {r.stack && (
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-xs text-muted-foreground">
+                        Detail teknis
+                      </summary>
+                      <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded bg-muted p-2 text-[11px]">
+                        {r.stack}
+                      </pre>
+                    </details>
+                  )}
+                  {isAdmin && (
+                    <div className="mt-3">
+                      <Button
+                        size="sm"
+                        variant={r.resolved ? "outline" : "default"}
+                        onClick={() => resolveM.mutate({ id: r.id, resolved: !r.resolved })}
+                        disabled={resolveM.isPending}
+                      >
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        {r.resolved ? "Buka kembali" : "Tandai sudah ditangani"}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
