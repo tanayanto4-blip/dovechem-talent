@@ -53,12 +53,21 @@ async function logoDataUrl(): Promise<string | null> {
 }
 
 export async function exportResultSheetPdf(input: ResultSheetInput) {
+  const logo = await logoDataUrl();
+  const doc = buildResultSheetDoc(input, logo);
+  const nameSlug = (input.meta.candidateName || "kandidat").replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
+  const testSlug = input.testName.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
+  doc.save(`lembar-hasil-${testSlug}-${nameSlug}.pdf`);
+  return { total: input.rows.length };
+}
+
+/** Menggambar dokumen (dipakai juga oleh pemeriksaan visual otomatis). */
+export function buildResultSheetDoc(input: ResultSheetInput, logo: string | null) {
   const { testName, meta, rows, summary = [] } = input;
   const doc = new jsPDF({ unit: "pt", format: "a4", orientation: "portrait" });
   const pw = doc.internal.pageSize.getWidth();
   const ph = doc.internal.pageSize.getHeight();
   const M = 40;
-  const logo = await logoDataUrl();
 
   const header = () => {
     doc.setFillColor(...BLUE);
@@ -241,8 +250,5 @@ export async function exportResultSheetPdf(input: ResultSheetInput) {
 
   footer();
 
-  const nameSlug = (meta.candidateName || "kandidat").replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
-  const testSlug = testName.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
-  doc.save(`lembar-hasil-${testSlug}-${nameSlug}.pdf`);
-  return { total: rows.length };
+  return doc;
 }
