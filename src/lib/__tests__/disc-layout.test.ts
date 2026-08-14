@@ -75,7 +75,7 @@ describe("DISC layout regression", () => {
     // Guards the scoring path in candidateSubmitTest which reads
     // JSON.parse(answer).most / .least buckets.
     const setDiscSig = SRC.match(
-      /setDisc = useCallback\(\(qid: string, kind: "most" \| "least", key: string\)/,
+      /setDisc\s*=\s*useCallback\(\s*\(\s*qid:\s*string,\s*kind:\s*"most"\s*\|\s*"least",\s*key:\s*string\)/,
     );
     expect(setDiscSig, "setDisc signature changed").not.toBeNull();
     expect(SRC).toMatch(/JSON\.stringify\(\{ most: cur\.most, least: cur\.least \}\)/);
