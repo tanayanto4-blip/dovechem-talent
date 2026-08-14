@@ -12,7 +12,8 @@ export type PracticeTestType =
   | "wpt"
   | "papi"
   | "pauli"
-  | "kraepelin";
+  | "kraepelin"
+  | "ishihara";
 
 export type PracticeQuestion = {
   id: string;
@@ -175,6 +176,22 @@ const SAMPLES: Record<string, PracticeSample> = {
     },
     answerKey: "5",
     explanation: "Betul: hanya angka terakhir (satuan) yang ditulis pada kotak jawaban.",
+  },
+  ishihara: {
+    testType: "ishihara",
+    instructions: [
+      "Tes ini mengukur kemampuan penglihatan warna Anda.",
+      "Lihat setiap lembar warna, lalu tuliskan sendiri angka yang Anda lihat pada kolom jawaban.",
+      "Jika Anda tidak melihat angka apa pun pada sebuah lembar, tulis: tidak terlihat.",
+      "Lihat gambar dari jarak normal (sekitar 60–75 cm) dan jangan terlalu lama pada satu lembar.",
+    ],
+    question: {
+      id: "sample-ishihara",
+      question_number: 1,
+      question_text: "Tuliskan angka yang Anda lihat pada gambar berikut.",
+    },
+    answerKey: "12",
+    explanation: "Jawaban cukup ditulis angkanya saja, misalnya 12.",
   },
   kraepelin: {
     testType: "pauli",

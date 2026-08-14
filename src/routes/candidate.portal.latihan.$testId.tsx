@@ -8,6 +8,7 @@ import { practiceSampleFor } from "@/lib/practice-samples";
 import { TestQuestionCard } from "@/components/test-question-card";
 import { PauliSheet, pauliFilledCount } from "@/components/pauli-sheet";
 import { WptSheet } from "@/components/wpt-sheet";
+import { ISHIHARA_PLATES } from "@/lib/ishihara-plates";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2, Lightbulb, CheckCircle2 } from "lucide-react";
@@ -151,7 +152,7 @@ function PracticePage() {
             testType={sample.testType as any}
             answer={answer}
             discPick={disc}
-            wptImage={null}
+            wptImage={sample.testType === "ishihara" ? ISHIHARA_PLATES[1] : null}
             onPickMcq={(_qid, key) => setAnswer(key)}
             onSetDisc={setDiscPick}
             onChangeText={(_qid, value) => setAnswer(value)}

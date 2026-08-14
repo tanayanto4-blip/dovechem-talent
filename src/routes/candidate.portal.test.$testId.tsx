@@ -21,6 +21,7 @@ import wptQ38 from "@/assets/wpt-q38.png.asset.json";
 import wptQ42 from "@/assets/wpt-q42.png.asset.json";
 import wptQ49 from "@/assets/wpt-q49.jpg.asset.json";
 import { WptSheet } from "@/components/wpt-sheet";
+import { ISHIHARA_PLATES } from "@/lib/ishihara-plates";
 
 
 const WPT_IMAGES: Record<number, { url: string; caption: string }> = {
@@ -635,7 +636,7 @@ function TakeTest() {
             testType={data.test!.test_type as any}
             answer={answers[q.id] ?? ""}
             discPick={discPicks[q.id]}
-            wptImage={null}
+            wptImage={data.test!.test_type === "ishihara" ? ISHIHARA_PLATES[q.question_number] ?? null : null}
             onPickMcq={pickMcq}
             onSetDisc={setDisc}
             onChangeText={handleTextChange}
