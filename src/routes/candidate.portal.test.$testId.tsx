@@ -650,10 +650,32 @@ function TakeTest() {
 
 
       <div className="sticky bottom-4 flex justify-end">
-        <Button size="lg" onClick={() => handleSubmit(false)} disabled={submitting || answered === 0}>
-          {submitting ? "Mengirim..." : `Kirim Jawaban (${answered}/${total})`}
-        </Button>
+        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <AlertDialogTrigger asChild>
+            <Button size="lg" disabled={submitting || answered === 0}>
+              {submitting ? "Mengirim..." : `Kirim Jawaban (${answered}/${total})`}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Kirim jawaban sekarang?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Anda sudah mengisi {answered} dari {total} soal. Jawaban tidak dapat diubah setelah dikirim.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={submitting}>Periksa lagi</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => { e.preventDefault(); setConfirmOpen(false); void handleSubmit(true); }}
+                disabled={submitting}
+              >
+                Ya, kirim jawaban
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
+
       </>
 
     </div>
