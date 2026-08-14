@@ -89,7 +89,31 @@ export const TestQuestionCard = memo(function TestQuestionCard({
         {!isDisc && !isMbti && !isPapi && <div className="text-base font-medium">{q.question_text}</div>}
         {isWpt && wptImage && <WptImageFigure url={wptImage.url} caption={wptImage.caption} number={q.question_number} />}
 
-        {isPapi ? (
+        {isIshihara ? (
+          <div className="mt-3 space-y-3">
+            {wptImage && (
+              <figure className="w-full overflow-hidden rounded-md border bg-white p-2 sm:p-3">
+                <img
+                  src={wptImage.url}
+                  alt={`Lembar warna soal nomor ${q.question_number}`}
+                  className="mx-auto block h-auto w-full max-w-[420px] object-contain"
+                  loading="lazy"
+                />
+              </figure>
+            )}
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <span className="text-xs text-muted-foreground">Tulis jawaban Anda</span>
+              <Input
+                value={answer}
+                onChange={(e) => handleText(e.target.value)}
+                placeholder="_____"
+                maxLength={30}
+                className="h-9 w-40 text-center font-mono"
+                aria-label={`Jawaban soal ${index + 1}`}
+              />
+            </div>
+          </div>
+        ) : isPapi ? (
           <div className="overflow-hidden rounded-md border bg-card">
             {(q.options ?? []).slice(0, 2).map((opt: any, oi: number) => {
               const picked = answer === opt.key;
