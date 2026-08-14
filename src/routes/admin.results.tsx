@@ -9,6 +9,8 @@ import { exportWptExcel } from "@/lib/wpt-excel";
 import { exportPapiExcel } from "@/lib/papi-excel";
 import { exportDiscExcel } from "@/lib/disc-excel";
 import { exportResultSheetPdf } from "@/lib/result-sheet-pdf";
+import { exportResumeExcel } from "@/lib/resume-excel";
+
 import { buildCandidateMeta } from "@/lib/candidate-meta";
 
 import { toast } from "sonner";
