@@ -91,7 +91,7 @@ describe("candidateUploadFile — static ownership guarantees", () => {
   it("replaces prior same-type file only within the same candidate scope", () => {
     // The pre-insert delete must be scoped by both candidate_id and file_type.
     expect(body).toMatch(
-      /\.from\(["']candidate_files["']\)\.delete\(\)[\s\S]{0,200}\.eq\(["']candidate_id["'],\s*cand\.id\)[\s\S]{0,200}\.eq\(["']file_type["']/,
+      /\.from\(["']candidate_files["']\)\s*\.\s*delete\(\)[\s\S]{0,200}\.eq\(["']candidate_id["'],\s*cand\.id\)[\s\S]{0,200}\.eq\(["']file_type["']/,
     );
   });
 });
