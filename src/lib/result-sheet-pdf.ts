@@ -180,15 +180,9 @@ export function buildResultSheetDoc(input: ResultSheetInput, logo: string | null
   const keyW = hasKey ? 72 : 0;
   const rowH = 16;
 
-  const perBlock = Math.ceil(rows.length / cols) || 1;
-  const blocks: ResultSheetRow[][] = [];
-  for (let i = 0; i < rows.length; i += perBlock) blocks.push(rows.slice(i, i + perBlock));
-
-  const topY = y;
-  blocks.forEach((block, bi) => {
-    const x = M + bi * (blockW + gap);
+  /** Menggambar satu blok kolom tabel jawaban. */
+  const drawBlock = (block: ResultSheetRow[], x: number, topY: number) => {
     let by = topY;
-    // Kepala tabel
     doc.setFillColor(...BLUE);
     doc.rect(x, by, blockW, rowH, "F");
     doc.setTextColor(255);
@@ -225,9 +219,31 @@ export function buildResultSheetDoc(input: ResultSheetInput, logo: string | null
       }
       by += rowH;
     });
-  });
+    return by;
+  };
 
-  const tableBottom = topY + rowH * (perBlock + 1);
+  // Paginasi: potong tabel jawaban agar tidak melewati batas halaman.
+  const bottomLimit = ph - 70;
+  let cursor = 0;
+  let tableBottom = y;
+  while (cursor < rows.length) {
+    const avail = Math.max(3, Math.floor((bottomLimit - y - rowH) / rowH));
+    const chunk = rows.slice(cursor, cursor + avail * cols);
+    const perBlock = Math.ceil(chunk.length / cols) || 1;
+    for (let bi = 0; bi < cols; bi++) {
+      const block = chunk.slice(bi * perBlock, (bi + 1) * perBlock);
+      if (block.length) drawBlock(block, M + bi * (blockW + gap), y);
+    }
+    tableBottom = y + rowH * (perBlock + 1);
+    cursor += chunk.length;
+    if (cursor < rows.length) {
+      doc.addPage();
+      header();
+      y = 100;
+      tableBottom = y;
+    }
+  }
+
   let sy = tableBottom + 40;
   if (sy > ph - 120) {
     doc.addPage();
