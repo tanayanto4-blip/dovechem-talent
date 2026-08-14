@@ -53,6 +53,7 @@ function summarize(r: any) {
   if (t === "mbti" && res.type) return `Tipe ${res.type}`;
   if (t === "disc" && res.dominant) return `Dominan ${res.dominant}`;
   if (t === "eq" && res.dominant) return `Terkuat ${res.dominant}`;
+  if (t === "ishihara" && typeof res.correct === "number") return `Benar ${res.correct} / Salah ${res.wrong ?? 0}`;
   if (res.requires_manual_review) return "Perlu penilaian manual";
   return "-";
 }
