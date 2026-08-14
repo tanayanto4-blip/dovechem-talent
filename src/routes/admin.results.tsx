@@ -143,8 +143,38 @@ function ResultsBank() {
       await exportPapiExcel(picks, meta);
       return true;
     }
-    return false;
+    // Test tanpa file skoring Excel -> lembar hasil PDF berkop logo Dover.
+    await exportGenericSheet(r);
+    return true;
   }
+
+  /** Lembar hasil PDF generik (berlogo + tabel) untuk test tanpa file skoring. */
+  async function exportGenericSheet(r: any) {
+    const { d, map } = await answerRows(r.id);
+    const cand = d.attempt?.candidates ?? {};
+    const rows = (d.questions ?? []).map((q: any) => ({
+      question_number: q.question_number,
+      answer: map.get(q.id)?.answer,
+      correct_answer: q.correct_answer,
+    }));
+    const res = d.attempt?.result ?? {};
+    const summary: Array<[string, string]> = [];
+    if (typeof res.correct === "number") summary.push(["Jawaban benar", String(res.correct)]);
+    if (typeof res.wrong === "number") summary.push(["Jawaban salah", String(res.wrong)]);
+    if (d.attempt?.score !== null && d.attempt?.score !== undefined) summary.push(["Skor", String(d.attempt.score)]);
+    return exportResultSheetPdf({
+      testName: d.attempt?.tests?.name ?? "Psikotest",
+      testType: d.attempt?.tests?.test_type,
+      rows,
+      summary,
+      meta: {
+        ...buildCandidateMeta(cand, { finishedAt: d.attempt?.finished_at }),
+        candidateCode: cand.candidate_codes?.code ?? cand.code_snapshot ?? null,
+        startedAt: d.attempt?.started_at ?? null,
+      },
+    });
+  }
+
 
   const [bulkKey, setBulkKey] = useState<string | null>(null);
 
