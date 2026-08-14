@@ -67,6 +67,7 @@ export const TestQuestionCard = memo(function TestQuestionCard({
   const isWpt = testType === "wpt";
   const isPapi = testType === "papi";
   const isKraepelin = testType === "kraepelin";
+  const isIshihara = testType === "ishihara";
 
   return (
     <Card className="shadow-card">
