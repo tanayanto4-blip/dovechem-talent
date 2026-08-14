@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateAutosaveProfile, candidateGetProfile, candidateSaveProfile } from "@/lib/candidate.functions";
 import { useCandidateSession } from "@/lib/candidate-session";
-import { candidateTypeLabel } from "@/lib/candidate-type";
+import { candidateTypeLabel, JOB_POSITIONS, jobLevelLabel, jobLevelOfPosition } from "@/lib/candidate-type";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +49,7 @@ const baseFields: [string, string][] = [
 function fieldsFor(type: string): [string, string][] {
   return type === "magang"
     ? [...baseFields, ["semester", "Semester saat ini"]]
-    : [...baseFields, ["work_experience", "Pengalaman kerja"]];
+    : [...baseFields, ["work_experience", "Pengalaman kerja"], ["job_position", "Posisi jabatan"]];
 }
 
 const semesterOptions = Array.from({ length: 14 }, (_, i) => String(i + 1));
@@ -93,6 +93,7 @@ function DataForm() {
         major: c.major ?? "",
         work_experience: c.work_experience ?? "",
         semester: (c as any).semester ?? "",
+        job_position: (c as any).job_position ?? "",
         phone: c.phone ?? "",
         email: c.email ?? "",
         position_applied: c.position_applied ?? "",
@@ -153,13 +154,13 @@ function DataForm() {
     }
     setSaving(true);
     try {
-      const { work_experience, semester, ...common } = form;
+      const { work_experience, semester, job_position, ...common } = form;
       await save({
         data: {
           code: session!.code,
           device: session!.device,
           ...common,
-          ...(isMagang ? { semester } : { work_experience }),
+          ...(isMagang ? { semester } : { work_experience, job_position }),
         } as any,
       });
       toast.success("Data tersimpan — lanjut ke psikotest");
@@ -184,7 +185,7 @@ function DataForm() {
     <Card className="shadow-card">
       <CardHeader>
         <h1 className="font-display text-2xl font-semibold leading-none tracking-tight">
-          Biodata {candidateTypeLabel(candidateType)}
+          Biodata {candidateTypeLabel(candidateType, isMagang ? null : jobLevelOfPosition(form.job_position ?? ""))}
         </h1>
         <p className="text-sm text-muted-foreground">
           Seluruh kolom wajib diisi. Data diri harus dilengkapi terlebih dahulu sebelum Anda dapat mengerjakan
@@ -290,6 +291,32 @@ function DataForm() {
                   ))}
                 </SelectContent>
               </Select>
+            </Field>
+          )}
+          {!isMagang && (
+            <Field label="Posisi Jabatan" required>
+              <Select
+                value={form.job_position ?? ""}
+                onValueChange={(v) => setForm({ ...form, job_position: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih posisi jabatan" />
+                </SelectTrigger>
+                <SelectContent className="max-h-64">
+                  {JOB_POSITIONS.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.value} — {jobLevelLabel(p.level)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Menentukan paket soal Anda:{" "}
+                {form.job_position
+                  ? `tingkat ${jobLevelLabel(jobLevelOfPosition(form.job_position))}`
+                  : "Staff atau SPV ke atas"}
+                .
+              </p>
             </Field>
           )}
 
