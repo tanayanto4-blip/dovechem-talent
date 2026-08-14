@@ -9,6 +9,7 @@ import { useCandidatesRealtime } from "@/hooks/use-candidates-realtime";
 import { Button } from "@/components/ui/button";
 import { Beaker, LayoutDashboard, KeyRound, Users, LogOut, UserCog, ClipboardList, ShieldCheck, FolderOpen, BarChart3, Volume2, Unlock, AlertTriangle } from "lucide-react";
 import doverLogo from "@/assets/dover-logo.jpg.asset.json";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [
@@ -110,27 +111,6 @@ function AdminLayout() {
             </Button>
           </div>
         </div>
-        {/* Navigasi horizontal untuk layar HP */}
-        <nav className="-mx-px flex gap-1.5 overflow-x-auto border-t px-4 py-2 md:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {items.map((it) => {
-            const active = pathname.startsWith(it.to);
-            return (
-              <Link
-                key={it.to}
-                to={it.to}
-                className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"}`}
-              >
-                <it.icon className="h-3.5 w-3.5" />
-                {it.label}
-                {"badge" in it && (it as { badge?: number }).badge ? (
-                  <span className="rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">
-                    {(it as { badge?: number }).badge}
-                  </span>
-                ) : null}
-              </Link>
-            );
-          })}
-        </nav>
       </header>
       <div className="mx-auto grid max-w-7xl gap-4 px-4 py-5 sm:px-6 sm:py-8 md:grid-cols-[220px_1fr] md:gap-6">
         <aside className="hidden space-y-1 md:block">
@@ -149,8 +129,9 @@ function AdminLayout() {
             );
           })}
         </aside>
-        <main className="min-w-0"><Outlet /></main>
+        <main className="min-w-0 pb-20 md:pb-0"><Outlet /></main>
       </div>
+      <MobileBottomNav items={items} pathname={pathname} />
     </div>
   );
 }
