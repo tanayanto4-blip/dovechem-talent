@@ -357,9 +357,12 @@ function TakeTest() {
       const payload = Object.entries(answers).map(([question_id, answer]) => ({ question_id, answer }));
       await submit({ data: { code: session!.code, device: session!.device, attempt_id: data.attempt.id, answers: payload } });
       toast.success("Jawaban terkirim. Hasil penilaian diproses oleh tim HR.");
-      qc.invalidateQueries({ queryKey: ["candidate-profile"] });
       qc.removeQueries({ queryKey: ["start-test", testId, session?.code] });
+      // Tunggu daftar test benar-benar tersegarkan supaya status "Selesai &
+      // terkunci" langsung terlihat begitu kandidat kembali ke daftar test.
+      await qc.invalidateQueries({ queryKey: ["candidate-profile"], refetchType: "all" });
       nav({ to: "/candidate/portal/tests", replace: true });
+
     } catch (e: any) {
       toast.error(e?.message || "Gagal mengirim jawaban. Coba lagi.");
       reportIncident("kirim-jawaban-gagal", `Gagal mengirim jawaban (${testLabel}): ${e?.message ?? "koneksi bermasalah"}`, {
