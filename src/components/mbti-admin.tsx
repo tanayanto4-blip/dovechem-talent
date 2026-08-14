@@ -1691,9 +1691,7 @@ export function MbtiAdmin({ initialTestId }: { initialTestId?: string } = {}) {
   );
 }
 
-function parseCsv(
-  text: string,
-): Array<{
+function parseCsv(text: string): Array<{
   number?: string;
   question_text?: string;
   a_label?: string;
