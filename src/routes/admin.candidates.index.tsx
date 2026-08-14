@@ -86,7 +86,7 @@ function CandidatesList() {
   const [level, setLevel] = useState<LevelFilter>("all");
   const [positionFilter, setPositionFilter] = useState<string>("all");
 
-  const all = (data?.candidates ?? []) as any[];
+  const all = useMemo(() => (data?.candidates ?? []) as any[], [data?.candidates]);
   const counts = useMemo(
     () => ({
       magang: all.filter((c) => candidateTrackOf(c) === "magang").length,
