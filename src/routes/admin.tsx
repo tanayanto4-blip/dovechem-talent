@@ -1,4 +1,11 @@
-import { createFileRoute, Link, Outlet, redirect, useNavigate, useRouterState } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  redirect,
+  useNavigate,
+  useRouterState,
+} from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -7,20 +14,44 @@ import { getMyRoles, logStaffAccess } from "@/lib/admin.functions";
 import { countOpenErrors } from "@/lib/monitoring.functions";
 import { useCandidatesRealtime } from "@/hooks/use-candidates-realtime";
 import { Button } from "@/components/ui/button";
-import { Beaker, LayoutDashboard, KeyRound, Users, LogOut, UserCog, ClipboardList, ShieldCheck, FolderOpen, BarChart3, Volume2, Unlock, AlertTriangle } from "lucide-react";
+import {
+  Beaker,
+  LayoutDashboard,
+  KeyRound,
+  Users,
+  LogOut,
+  UserCog,
+  ClipboardList,
+  ShieldCheck,
+  FolderOpen,
+  BarChart3,
+  Volume2,
+  Unlock,
+  AlertTriangle,
+} from "lucide-react";
 import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
 export const Route = createFileRoute("/admin")({
-  head: () => ({ meta: [
-    { title: "Panel Admin & HR — PT Dover Chemical" },
-    { name: "description", content: "Area kerja tim HR PT Dover Chemical untuk mengelola kandidat, kode akses, bank soal, dan hasil psikotest." },
-    { property: "og:title", content: "Panel Admin & HR — PT Dover Chemical" },
-    { property: "og:description", content: "Area kerja tim HR PT Dover Chemical untuk mengelola kandidat, kode akses, bank soal, dan hasil psikotest." },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary" },
-    { name: "robots", content: "noindex" },
-  ] }),
+  head: () => ({
+    meta: [
+      { title: "Panel Admin & HR — PT Dover Chemical" },
+      {
+        name: "description",
+        content:
+          "Area kerja tim HR PT Dover Chemical untuk mengelola kandidat, kode akses, bank soal, dan hasil psikotest.",
+      },
+      { property: "og:title", content: "Panel Admin & HR — PT Dover Chemical" },
+      {
+        property: "og:description",
+        content:
+          "Area kerja tim HR PT Dover Chemical untuk mengelola kandidat, kode akses, bank soal, dan hasil psikotest.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
   ssr: false,
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
@@ -35,12 +66,13 @@ function AdminLayout() {
   const qc = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const rolesFn = useServerFn(getMyRoles);
-  const { data: roles } = useQuery({ queryKey: ["my-roles"], queryFn: () => rolesFn({ data: {} as never }) });
+  const { data: roles } = useQuery({
+    queryKey: ["my-roles"],
+    queryFn: () => rolesFn({ data: {} as never }),
+  });
 
   // Biodata yang diubah kandidat langsung tersinkron ke dashboard staf.
   useCandidatesRealtime();
-
-
 
   // Audit staff dashboard access — one entry per area per session.
   const logAccess = useServerFn(logStaffAccess);
@@ -72,14 +104,19 @@ function AdminLayout() {
     { to: "/admin/instruksi", label: "Instruksi Suara", icon: Volume2 },
     { to: "/admin/test-access", label: "Kontrol Test", icon: Unlock },
     { to: "/admin/results", label: "Bank Data Hasil", icon: BarChart3 },
-    { to: "/admin/monitoring", label: "Monitor Error", icon: AlertTriangle, badge: openErrors?.open ?? 0 },
-    ...(isAdmin ? [
-      { to: "/admin/users", label: "User Admin/HR", icon: UserCog },
-      { to: "/admin/audit", label: "Audit Log", icon: ShieldCheck },
-    ] : []),
-
+    {
+      to: "/admin/monitoring",
+      label: "Monitor Error",
+      icon: AlertTriangle,
+      badge: openErrors?.open ?? 0,
+    },
+    ...(isAdmin
+      ? [
+          { to: "/admin/users", label: "User Admin/HR", icon: UserCog },
+          { to: "/admin/audit", label: "Audit Log", icon: ShieldCheck },
+        ]
+      : []),
   ];
-
 
   async function signOut() {
     await qc.cancelQueries();
@@ -93,10 +130,18 @@ function AdminLayout() {
       <header className="sticky top-0 z-40 border-b bg-card text-foreground shadow-sm">
         <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:px-6 sm:py-4">
           <Link to="/" className="flex min-w-0 items-center gap-2.5">
-            <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="h-8 w-auto shrink-0 rounded p-0.5 object-contain" />
+            <img
+              src={doverLogo.url}
+              alt="Logo PT Dover Chemical"
+              className="h-8 w-auto shrink-0 rounded p-0.5 object-contain"
+            />
             <div className="min-w-0">
-              <div className="truncate font-display text-xs font-bold sm:text-sm">PT DOVER CHEMICAL</div>
-              <div className="truncate text-[10px] uppercase tracking-widest text-muted-foreground">Admin HR Panel</div>
+              <div className="truncate font-display text-xs font-bold sm:text-sm">
+                PT DOVER CHEMICAL
+              </div>
+              <div className="truncate text-[10px] uppercase tracking-widest text-muted-foreground">
+                Admin HR Panel
+              </div>
             </div>
           </Link>
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
@@ -117,7 +162,11 @@ function AdminLayout() {
           {items.map((it) => {
             const active = pathname.startsWith(it.to);
             return (
-              <Link key={it.to} to={it.to} className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`}>
+              <Link
+                key={it.to}
+                to={it.to}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`}
+              >
                 <it.icon className="h-4 w-4" />
                 <span className="flex-1">{it.label}</span>
                 {"badge" in it && (it as { badge?: number }).badge ? (
@@ -129,7 +178,9 @@ function AdminLayout() {
             );
           })}
         </aside>
-        <main className="min-w-0 pb-20 md:pb-0"><Outlet /></main>
+        <main className="min-w-0 pb-20 md:pb-0">
+          <Outlet />
+        </main>
       </div>
       <MobileBottomNav items={items} pathname={pathname} />
     </div>

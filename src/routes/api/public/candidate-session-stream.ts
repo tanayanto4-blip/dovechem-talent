@@ -63,10 +63,17 @@ export const Route = createFileRoute("/api/public/candidate-session-stream")({
             await tick();
             timer = setInterval(tick, 2000);
             // Batasi umur stream (10 menit) agar koneksi tidak menggantung.
-            setTimeout(() => {
-              if (timer) clearInterval(timer);
-              try { controller.close(); } catch { /* already closed */ }
-            }, 10 * 60 * 1000);
+            setTimeout(
+              () => {
+                if (timer) clearInterval(timer);
+                try {
+                  controller.close();
+                } catch {
+                  /* already closed */
+                }
+              },
+              10 * 60 * 1000,
+            );
           },
           cancel() {
             if (timer) clearInterval(timer);

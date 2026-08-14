@@ -8,7 +8,6 @@ import { exportPauliPdf, type PauliPdfMeta } from "@/lib/pauli-pdf";
 
 type Q = { id: string; question_number: number; options: any };
 
-
 export type PauliColumn = {
   column: number;
   digits: string;
@@ -23,7 +22,9 @@ export type PauliColumn = {
 /** Hitung ulang hasil Pauli dari soal + jawaban kandidat (deret angka, jumlah 2 digit, ambil digit terakhir). */
 export function computePauli(questions: Q[], answerOf: (id: string) => string | undefined) {
   const columns: PauliColumn[] = [];
-  for (const q of [...questions].sort((a, b) => (a.question_number ?? 0) - (b.question_number ?? 0))) {
+  for (const q of [...questions].sort(
+    (a, b) => (a.question_number ?? 0) - (b.question_number ?? 0),
+  )) {
     const digits: string = (q.options as any)?.digits ?? "";
     if (!digits) continue;
     const answer = answerOf(q.id) ?? "";
@@ -67,8 +68,23 @@ export function computePauli(questions: Q[], answerOf: (id: string) => string | 
   };
 }
 
-function Stat({ label, value, hint, tone }: { label: string; value: string | number; hint?: string; tone?: "success" | "destructive" | "primary" }) {
-  const color = tone === "success" ? "text-success" : tone === "destructive" ? "text-destructive" : "text-primary";
+function Stat({
+  label,
+  value,
+  hint,
+  tone,
+}: {
+  label: string;
+  value: string | number;
+  hint?: string;
+  tone?: "success" | "destructive" | "primary";
+}) {
+  const color =
+    tone === "success"
+      ? "text-success"
+      : tone === "destructive"
+        ? "text-destructive"
+        : "text-primary";
   return (
     <div className="rounded-lg border bg-muted/30 p-3 text-center">
       <div className={`font-display text-2xl font-bold ${color}`}>{value}</div>
@@ -125,7 +141,9 @@ export function PauliResult({
           <div>
             <div className="mb-1 flex justify-between text-xs text-muted-foreground">
               <span>Progres pengerjaan</span>
-              <span>{res.filled}/{res.total}</span>
+              <span>
+                {res.filled}/{res.total}
+              </span>
             </div>
             <div className="h-2 overflow-hidden rounded bg-muted">
               <div className="h-full bg-primary" style={{ width: `${res.completion}%` }} />
@@ -154,10 +172,14 @@ export function PauliResult({
                 {res.columns.map((c) => (
                   <tr key={c.column} className="border-t">
                     <td className="px-3 py-1.5 font-medium">Kolom {c.column}</td>
-                    <td className="px-3 py-1.5 text-right">{c.filled}/{c.total}</td>
+                    <td className="px-3 py-1.5 text-right">
+                      {c.filled}/{c.total}
+                    </td>
                     <td className="px-3 py-1.5 text-right text-success">{c.correct}</td>
                     <td className="px-3 py-1.5 text-right text-destructive">{c.wrong}</td>
-                    <td className="px-3 py-1.5 text-right">{c.filled > 0 ? Math.round((c.correct / c.filled) * 100) : 0}%</td>
+                    <td className="px-3 py-1.5 text-right">
+                      {c.filled > 0 ? Math.round((c.correct / c.filled) * 100) : 0}%
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -181,9 +203,16 @@ export function PauliResult({
         {showSheet && (
           <CardContent>
             <div className="mb-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1"><span className="h-3 w-3 rounded-sm bg-success/20 ring-1 ring-success" /> Benar</span>
-              <span className="inline-flex items-center gap-1"><span className="h-3 w-3 rounded-sm bg-destructive/20 ring-1 ring-destructive" /> Salah (kunci ditampilkan)</span>
-              <span className="inline-flex items-center gap-1"><span className="h-3 w-3 rounded-sm bg-muted ring-1 ring-border" /> Belum diisi</span>
+              <span className="inline-flex items-center gap-1">
+                <span className="h-3 w-3 rounded-sm bg-success/20 ring-1 ring-success" /> Benar
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="h-3 w-3 rounded-sm bg-destructive/20 ring-1 ring-destructive" />{" "}
+                Salah (kunci ditampilkan)
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="h-3 w-3 rounded-sm bg-muted ring-1 ring-border" /> Belum diisi
+              </span>
             </div>
             {cols.length === 0 ? (
               <div className="rounded border border-dashed p-6 text-center text-sm text-muted-foreground">
@@ -199,16 +228,26 @@ export function PauliResult({
                     <div className="rounded border">
                       {c.cells.map((cell) => {
                         const digitTop = c.digits[cell.index];
-                        const state = cell.value === null
-                          ? "bg-muted/40 text-muted-foreground"
-                          : cell.correct
-                            ? "bg-success/15 text-success"
-                            : "bg-destructive/15 text-destructive";
+                        const state =
+                          cell.value === null
+                            ? "bg-muted/40 text-muted-foreground"
+                            : cell.correct
+                              ? "bg-success/15 text-success"
+                              : "bg-destructive/15 text-destructive";
                         return (
-                          <div key={cell.index} className="grid grid-cols-[26px_28px_26px] items-center border-b text-[11px] last:border-b-0">
-                            <div className="px-1 text-center font-mono text-muted-foreground">{digitTop}</div>
-                            <div className={`px-1 text-center font-mono font-bold ${state}`}>{cell.value ?? "–"}</div>
-                            <div className="px-1 text-center font-mono text-[10px] text-muted-foreground">{cell.key}</div>
+                          <div
+                            key={cell.index}
+                            className="grid grid-cols-[26px_28px_26px] items-center border-b text-[11px] last:border-b-0"
+                          >
+                            <div className="px-1 text-center font-mono text-muted-foreground">
+                              {digitTop}
+                            </div>
+                            <div className={`px-1 text-center font-mono font-bold ${state}`}>
+                              {cell.value ?? "–"}
+                            </div>
+                            <div className="px-1 text-center font-mono text-[10px] text-muted-foreground">
+                              {cell.key}
+                            </div>
                           </div>
                         );
                       })}

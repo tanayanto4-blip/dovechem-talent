@@ -43,7 +43,6 @@ export function TestDurationEditor({
       ]) {
         qc.invalidateQueries({ queryKey: key, refetchType: "all" });
       }
-
     },
     onError: (e: any) => toast.error(e?.message ?? "Gagal menyimpan durasi"),
   });
@@ -83,7 +82,9 @@ export function TestDurationEditor({
             type="button"
             onClick={() => setMinutes(String(p))}
             className={`rounded-full border px-2 py-0.5 text-[11px] transition-colors ${
-              parsed === p ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+              parsed === p
+                ? "border-primary bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-muted"
             }`}
           >
             {p}m

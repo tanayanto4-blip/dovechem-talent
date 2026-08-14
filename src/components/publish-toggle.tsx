@@ -30,7 +30,6 @@ function useInvalidate() {
     Promise.all(KEYS.map((queryKey) => qc.invalidateQueries({ queryKey, refetchType: "all" })));
 }
 
-
 /** True bila user saat ini Super Admin (hanya Super Admin boleh publish/unpublish). */
 export function useIsAdmin() {
   const fn = useServerFn(getMyRoles);
@@ -130,7 +129,12 @@ export function BulkQuestionPublish({ testId }: { testId: string }) {
       <Button size="sm" variant="outline" disabled={mut.isPending} onClick={() => mut.mutate(true)}>
         <Eye className="mr-2 h-4 w-4" /> Publish semua soal
       </Button>
-      <Button size="sm" variant="outline" disabled={mut.isPending} onClick={() => mut.mutate(false)}>
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={mut.isPending}
+        onClick={() => mut.mutate(false)}
+      >
         <EyeOff className="mr-2 h-4 w-4" /> Draft-kan semua soal
       </Button>
     </div>

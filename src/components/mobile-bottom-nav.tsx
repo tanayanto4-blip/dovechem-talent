@@ -60,7 +60,9 @@ export function MobileBottomNav({
                   {it.badge}
                 </span>
               ) : null}
-              {active && <span className="absolute inset-x-4 top-0 h-0.5 rounded-full bg-primary" />}
+              {active && (
+                <span className="absolute inset-x-4 top-0 h-0.5 rounded-full bg-primary" />
+              )}
             </Link>
           );
         })}

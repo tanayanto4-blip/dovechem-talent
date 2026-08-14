@@ -34,10 +34,18 @@ export function useSpeech({ text, lang, rate }: VoiceSettings) {
     u.lang = lang || "id-ID";
     u.rate = Math.min(2, Math.max(0.5, Number(rate) || 1));
     const voices = window.speechSynthesis.getVoices();
-    const match = voices.find((v) => v.lang?.toLowerCase().startsWith((u.lang || "id").slice(0, 2).toLowerCase()));
+    const match = voices.find((v) =>
+      v.lang?.toLowerCase().startsWith((u.lang || "id").slice(0, 2).toLowerCase()),
+    );
     if (match) u.voice = match;
-    u.onend = () => { setSpeaking(false); setPaused(false); };
-    u.onerror = () => { setSpeaking(false); setPaused(false); };
+    u.onend = () => {
+      setSpeaking(false);
+      setPaused(false);
+    };
+    u.onerror = () => {
+      setSpeaking(false);
+      setPaused(false);
+    };
     utterRef.current = u;
     setSpeaking(true);
     setPaused(false);
@@ -46,11 +54,22 @@ export function useSpeech({ text, lang, rate }: VoiceSettings) {
 
   const toggplePause = useCallback(() => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-    if (window.speechSynthesis.paused) { window.speechSynthesis.resume(); setPaused(false); }
-    else { window.speechSynthesis.pause(); setPaused(true); }
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+      setPaused(false);
+    } else {
+      window.speechSynthesis.pause();
+      setPaused(true);
+    }
   }, []);
 
-  useEffect(() => () => { if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel(); }, []);
+  useEffect(
+    () => () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window)
+        window.speechSynthesis.cancel();
+    },
+    [],
+  );
 
   return { supported, speaking, paused, speak, stop, togglePause: toggplePause };
 }
@@ -83,11 +102,12 @@ export function VoiceInstructionPlayer({
   useEffect(() => {
     if (!replayRef) return;
     replayRef.current = speak;
-    return () => { replayRef.current = null; };
+    return () => {
+      replayRef.current = null;
+    };
   }, [replayRef, speak]);
 
   if (!text.trim()) return null;
-
 
   return (
     <div className={`rounded-lg border bg-accent/40 ${compact ? "p-3" : "p-4"}`}>
@@ -99,14 +119,30 @@ export function VoiceInstructionPlayer({
           <Button type="button" size="sm" onClick={speak} disabled={!supported}>
             <Play className="mr-1.5 h-3.5 w-3.5" /> {speaking ? "Ulangi" : "Putar"}
           </Button>
-          <Button type="button" size="sm" variant="outline" onClick={togglePause} disabled={!supported || !speaking}>
-            {paused ? <Play className="mr-1.5 h-3.5 w-3.5" /> : <Pause className="mr-1.5 h-3.5 w-3.5" />}
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={togglePause}
+            disabled={!supported || !speaking}
+          >
+            {paused ? (
+              <Play className="mr-1.5 h-3.5 w-3.5" />
+            ) : (
+              <Pause className="mr-1.5 h-3.5 w-3.5" />
+            )}
             {paused ? "Lanjut" : "Jeda"}
           </Button>
           <Button type="button" size="sm" variant="secondary" onClick={speak} disabled={!supported}>
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Ulangi instruksi
           </Button>
-          <Button type="button" size="sm" variant="ghost" onClick={stop} disabled={!supported || !speaking}>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={stop}
+            disabled={!supported || !speaking}
+          >
             <Square className="mr-1.5 h-3.5 w-3.5" /> Berhenti
           </Button>
         </div>

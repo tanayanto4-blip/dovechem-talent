@@ -17,9 +17,16 @@ export const Route = createFileRoute("/candidate/portal/latihan/$testId")({
   head: () => ({
     meta: [
       { title: "Halaman Latihan Soal — Portal Kandidat Dover Chemical" },
-      { name: "description", content: "Halaman latihan berisi petunjuk pengerjaan dan satu contoh soal sebelum kandidat masuk ke halaman test yang sebenarnya." },
+      {
+        name: "description",
+        content:
+          "Halaman latihan berisi petunjuk pengerjaan dan satu contoh soal sebelum kandidat masuk ke halaman test yang sebenarnya.",
+      },
       { property: "og:title", content: "Halaman Latihan Soal — Portal Kandidat Dover Chemical" },
-      { property: "og:description", content: "Petunjuk pengerjaan dan satu contoh soal latihan sebelum psikotest dimulai." },
+      {
+        property: "og:description",
+        content: "Petunjuk pengerjaan dan satu contoh soal latihan sebelum psikotest dimulai.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -45,7 +52,8 @@ function PracticePage() {
 
   const intro = useQuery({
     queryKey: ["test-intro", testId, session?.code],
-    queryFn: () => getIntro({ data: { code: session!.code, device: session!.device, test_id: testId } }),
+    queryFn: () =>
+      getIntro({ data: { code: session!.code, device: session!.device, test_id: testId } }),
     enabled: !!session,
     staleTime: Infinity,
   });
@@ -69,7 +77,9 @@ function PracticePage() {
     return (
       <Card>
         <CardContent className="space-y-3 py-8 text-center">
-          <p className="text-sm text-muted-foreground">Sesi kandidat tidak ditemukan. Silakan login kembali menggunakan kode akses Anda.</p>
+          <p className="text-sm text-muted-foreground">
+            Sesi kandidat tidak ditemukan. Silakan login kembali menggunakan kode akses Anda.
+          </p>
           <Button onClick={() => nav({ to: "/candidate/login" })}>Login Kandidat</Button>
         </CardContent>
       </Card>
@@ -107,7 +117,8 @@ function PracticePage() {
             LATIHAN — {testLabel}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Halaman ini terpisah dari halaman test. Waktu belum berjalan dan jawaban di sini tidak dinilai.
+            Halaman ini terpisah dari halaman test. Waktu belum berjalan dan jawaban di sini tidak
+            dinilai.
           </p>
         </CardHeader>
       </Card>
@@ -164,7 +175,12 @@ function PracticePage() {
             <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-success" />
             <span>
               {sample.explanation}
-              {sample.answerKey && <> Jawaban contoh yang benar: <b>{sample.answerKey}</b>.</>}
+              {sample.answerKey && (
+                <>
+                  {" "}
+                  Jawaban contoh yang benar: <b>{sample.answerKey}</b>.
+                </>
+              )}
             </span>
           </div>
         )}
@@ -174,7 +190,9 @@ function PracticePage() {
         <Button onClick={() => nav({ to: "/candidate/portal/test/$testId", params: { testId } })}>
           Lanjut ke {testLabel} <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
-        <Button variant="outline" onClick={() => nav({ to: "/candidate/portal/tests" })}>Kembali</Button>
+        <Button variant="outline" onClick={() => nav({ to: "/candidate/portal/tests" })}>
+          Kembali
+        </Button>
       </div>
     </div>
   );

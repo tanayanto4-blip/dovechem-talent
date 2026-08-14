@@ -31,13 +31,21 @@ export const Route = createFileRoute("/admin/audit")({
   head: () => ({
     meta: [
       { title: "Audit Log — Admin PT Dover Chemical" },
-      { name: "description", content: "Jejak aktivitas admin/HR: aktivasi kode kandidat, akses lembar jawaban, dan penolakan RBAC." },
-          { property: "og:title", content: "Audit Log — Admin PT Dover Chemical" },
-      { property: "og:description", content: "Jejak aktivitas admin/HR: aktivasi kode kandidat, akses lembar jawaban, dan penolakan RBAC." },
+      {
+        name: "description",
+        content:
+          "Jejak aktivitas admin/HR: aktivasi kode kandidat, akses lembar jawaban, dan penolakan RBAC.",
+      },
+      { property: "og:title", content: "Audit Log — Admin PT Dover Chemical" },
+      {
+        property: "og:description",
+        content:
+          "Jejak aktivitas admin/HR: aktivasi kode kandidat, akses lembar jawaban, dan penolakan RBAC.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
-],
+    ],
   }),
   component: AuditPage,
 });
@@ -74,7 +82,19 @@ function isDenied(r: Row) {
 }
 
 function toCsv(rows: Row[]): string {
-  const headers = ["waktu", "actor_type", "actor_name", "actor_id", "action", "action_label", "target_type", "target_id", "ip", "user_agent", "metadata"];
+  const headers = [
+    "waktu",
+    "actor_type",
+    "actor_name",
+    "actor_id",
+    "action",
+    "action_label",
+    "target_type",
+    "target_id",
+    "ip",
+    "user_agent",
+    "metadata",
+  ];
   const esc = (v: unknown) => {
     const s = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
     return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -82,19 +102,23 @@ function toCsv(rows: Row[]): string {
   const lines = [headers.join(",")];
   for (const r of rows) {
     const meta = (r.metadata ?? {}) as Record<string, unknown>;
-    lines.push([
-      new Date(r.created_at).toISOString(),
-      r.actor_type,
-      r.actor?.full_name || r.actor?.username || r.actor_label || "",
-      r.actor_id ?? "",
-      r.action,
-      ACTION_LABEL[r.action] ?? r.action,
-      r.target_type,
-      r.target_id ?? "",
-      (meta.ip as string) ?? "",
-      (meta.user_agent as string) ?? "",
-      r.metadata ?? {},
-    ].map(esc).join(","));
+    lines.push(
+      [
+        new Date(r.created_at).toISOString(),
+        r.actor_type,
+        r.actor?.full_name || r.actor?.username || r.actor_label || "",
+        r.actor_id ?? "",
+        r.action,
+        ACTION_LABEL[r.action] ?? r.action,
+        r.target_type,
+        r.target_id ?? "",
+        (meta.ip as string) ?? "",
+        (meta.user_agent as string) ?? "",
+        r.metadata ?? {},
+      ]
+        .map(esc)
+        .join(","),
+    );
   }
   return lines.join("\n");
 }
@@ -132,7 +156,6 @@ function AuditPage() {
   const fetchLogs = useServerFn(listAuditLogs);
   const fetchUsers = useServerFn(listAdminUsers);
 
-
   const [action, setAction] = useState<string | null>(null);
   const [onlyDenied, setOnlyDenied] = useState(false);
   const [actorId, setActorId] = useState<string | null>(null);
@@ -158,11 +181,7 @@ function AuditPage() {
       .filter((u) => (roleFilter === "all" ? true : u.roles.includes(roleFilter)))
       .map((u) => ({
         id: u.id,
-        label:
-          u.profile?.full_name ||
-          u.profile?.username ||
-          u.email ||
-          u.id.slice(0, 8),
+        label: u.profile?.full_name || u.profile?.username || u.email || u.id.slice(0, 8),
         roles: u.roles,
       }));
   }, [usersQ.data, roleFilter]);
@@ -261,7 +280,12 @@ function AuditPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => downloadCsv(rows)} disabled={rows.length === 0}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => downloadCsv(rows)}
+            disabled={rows.length === 0}
+          >
             <Download className="mr-2 h-4 w-4" /> CSV halaman
           </Button>
           <Button variant="outline" size="sm" onClick={exportAllMatching} disabled={total === 0}>
@@ -381,7 +405,11 @@ function AuditPage() {
                   {staffOptions.map((u) => (
                     <SelectItem key={u.id} value={u.id}>
                       {u.label}
-                      {u.roles.includes("admin") ? " · admin" : u.roles.includes("hr") ? " · hr" : ""}
+                      {u.roles.includes("admin")
+                        ? " · admin"
+                        : u.roles.includes("hr")
+                          ? " · hr"
+                          : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -505,9 +533,7 @@ function AuditPage() {
                     <tr
                       key={r.id}
                       className={`border-t ${
-                        denied
-                          ? "bg-destructive/10 border-l-4 border-l-destructive"
-                          : ""
+                        denied ? "bg-destructive/10 border-l-4 border-l-destructive" : ""
                       }`}
                     >
                       <td className="whitespace-nowrap px-4 py-2 font-mono text-xs">
@@ -516,8 +542,8 @@ function AuditPage() {
                       <td className="px-4 py-2">
                         <div className="font-medium">
                           {r.actor_type === "candidate"
-                            ? (r.actor_label || "Kandidat")
-                            : (r.actor?.full_name || r.actor?.username || r.actor_label || "—")}
+                            ? r.actor_label || "Kandidat"
+                            : r.actor?.full_name || r.actor?.username || r.actor_label || "—"}
                         </div>
                         <div className="font-mono text-[10px] text-muted-foreground">
                           {r.actor_type === "candidate"
@@ -572,7 +598,7 @@ function AuditPage() {
                         ) : null}
                       </td>
                       <td className="px-4 py-2 text-xs text-muted-foreground">
-                        {(ip || ua) ? (
+                        {ip || ua ? (
                           <div className="space-y-0.5">
                             {ip ? (
                               <div className="font-mono text-[11px] text-foreground">
@@ -580,7 +606,10 @@ function AuditPage() {
                               </div>
                             ) : null}
                             {ua ? (
-                              <div className="truncate font-mono text-[10px] text-muted-foreground" title={ua}>
+                              <div
+                                className="truncate font-mono text-[10px] text-muted-foreground"
+                                title={ua}
+                              >
                                 <span>UA:</span> {ua}
                               </div>
                             ) : null}

@@ -25,8 +25,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL =
-  process.env.INTEGRATION_SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
+const SUPABASE_URL = process.env.INTEGRATION_SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
 const SUPABASE_KEY =
   process.env.INTEGRATION_SUPABASE_PUBLISHABLE_KEY ??
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
@@ -157,10 +156,7 @@ describe.skipIf(!hasCandidate)("integration: candidate endpoint access", () => {
 
   it("anon Supabase key cannot read candidate PII directly (403-equivalent)", async () => {
     const anon = newClient();
-    const { data, error } = await anon
-      .from("candidates")
-      .select("full_name, nik, phone")
-      .limit(1);
+    const { data, error } = await anon.from("candidates").select("full_name, nik, phone").limit(1);
     expect(error !== null || (data ?? []).length === 0).toBe(true);
   });
 
@@ -185,7 +181,8 @@ describe("integration suite wiring", () => {
     // This meta-test always runs so a CI operator sees which vars to set.
     const missing: string[] = [];
     if (!SUPABASE_URL) missing.push("INTEGRATION_SUPABASE_URL / VITE_SUPABASE_URL");
-    if (!SUPABASE_KEY) missing.push("INTEGRATION_SUPABASE_PUBLISHABLE_KEY / VITE_SUPABASE_PUBLISHABLE_KEY");
+    if (!SUPABASE_KEY)
+      missing.push("INTEGRATION_SUPABASE_PUBLISHABLE_KEY / VITE_SUPABASE_PUBLISHABLE_KEY");
     if (!ADMIN_EMAIL || !ADMIN_PASSWORD) missing.push("INTEGRATION_ADMIN_EMAIL / _PASSWORD");
     if (!HR_EMAIL || !HR_PASSWORD) missing.push("INTEGRATION_HR_EMAIL / _PASSWORD");
     if (!CANDIDATE_CODE) missing.push("INTEGRATION_CANDIDATE_CODE");

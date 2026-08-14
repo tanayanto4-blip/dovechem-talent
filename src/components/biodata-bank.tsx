@@ -7,7 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +33,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Download, Search, IdCard, FileSpreadsheet, FileText, ChevronDown, Trash2 } from "lucide-react";
+import {
+  Download,
+  Search,
+  IdCard,
+  FileSpreadsheet,
+  FileText,
+  ChevronDown,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { candidateTrackOf } from "@/lib/candidate-type";
 import {
@@ -37,12 +52,17 @@ import {
   safeName,
 } from "@/lib/biodata-export";
 
-
 function fmtWhen(v: unknown) {
   if (!v) return "-";
   const d = new Date(String(v));
   if (Number.isNaN(d.getTime())) return "-";
-  return d.toLocaleString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function csvCell(v: unknown) {
@@ -80,7 +100,17 @@ export function BiodataBank({ track }: { track?: "magang" | "karyawan" }) {
     const s = q.trim().toLowerCase();
     if (!s) return candidates;
     return candidates.filter((c) =>
-      [c.full_name, c.school_name, c.major, c.education, c.position_applied, c.email, c.phone, c.candidate_codes?.code, c.code_snapshot]
+      [
+        c.full_name,
+        c.school_name,
+        c.major,
+        c.education,
+        c.position_applied,
+        c.email,
+        c.phone,
+        c.candidate_codes?.code,
+        c.code_snapshot,
+      ]
         .filter(Boolean)
         .some((v: string) => String(v).toLowerCase().includes(s)),
     );
@@ -123,7 +153,10 @@ export function BiodataBank({ track }: { track?: "magang" | "karyawan" }) {
   }
 
   function downloadOneCsv(c: any) {
-    downloadCsv([["Kode", ...FIELDS.map((f) => f.label)], rowFor(c)], `biodata_${safeName(c.full_name ?? "")}.csv`);
+    downloadCsv(
+      [["Kode", ...FIELDS.map((f) => f.label)], rowFor(c)],
+      `biodata_${safeName(c.full_name ?? "")}.csv`,
+    );
     toast.success(`CSV biodata ${c.full_name ?? "kandidat"} diunduh`);
   }
 
@@ -135,7 +168,6 @@ export function BiodataBank({ track }: { track?: "magang" | "karyawan" }) {
     );
     toast.success(`${target.length} biodata diunduh (CSV)`);
   }
-
 
   async function run(fn: () => void | Promise<void>, msg: string) {
     try {
@@ -175,7 +207,12 @@ export function BiodataBank({ track }: { track?: "magang" | "karyawan" }) {
           )}
           <div className="relative">
             <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Cari nama, sekolah, posisi..." value={q} onChange={(e) => setQ(e.target.value)} className="w-64 pl-8" />
+            <Input
+              placeholder="Cari nama, sekolah, posisi..."
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="w-64 pl-8"
+            />
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -192,7 +229,10 @@ export function BiodataBank({ track }: { track?: "magang" | "karyawan" }) {
                 onClick={() =>
                   run(
                     () =>
-                      exportBiodataExcel(target, `rekap_biodata_kandidat_${new Date().toISOString().slice(0, 10)}.xlsx`),
+                      exportBiodataExcel(
+                        target,
+                        `rekap_biodata_kandidat_${new Date().toISOString().slice(0, 10)}.xlsx`,
+                      ),
                     `${target.length} biodata diunduh (Excel)`,
                   )
                 }
@@ -200,7 +240,9 @@ export function BiodataBank({ track }: { track?: "magang" | "karyawan" }) {
                 <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel (.xlsx)
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => run(() => exportAllBiodataPdf(target), `${target.length} biodata diunduh (PDF)`)}
+                onClick={() =>
+                  run(() => exportAllBiodataPdf(target), `${target.length} biodata diunduh (PDF)`)
+                }
               >
                 <FileText className="mr-2 h-4 w-4" /> PDF rekap
               </DropdownMenuItem>
@@ -215,7 +257,9 @@ export function BiodataBank({ track }: { track?: "magang" | "karyawan" }) {
         {isLoading ? (
           <div className="py-8 text-center text-sm text-muted-foreground">Memuat biodata...</div>
         ) : filtered.length === 0 ? (
-          <div className="py-8 text-center text-sm text-muted-foreground">Belum ada biodata kandidat.</div>
+          <div className="py-8 text-center text-sm text-muted-foreground">
+            Belum ada biodata kandidat.
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <Table>
@@ -232,7 +276,9 @@ export function BiodataBank({ track }: { track?: "magang" | "karyawan" }) {
                     </div>
                   </TableHead>
                   <TableHead>Kode</TableHead>
-                  {FIELDS.map((f) => <TableHead key={f.key}>{f.label}</TableHead>)}
+                  {FIELDS.map((f) => (
+                    <TableHead key={f.key}>{f.label}</TableHead>
+                  ))}
                   <TableHead className="w-40">Terakhir diperbarui</TableHead>
                   <TableHead className="w-40 text-right">Aksi</TableHead>
                 </TableRow>
@@ -250,9 +296,14 @@ export function BiodataBank({ track }: { track?: "magang" | "karyawan" }) {
                         <span>{i + 1}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-xs">{c.candidate_codes?.code ?? c.code_snapshot ?? "-"}</TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {c.candidate_codes?.code ?? c.code_snapshot ?? "-"}
+                    </TableCell>
                     {FIELDS.map((f) => (
-                      <TableCell key={f.key} className={f.key === "full_name" ? "font-medium" : "text-sm"}>
+                      <TableCell
+                        key={f.key}
+                        className={f.key === "full_name" ? "font-medium" : "text-sm"}
+                      >
                         {c[f.key] || "-"}
                       </TableCell>
                     ))}
@@ -264,23 +315,34 @@ export function BiodataBank({ track }: { track?: "magang" | "karyawan" }) {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button size="sm" variant="outline" className="gap-1">
-                              <Download className="h-3.5 w-3.5" /> Unduh <ChevronDown className="h-3 w-3" />
+                              <Download className="h-3.5 w-3.5" /> Unduh{" "}
+                              <ChevronDown className="h-3 w-3" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuLabel className="max-w-48 truncate">{c.full_name ?? "Kandidat"}</DropdownMenuLabel>
+                            <DropdownMenuLabel className="max-w-48 truncate">
+                              {c.full_name ?? "Kandidat"}
+                            </DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() =>
                                 run(
-                                  () => exportBiodataExcel([c], `biodata_${safeName(c.full_name ?? "")}.xlsx`),
+                                  () =>
+                                    exportBiodataExcel(
+                                      [c],
+                                      `biodata_${safeName(c.full_name ?? "")}.xlsx`,
+                                    ),
                                   "Excel biodata diunduh",
                                 )
                               }
                             >
                               <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel (.xlsx)
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => run(() => exportCandidateBiodataPdf(c), "PDF biodata diunduh")}>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                run(() => exportCandidateBiodataPdf(c), "PDF biodata diunduh")
+                              }
+                            >
                               <FileText className="mr-2 h-4 w-4" /> PDF
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => downloadOneCsv(c)}>
@@ -312,8 +374,8 @@ export function BiodataBank({ track }: { track?: "magang" | "karyawan" }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus biodata kandidat?</AlertDialogTitle>
             <AlertDialogDescription>
-              Biodata {toDelete?.full_name ?? "kandidat ini"} akan dikosongkan. Kode akses, dokumen, dan hasil test tetap
-              tersimpan. Tindakan ini tidak bisa dibatalkan.
+              Biodata {toDelete?.full_name ?? "kandidat ini"} akan dikosongkan. Kode akses, dokumen,
+              dan hasil test tetap tersimpan. Tindakan ini tidak bisa dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -332,6 +394,5 @@ export function BiodataBank({ track }: { track?: "magang" | "karyawan" }) {
         </AlertDialogContent>
       </AlertDialog>
     </Card>
-
   );
 }

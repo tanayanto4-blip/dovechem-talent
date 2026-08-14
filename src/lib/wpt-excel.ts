@@ -193,7 +193,12 @@ export async function exportWptExcel(answers: WptExcelAnswer[], meta: WptExcelMe
   ws.getCell("B5").value = `Nama : ${nama}   |   Jabatan : ${meta.position ?? "-"}`;
 
   // Biodata kandidat terisi otomatis pada lembar template (tanpa sheet tambahan)
-  applyInlineBiodata(ws, meta, { startRow: 191, labelCol: "B", valueCol: "C", title: "BIODATA KANDIDAT (PT DOVER CHEMICAL)" });
+  applyInlineBiodata(ws, meta, {
+    startRow: 191,
+    labelCol: "B",
+    valueCol: "C",
+    title: "BIODATA KANDIDAT (PT DOVER CHEMICAL)",
+  });
 
   (wb as any).calcProperties = { ...(wb as any).calcProperties, fullCalcOnLoad: true };
 
@@ -211,4 +216,3 @@ export async function exportWptExcel(answers: WptExcelAnswer[], meta: WptExcelMe
 
   return { filled, total, iq, category, lastAnswered, valid: filled > 0 };
 }
-

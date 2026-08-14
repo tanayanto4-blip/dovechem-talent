@@ -51,10 +51,7 @@ const SCALE_COLUMNS: Array<{ col: string; scale: string }> = [
 /** Baris data pertama pada sheet "POLA DASAR" — yang dirujuk sheet Summary. */
 const DATA_ROW = 6;
 
-export async function exportPapiExcel(
-  picks: Record<number, string>,
-  meta: PapiExcelMeta = {},
-) {
+export async function exportPapiExcel(picks: Record<number, string>, meta: PapiExcelMeta = {}) {
   const score = papiScore(picks);
 
   const res = await fetch(templateAsset.url);

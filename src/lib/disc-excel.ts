@@ -77,7 +77,6 @@ export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExce
   const { wbXml, sheets } = await sheetPaths(zip);
   const main = sheets.find((s) => /disc\s*test/i.test(s.name)) ?? sheets[0];
 
-
   // 1) Kosongkan semua kolom P/K, lalu isi sesuai jawaban kandidat
   const edits = new Map<string, CellValue>();
   for (let g = 1; g <= 24; g++) {
@@ -107,7 +106,10 @@ export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExce
   // 2) Identitas kandidat pada kolom yang memang disediakan template
   const nama = [meta.candidateName, meta.candidateCode].filter(Boolean).join(" — ") || "-";
   edits.set("G2", nama);
-  edits.set("G3", meta.age != null && meta.age !== "" ? Number(meta.age) || String(meta.age) : null);
+  edits.set(
+    "G3",
+    meta.age != null && meta.age !== "" ? Number(meta.age) || String(meta.age) : null,
+  );
   edits.set("G4", meta.gender ? String(meta.gender).toUpperCase() : null);
   edits.set(
     "G5",

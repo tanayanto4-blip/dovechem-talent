@@ -2,14 +2,29 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { candidateAutosaveProfile, candidateGetProfile, candidateSaveProfile } from "@/lib/candidate.functions";
+import {
+  candidateAutosaveProfile,
+  candidateGetProfile,
+  candidateSaveProfile,
+} from "@/lib/candidate.functions";
 import { useCandidateSession } from "@/lib/candidate-session";
-import { candidateTypeLabel, JOB_POSITIONS, jobLevelLabel, jobLevelOfPosition } from "@/lib/candidate-type";
+import {
+  candidateTypeLabel,
+  JOB_POSITIONS,
+  jobLevelLabel,
+  jobLevelOfPosition,
+} from "@/lib/candidate-type";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/candidate/portal/data")({
@@ -18,12 +33,14 @@ export const Route = createFileRoute("/candidate/portal/data")({
       { title: "Data Diri Kandidat — Dover Chemical" },
       {
         name: "description",
-        content: "Lengkapi biodata kandidat PT Dover Chemical sebelum mengerjakan rangkaian psikotest online.",
+        content:
+          "Lengkapi biodata kandidat PT Dover Chemical sebelum mengerjakan rangkaian psikotest online.",
       },
       { property: "og:title", content: "Data Diri Kandidat — Dover Chemical" },
       {
         property: "og:description",
-        content: "Lengkapi biodata kandidat PT Dover Chemical sebelum mengerjakan rangkaian psikotest online.",
+        content:
+          "Lengkapi biodata kandidat PT Dover Chemical sebelum mengerjakan rangkaian psikotest online.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -107,7 +124,11 @@ function DataForm() {
   const doAutosave = useCallback(
     async (currentForm: Record<string, string>) => {
       if (!session) return;
-      if (lastSavedRef.current && JSON.stringify(lastSavedRef.current) === JSON.stringify(currentForm)) return;
+      if (
+        lastSavedRef.current &&
+        JSON.stringify(lastSavedRef.current) === JSON.stringify(currentForm)
+      )
+        return;
 
       const payload: Record<string, string> = { code: session.code, device: session.device ?? "" };
       let hasValue = false;
@@ -176,7 +197,9 @@ function DataForm() {
   if (isLoading || !session) {
     return (
       <Card className="shadow-card">
-        <CardContent className="py-10 text-center text-muted-foreground">Memuat data diri…</CardContent>
+        <CardContent className="py-10 text-center text-muted-foreground">
+          Memuat data diri…
+        </CardContent>
       </Card>
     );
   }
@@ -185,11 +208,15 @@ function DataForm() {
     <Card className="shadow-card">
       <CardHeader>
         <h1 className="font-display text-2xl font-semibold leading-none tracking-tight">
-          Biodata {candidateTypeLabel(candidateType, isMagang ? null : jobLevelOfPosition(form.job_position ?? ""))}
+          Biodata{" "}
+          {candidateTypeLabel(
+            candidateType,
+            isMagang ? null : jobLevelOfPosition(form.job_position ?? ""),
+          )}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Seluruh kolom wajib diisi. Data diri harus dilengkapi terlebih dahulu sebelum Anda dapat mengerjakan
-          psikotest. Setiap kolom yang terisi akan otomatis tersimpan.
+          Seluruh kolom wajib diisi. Data diri harus dilengkapi terlebih dahulu sebelum Anda dapat
+          mengerjakan psikotest. Setiap kolom yang terisi akan otomatis tersimpan.
         </p>
       </CardHeader>
       <CardContent>
@@ -202,7 +229,10 @@ function DataForm() {
             />
           </Field>
           <Field label="Jenis Kelamin" required>
-            <Select value={form.gender ?? ""} onValueChange={(v) => setForm({ ...form, gender: v })}>
+            <Select
+              value={form.gender ?? ""}
+              onValueChange={(v) => setForm({ ...form, gender: v })}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Pilih jenis kelamin" />
               </SelectTrigger>
@@ -224,7 +254,10 @@ function DataForm() {
             />
           </Field>
           <Field label="Pendidikan" required>
-            <Select value={form.education ?? ""} onValueChange={(v) => setForm({ ...form, education: v })}>
+            <Select
+              value={form.education ?? ""}
+              onValueChange={(v) => setForm({ ...form, education: v })}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Pilih jenjang" />
               </SelectTrigger>
@@ -261,7 +294,10 @@ function DataForm() {
           </Field>
           {isMagang ? (
             <Field label="Semester Saat Ini" required>
-              <Select value={form.semester ?? ""} onValueChange={(v) => setForm({ ...form, semester: v })}>
+              <Select
+                value={form.semester ?? ""}
+                onValueChange={(v) => setForm({ ...form, semester: v })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih semester" />
                 </SelectTrigger>
@@ -310,13 +346,6 @@ function DataForm() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Menentukan paket soal Anda:{" "}
-                {form.job_position
-                  ? `tingkat ${jobLevelLabel(jobLevelOfPosition(form.job_position))}`
-                  : "Staff atau SPV ke atas"}
-                .
-              </p>
             </Field>
           )}
 
@@ -350,8 +379,12 @@ function DataForm() {
             {saveStatus === "saving" && (
               <span className="text-sm text-muted-foreground">Menyimpan otomatis…</span>
             )}
-            {saveStatus === "saved" && <span className="text-sm text-green-600">Tersimpan otomatis</span>}
-            {saveStatus === "error" && <span className="text-sm text-destructive">Gagal menyimpan otomatis</span>}
+            {saveStatus === "saved" && (
+              <span className="text-sm text-green-600">Tersimpan otomatis</span>
+            )}
+            {saveStatus === "error" && (
+              <span className="text-sm text-destructive">Gagal menyimpan otomatis</span>
+            )}
           </div>
         </form>
       </CardContent>

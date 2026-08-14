@@ -17,7 +17,9 @@ export type CandidateSession = {
 };
 
 const listeners = new Set<() => void>();
-function emit() { listeners.forEach((l) => l()); }
+function emit() {
+  listeners.forEach((l) => l());
+}
 
 let cachedRaw: string | null = null;
 let cachedValue: CandidateSession | null = null;
@@ -30,7 +32,9 @@ export function getCandidateSession(): CandidateSession | null {
     cachedRaw = raw;
     cachedValue = raw ? (JSON.parse(raw) as CandidateSession) : null;
     return cachedValue;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 export function setCandidateSession(s: CandidateSession | null) {
@@ -43,7 +47,10 @@ export function setCandidateSession(s: CandidateSession | null) {
 
 export function useCandidateSession() {
   return useSyncExternalStore(
-    (cb) => { listeners.add(cb); return () => listeners.delete(cb); },
+    (cb) => {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
     () => getCandidateSession(),
     () => null,
   );

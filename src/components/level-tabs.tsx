@@ -35,13 +35,17 @@ export function LevelTabs({
           onClick={() => onChange(key)}
           className={cn(
             "inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-            value === key ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-foreground",
+            value === key
+              ? "bg-card text-primary shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
           )}
         >
           <Icon className="h-4 w-4" />
           {label}
           {counts?.[key] != null && (
-            <span className="rounded-full bg-muted px-1.5 text-[11px] tabular-nums">{counts[key]}</span>
+            <span className="rounded-full bg-muted px-1.5 text-[11px] tabular-nums">
+              {counts[key]}
+            </span>
           )}
         </button>
       ))}

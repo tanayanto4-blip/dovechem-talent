@@ -16,13 +16,19 @@ export const Route = createFileRoute("/admin/test-access")({
   head: () => ({
     meta: [
       { title: "Kontrol Pengerjaan Test | Dover Chemical" },
-      { name: "description", content: "Buka, tutup, dan setujui permintaan pengulangan test psikotest kandidat." },
+      {
+        name: "description",
+        content: "Buka, tutup, dan setujui permintaan pengulangan test psikotest kandidat.",
+      },
       { property: "og:title", content: "Kontrol Pengerjaan Test | Dover Chemical" },
-      { property: "og:description", content: "Kelola akses buka/tutup test dan permintaan ulang test kandidat." },
+      {
+        property: "og:description",
+        content: "Kelola akses buka/tutup test dan permintaan ulang test kandidat.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-        { name: "robots", content: "noindex" },
-  ],
+      { name: "robots", content: "noindex" },
+    ],
   }),
 });
 
@@ -35,8 +41,14 @@ function TestAccessPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const { data: candData } = useQuery({ queryKey: ["candidates"], queryFn: () => candFn({ data: { limit: 1000 } }) });
-  const { data: reqData } = useQuery({ queryKey: ["retake-requests"], queryFn: () => reqFn({ data: { status: "pending" } }) });
+  const { data: candData } = useQuery({
+    queryKey: ["candidates"],
+    queryFn: () => candFn({ data: { limit: 1000 } }),
+  });
+  const { data: reqData } = useQuery({
+    queryKey: ["retake-requests"],
+    queryFn: () => reqFn({ data: { status: "pending" } }),
+  });
 
   const isAdmin = !!reqData?.isAdmin;
   const candidates = (candData?.candidates ?? []) as any[];
@@ -90,14 +102,17 @@ function TestAccessPage() {
         </CardHeader>
         <CardContent>
           {requests.length === 0 ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">Tidak ada permintaan yang menunggu.</div>
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              Tidak ada permintaan yang menunggu.
+            </div>
           ) : (
             <div className="divide-y rounded-md border">
               {requests.map((r) => (
                 <div key={r.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
                   <div>
                     <div className="font-medium">
-                      {r.candidates?.full_name ?? "Kandidat"} · <span className="text-secondary">{r.tests?.name}</span>
+                      {r.candidates?.full_name ?? "Kandidat"} ·{" "}
+                      <span className="text-secondary">{r.tests?.name}</span>
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {new Date(r.created_at).toLocaleString("id-ID")}
@@ -109,7 +124,12 @@ function TestAccessPage() {
                       <Button size="sm" disabled={busy === r.id} onClick={() => decide(r.id, true)}>
                         <Check className="mr-2 h-4 w-4" /> Setujui & Buka
                       </Button>
-                      <Button size="sm" variant="outline" disabled={busy === r.id} onClick={() => decide(r.id, false)}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busy === r.id}
+                        onClick={() => decide(r.id, false)}
+                      >
                         <X className="mr-2 h-4 w-4" /> Tolak
                       </Button>
                     </div>
@@ -132,7 +152,12 @@ function TestAccessPage() {
         <CardContent className="space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari nama / kode kandidat..." />
+            <Input
+              className="pl-9"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Cari nama / kode kandidat..."
+            />
           </div>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((c) => (
@@ -145,10 +170,14 @@ function TestAccessPage() {
                 }`}
               >
                 <div className="text-sm font-medium">{c.full_name ?? "Tanpa nama"}</div>
-                <div className="font-mono text-xs text-muted-foreground">{c.candidate_codes?.code ?? c.code_snapshot ?? "-"}</div>
+                <div className="font-mono text-xs text-muted-foreground">
+                  {c.candidate_codes?.code ?? c.code_snapshot ?? "-"}
+                </div>
               </button>
             ))}
-            {filtered.length === 0 ? <div className="text-sm text-muted-foreground">Kandidat tidak ditemukan.</div> : null}
+            {filtered.length === 0 ? (
+              <div className="text-sm text-muted-foreground">Kandidat tidak ditemukan.</div>
+            ) : null}
           </div>
         </CardContent>
       </Card>
@@ -156,7 +185,8 @@ function TestAccessPage() {
       {selected ? (
         <div className="space-y-2">
           <div className="text-sm text-muted-foreground">
-            Kandidat terpilih: <b className="text-foreground">{selectedCandidate?.full_name ?? "-"}</b>
+            Kandidat terpilih:{" "}
+            <b className="text-foreground">{selectedCandidate?.full_name ?? "-"}</b>
           </div>
           <TestAccessControl candidateId={selected} />
         </div>

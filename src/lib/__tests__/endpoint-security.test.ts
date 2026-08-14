@@ -113,10 +113,9 @@ describe("endpoint security — role enforcement", () => {
       "createAdminUser",
       "listAuditLogs",
     ]) {
-      expect(
-        candidateSrc,
-        `candidate module must not reference ${forbidden}`,
-      ).not.toMatch(new RegExp(`\\b${forbidden}\\b`));
+      expect(candidateSrc, `candidate module must not reference ${forbidden}`).not.toMatch(
+        new RegExp(`\\b${forbidden}\\b`),
+      );
     }
   });
 });

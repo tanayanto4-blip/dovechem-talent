@@ -23,10 +23,7 @@ const SRC = readFileSync(
 
 // The per-question rendering (including the DISC grid) lives in the shared
 // question card component; the route owns state + the setDisc contract.
-const CARD = readFileSync(
-  resolve(__dirname, "../../components/test-question-card.tsx"),
-  "utf8",
-);
+const CARD = readFileSync(resolve(__dirname, "../../components/test-question-card.tsx"), "utf8");
 
 // Strip the non-DISC branches so assertions only inspect the DISC block.
 const DISC_BLOCK = (() => {
@@ -39,9 +36,7 @@ const DISC_BLOCK = (() => {
 
 describe("DISC layout regression", () => {
   it("uses a 3-column grid (statement | M | L) for header and rows", () => {
-    const grids = DISC_BLOCK.match(
-      /grid-cols-\[minmax\(0,1fr\)_[^\]]*\]/g,
-    );
+    const grids = DISC_BLOCK.match(/grid-cols-\[minmax\(0,1fr\)_[^\]]*\]/g);
     expect(grids?.length ?? 0).toBeGreaterThanOrEqual(2);
   });
 
@@ -75,7 +70,6 @@ describe("DISC layout regression", () => {
     expect(mLegend).toBeGreaterThan(-1);
     expect(lLegend).toBeGreaterThan(mLegend);
   });
-
 
   it("keeps the setDisc contract: M -> most, L -> least", () => {
     // Guards the scoring path in candidateSubmitTest which reads

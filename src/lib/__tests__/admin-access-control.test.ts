@@ -92,10 +92,9 @@ describe("staff/admin server fns enforce role checks", () => {
       /\.middleware\(\s*\[\s*requireStaff\s*\]\s*\)/.test(attempt!.body),
       "getAttemptDetail must use requireStaff middleware",
     ).toBe(true);
-    expect(
-      candidateSrc,
-      "candidate.functions.ts must not import getAttemptDetail",
-    ).not.toMatch(/getAttemptDetail/);
+    expect(candidateSrc, "candidate.functions.ts must not import getAttemptDetail").not.toMatch(
+      /getAttemptDetail/,
+    );
   });
 
   it("candidate.functions.ts does not import admin fns or staff middleware", () => {
@@ -108,7 +107,10 @@ describe("staff/admin server fns enforce role checks", () => {
 
   // Reproduces requireStaff's server body — kept in sync with staff-middleware.ts
   // to allow runtime assertions without evaluating raw TypeScript source.
-  async function runRequireStaff(context: { supabase: any; userId: string }, next: (arg: any) => Promise<any>) {
+  async function runRequireStaff(
+    context: { supabase: any; userId: string },
+    next: (arg: any) => Promise<any>,
+  ) {
     const { data, error } = await context.supabase
       .from("user_roles")
       .select("role")
@@ -150,7 +152,9 @@ describe("staff/admin server fns enforce role checks", () => {
       }),
     };
     await expect(
-      runRequireStaff({ supabase: fakeSb, userId: "candidate-user-id" }, async () => ({ ok: true })),
+      runRequireStaff({ supabase: fakeSb, userId: "candidate-user-id" }, async () => ({
+        ok: true,
+      })),
     ).rejects.toThrow(/Forbidden/);
   });
 

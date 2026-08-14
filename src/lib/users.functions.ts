@@ -8,8 +8,6 @@ async function getAdminClient() {
   return mod.supabaseAdmin;
 }
 
-
-
 /** Public: check if any admin account already exists (for bootstrap UI). */
 export const bootstrapStatus = createServerFn({ method: "GET" }).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -36,7 +34,8 @@ export const createBootstrapAdmin = createServerFn({ method: "POST" })
       .from("user_roles")
       .select("*", { count: "exact", head: true })
       .eq("role", "admin");
-    if ((count ?? 0) > 0) throw new Error("Bootstrap sudah dilakukan. Hubungi admin untuk membuat akun.");
+    if ((count ?? 0) > 0)
+      throw new Error("Bootstrap sudah dilakukan. Hubungi admin untuk membuat akun.");
 
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
@@ -119,7 +118,9 @@ export const deleteAdminUser = createServerFn({ method: "POST" })
 
 export const resetUserPassword = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
-  .inputValidator((d) => z.object({ id: z.string().uuid(), password: z.string().min(8).max(72) }).parse(d))
+  .inputValidator((d) =>
+    z.object({ id: z.string().uuid(), password: z.string().min(8).max(72) }).parse(d),
+  )
   .handler(async ({ context, data }) => {
     const admin = await getAdminClient();
     const { error } = await admin.auth.admin.updateUserById(data.id, { password: data.password });

@@ -32,7 +32,10 @@ export function stripImgToken(text: string): string {
  * Blok dipisah oleh 2+ spasi dan setiap barisnya memuat tanda "/".
  */
 export function extractPairBlock(text: string): { body: string; lines: string[] } {
-  const segments = (text ?? "").split(/\s{2,}/).map((s) => s.trim()).filter(Boolean);
+  const segments = (text ?? "")
+    .split(/\s{2,}/)
+    .map((s) => s.trim())
+    .filter(Boolean);
   const pairIdx = segments.findIndex((s) => /^[^/]+\/[^/]+$/.test(s));
   if (pairIdx === -1) return { body: text, lines: [] };
   const lines = segments.slice(pairIdx).filter((s) => /^[^/]+\/[^/]+$/.test(s));
@@ -44,8 +47,13 @@ const isNumToken = (s: string) => /^[-+]?[\d.,/]*\d[\d.,/]*[?.]?$|^\?$/.test(s);
 
 /** Deret angka bersampingan, mis. "1   .5   .25   .125   ?" atau "8, 4, 2, 1, 1/2, ?" */
 export function extractSeriesBlock(text: string): { body: string; items: string[] } {
-  const segments = (text ?? "").split(/\s{2,}/).map((s) => s.trim()).filter(Boolean);
-  const startIdx = segments.findIndex((s, i) => isNumToken(s) && segments.slice(i).every(isNumToken));
+  const segments = (text ?? "")
+    .split(/\s{2,}/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const startIdx = segments.findIndex(
+    (s, i) => isNumToken(s) && segments.slice(i).every(isNumToken),
+  );
   if (startIdx !== -1) {
     const items = segments.slice(startIdx);
     if (items.length >= 3) return { body: segments.slice(0, startIdx).join(" "), items };
@@ -55,7 +63,10 @@ export function extractSeriesBlock(text: string): { body: string; items: string[
   const commaIdx = tail.search(/(?:(?<=\?|:)\s+)[\d.]/);
   const head = commaIdx === -1 ? "" : tail.slice(0, commaIdx).trim();
   const listPart = commaIdx === -1 ? tail : tail.slice(commaIdx).trim();
-  const parts = listPart.split(",").map((s) => s.trim()).filter(Boolean);
+  const parts = listPart
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
   if (parts.length >= 3 && parts.every(isNumToken)) {
     const body = [...segments.slice(0, -1), head].filter(Boolean).join(" ");
     return { body, items: parts };
@@ -76,7 +87,13 @@ export function extractQuoteBlock(text: string): { body: string; lines: string[]
     .map((s) => s.trim())
     .filter(Boolean);
   if (lines.length < 2) return { body: text, lines: [] };
-  return { body: (text ?? "").replace(m[0], "").replace(/\s{2,}/g, " ").trim(), lines };
+  return {
+    body: (text ?? "")
+      .replace(m[0], "")
+      .replace(/\s{2,}/g, " ")
+      .trim(),
+    lines,
+  };
 }
 
 /** Gabungan semua blok tampilan khusus WPT */
@@ -91,13 +108,20 @@ export function extractWptBlocks(stem: string) {
   return { ...empty, body: stem };
 }
 
-
 /** Pisahkan teks soal dari opsi inline berformat "1. xxx  2. yyy" atau "a. xxx  b. yyy" */
-export function parseWptOptions(text: string): { stem: string; options: { key: string; label: string }[] } {
+export function parseWptOptions(text: string): {
+  stem: string;
+  options: { key: string; label: string }[];
+} {
   const cleaned = stripImgToken(text ?? "");
   // Blok kutipan dipisahkan dulu agar tidak ikut terparsing sebagai opsi
   const quoteMatch = cleaned.match(/"[^"]+"/);
-  const raw = quoteMatch ? cleaned.replace(quoteMatch[0], "").replace(/\s{2,}/g, "  ").trim() : cleaned;
+  const raw = quoteMatch
+    ? cleaned
+        .replace(quoteMatch[0], "")
+        .replace(/\s{2,}/g, "  ")
+        .trim()
+    : cleaned;
   const withQuote = (s: string) => (quoteMatch ? `${s}  ${quoteMatch[0]}`.trim() : s);
 
   // 1) Opsi berupa angka: "1. xxx  2. yyy"
@@ -127,8 +151,6 @@ export function parseWptOptions(text: string): { stem: string; options: { key: s
   return { stem: withQuote(raw), options: [] };
 }
 
-
-
 export function WptSheet({ questions, answers, images, onChange, renderImage }: Props) {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
 
@@ -140,14 +162,11 @@ export function WptSheet({ questions, answers, images, onChange, renderImage }: 
   const active = activeIdx === null ? null : sorted[activeIdx];
   const parsed = active ? parseWptOptions(active.question_text ?? "") : null;
   const block = parsed
-
     ? extractWptBlocks(parsed.stem)
     : { body: "", pairs: [] as string[], series: [] as string[], quote: [] as string[] };
 
-  
   const activeAnswer = active ? (answers[active.id] ?? "") : "";
   const img = active ? images[active.question_number] : undefined;
-
 
   return (
     <div className="space-y-4">
@@ -187,7 +206,8 @@ export function WptSheet({ questions, answers, images, onChange, renderImage }: 
             })}
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Klik salah satu kotak nomor untuk menampilkan soalnya. Kotak berubah hijau setelah jawaban terisi.
+            Klik salah satu kotak nomor untuk menampilkan soalnya. Kotak berubah hijau setelah
+            jawaban terisi.
           </p>
         </CardContent>
       </Card>
@@ -231,7 +251,10 @@ export function WptSheet({ questions, answers, images, onChange, renderImage }: 
             {block.pairs.length > 0 && (
               <ul className="w-full max-w-md space-y-1 rounded-md border bg-muted/40 p-3 font-mono text-sm">
                 {block.pairs.map((line, i) => (
-                  <li key={i} className="flex items-center justify-between gap-4 border-b border-dashed border-border/60 pb-1 last:border-0 last:pb-0">
+                  <li
+                    key={i}
+                    className="flex items-center justify-between gap-4 border-b border-dashed border-border/60 pb-1 last:border-0 last:pb-0"
+                  >
                     <span>{line.split("/")[0]?.trim()}</span>
                     <span>{line.split("/").slice(1).join("/").trim()}</span>
                   </li>
@@ -259,7 +282,6 @@ export function WptSheet({ questions, answers, images, onChange, renderImage }: 
                 ))}
               </ul>
             )}
-
 
             {img && renderImage?.(img, active.question_number)}
 

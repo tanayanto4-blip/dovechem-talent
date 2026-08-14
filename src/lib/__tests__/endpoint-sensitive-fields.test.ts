@@ -121,14 +121,15 @@ describe("endpoint leaks — explicit column projection", () => {
   for (const field of FORBIDDEN) {
     it(`no handler .select()s ${field}`, () => {
       const offenders = HANDLERS.filter((h) => {
-        if (field === "correct_answer" && (ADMIN_QUESTION_WRITERS as readonly string[]).includes(h.name)) {
+        if (
+          field === "correct_answer" &&
+          (ADMIN_QUESTION_WRITERS as readonly string[]).includes(h.name)
+        ) {
           return false;
         }
         // Match `.select("...")` or `.select(\`...\`)` string arguments
         // that list this field.
-        const re = new RegExp(
-          `\\.select\\(\\s*[\`"'][^\`"']*\\b${field}\\b[^\`"']*[\`"']`,
-        );
+        const re = new RegExp(`\\.select\\(\\s*[\`"'][^\`"']*\\b${field}\\b[^\`"']*[\`"']`);
         return re.test(h.body);
       });
       expect(
@@ -150,9 +151,7 @@ describe("endpoint leaks — select('*') on secret-bearing tables", () => {
       const re = new RegExp(
         `\\.from\\(\\s*[\`"']${table}[\`"']\\s*\\)[\\s\\S]{0,200}?\\.select\\(\\s*[\`"']\\*[\`"']`,
       );
-      const offenders = HANDLERS.filter(
-        (h) => re.test(h.body) && !allowed.has(h.name),
-      );
+      const offenders = HANDLERS.filter((h) => re.test(h.body) && !allowed.has(h.name));
       expect(
         offenders.map((h) => `${h.name} (${h.file})`),
         `Non-whitelisted handlers do select('*') on ${table}, which leaks: ${secrets.join(", ")}`,
@@ -177,7 +176,9 @@ describe("endpoint leaks — response object literals", () => {
         // Allow whitelisted scoring handler to reference the field internally
         // as long as it does not appear in a return payload literal.
         if (
-          [...(SELECT_STAR_WHITELIST["test_questions"] ?? []), ...ADMIN_QUESTION_WRITERS].includes(h.name) &&
+          [...(SELECT_STAR_WHITELIST["test_questions"] ?? []), ...ADMIN_QUESTION_WRITERS].includes(
+            h.name,
+          ) &&
           field === "correct_answer"
         ) {
           // Scan return statements only.

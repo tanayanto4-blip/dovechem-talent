@@ -57,7 +57,9 @@ describe("candidateSubmitTest — static guarantees", () => {
   it("resolves the active access code before any write", () => {
     const resolveIdx = body.search(/resolveActiveCode\(sb,\s*data\.code[^)]*\)/);
     const answersDeleteIdx = body.search(/from\(["']test_answers["']\)[\s\S]{0,40}\.delete\(\)/);
-    const answersWriteIdx = body.search(/from\(["']test_answers["']\)[\s\S]{0,40}\.(insert|upsert)\(/);
+    const answersWriteIdx = body.search(
+      /from\(["']test_answers["']\)[\s\S]{0,40}\.(insert|upsert)\(/,
+    );
     const attemptUpdateIdx = body.search(/from\(["']test_attempts["']\)\.update\(/);
     expect(resolveIdx).toBeGreaterThan(-1);
     expect(resolveIdx).toBeLessThan(answersDeleteIdx);
@@ -74,7 +76,9 @@ describe("candidateSubmitTest — static guarantees", () => {
   it("rejects an unknown attempt and short-circuits a finished attempt", () => {
     expect(body).toMatch(/if\s*\(!attempt\)\s*throw new Error\(["']Attempt tidak valid\.["']\)/);
     // Re-submitting a finished attempt is an idempotent no-op (no re-scoring).
-    expect(body).toMatch(/attempt\.status\s*===\s*["']finished["'][\s\S]{0,120}return\s*\{\s*ok:\s*true,\s*idempotent:\s*true/);
+    expect(body).toMatch(
+      /attempt\.status\s*===\s*["']finished["'][\s\S]{0,120}return\s*\{\s*ok:\s*true,\s*idempotent:\s*true/,
+    );
   });
 
   it("replaces answers for the attempt (scoped to attempt_id, upsert-idempotent)", () => {
@@ -101,8 +105,12 @@ describe("candidateSubmitTest — static guarantees", () => {
   });
 
   it("DISC branch tallies most/least across D/I/S/C and derives dominant + score", () => {
-    expect(body).toMatch(/most:\s*Record<string,\s*number>\s*=\s*\{\s*D:\s*0,\s*I:\s*0,\s*S:\s*0,\s*C:\s*0/);
-    expect(body).toMatch(/least:\s*Record<string,\s*number>\s*=\s*\{\s*D:\s*0,\s*I:\s*0,\s*S:\s*0,\s*C:\s*0/);
+    expect(body).toMatch(
+      /most:\s*Record<string,\s*number>\s*=\s*\{\s*D:\s*0,\s*I:\s*0,\s*S:\s*0,\s*C:\s*0/,
+    );
+    expect(body).toMatch(
+      /least:\s*Record<string,\s*number>\s*=\s*\{\s*D:\s*0,\s*I:\s*0,\s*S:\s*0,\s*C:\s*0/,
+    );
     expect(body).toMatch(/change:\s*Record<string,\s*number>/);
     expect(body).toMatch(/const dominant\s*=\s*\(Object\.entries\(most\)\.sort/);
     expect(body).toMatch(/Math\.round\(\(most\[dominant\]\s*\/\s*totalGroups\)\s*\*\s*100\)/);
@@ -134,7 +142,12 @@ function scoreDisc(answers: A[], totalGroups = 24) {
       if (most[a.answer] !== undefined) most[a.answer]++;
     }
   }
-  const change = { D: most.D - least.D, I: most.I - least.I, S: most.S - least.S, C: most.C - least.C };
+  const change = {
+    D: most.D - least.D,
+    I: most.I - least.I,
+    S: most.S - least.S,
+    C: most.C - least.C,
+  };
   const dominant = (Object.entries(most).sort((x, y) => y[1] - x[1])[0] ?? ["D", 0])[0];
   const score = Math.round((most[dominant] / totalGroups) * 100);
   return { score, most, least, change, dominant };
@@ -216,7 +229,11 @@ async function rpc(name: string, data: Record<string, unknown>): Promise<Respons
 
 async function json<T = any>(res: Response): Promise<T> {
   const text = await res.text();
-  try { return JSON.parse(text) as T; } catch { throw new Error(`non-JSON response ${res.status}: ${text.slice(0, 200)}`); }
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error(`non-JSON response ${res.status}: ${text.slice(0, 200)}`);
+  }
 }
 
 runtime("candidateSubmitTest — end-to-end (env-gated)", () => {
@@ -239,12 +256,14 @@ runtime("candidateSubmitTest — end-to-end (env-gated)", () => {
       // MCQ / Kraepelin — pick the first option so scoring is deterministic.
       answers = questions.map((q: any) => ({
         question_id: q.id,
-        answer: String((q.options?.[0]?.value ?? q.options?.[0] ?? "A")),
+        answer: String(q.options?.[0]?.value ?? q.options?.[0] ?? "A"),
       }));
     }
 
     const submit = await rpc("candidateSubmitTest", {
-      code: CODE, attempt_id: attempt.id, answers,
+      code: CODE,
+      attempt_id: attempt.id,
+      answers,
     });
     expect(submit.status, `submit failed: ${submit.status}`).toBe(200);
     const submitBody = await json(submit);

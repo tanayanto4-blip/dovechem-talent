@@ -8,32 +8,58 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { MbtiAdmin } from "@/components/mbti-admin";
 import { TestDurationEditor } from "@/components/test-duration-editor";
-import { TestPublishToggle, QuestionPublishToggle, BulkQuestionPublish } from "@/components/publish-toggle";
-import { QuestionEditorDialog, QuestionDeleteButton, TestMetaEditor } from "@/components/question-editor";
+import {
+  TestPublishToggle,
+  QuestionPublishToggle,
+  BulkQuestionPublish,
+} from "@/components/publish-toggle";
+import {
+  QuestionEditorDialog,
+  QuestionDeleteButton,
+  TestMetaEditor,
+} from "@/components/question-editor";
 
-
-export const Route = createFileRoute("/admin/tests/$id")({ head: () => ({ meta: [
-    { title: "Detail Bank Soal — Admin Dover Chemical" },
-    { name: "description", content: "Edit item soal, opsi jawaban, durasi, dan status publish satu paket psikotest PT Dover Chemical." },
-    { property: "og:title", content: "Detail Bank Soal — Admin Dover Chemical" },
-    { property: "og:description", content: "Edit item soal, opsi jawaban, durasi, dan status publish satu paket psikotest PT Dover Chemical." },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary" },
-    { name: "robots", content: "noindex" },
-  ] }),
-  component: TestDetail });
+export const Route = createFileRoute("/admin/tests/$id")({
+  head: () => ({
+    meta: [
+      { title: "Detail Bank Soal — Admin Dover Chemical" },
+      {
+        name: "description",
+        content:
+          "Edit item soal, opsi jawaban, durasi, dan status publish satu paket psikotest PT Dover Chemical.",
+      },
+      { property: "og:title", content: "Detail Bank Soal — Admin Dover Chemical" },
+      {
+        property: "og:description",
+        content:
+          "Edit item soal, opsi jawaban, durasi, dan status publish satu paket psikotest PT Dover Chemical.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: TestDetail,
+});
 
 function TestDetail() {
   const { id } = Route.useParams();
   const fn = useServerFn(getTestWithQuestions);
-  const { data, isLoading } = useQuery({ queryKey: ["admin-test", id], queryFn: () => fn({ data: { id } }) });
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-test", id],
+    queryFn: () => fn({ data: { id } }),
+  });
 
   if (isLoading || !data) return <div className="text-muted-foreground">Memuat...</div>;
   const t = data.test as any;
   if (t.test_type === "mbti") {
     return (
       <div className="space-y-4">
-        <Button asChild variant="ghost" size="sm"><Link to="/admin/tests"><ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Bank Soal</Link></Button>
+        <Button asChild variant="ghost" size="sm">
+          <Link to="/admin/tests">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke Bank Soal
+          </Link>
+        </Button>
         <div className="grid max-w-2xl gap-3 md:grid-cols-2">
           <TestPublishToggle testId={t.id} testName={t.name} active={!!t.active} />
           <TestDurationEditor testId={t.id} testName={t.name} value={t.duration_minutes} />
@@ -46,17 +72,22 @@ function TestDetail() {
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm"><Link to="/admin/tests"><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Link></Button>
+      <Button asChild variant="ghost" size="sm">
+        <Link to="/admin/tests">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
+        </Link>
+      </Button>
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="font-display text-3xl font-bold text-primary">{t.name}</h1>
-          <Badge variant="outline" className="uppercase">{t.test_type}</Badge>
+          <Badge variant="outline" className="uppercase">
+            {t.test_type}
+          </Badge>
           <Badge variant="secondary">{t.duration_minutes} menit</Badge>
           <Badge>{data.questions.length} soal</Badge>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">{t.description}</p>
         <div className="mt-4 grid max-w-2xl gap-3 md:grid-cols-2">
-
           <TestPublishToggle testId={t.id} testName={t.name} active={!!t.active} />
           <TestDurationEditor testId={t.id} testName={t.name} value={t.duration_minutes} />
         </div>
@@ -71,7 +102,6 @@ function TestDetail() {
           />
         </div>
       </div>
-
 
       <div className="space-y-4">
         {data.questions.map((q: any, i: number) => (
@@ -88,7 +118,6 @@ function TestDetail() {
                   <QuestionDeleteButton id={q.id} number={q.question_number ?? i + 1} />
                 </div>
               </div>
-
             </CardHeader>
             <CardContent>
               {q.question_text && <div className="mb-3 font-medium">{q.question_text}</div>}
@@ -101,10 +130,15 @@ function TestDetail() {
                       <div className="px-3 py-2 border-l">Dimensi</div>
                     </div>
                     {q.options.map((opt: any) => (
-                      <div key={opt.key} className="grid grid-cols-[56px_1fr_80px] items-center border-t text-sm">
+                      <div
+                        key={opt.key}
+                        className="grid grid-cols-[56px_1fr_80px] items-center border-t text-sm"
+                      >
                         <div className="px-3 py-2 font-mono">{opt.key}</div>
                         <div className="px-3 py-2 border-l">{opt.label}</div>
-                        <div className="px-3 py-2 border-l"><Badge variant="secondary">{opt.dimension ?? "-"}</Badge></div>
+                        <div className="px-3 py-2 border-l">
+                          <Badge variant="secondary">{opt.dimension ?? "-"}</Badge>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -113,7 +147,10 @@ function TestDetail() {
                     {q.options.map((opt: any) => {
                       const correct = q.correct_answer && opt.key === q.correct_answer;
                       return (
-                        <div key={opt.key} className={`flex items-center gap-3 rounded-md border p-2 text-sm ${correct ? "border-success bg-success/10" : ""}`}>
+                        <div
+                          key={opt.key}
+                          className={`flex items-center gap-3 rounded-md border p-2 text-sm ${correct ? "border-success bg-success/10" : ""}`}
+                        >
                           <span className="font-mono font-bold">{opt.key}.</span>
                           <span className="flex-1">{opt.label}</span>
                           {correct && <Badge className="bg-success">Kunci</Badge>}
@@ -122,10 +159,13 @@ function TestDetail() {
                     })}
                   </div>
                 )
-              ) : q.options && typeof q.options === "object" && typeof (q.options as any).digits === "string" ? (
+              ) : q.options &&
+                typeof q.options === "object" &&
+                typeof (q.options as any).digits === "string" ? (
                 <div className="space-y-2">
                   <div className="text-xs text-muted-foreground">
-                    Deret angka kolom ini ({(q.options as any).digits.length} digit) — kandidat menjumlahkan dua angka bersebelahan.
+                    Deret angka kolom ini ({(q.options as any).digits.length} digit) — kandidat
+                    menjumlahkan dua angka bersebelahan.
                   </div>
                   <div className="max-h-32 overflow-auto rounded-md border bg-muted/40 p-2 font-mono text-xs leading-relaxed break-all">
                     {(q.options as any).digits}
@@ -134,12 +174,19 @@ function TestDetail() {
               ) : (
                 <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
                   Soal isian bebas — kandidat mengetik jawaban sendiri.
-                  {q.correct_answer ? <> Kunci: <span className="font-mono font-semibold">{q.correct_answer}</span></> : null}
+                  {q.correct_answer ? (
+                    <>
+                      {" "}
+                      Kunci: <span className="font-mono font-semibold">{q.correct_answer}</span>
+                    </>
+                  ) : null}
                 </div>
               )}
 
               {q.explanation && (
-                <div className="mt-3 rounded bg-muted p-2 text-xs text-muted-foreground"><b>Penjelasan:</b> {q.explanation}</div>
+                <div className="mt-3 rounded bg-muted p-2 text-xs text-muted-foreground">
+                  <b>Penjelasan:</b> {q.explanation}
+                </div>
               )}
             </CardContent>
           </Card>

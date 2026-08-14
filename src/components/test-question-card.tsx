@@ -13,7 +13,16 @@ export type Question = {
   dimension?: string | null;
 };
 
-type TestType = "mcq" | "disc" | "kraepelin" | "mbti" | "eq" | "wpt" | "papi" | "pauli" | "ishihara";
+type TestType =
+  | "mcq"
+  | "disc"
+  | "kraepelin"
+  | "mbti"
+  | "eq"
+  | "wpt"
+  | "papi"
+  | "pauli"
+  | "ishihara";
 
 export interface TestQuestionCardProps {
   q: Question;
@@ -28,7 +37,15 @@ export interface TestQuestionCardProps {
   onChangeText: (qid: string, value: string) => void;
 }
 
-function WptImageFigure({ url, caption, number }: { url: string; caption: string; number: number }) {
+function WptImageFigure({
+  url,
+  caption,
+  number,
+}: {
+  url: string;
+  caption: string;
+  number: number;
+}) {
   return (
     <figure className="mt-3 w-full overflow-hidden rounded-md border bg-white p-2 sm:p-3">
       <img
@@ -57,8 +74,14 @@ export const TestQuestionCard = memo(function TestQuestionCard({
   onChangeText,
 }: TestQuestionCardProps) {
   const handleMcq = useCallback((key: string) => onPickMcq(q.id, key), [onPickMcq, q.id]);
-  const handleDiscMost = useCallback((key: string) => onSetDisc(q.id, "most", key), [onSetDisc, q.id]);
-  const handleDiscLeast = useCallback((key: string) => onSetDisc(q.id, "least", key), [onSetDisc, q.id]);
+  const handleDiscMost = useCallback(
+    (key: string) => onSetDisc(q.id, "most", key),
+    [onSetDisc, q.id],
+  );
+  const handleDiscLeast = useCallback(
+    (key: string) => onSetDisc(q.id, "least", key),
+    [onSetDisc, q.id],
+  );
   const handleText = useCallback((v: string) => onChangeText(q.id, v), [onChangeText, q.id]);
 
   const isDisc = testType === "disc";
@@ -79,15 +102,25 @@ export const TestQuestionCard = memo(function TestQuestionCard({
           {isDisc && (
             <div className="text-[11px] text-muted-foreground">
               {discPick?.most && discPick?.least ? (
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">✓ Terisi</span>
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">
+                  ✓ Terisi
+                </span>
               ) : (
                 <span>Pilih 1 M &amp; 1 L</span>
               )}
             </div>
           )}
         </div>
-        {!isDisc && !isMbti && !isPapi && <div className="text-base font-medium">{q.question_text}</div>}
-        {isWpt && wptImage && <WptImageFigure url={wptImage.url} caption={wptImage.caption} number={q.question_number} />}
+        {!isDisc && !isMbti && !isPapi && (
+          <div className="text-base font-medium">{q.question_text}</div>
+        )}
+        {isWpt && wptImage && (
+          <WptImageFigure
+            url={wptImage.url}
+            caption={wptImage.caption}
+            number={q.question_number}
+          />
+        )}
 
         {isIshihara ? (
           <div className="mt-3 space-y-3">
@@ -136,7 +169,9 @@ export const TestQuestionCard = memo(function TestQuestionCard({
                   >
                     {opt.key}
                   </span>
-                  <span className="min-w-0 break-words text-[13px] sm:text-sm leading-snug">{opt.label}</span>
+                  <span className="min-w-0 break-words text-[13px] sm:text-sm leading-snug">
+                    {opt.label}
+                  </span>
                 </button>
               );
             })}
@@ -147,7 +182,9 @@ export const TestQuestionCard = memo(function TestQuestionCard({
         ) : isMbti ? (
           <div className="rounded-md border bg-card">
             {q.question_text && (
-              <div className="border-b bg-muted/40 px-3 sm:px-4 py-2 text-sm font-medium">{q.question_text}</div>
+              <div className="border-b bg-muted/40 px-3 sm:px-4 py-2 text-sm font-medium">
+                {q.question_text}
+              </div>
             )}
             <div className="grid grid-cols-[1fr_3rem_3rem_1fr] items-stretch">
               {(() => {
@@ -176,7 +213,9 @@ export const TestQuestionCard = memo(function TestQuestionCard({
                           {opt.label}
                         </button>
                       )}
-                      <div className={`flex items-center justify-center border-r ${isPicked ? "bg-primary/10" : ""}`}>
+                      <div
+                        className={`flex items-center justify-center border-r ${isPicked ? "bg-primary/10" : ""}`}
+                      >
                         <Input
                           inputMode="numeric"
                           maxLength={1}
@@ -209,7 +248,8 @@ export const TestQuestionCard = memo(function TestQuestionCard({
               })()}
             </div>
             <div className="border-t bg-muted/40 px-3 sm:px-4 py-2 text-[11px] text-muted-foreground">
-              Isi angka <b className="text-foreground">1</b> pada kolom A atau B — pilih salah satu yang paling menggambarkan diri Anda.
+              Isi angka <b className="text-foreground">1</b> pada kolom A atau B — pilih salah satu
+              yang paling menggambarkan diri Anda.
             </div>
           </div>
         ) : isKraepelin ? (
@@ -271,8 +311,12 @@ export const TestQuestionCard = memo(function TestQuestionCard({
               })}
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 border-t bg-muted/40 px-3 sm:px-4 py-2 text-[10px] sm:text-[11px] text-muted-foreground">
-              <span><b className="text-primary">M</b> (kolom kiri) = Paling menggambarkan diri Anda</span>
-              <span><b className="text-destructive">L</b> (kolom kanan) = Paling tidak menggambarkan</span>
+              <span>
+                <b className="text-primary">M</b> (kolom kiri) = Paling menggambarkan diri Anda
+              </span>
+              <span>
+                <b className="text-destructive">L</b> (kolom kanan) = Paling tidak menggambarkan
+              </span>
             </div>
           </div>
         ) : isEq ? (
@@ -293,7 +337,9 @@ export const TestQuestionCard = memo(function TestQuestionCard({
                     }`}
                   >
                     <span className="text-lg font-bold">{opt.key}</span>
-                    <span className={`mt-0.5 text-[10px] leading-tight ${picked ? "text-primary-foreground/90" : ""}`}>
+                    <span
+                      className={`mt-0.5 text-[10px] leading-tight ${picked ? "text-primary-foreground/90" : ""}`}
+                    >
                       {opt.label.replace(/^\d+\s*[—-]\s*/, "")}
                     </span>
                   </button>
@@ -320,9 +366,15 @@ export const TestQuestionCard = memo(function TestQuestionCard({
         ) : (
           <RadioGroup className="mt-4 space-y-2" value={answer} onValueChange={(v) => handleMcq(v)}>
             {(q.options ?? []).map((opt: any) => (
-              <label key={opt.key} className="flex cursor-pointer items-center gap-3 rounded-md border p-3 hover:bg-accent">
+              <label
+                key={opt.key}
+                className="flex cursor-pointer items-center gap-3 rounded-md border p-3 hover:bg-accent"
+              >
                 <RadioGroupItem value={opt.key} id={`${q.id}-${opt.key}`} />
-                <span className="text-sm"><b className="mr-2">{opt.key}.</b>{opt.label}</span>
+                <span className="text-sm">
+                  <b className="mr-2">{opt.key}.</b>
+                  {opt.label}
+                </span>
               </label>
             ))}
           </RadioGroup>

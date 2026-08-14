@@ -64,10 +64,9 @@ describe("candidate RLS — static scope checks", () => {
       );
       if (!touchesScoped) continue;
       expect(h.body, `${h.name} must call resolveActiveCode`).toMatch(/resolveActiveCode\s*\(/);
-      expect(
-        h.body,
-        `${h.name} must resolve candidate row from code_id`,
-      ).toMatch(/ensureCandidate\s*\(\s*sb\s*,\s*codeRow\.id\s*\)|\.from\(["']candidates["']\)[\s\S]*?\.eq\(["']code_id["']/);
+      expect(h.body, `${h.name} must resolve candidate row from code_id`).toMatch(
+        /ensureCandidate\s*\(\s*sb\s*,\s*codeRow\.id\s*\)|\.from\(["']candidates["']\)[\s\S]*?\.eq\(["']code_id["']/,
+      );
     }
   });
 
@@ -110,7 +109,9 @@ describe("candidate RLS — static scope checks", () => {
       const handlersTouching = HANDLERS.filter((h) =>
         new RegExp(`\\.from\\(["']${table}["']\\)`).test(h.body),
       );
-      expect(handlersTouching.length, `expected a handler that touches ${table}`).toBeGreaterThan(0);
+      expect(handlersTouching.length, `expected a handler that touches ${table}`).toBeGreaterThan(
+        0,
+      );
       for (const h of handlersTouching) {
         // Accept either the `cand.id` variable pattern OR the inline
         // `.eq("candidate_id", (await sb.from("candidates")…).data?.id ?? "")`
@@ -118,11 +119,12 @@ describe("candidate RLS — static scope checks", () => {
         const hasOwnershipCheck =
           /\.eq\(["']candidate_id["'],\s*cand\.id/.test(h.body) ||
           /candidate_id:\s*cand\.id/.test(h.body) ||
-          /\.eq\(["']candidate_id["'],[\s\S]{0,400}?candidates[\s\S]{0,200}?\.data\?\.id/.test(h.body);
-        expect(
-          hasOwnershipCheck,
-          `${h.name} touches ${table} but never scopes by cand.id`,
-        ).toBe(true);
+          /\.eq\(["']candidate_id["'],[\s\S]{0,400}?candidates[\s\S]{0,200}?\.data\?\.id/.test(
+            h.body,
+          );
+        expect(hasOwnershipCheck, `${h.name} touches ${table} but never scopes by cand.id`).toBe(
+          true,
+        );
       }
     });
 
@@ -132,8 +134,7 @@ describe("candidate RLS — static scope checks", () => {
       for (const m of openings) {
         const chain = readChain(candidateSrc, m.index!);
         const scopedByCandidate =
-          /\.eq\(["']candidate_id["']/.test(chain) ||
-          /candidate_id:\s*cand\.id/.test(chain);
+          /\.eq\(["']candidate_id["']/.test(chain) || /candidate_id:\s*cand\.id/.test(chain);
         // `.update/.delete` chains may target by primary key when a
         // preceding SELECT in the same handler already proved ownership.
         const scopedByVerifiedId =
@@ -142,10 +143,9 @@ describe("candidate RLS — static scope checks", () => {
           // attempt row already loaded/created scoped by cand.id in the same handler
           /\.eq\(["']attempt_id["'],\s*\(attempt as any\)\.id/.test(chain) ||
           /\.eq\(["']id["'],\s*data\.attempt_id/.test(chain);
-        expect(
-          scopedByCandidate || scopedByVerifiedId,
-          `unscoped ${table} chain:\n${chain}`,
-        ).toBe(true);
+        expect(scopedByCandidate || scopedByVerifiedId, `unscoped ${table} chain:\n${chain}`).toBe(
+          true,
+        );
       }
     });
   }
@@ -155,9 +155,7 @@ describe("candidate RLS — static scope checks", () => {
     // `test_attempts` in that handler MUST also filter by cand.id.
     for (const h of HANDLERS) {
       if (!/attempt_id:\s*z\.string\(\)\.uuid\(\)/.test(h.body)) continue;
-      const firstAttemptSelect = h.body.match(
-        /\.from\(["']test_attempts["']\)[\s\S]*?(?=;|\}\))/,
-      );
+      const firstAttemptSelect = h.body.match(/\.from\(["']test_attempts["']\)[\s\S]*?(?=;|\}\))/);
       if (!firstAttemptSelect) continue;
       expect(
         firstAttemptSelect[0],
@@ -171,8 +169,7 @@ describe("candidate RLS — static scope checks", () => {
 // B. RUNTIME — anon Supabase client cannot reach candidate data
 // -------------------------------------------------------------------------
 
-const SUPABASE_URL =
-  process.env.INTEGRATION_SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
+const SUPABASE_URL = process.env.INTEGRATION_SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
 const SUPABASE_KEY =
   process.env.INTEGRATION_SUPABASE_PUBLISHABLE_KEY ??
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
@@ -196,10 +193,21 @@ describe.skipIf(!canRunAnon)("candidate RLS — anon Data API is denied", () => 
       // point is that RLS/WITH CHECK rejects it before any FK check.
       const payload =
         table === "candidate_files"
-          ? { candidate_id: "00000000-0000-0000-0000-000000000000", file_type: "ktp", storage_path: "x" }
+          ? {
+              candidate_id: "00000000-0000-0000-0000-000000000000",
+              file_type: "ktp",
+              storage_path: "x",
+            }
           : table === "test_attempts"
-            ? { candidate_id: "00000000-0000-0000-0000-000000000000", test_id: "00000000-0000-0000-0000-000000000000" }
-            : { attempt_id: "00000000-0000-0000-0000-000000000000", question_id: "00000000-0000-0000-0000-000000000000", answer: "x" };
+            ? {
+                candidate_id: "00000000-0000-0000-0000-000000000000",
+                test_id: "00000000-0000-0000-0000-000000000000",
+              }
+            : {
+                attempt_id: "00000000-0000-0000-0000-000000000000",
+                question_id: "00000000-0000-0000-0000-000000000000",
+                answer: "x",
+              };
       const { error } = await anon.from(table).insert(payload as never);
       expect(error, "anon insert must be rejected").not.toBeNull();
     });
@@ -211,7 +219,9 @@ describe.skipIf(!canRunAnon)("candidate RLS — anon Data API is denied", () => 
   });
 
   it("anon cannot download from the private candidate-files bucket", async () => {
-    const { data, error } = await anon.storage.from("candidate-files").download("does-not-exist.pdf");
+    const { data, error } = await anon.storage
+      .from("candidate-files")
+      .download("does-not-exist.pdf");
     expect(error).not.toBeNull();
     expect(data).toBeNull();
   });

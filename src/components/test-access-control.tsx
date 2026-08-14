@@ -65,7 +65,16 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
                 size="sm"
                 variant="outline"
                 disabled={busy === "all-open"}
-                onClick={() => run("all-open", () => setAllFn({ data: { candidate_id: candidateId, is_open: true, reason: reason || null } }), "Semua test dibuka.")}
+                onClick={() =>
+                  run(
+                    "all-open",
+                    () =>
+                      setAllFn({
+                        data: { candidate_id: candidateId, is_open: true, reason: reason || null },
+                      }),
+                    "Semua test dibuka.",
+                  )
+                }
               >
                 <LockOpen className="mr-2 h-4 w-4" /> Buka semua
               </Button>
@@ -73,7 +82,16 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
                 size="sm"
                 variant="outline"
                 disabled={busy === "all-close"}
-                onClick={() => run("all-close", () => setAllFn({ data: { candidate_id: candidateId, is_open: false, reason: reason || null } }), "Semua test ditutup.")}
+                onClick={() =>
+                  run(
+                    "all-close",
+                    () =>
+                      setAllFn({
+                        data: { candidate_id: candidateId, is_open: false, reason: reason || null },
+                      }),
+                    "Semua test ditutup.",
+                  )
+                }
               >
                 <Lock className="mr-2 h-4 w-4" /> Tutup semua
               </Button>
@@ -98,7 +116,8 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
               maxLength={300}
             />
             <p className="text-sm text-muted-foreground">
-              Anda dapat <b>mengajukan permintaan ulang test</b>. Persetujuan buka/tutup akses dilakukan oleh Super Admin.
+              Anda dapat <b>mengajukan permintaan ulang test</b>. Persetujuan buka/tutup akses
+              dilakukan oleh Super Admin.
             </p>
           </div>
         )}
@@ -122,7 +141,11 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
                     ) : (
                       <Badge variant="outline">Belum mulai</Badge>
                     )}
-                    {closed ? <Badge variant="destructive">Ditutup</Badge> : <Badge variant="outline">Terbuka</Badge>}
+                    {closed ? (
+                      <Badge variant="destructive">Ditutup</Badge>
+                    ) : (
+                      <Badge variant="outline">Terbuka</Badge>
+                    )}
                     {ac?.retake_count ? <span>Diulang {ac.retake_count}x</span> : null}
                   </div>
                 </div>
@@ -135,7 +158,15 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
                       onCheckedChange={(v) =>
                         run(
                           `acc-${t.id}`,
-                          () => setFn({ data: { candidate_id: candidateId, test_id: t.id, is_open: v, reason: reason || null } }),
+                          () =>
+                            setFn({
+                              data: {
+                                candidate_id: candidateId,
+                                test_id: t.id,
+                                is_open: v,
+                                reason: reason || null,
+                              },
+                            }),
                           v ? `${t.name} dibuka.` : `${t.name} ditutup.`,
                         )
                       }
@@ -148,10 +179,23 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
                       variant="secondary"
                       disabled={busy === `re-${t.id}`}
                       onClick={() => {
-                        if (!confirm(`Minta kandidat mengulangi ${t.name}? Jawaban sebelumnya akan dihapus.`)) return;
+                        if (
+                          !confirm(
+                            `Minta kandidat mengulangi ${t.name}? Jawaban sebelumnya akan dihapus.`,
+                          )
+                        )
+                          return;
                         run(
                           `re-${t.id}`,
-                          () => reopenFn({ data: { candidate_id: candidateId, test_id: t.id, clear_answers: true, reason: reason || null } }),
+                          () =>
+                            reopenFn({
+                              data: {
+                                candidate_id: candidateId,
+                                test_id: t.id,
+                                clear_answers: true,
+                                reason: reason || null,
+                              },
+                            }),
                           `${t.name} dibuka untuk pengerjaan ulang.`,
                         );
                       }}
@@ -166,7 +210,14 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
                       onClick={() =>
                         run(
                           `req-${t.id}`,
-                          () => requestFn({ data: { candidate_id: candidateId, test_id: t.id, reason: reason || null } }),
+                          () =>
+                            requestFn({
+                              data: {
+                                candidate_id: candidateId,
+                                test_id: t.id,
+                                reason: reason || null,
+                              },
+                            }),
                           `Permintaan ulang ${t.name} dikirim ke Super Admin.`,
                         )
                       }

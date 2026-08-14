@@ -18,9 +18,17 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Login Admin HR — PT Dover Chemical" },
-      { name: "description", content: "Halaman masuk administrator dan tim HR PT Dover Chemical untuk mengelola kode akses, bank soal, serta hasil psikotest kandidat." },
+      {
+        name: "description",
+        content:
+          "Halaman masuk administrator dan tim HR PT Dover Chemical untuk mengelola kode akses, bank soal, serta hasil psikotest kandidat.",
+      },
       { property: "og:title", content: "Login Admin HR — PT Dover Chemical" },
-      { property: "og:description", content: "Halaman masuk administrator dan tim HR PT Dover Chemical untuk mengelola kode akses, bank soal, serta hasil psikotest kandidat." },
+      {
+        property: "og:description",
+        content:
+          "Halaman masuk administrator dan tim HR PT Dover Chemical untuk mengelola kode akses, bank soal, serta hasil psikotest kandidat.",
+      },
       { property: "og:url", content: "https://test-dovechem.lovable.app/auth" },
       { name: "robots", content: "noindex" },
     ],
@@ -45,14 +53,20 @@ function AuthPage() {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/admin/dashboard" });
     });
-    statusFn({ data: {} as never }).then((r) => setNeedsBootstrap(r.needsBootstrap)).catch(() => setNeedsBootstrap(false));
+    statusFn({ data: {} as never })
+      .then((r) => setNeedsBootstrap(r.needsBootstrap))
+      .catch(() => setNeedsBootstrap(false));
   }, [navigate, statusFn]);
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) { toast.error(error.message); setLoading(false); return; }
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
+    }
     toast.success("Berhasil login");
     navigate({ to: "/admin/dashboard" });
   }
@@ -75,12 +89,19 @@ function AuthPage() {
   return (
     <div className="min-h-screen bg-hero p-4">
       <div className="mx-auto max-w-md pt-8">
-        <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm text-white/80 hover:text-white">
+        <Link
+          to="/"
+          className="mb-6 inline-flex items-center gap-2 text-sm text-white/80 hover:text-white"
+        >
           <ArrowLeft className="h-4 w-4" /> Kembali
         </Link>
         <Card className="shadow-elegant">
           <CardHeader className="text-center">
-            <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="mx-auto h-12 w-auto object-contain" />
+            <img
+              src={doverLogo.url}
+              alt="Logo PT Dover Chemical"
+              className="mx-auto h-12 w-auto object-contain"
+            />
             <h1 className="mt-3 font-display text-2xl font-semibold leading-none tracking-tight">
               {needsBootstrap ? "Setup Super Admin" : "Portal Admin HR"}
             </h1>
@@ -92,25 +113,67 @@ function AuthPage() {
             ) : needsBootstrap ? (
               <form onSubmit={handleBootstrap} className="space-y-4">
                 <div className="rounded-md border border-secondary/40 bg-secondary/10 p-3 text-xs text-secondary-foreground">
-                  Belum ada admin terdaftar. Buat akun Super Admin pertama untuk memulai. Setelah ini, hanya admin yang bisa membuat user baru.
+                  Belum ada admin terdaftar. Buat akun Super Admin pertama untuk memulai. Setelah
+                  ini, hanya admin yang bisa membuat user baru.
                 </div>
-                <div className="space-y-2"><Label>Nama Lengkap</Label><Input required value={fullName} onChange={(e) => setFullName(e.target.value)} /></div>
-                <div className="space-y-2"><Label>Username</Label><Input required value={username} onChange={(e) => setUsername(e.target.value)} /></div>
-                <div className="space-y-2"><Label>Email</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-                <div className="space-y-2"><Label>Password (min 8 karakter)</Label><Input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} /></div>
-                <Button type="submit" className="w-full" disabled={loading}>{loading ? "Memproses..." : "Buat Super Admin"}</Button>
+                <div className="space-y-2">
+                  <Label>Nama Lengkap</Label>
+                  <Input required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Username</Label>
+                  <Input required value={username} onChange={(e) => setUsername(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Password (min 8 karakter)</Label>
+                  <Input
+                    type="password"
+                    required
+                    minLength={8}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Memproses..." : "Buat Super Admin"}
+                </Button>
               </form>
             ) : (
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="e">Email</Label>
-                  <Input id="e" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <Input
+                    id="e"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="p">Password</Label>
-                  <Input id="p" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <Input
+                    id="p"
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>{loading ? "Memproses..." : "Login"}</Button>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Memproses..." : "Login"}
+                </Button>
                 <div className="flex items-center justify-center gap-2 pt-2 text-xs text-muted-foreground">
                   <Lock className="h-3 w-3" /> Registrasi ditutup — akun dibuat oleh admin.
                 </div>

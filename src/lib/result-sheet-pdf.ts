@@ -55,7 +55,9 @@ async function logoDataUrl(): Promise<string | null> {
 export async function exportResultSheetPdf(input: ResultSheetInput) {
   const logo = await logoDataUrl();
   const doc = buildResultSheetDoc(input, logo);
-  const nameSlug = (input.meta.candidateName || "kandidat").replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
+  const nameSlug = (input.meta.candidateName || "kandidat")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .toLowerCase();
   const testSlug = input.testName.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
   doc.save(`lembar-hasil-${testSlug}-${nameSlug}.pdf`);
   return { total: input.rows.length };
@@ -75,7 +77,11 @@ export function buildResultSheetDoc(input: ResultSheetInput, logo: string | null
     if (logo) {
       doc.setFillColor(255, 255, 255);
       doc.roundedRect(M - 4, 13, 52, 44, 4, 4, "F");
-      try { doc.addImage(logo, "JPEG", M, 17, 44, 36); } catch { /* abaikan */ }
+      try {
+        doc.addImage(logo, "JPEG", M, 17, 44, 36);
+      } catch {
+        /* abaikan */
+      }
     }
     const x = logo ? M + 62 : M;
     doc.setTextColor(255);
@@ -210,7 +216,11 @@ export function buildResultSheetDoc(input: ResultSheetInput, logo: string | null
         const key = String(r.correct_answer ?? "").trim();
         const ok = key && ans && key.toLowerCase() === ans.toLowerCase();
         if (key) {
-          doc.setTextColor(...(ok ? ([21, 128, 61] as [number, number, number]) : ([185, 28, 28] as [number, number, number])));
+          doc.setTextColor(
+            ...(ok
+              ? ([21, 128, 61] as [number, number, number])
+              : ([185, 28, 28] as [number, number, number])),
+          );
           doc.text(`${key} ${ok ? "(B)" : "(S)"}`, x + blockW - keyW + 6, by + 11);
           doc.setTextColor(20);
         } else {

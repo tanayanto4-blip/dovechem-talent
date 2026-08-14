@@ -39,10 +39,7 @@ import { createClient } from "@supabase/supabase-js";
 const here = dirname(fileURLToPath(import.meta.url));
 const adminSrc = readFileSync(resolve(here, "../admin.functions.ts"), "utf8");
 const candSrc = readFileSync(resolve(here, "../candidate.functions.ts"), "utf8");
-const adminRouteSrc = readFileSync(
-  resolve(here, "../../routes/admin.tsx"),
-  "utf8",
-);
+const adminRouteSrc = readFileSync(resolve(here, "../../routes/admin.tsx"), "utf8");
 
 function extractHandler(src: string, name: string): string {
   const startRe = new RegExp(`export const ${name}\\s*=\\s*createServerFn`);
@@ -63,12 +60,16 @@ describe("audit logging — static guarantees", () => {
     // Validates the area input
     expect(body).toMatch(/area:\s*z\.string\(\)[\s\S]{0,80}\.min\(1\)/);
     // Emits the audit call with the right action / target_type / metadata
-    expect(body).toMatch(/logAudit\(\s*context\s*,\s*["']admin\.access["']\s*,\s*["']area["']\s*,\s*null\s*,\s*\{\s*area:\s*data\.area\s*\}\s*\)/);
+    expect(body).toMatch(
+      /logAudit\(\s*context\s*,\s*["']admin\.access["']\s*,\s*["']area["']\s*,\s*null\s*,\s*\{\s*area:\s*data\.area\s*\}\s*\)/,
+    );
   });
 
   it("logAudit sets actor_id from ctx.userId and actor_type='staff'", () => {
     // The shared helper is the sole writer for staff audit rows.
-    expect(adminSrc).toMatch(/from\(["']audit_logs["']\)\.insert\(\{[\s\S]*actor_id:\s*ctx\.userId[\s\S]*actor_type:\s*["']staff["'][\s\S]*action[\s\S]*target_type[\s\S]*target_id[\s\S]*metadata[\s\S]*\}\)/);
+    expect(adminSrc).toMatch(
+      /from\(["']audit_logs["']\)\.insert\(\{[\s\S]*actor_id:\s*ctx\.userId[\s\S]*actor_type:\s*["']staff["'][\s\S]*action[\s\S]*target_type[\s\S]*target_id[\s\S]*metadata[\s\S]*\}\)/,
+    );
   });
 
   it("admin layout calls logStaffAccess for every distinct admin area visited", () => {
@@ -78,12 +79,16 @@ describe("audit logging — static guarantees", () => {
     // Derives the current area segment from the pathname (not a hardcoded value).
     expect(adminRouteSrc).toMatch(/pathname\.replace\(\/\^\\\/admin/);
     // useEffect depends on pathname so each navigation re-runs the check.
-    expect(adminRouteSrc).toMatch(/useEffect\(\(\)\s*=>\s*\{[\s\S]*logAccess\([\s\S]*\}\s*,\s*\[pathname,\s*logAccess\]\)/);
+    expect(adminRouteSrc).toMatch(
+      /useEffect\(\(\)\s*=>\s*\{[\s\S]*logAccess\([\s\S]*\}\s*,\s*\[pathname,\s*logAccess\]\)/,
+    );
   });
 
   it("candidateSubmitTest writes an audit_logs row with the expected shape", () => {
     const body = extractHandler(candSrc, "candidateSubmitTest");
-    expect(body).toMatch(/from\(["']audit_logs["']\)\.insert\(\{[\s\S]*action:\s*["']attempt\.submit["']/);
+    expect(body).toMatch(
+      /from\(["']audit_logs["']\)\.insert\(\{[\s\S]*action:\s*["']attempt\.submit["']/,
+    );
     expect(body).toMatch(/target_type:\s*["']test_attempt["']/);
     expect(body).toMatch(/target_id:\s*data\.attempt_id/);
     expect(body).toMatch(/actor_type:\s*["']candidate["']/);
@@ -96,7 +101,8 @@ describe("audit logging — static guarantees", () => {
       /test_type:\s*test\.test_type/,
       /score,/,
       /finished_at:\s*finishedAt/,
-    ]) expect(body).toMatch(key);
+    ])
+      expect(body).toMatch(key);
   });
 
   it("candidateSubmitTest computes finished_at as an ISO timestamp used both on the attempt and the audit row", () => {
@@ -186,7 +192,9 @@ runtime("audit logging — end-to-end (env-gated)", () => {
     expect(row.actor_type).toBe("staff");
     expect(row.target_type).toBe("area");
     expect(row.metadata?.area).toBe(area);
-    expect(new Date(row.created_at).getTime()).toBeGreaterThanOrEqual(new Date(before).getTime() - 1000);
+    expect(new Date(row.created_at).getTime()).toBeGreaterThanOrEqual(
+      new Date(before).getTime() - 1000,
+    );
     expect(row.actor_id).toBeTruthy(); // staff user id
   }, 30_000);
 
@@ -204,7 +212,10 @@ runtime("audit logging — end-to-end (env-gated)", () => {
     // Build deterministic answers.
     const answers =
       testType === "disc"
-        ? questions.map((q) => ({ question_id: q.id, answer: JSON.stringify({ most: "D", least: "C" }) }))
+        ? questions.map((q) => ({
+            question_id: q.id,
+            answer: JSON.stringify({ most: "D", least: "C" }),
+          }))
         : questions.map((q) => ({
             question_id: q.id,
             answer: String(q.options?.[0]?.value ?? q.options?.[0] ?? "A"),
@@ -252,6 +263,8 @@ runtime("audit logging — end-to-end (env-gated)", () => {
     expect(row.metadata?.score).toBe(submitBody.score);
     expect(row.metadata?.finished_at).toBeTruthy();
     // Audit timestamp is not older than the moment we started
-    expect(new Date(row.created_at).getTime()).toBeGreaterThanOrEqual(new Date(before).getTime() - 1000);
+    expect(new Date(row.created_at).getTime()).toBeGreaterThanOrEqual(
+      new Date(before).getTime() - 1000,
+    );
   }, 45_000);
 });

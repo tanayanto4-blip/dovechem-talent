@@ -2,7 +2,13 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { candidateStartTest, candidateSubmitTest, candidateSaveAnswer, candidateGetTestIntro, candidateGetProfile } from "@/lib/candidate.functions";
+import {
+  candidateStartTest,
+  candidateSubmitTest,
+  candidateSaveAnswer,
+  candidateGetTestIntro,
+  candidateGetProfile,
+} from "@/lib/candidate.functions";
 import { VoiceInstructionPlayer } from "@/components/voice-instruction";
 import { PauliSheet, pauliFilledCount } from "@/components/pauli-sheet";
 import { TestQuestionCard } from "@/components/test-question-card";
@@ -16,18 +22,29 @@ import { toast } from "sonner";
 import { reportIncident } from "@/lib/error-monitor";
 import { Timer, Check, Loader2, AlertCircle, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import wptQ7 from "@/assets/wpt-q7.jpg.asset.json";
 import wptQ38 from "@/assets/wpt-q38.png.asset.json";
 import wptQ42 from "@/assets/wpt-q42.png.asset.json";
 import wptQ49 from "@/assets/wpt-q49.jpg.asset.json";
 import { WptSheet } from "@/components/wpt-sheet";
 import { ISHIHARA_PLATES } from "@/lib/ishihara-plates";
-
 
 const WPT_IMAGES: Record<number, { url: string; caption: string }> = {
   7: { url: wptQ7.url, caption: "Gambar pilihan 1–5 dan dua gambar dalam tanda kurung { }." },
@@ -36,8 +53,15 @@ const WPT_IMAGES: Record<number, { url: string; caption: string }> = {
   49: { url: wptQ49.url, caption: "Lima bagian bentuk bernomor 1–5." },
 };
 
-
-function WptImageFigure({ url, caption, number }: { url: string; caption: string; number: number }) {
+function WptImageFigure({
+  url,
+  caption,
+  number,
+}: {
+  url: string;
+  caption: string;
+  number: number;
+}) {
   const [zoom, setZoom] = useState(1);
   const [failed, setFailed] = useState(false);
   const [dialogFailed, setDialogFailed] = useState(false);
@@ -51,11 +75,17 @@ function WptImageFigure({ url, caption, number }: { url: string; caption: string
         className="mt-3 w-full rounded-md border border-dashed border-amber-300 bg-amber-50 p-4 text-amber-900"
       >
         <div className="flex items-start gap-3">
-          <span aria-hidden className="mt-0.5 inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-amber-100 text-base font-semibold">!</span>
+          <span
+            aria-hidden
+            className="mt-0.5 inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-amber-100 text-base font-semibold"
+          >
+            !
+          </span>
           <div className="flex-1 text-xs sm:text-sm">
             <p className="font-medium">Ilustrasi soal nomor {number} gagal dimuat.</p>
             <p className="mt-1 leading-snug text-amber-800">
-              Anda tetap dapat mengisi dan mengirim jawaban. Coba muat ulang gambar; jika masih gagal, lanjutkan mengerjakan berdasarkan deskripsi berikut.
+              Anda tetap dapat mengisi dan mengirim jawaban. Coba muat ulang gambar; jika masih
+              gagal, lanjutkan mengerjakan berdasarkan deskripsi berikut.
             </p>
             <p className="mt-1 leading-snug italic text-amber-700">{caption}</p>
             <Button
@@ -63,7 +93,10 @@ function WptImageFigure({ url, caption, number }: { url: string; caption: string
               size="sm"
               variant="outline"
               className="mt-2 border-amber-300 bg-white text-amber-900 hover:bg-amber-100"
-              onClick={() => { setFailed(false); setDialogFailed(false); }}
+              onClick={() => {
+                setFailed(false);
+                setDialogFailed(false);
+              }}
             >
               Muat ulang gambar
             </Button>
@@ -75,7 +108,11 @@ function WptImageFigure({ url, caption, number }: { url: string; caption: string
 
   return (
     <figure className="mt-3 w-full overflow-hidden rounded-md border bg-white p-2 sm:p-3">
-      <Dialog onOpenChange={(o) => { if (!o) setZoom(1); }}>
+      <Dialog
+        onOpenChange={(o) => {
+          if (!o) setZoom(1);
+        }}
+      >
         <DialogTrigger asChild>
           <button
             type="button"
@@ -98,21 +135,48 @@ function WptImageFigure({ url, caption, number }: { url: string; caption: string
           <DialogTitle className="text-sm">Ilustrasi Soal No. {number}</DialogTitle>
           <DialogDescription className="text-xs leading-snug">{caption}</DialogDescription>
           <div className="mt-2 flex items-center justify-center gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))} aria-label="Perkecil gambar" disabled={zoom <= 0.5 || dialogFailed}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))}
+              aria-label="Perkecil gambar"
+              disabled={zoom <= 0.5 || dialogFailed}
+            >
               <ZoomOut className="h-4 w-4" />
             </Button>
-            <span className="min-w-[3rem] text-center text-xs tabular-nums text-muted-foreground">{Math.round(zoom * 100)}%</span>
-            <Button type="button" size="sm" variant="outline" onClick={() => setZoom((z) => Math.min(4, +(z + 0.25).toFixed(2)))} aria-label="Perbesar gambar" disabled={zoom >= 4 || dialogFailed}>
+            <span className="min-w-[3rem] text-center text-xs tabular-nums text-muted-foreground">
+              {Math.round(zoom * 100)}%
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setZoom((z) => Math.min(4, +(z + 0.25).toFixed(2)))}
+              aria-label="Perbesar gambar"
+              disabled={zoom >= 4 || dialogFailed}
+            >
               <ZoomIn className="h-4 w-4" />
             </Button>
-            <Button type="button" size="sm" variant="ghost" onClick={() => setZoom(1)} disabled={dialogFailed}>Reset</Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => setZoom(1)}
+              disabled={dialogFailed}
+            >
+              Reset
+            </Button>
           </div>
           <div className="mt-2 max-h-[75vh] w-full overflow-auto rounded-md border bg-white">
             <div className="flex min-h-full min-w-full items-center justify-center p-3">
               {dialogFailed ? (
                 <div className="w-full max-w-md rounded-md border border-dashed border-amber-300 bg-amber-50 p-4 text-center text-xs text-amber-900 sm:text-sm">
                   <p className="font-medium">Gambar tidak dapat dimuat.</p>
-                  <p className="mt-1 leading-snug">Periksa koneksi internet Anda, lalu coba lagi. Jawaban Anda tetap bisa diisi dan dikirim.</p>
+                  <p className="mt-1 leading-snug">
+                    Periksa koneksi internet Anda, lalu coba lagi. Jawaban Anda tetap bisa diisi dan
+                    dikirim.
+                  </p>
                   <Button
                     type="button"
                     size="sm"
@@ -142,20 +206,30 @@ function WptImageFigure({ url, caption, number }: { url: string; caption: string
       </figcaption>
     </figure>
   );
-
 }
 
-
-export const Route = createFileRoute("/candidate/portal/test/$testId")({ head: () => ({ meta: [
-    { title: "Pengerjaan Test — Portal Kandidat Dover Chemical" },
-    { name: "description", content: "Halaman pengerjaan psikotest kandidat PT Dover Chemical dengan timer dan penyimpanan jawaban otomatis." },
-    { property: "og:title", content: "Pengerjaan Test — Portal Kandidat Dover Chemical" },
-    { property: "og:description", content: "Halaman pengerjaan psikotest kandidat PT Dover Chemical dengan timer dan penyimpanan jawaban otomatis." },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary" },
-    { name: "robots", content: "noindex" },
-  ] }),
-  component: TakeTest });
+export const Route = createFileRoute("/candidate/portal/test/$testId")({
+  head: () => ({
+    meta: [
+      { title: "Pengerjaan Test — Portal Kandidat Dover Chemical" },
+      {
+        name: "description",
+        content:
+          "Halaman pengerjaan psikotest kandidat PT Dover Chemical dengan timer dan penyimpanan jawaban otomatis.",
+      },
+      { property: "og:title", content: "Pengerjaan Test — Portal Kandidat Dover Chemical" },
+      {
+        property: "og:description",
+        content:
+          "Halaman pengerjaan psikotest kandidat PT Dover Chemical dengan timer dan penyimpanan jawaban otomatis.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: TakeTest,
+});
 
 function TakeTest() {
   const { testId } = Route.useParams();
@@ -182,14 +256,16 @@ function TakeTest() {
   const [started, setStarted] = useState(false);
   const intro = useQuery({
     queryKey: ["test-intro", testId, session?.code],
-    queryFn: () => getIntro({ data: { code: session!.code, device: session!.device, test_id: testId } }),
+    queryFn: () =>
+      getIntro({ data: { code: session!.code, device: session!.device, test_id: testId } }),
     enabled: !!session && !started,
     staleTime: Infinity,
   });
 
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["start-test", testId, session?.code],
-    queryFn: () => start({ data: { code: session!.code, device: session!.device, test_id: testId } }),
+    queryFn: () =>
+      start({ data: { code: session!.code, device: session!.device, test_id: testId } }),
     enabled: !!session && started,
     staleTime: Infinity,
     retry: 1,
@@ -209,7 +285,6 @@ function TakeTest() {
   const replayVoiceRef = useRef<(() => void) | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-
   // Hydrate saved answers on first load so the candidate can resume.
   useEffect(() => {
     if (hydratedRef.current || !data?.attempt) return;
@@ -223,7 +298,9 @@ function TakeTest() {
         if (parsed && (parsed.most || parsed.least)) {
           restoredDisc[row.question_id] = { most: parsed.most, least: parsed.least };
         }
-      } catch { /* not JSON, regular answer */ }
+      } catch {
+        /* not JSON, regular answer */
+      }
     }
     if (Object.keys(restored).length > 0) {
       setAnswers(restored);
@@ -273,14 +350,17 @@ function TakeTest() {
       reportIncident(
         "test-auto-submit",
         `Test dikirim otomatis karena waktu habis (${testLabel})`,
-        { test_id: testId, code: session?.code, answered: Object.keys(answers).length, server_expired: serverExpired },
+        {
+          test_id: testId,
+          code: session?.code,
+          answered: Object.keys(answers).length,
+          server_expired: serverExpired,
+        },
       );
       handleSubmit(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remaining, timerReady, data]);
-
-
 
   // --- Autosave callbacks -------------------------------------------------
   // These MUST stay above the early returns below: calling hooks after a
@@ -290,69 +370,103 @@ function TakeTest() {
   const sessionRef = useRef(session);
   sessionRef.current = session;
 
-  const persist = useCallback(async (qid: string, answer: string) => {
-    const d = dataRef.current;
-    const s = sessionRef.current;
-    if (!d?.attempt || !s) return;
-    inflight.current += 1;
-    setSaveState("saving");
-    try {
-      await saveAnswer({ data: { code: s.code, device: s.device, attempt_id: d.attempt.id, question_id: qid, answer } });
-      inflight.current -= 1;
-      if (inflight.current <= 0) { inflight.current = 0; setSaveState("saved"); }
-    } catch (err) {
-      inflight.current = Math.max(0, inflight.current - 1);
-      setSaveState("error");
-      reportIncident("autosave-gagal", "Jawaban gagal tersimpan (kemungkinan sinyal lemah)", {
-        test_id: testId,
-        question_id: qid,
-        error: err instanceof Error ? err.message : String(err),
+  const persist = useCallback(
+    async (qid: string, answer: string) => {
+      const d = dataRef.current;
+      const s = sessionRef.current;
+      if (!d?.attempt || !s) return;
+      inflight.current += 1;
+      setSaveState("saving");
+      try {
+        await saveAnswer({
+          data: {
+            code: s.code,
+            device: s.device,
+            attempt_id: d.attempt.id,
+            question_id: qid,
+            answer,
+          },
+        });
+        inflight.current -= 1;
+        if (inflight.current <= 0) {
+          inflight.current = 0;
+          setSaveState("saved");
+        }
+      } catch (err) {
+        inflight.current = Math.max(0, inflight.current - 1);
+        setSaveState("error");
+        reportIncident("autosave-gagal", "Jawaban gagal tersimpan (kemungkinan sinyal lemah)", {
+          test_id: testId,
+          question_id: qid,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    },
+    [saveAnswer],
+  );
+
+  const persistDebounced = useCallback(
+    (qid: string, answer: string, delay = 500) => {
+      if (timers.current[qid]) clearTimeout(timers.current[qid]);
+      setSaveState("saving");
+      timers.current[qid] = setTimeout(() => {
+        void persist(qid, answer);
+      }, delay);
+    },
+    [persist],
+  );
+
+  const pickMcq = useCallback(
+    (qid: string, key: string) => {
+      setAnswers((a) => ({ ...a, [qid]: key }));
+      void persist(qid, key);
+    },
+    [persist],
+  );
+
+  const handleTextChange = useCallback(
+    (qid: string, value: string) => {
+      setAnswers((a) => ({ ...a, [qid]: value }));
+      persistDebounced(qid, value);
+    },
+    [persistDebounced],
+  );
+
+  const setDisc = useCallback(
+    (qid: string, kind: "most" | "least", key: string) => {
+      setDiscPicks((prev) => {
+        const cur = { ...(prev[qid] ?? {}) };
+        // Toggle off if same, else set and clear opposite if collides
+        if (cur[kind] === key) delete cur[kind];
+        else {
+          cur[kind] = key;
+          const other = kind === "most" ? "least" : "most";
+          if (cur[other] === key) delete cur[other];
+        }
+        const next = { ...prev, [qid]: cur };
+        if (cur.most && cur.least && cur.most !== cur.least) {
+          const payload = JSON.stringify({ most: cur.most, least: cur.least });
+          setAnswers((a) => ({ ...a, [qid]: payload }));
+          void persist(qid, payload);
+        } else {
+          setAnswers((a) => {
+            const c = { ...a };
+            delete c[qid];
+            return c;
+          });
+        }
+        return next;
       });
-    }
-  }, [saveAnswer]);
-
-  const persistDebounced = useCallback((qid: string, answer: string, delay = 500) => {
-    if (timers.current[qid]) clearTimeout(timers.current[qid]);
-    setSaveState("saving");
-    timers.current[qid] = setTimeout(() => { void persist(qid, answer); }, delay);
-  }, [persist]);
-
-  const pickMcq = useCallback((qid: string, key: string) => {
-    setAnswers((a) => ({ ...a, [qid]: key }));
-    void persist(qid, key);
-  }, [persist]);
-
-  const handleTextChange = useCallback((qid: string, value: string) => {
-    setAnswers((a) => ({ ...a, [qid]: value }));
-    persistDebounced(qid, value);
-  }, [persistDebounced]);
-
-  const setDisc = useCallback((qid: string, kind: "most" | "least", key: string) => {
-    setDiscPicks((prev) => {
-      const cur = { ...(prev[qid] ?? {}) };
-      // Toggle off if same, else set and clear opposite if collides
-      if (cur[kind] === key) delete cur[kind];
-      else {
-        cur[kind] = key;
-        const other = kind === "most" ? "least" : "most";
-        if (cur[other] === key) delete cur[other];
-      }
-      const next = { ...prev, [qid]: cur };
-      if (cur.most && cur.least && cur.most !== cur.least) {
-        const payload = JSON.stringify({ most: cur.most, least: cur.least });
-        setAnswers((a) => ({ ...a, [qid]: payload }));
-        void persist(qid, payload);
-      } else {
-        setAnswers((a) => { const c = { ...a }; delete c[qid]; return c; });
-      }
-      return next;
-    });
-  }, [persist]);
+    },
+    [persist],
+  );
 
   // Flush pending debounced saves when leaving the page.
   useEffect(() => {
     const t = timers.current;
-    return () => { Object.values(t).forEach((h) => h && clearTimeout(h)); };
+    return () => {
+      Object.values(t).forEach((h) => h && clearTimeout(h));
+    };
   }, []);
 
   async function handleSubmit(auto = false) {
@@ -360,33 +474,47 @@ function TakeTest() {
     if (!auto && !confirm("Kirim jawaban? Anda tidak dapat mengubah setelah dikirim.")) return;
     setSubmitting(true);
     try {
-      const payload = Object.entries(answers).map(([question_id, answer]) => ({ question_id, answer }));
-      await submit({ data: { code: session!.code, device: session!.device, attempt_id: data.attempt.id, answers: payload } });
+      const payload = Object.entries(answers).map(([question_id, answer]) => ({
+        question_id,
+        answer,
+      }));
+      await submit({
+        data: {
+          code: session!.code,
+          device: session!.device,
+          attempt_id: data.attempt.id,
+          answers: payload,
+        },
+      });
       toast.success("Jawaban terkirim. Hasil penilaian diproses oleh tim HR.");
       qc.removeQueries({ queryKey: ["start-test", testId, session?.code] });
       // Tunggu daftar test benar-benar tersegarkan supaya status "Selesai &
       // terkunci" langsung terlihat begitu kandidat kembali ke daftar test.
       await qc.invalidateQueries({ queryKey: ["candidate-profile"], refetchType: "all" });
       nav({ to: "/candidate/portal/tests", replace: true });
-
     } catch (e: any) {
       toast.error(e?.message || "Gagal mengirim jawaban. Coba lagi.");
-      reportIncident("kirim-jawaban-gagal", `Gagal mengirim jawaban (${testLabel}): ${e?.message ?? "koneksi bermasalah"}`, {
-        test_id: testId,
-        auto,
-        code: session?.code,
-      });
+      reportIncident(
+        "kirim-jawaban-gagal",
+        `Gagal mengirim jawaban (${testLabel}): ${e?.message ?? "koneksi bermasalah"}`,
+        {
+          test_id: testId,
+          auto,
+          code: session?.code,
+        },
+      );
+    } finally {
+      setSubmitting(false);
     }
-    finally { setSubmitting(false); }
   }
-
-
 
   if (!session) {
     return (
       <Card>
         <CardContent className="space-y-3 py-8 text-center">
-          <p className="text-sm text-muted-foreground">Sesi kandidat tidak ditemukan. Silakan login kembali menggunakan kode akses Anda.</p>
+          <p className="text-sm text-muted-foreground">
+            Sesi kandidat tidak ditemukan. Silakan login kembali menggunakan kode akses Anda.
+          </p>
           <Button onClick={() => nav({ to: "/candidate/login" })}>Login Kandidat</Button>
         </CardContent>
       </Card>
@@ -395,7 +523,8 @@ function TakeTest() {
 
   if (!started) {
     const it: any = intro.data?.test;
-    const voiceText: string = (it?.voice_instruction?.trim() || (it ? voiceTemplateFor(testLabel, it.test_type) : ""));
+    const voiceText: string =
+      it?.voice_instruction?.trim() || (it ? voiceTemplateFor(testLabel, it.test_type) : "");
     const useAudio = !!(it?.voice_mode === "audio" && it?.voice_audio_url);
     return (
       <Card className="shadow-card">
@@ -413,8 +542,14 @@ function TakeTest() {
           {it && (
             <>
               <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1"><Timer className="h-4 w-4" /> {it.duration_minutes} menit</span>
-                {intro.data?.resumed && <span className="rounded bg-accent px-2 py-0.5 text-xs">Melanjutkan pengerjaan</span>}
+                <span className="inline-flex items-center gap-1">
+                  <Timer className="h-4 w-4" /> {it.duration_minutes} menit
+                </span>
+                {intro.data?.resumed && (
+                  <span className="rounded bg-accent px-2 py-0.5 text-xs">
+                    Melanjutkan pengerjaan
+                  </span>
+                )}
               </div>
               {useAudio ? (
                 <div className="space-y-2 rounded-lg border bg-accent/40 p-4">
@@ -428,12 +563,24 @@ function TakeTest() {
                     ref={audioRef}
                     className="w-full"
                   />
-                  <Button type="button" size="sm" variant="secondary"
-                    onClick={() => { const a = audioRef.current; if (a) { a.currentTime = 0; void a.play(); } }}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      const a = audioRef.current;
+                      if (a) {
+                        a.currentTime = 0;
+                        void a.play();
+                      }
+                    }}
+                  >
                     <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Ulangi instruksi
                   </Button>
                   {voiceText && (
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">{voiceText}</p>
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
+                      {voiceText}
+                    </p>
                   )}
                 </div>
               ) : (
@@ -452,7 +599,18 @@ function TakeTest() {
             </>
           )}
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => { try { window.speechSynthesis?.cancel(); audioRef.current?.pause(); } catch { /* noop */ } setStarted(true); }} disabled={intro.isLoading || !!intro.error}>
+            <Button
+              onClick={() => {
+                try {
+                  window.speechSynthesis?.cancel();
+                  audioRef.current?.pause();
+                } catch {
+                  /* noop */
+                }
+                setStarted(true);
+              }}
+              disabled={intro.isLoading || !!intro.error}
+            >
               Mulai Test
             </Button>
             {it && !useAudio && voiceText && (
@@ -460,19 +618,22 @@ function TakeTest() {
                 <RotateCcw className="mr-1.5 h-4 w-4" /> Ulangi instruksi
               </Button>
             )}
-            <Button variant="outline" onClick={() => nav({ to: "/candidate/portal/tests" })}>Kembali</Button>
+            <Button variant="outline" onClick={() => nav({ to: "/candidate/portal/tests" })}>
+              Kembali
+            </Button>
           </div>
         </CardContent>
       </Card>
     );
   }
 
-
   // Error must be checked BEFORE the loading branch: when the server rejects
   // the request (e.g. biodata belum lengkap) `data` stays undefined and the
   // page previously hung forever on "Memuat test...".
   if (error || (!isLoading && (!data || !data.test || !data.attempt))) {
-    const msg = (error as any)?.message || "Test tidak dapat dimuat. Periksa koneksi Anda atau hubungi admin.";
+    const msg =
+      (error as any)?.message ||
+      "Test tidak dapat dimuat. Periksa koneksi Anda atau hubungi admin.";
     const needsBiodata = /data diri|biodata/i.test(msg);
     return (
       <Card className="border-destructive/40">
@@ -484,11 +645,17 @@ function TakeTest() {
           <p className="text-sm text-muted-foreground">{msg}</p>
           <div className="flex flex-wrap justify-center gap-2">
             {needsBiodata ? (
-              <Button onClick={() => nav({ to: "/candidate/portal/data" })}>Lengkapi Data Diri</Button>
+              <Button onClick={() => nav({ to: "/candidate/portal/data" })}>
+                Lengkapi Data Diri
+              </Button>
             ) : (
-              <Button variant="outline" onClick={() => refetch()}>Coba lagi</Button>
+              <Button variant="outline" onClick={() => refetch()}>
+                Coba lagi
+              </Button>
             )}
-            <Button variant="outline" onClick={() => nav({ to: "/candidate/portal/tests" })}>Kembali ke daftar test</Button>
+            <Button variant="outline" onClick={() => nav({ to: "/candidate/portal/tests" })}>
+              Kembali ke daftar test
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -509,10 +676,11 @@ function TakeTest() {
         <CardContent className="space-y-3 py-8 text-center">
           <AlertCircle className="mx-auto h-8 w-8 text-destructive" />
           <div className="font-medium text-destructive">Gagal memuat test</div>
-          <Button onClick={() => nav({ to: "/candidate/portal/tests" })}>Kembali ke daftar test</Button>
+          <Button onClick={() => nav({ to: "/candidate/portal/tests" })}>
+            Kembali ke daftar test
+          </Button>
         </CardContent>
       </Card>
-
     );
   }
   if (data.attempt.status === "finished") {
@@ -520,9 +688,12 @@ function TakeTest() {
       <Card>
         <CardContent className="space-y-3 py-8 text-center">
           <p className="text-sm text-muted-foreground">
-            Test sudah selesai dan jawaban Anda telah tersimpan. Hasil penilaian tidak ditampilkan dan akan diproses oleh tim HR.
+            Test sudah selesai dan jawaban Anda telah tersimpan. Hasil penilaian tidak ditampilkan
+            dan akan diproses oleh tim HR.
           </p>
-          <Button onClick={() => nav({ to: "/candidate/portal/tests" })}>Kembali ke daftar test</Button>
+          <Button onClick={() => nav({ to: "/candidate/portal/tests" })}>
+            Kembali ke daftar test
+          </Button>
         </CardContent>
       </Card>
     );
@@ -536,7 +707,9 @@ function TakeTest() {
       <Card className="border-destructive/40">
         <CardContent className="space-y-3 py-10 text-center">
           <AlertCircle className="mx-auto h-8 w-8 text-destructive" />
-          <div className="font-display text-lg font-semibold text-destructive">WAKTU HABIS — TEST TERKUNCI</div>
+          <div className="font-display text-lg font-semibold text-destructive">
+            WAKTU HABIS — TEST TERKUNCI
+          </div>
           <p className="text-sm text-muted-foreground">
             {submitting
               ? "Menyimpan dan mengunci jawaban Anda..."
@@ -550,11 +723,9 @@ function TakeTest() {
     );
   }
 
-
-
-
-
-  const mins = Math.floor(remaining / 60).toString().padStart(2, "0");
+  const mins = Math.floor(remaining / 60)
+    .toString()
+    .padStart(2, "0");
   const secs = (remaining % 60).toString().padStart(2, "0");
   const total = data.questions.length;
   const isDisc = data.test.test_type === "disc";
@@ -567,123 +738,143 @@ function TakeTest() {
       ? data.questions.filter((q: any) => pauliFilledCount(answers[q.id]) > 0).length
       : Object.keys(answers).filter((k) => (answers[k] ?? "").trim() !== "").length;
 
-
-
-
   return (
     <div className="space-y-6">
       <>
-
-      <Card className="shadow-card">
-
-        <CardHeader>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h1 className="font-display text-2xl font-semibold leading-none tracking-tight text-primary">{testLabel}</h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
-                <div className="flex items-center gap-2"><Timer className="h-4 w-4" /> <span className="font-mono text-lg">{timerReady ? `${mins}:${secs}` : "--:--"}</span></div>
+        <Card className="shadow-card">
+          <CardHeader>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h1 className="font-display text-2xl font-semibold leading-none tracking-tight text-primary">
+                  {testLabel}
+                </h1>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">
+                  <div className="flex items-center gap-2">
+                    <Timer className="h-4 w-4" />{" "}
+                    <span className="font-mono text-lg">
+                      {timerReady ? `${mins}:${secs}` : "--:--"}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="mt-4 space-y-2">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <div className="flex items-center gap-3">
-                <span>Progress</span>
-                <span className="inline-flex items-center gap-1 rounded-full border bg-background px-2 py-0.5">
-                  {saveState === "saving" && (<><Loader2 className="h-3 w-3 animate-spin" /> Menyimpan...</>)}
-                  {saveState === "saved" && (<><Check className="h-3 w-3 text-success" /> Tersimpan otomatis</>)}
-                  {saveState === "error" && (<><AlertCircle className="h-3 w-3 text-destructive" /> Gagal menyimpan</>)}
-                  {saveState === "idle" && (<><Check className="h-3 w-3 opacity-40" /> Autosave aktif</>)}
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div className="flex items-center gap-3">
+                  <span>Progress</span>
+                  <span className="inline-flex items-center gap-1 rounded-full border bg-background px-2 py-0.5">
+                    {saveState === "saving" && (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" /> Menyimpan...
+                      </>
+                    )}
+                    {saveState === "saved" && (
+                      <>
+                        <Check className="h-3 w-3 text-success" /> Tersimpan otomatis
+                      </>
+                    )}
+                    {saveState === "error" && (
+                      <>
+                        <AlertCircle className="h-3 w-3 text-destructive" /> Gagal menyimpan
+                      </>
+                    )}
+                    {saveState === "idle" && (
+                      <>
+                        <Check className="h-3 w-3 opacity-40" /> Autosave aktif
+                      </>
+                    )}
+                  </span>
+                </div>
+                <span>
+                  {answered}/{total} soal
                 </span>
               </div>
-              <span>{answered}/{total} soal</span>
+              <Progress value={(answered / total) * 100} className="h-2" />
             </div>
-            <Progress value={(answered / total) * 100} className="h-2" />
-          </div>
-        </CardHeader>
-      </Card>
+          </CardHeader>
+        </Card>
 
-      {/* Tanpa petunjuk apa pun: seluruh petunjuk & contoh soal ada di halaman latihan terpisah. */}
+        {/* Tanpa petunjuk apa pun: seluruh petunjuk & contoh soal ada di halaman latihan terpisah. */}
 
-
-
-
-
-
-      {isPauli && (
-        <PauliSheet
-          questions={data.questions as any}
-          answers={answers}
-          onChange={(qid, value) => {
-            setAnswers((prev) => ({ ...prev, [qid]: value }));
-            persistDebounced(qid, value, 800);
-          }}
-        />
-      )}
-
-      {isWpt && (
-        <WptSheet
-          questions={data.questions as any}
-          answers={answers}
-          images={WPT_IMAGES}
-          onChange={handleTextChange}
-          renderImage={(img, number) => (
-            <WptImageFigure url={img.url} caption={img.caption} number={number} />
-          )}
-        />
-      )}
-
-      <div className={isPauli || isWpt ? "hidden" : "space-y-4"}>
-        {(isPauli || isWpt ? [] : data.questions).map((q: any, i: number) => (
-          <TestQuestionCard
-            key={q.id}
-            q={q}
-            index={i}
-            total={total}
-            testType={data.test!.test_type as any}
-            answer={answers[q.id] ?? ""}
-            discPick={discPicks[q.id]}
-            wptImage={data.test!.test_type === "ishihara" ? ISHIHARA_PLATES[q.question_number] ?? null : null}
-            onPickMcq={pickMcq}
-            onSetDisc={setDisc}
-            onChangeText={handleTextChange}
+        {isPauli && (
+          <PauliSheet
+            questions={data.questions as any}
+            answers={answers}
+            onChange={(qid, value) => {
+              setAnswers((prev) => ({ ...prev, [qid]: value }));
+              persistDebounced(qid, value, 800);
+            }}
           />
-        ))}
-      </div>
+        )}
 
+        {isWpt && (
+          <WptSheet
+            questions={data.questions as any}
+            answers={answers}
+            images={WPT_IMAGES}
+            onChange={handleTextChange}
+            renderImage={(img, number) => (
+              <WptImageFigure url={img.url} caption={img.caption} number={number} />
+            )}
+          />
+        )}
 
+        <div className={isPauli || isWpt ? "hidden" : "space-y-4"}>
+          {(isPauli || isWpt ? [] : data.questions).map((q: any, i: number) => (
+            <TestQuestionCard
+              key={q.id}
+              q={q}
+              index={i}
+              total={total}
+              testType={data.test!.test_type as any}
+              answer={answers[q.id] ?? ""}
+              discPick={discPicks[q.id]}
+              wptImage={
+                data.test!.test_type === "ishihara"
+                  ? (ISHIHARA_PLATES[q.question_number] ?? null)
+                  : null
+              }
+              onPickMcq={pickMcq}
+              onSetDisc={setDisc}
+              onChangeText={handleTextChange}
+            />
+          ))}
+        </div>
 
-      <div className="sticky bottom-4 flex justify-end">
-        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-          <AlertDialogTrigger asChild>
-            <Button size="lg" disabled={submitting || answered === 0}>
-              {submitting ? "Mengirim..." : `Kirim Jawaban (${answered}/${total})`}
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Kirim jawaban sekarang?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Anda sudah mengisi {answered} dari {total} soal. Jawaban tidak dapat diubah setelah dikirim.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={submitting}>Periksa lagi</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={(e: React.MouseEvent) => { e.preventDefault(); setConfirmOpen(false); void handleSubmit(true); }}
-                disabled={submitting}
-              >
-                Ya, kirim jawaban
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-
+        <div className="sticky bottom-4 flex justify-end">
+          <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+            <AlertDialogTrigger asChild>
+              <Button size="lg" disabled={submitting || answered === 0}>
+                {submitting ? "Mengirim..." : `Kirim Jawaban (${answered}/${total})`}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Kirim jawaban sekarang?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Anda sudah mengisi {answered} dari {total} soal. Jawaban tidak dapat diubah
+                  setelah dikirim.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={submitting}>Periksa lagi</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e: React.MouseEvent) => {
+                    e.preventDefault();
+                    setConfirmOpen(false);
+                    void handleSubmit(true);
+                  }}
+                  disabled={submitting}
+                >
+                  Ya, kirim jawaban
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </>
-
     </div>
   );
 }

@@ -32,12 +32,16 @@ export const Route = createFileRoute("/admin/monitoring")({
         content:
           "Pantau kegagalan yang terjadi di halaman Admin, HR, dan Kandidat secara real-time beserta status penanganannya.",
       },
-          { property: "og:title", content: "Monitor Error — Admin PT Dover Chemical" },
-      { property: "og:description", content: "Pantau kegagalan di halaman Admin, HR, dan Kandidat secara real-time beserta status penanganannya." },
+      { property: "og:title", content: "Monitor Error — Admin PT Dover Chemical" },
+      {
+        property: "og:description",
+        content:
+          "Pantau kegagalan di halaman Admin, HR, dan Kandidat secara real-time beserta status penanganannya.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
-],
+    ],
   }),
   component: MonitoringPage,
 });
@@ -90,7 +94,10 @@ function MonitoringPage() {
   const [onlyOpen, setOnlyOpen] = useState(true);
   const [area, setArea] = useState<string>("all");
 
-  const { data: roles } = useQuery({ queryKey: ["my-roles"], queryFn: () => rolesFn({ data: {} as never }) });
+  const { data: roles } = useQuery({
+    queryKey: ["my-roles"],
+    queryFn: () => rolesFn({ data: {} as never }),
+  });
   const isAdmin = !!roles?.roles?.includes("admin");
 
   const { data, isFetching, refetch } = useQuery({
@@ -181,13 +188,17 @@ function MonitoringPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="p-4">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">Belum ditangani</div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">
+              Belum ditangani
+            </div>
             <div className="text-3xl font-bold text-destructive">{data?.openCount ?? 0}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">Tampil sekarang</div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">
+              Tampil sekarang
+            </div>
             <div className="text-3xl font-bold text-primary">{rows.length}</div>
           </CardContent>
         </Card>
@@ -195,10 +206,14 @@ function MonitoringPage() {
           <CardContent className="flex flex-col justify-center gap-3 p-4">
             <div className="flex items-center gap-2">
               <Switch id="only-open" checked={onlyOpen} onCheckedChange={setOnlyOpen} />
-              <Label htmlFor="only-open" className="text-sm">Hanya yang belum ditangani</Label>
+              <Label htmlFor="only-open" className="text-sm">
+                Hanya yang belum ditangani
+              </Label>
             </div>
             <Select value={area} onValueChange={setArea}>
-              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-8">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua area</SelectItem>
                 <SelectItem value="admin">Admin/HR</SelectItem>
@@ -237,7 +252,9 @@ function MonitoringPage() {
                   <span className="text-xs text-muted-foreground">· {r.actor_label}</span>
                 )}
                 {r.source.startsWith("insiden:") ? (
-                  <Badge className="ml-auto" variant="secondary">{sourceLabel(r.source)}</Badge>
+                  <Badge className="ml-auto" variant="secondary">
+                    {sourceLabel(r.source)}
+                  </Badge>
                 ) : (
                   <span className="ml-auto text-[10px] uppercase tracking-wide text-muted-foreground">
                     {r.source}

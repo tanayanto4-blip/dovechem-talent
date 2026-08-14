@@ -143,8 +143,6 @@ export async function exportPapiPdf(picks: Record<number, string>, meta: PapiPdf
   }
   doc.setTextColor(15);
 
-
-
   // ---------- Halaman lanjutan bergaya lembar acuan (mono, berbingkai) ----------
   const sheetHeader = (subtitle: string) => {
     doc.addPage("a4", "landscape");
@@ -170,7 +168,6 @@ export async function exportPapiPdf(picks: Record<number, string>, meta: PapiPdf
     doc.setLineWidth(0.8);
     doc.line(52, 138, w - 52, 138);
     return w;
-
   };
 
   // Halaman 2: rekap skala — dua tabel berkotak (Roles & Needs)
@@ -224,11 +221,7 @@ export async function exportPapiPdf(picks: Record<number, string>, meta: PapiPdf
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.text("Total", x + 8, yT + 17);
-    doc.text(
-      String(order === PAPI_TOP_ORDER ? s.totalTop : s.totalBottom),
-      x + tw - 102,
-      yT + 17,
-    );
+    doc.text(String(order === PAPI_TOP_ORDER ? s.totalTop : s.totalBottom), x + tw - 102, yT + 17);
     doc.setFont("helvetica", "normal");
   };
 
@@ -282,10 +275,8 @@ export async function exportPapiPdf(picks: Record<number, string>, meta: PapiPdf
       doc.text(scale, bx + 64, y0 + 14);
       doc.setFont("helvetica", "normal");
       doc.text(`${k.A}/${k.B}`, bx + 91, y0 + 14);
-
     }
   }
-
 
   const safe = (meta.candidateName || "kandidat").replace(/[^a-z0-9]+/gi, "_");
   doc.save(`PAPI_${safe}.pdf`);
