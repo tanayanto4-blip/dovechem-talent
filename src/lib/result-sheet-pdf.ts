@@ -112,7 +112,7 @@ export async function exportResultSheetPdf(input: ResultSheetInput) {
         header();
         y = 90;
       }
-      doc.setFillColor(...(i % 2 === 0 ? LIGHT : [255, 255, 255]));
+      doc.setFillColor(...(i % 2 === 0 ? LIGHT : ([255, 255, 255] as [number, number, number])));
       doc.rect(M, y, w, rowH, "F");
       doc.setDrawColor(205, 213, 224);
       doc.rect(M, y, w, rowH);
@@ -193,7 +193,7 @@ export async function exportResultSheetPdf(input: ResultSheetInput) {
 
     doc.setFont("helvetica", "normal");
     block.forEach((r, i) => {
-      doc.setFillColor(...(i % 2 === 0 ? [255, 255, 255] : LIGHT));
+      doc.setFillColor(...(i % 2 === 0 ? ([255, 255, 255] as [number, number, number]) : LIGHT));
       doc.rect(x, by, blockW, rowH, "F");
       doc.setDrawColor(205, 213, 224);
       doc.rect(x, by, blockW, rowH);
