@@ -56,11 +56,11 @@ describe("candidateSubmitTest — static guarantees", () => {
 
   it("resolves the active access code before any write", () => {
     const resolveIdx = body.search(/resolveActiveCode\(sb,\s*data\.code[^)]*\)/);
-    const answersDeleteIdx = body.search(/from\(["']test_answers["']\)[\s\S]{0,40}\.delete\(\)/);
+    const answersDeleteIdx = body.search(/from\(["']test_answers["']\)[\s\S]{0,40}\.\s*delete\(\)/);
     const answersWriteIdx = body.search(
-      /from\(["']test_answers["']\)[\s\S]{0,40}\.(insert|upsert)\(/,
+      /from\(["']test_answers["']\)[\s\S]{0,40}\s*\.\s*(insert|upsert)\(/,
     );
-    const attemptUpdateIdx = body.search(/from\(["']test_attempts["']\)\.update\(/);
+    const attemptUpdateIdx = body.search(/from\(["']test_attempts["']\)\s*\.\s*update\(/);
     expect(resolveIdx).toBeGreaterThan(-1);
     expect(resolveIdx).toBeLessThan(answersDeleteIdx);
     expect(resolveIdx).toBeLessThan(answersWriteIdx);
