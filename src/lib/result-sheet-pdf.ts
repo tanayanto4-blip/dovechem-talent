@@ -177,7 +177,7 @@ export function buildResultSheetDoc(input: ResultSheetInput, logo: string | null
   const gap = 14;
   const blockW = (pw - M * 2 - gap * (cols - 1)) / cols;
   const noW = 38;
-  const keyW = hasKey ? 56 : 0;
+  const keyW = hasKey ? 72 : 0;
   const rowH = 16;
 
   const perBlock = Math.ceil(rows.length / cols) || 1;
@@ -217,7 +217,7 @@ export function buildResultSheetDoc(input: ResultSheetInput, logo: string | null
         const ok = key && ans && key.toLowerCase() === ans.toLowerCase();
         if (key) {
           doc.setTextColor(...(ok ? ([21, 128, 61] as [number, number, number]) : ([185, 28, 28] as [number, number, number])));
-          doc.text(`${key} ${ok ? "✓" : "✗"}`, x + blockW - keyW + 6, by + 11);
+          doc.text(`${key} ${ok ? "(B)" : "(S)"}`, x + blockW - keyW + 6, by + 11);
           doc.setTextColor(20);
         } else {
           doc.text("-", x + blockW - keyW + 6, by + 11);
@@ -245,8 +245,8 @@ export function buildResultSheetDoc(input: ResultSheetInput, logo: string | null
   doc.rect(M, sy + 8, pw - M * 2, 70);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.text("Penilai / HR", pw - M - 160, sy + 118);
-  doc.line(pw - M - 160, sy + 112, pw - M, sy + 112);
+  doc.line(pw - M - 160, sy + 122, pw - M, sy + 122);
+  doc.text("Penilai / HR", pw - M - 160, sy + 136);
 
   footer();
 
