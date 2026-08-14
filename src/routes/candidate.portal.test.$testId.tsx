@@ -15,6 +15,11 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { reportIncident } from "@/lib/error-monitor";
 import { Timer, Check, Loader2, AlertCircle, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import wptQ7 from "@/assets/wpt-q7.jpg.asset.json";
 import wptQ38 from "@/assets/wpt-q38.png.asset.json";
@@ -196,6 +201,7 @@ function TakeTest() {
   const [timerReady, setTimerReady] = useState(false);
   const expiredRef = useRef(false);
   const [submitting, setSubmitting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const hydratedRef = useRef(false);
   const inflight = useRef(0);
@@ -357,9 +363,12 @@ function TakeTest() {
       const payload = Object.entries(answers).map(([question_id, answer]) => ({ question_id, answer }));
       await submit({ data: { code: session!.code, device: session!.device, attempt_id: data.attempt.id, answers: payload } });
       toast.success("Jawaban terkirim. Hasil penilaian diproses oleh tim HR.");
-      qc.invalidateQueries({ queryKey: ["candidate-profile"] });
       qc.removeQueries({ queryKey: ["start-test", testId, session?.code] });
+      // Tunggu daftar test benar-benar tersegarkan supaya status "Selesai &
+      // terkunci" langsung terlihat begitu kandidat kembali ke daftar test.
+      await qc.invalidateQueries({ queryKey: ["candidate-profile"], refetchType: "all" });
       nav({ to: "/candidate/portal/tests", replace: true });
+
     } catch (e: any) {
       toast.error(e?.message || "Gagal mengirim jawaban. Coba lagi.");
       reportIncident("kirim-jawaban-gagal", `Gagal mengirim jawaban (${testLabel}): ${e?.message ?? "koneksi bermasalah"}`, {
@@ -647,10 +656,32 @@ function TakeTest() {
 
 
       <div className="sticky bottom-4 flex justify-end">
-        <Button size="lg" onClick={() => handleSubmit(false)} disabled={submitting || answered === 0}>
-          {submitting ? "Mengirim..." : `Kirim Jawaban (${answered}/${total})`}
-        </Button>
+        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <AlertDialogTrigger asChild>
+            <Button size="lg" disabled={submitting || answered === 0}>
+              {submitting ? "Mengirim..." : `Kirim Jawaban (${answered}/${total})`}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Kirim jawaban sekarang?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Anda sudah mengisi {answered} dari {total} soal. Jawaban tidak dapat diubah setelah dikirim.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={submitting}>Periksa lagi</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e: React.MouseEvent) => { e.preventDefault(); setConfirmOpen(false); void handleSubmit(true); }}
+                disabled={submitting}
+              >
+                Ya, kirim jawaban
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
+
       </>
 
     </div>
