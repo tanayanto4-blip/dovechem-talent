@@ -23,11 +23,12 @@ function TestsPage() {
   const session = useCandidateSession();
   const nav = useNavigate();
   const getProfile = useServerFn(candidateGetProfile);
-  const { data } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["candidate-profile", session?.code],
     queryFn: () => getProfile({ data: { code: session!.code, device: session!.device } }),
     enabled: !!session,
   });
+
   const attempts = new Map((data?.attempts ?? []).map((a: any) => [a.test_id, a]));
   const access = new Map(((data as any)?.access ?? []).map((a: any) => [a.test_id, a]));
 
