@@ -96,13 +96,19 @@ function classifyIq(iq: number): string {
   return "Very Superior";
 }
 
-export async function exportWptExcel(answers: WptExcelAnswer[], meta: WptExcelMeta = {}) {
+/**
+ * Menghitung skor & IQ WPT dari jawaban kandidat memakai kunci + tabel konversi
+ * pada template resmi. Mengembalikan workbook/sheet yang sudah terisi supaya
+ * bisa dipakai ulang oleh exporter Excel maupun resume rekrutmen.
+ */
+export async function computeWptScore(answers: WptExcelAnswer[]) {
   const res = await fetch(templateAsset.url);
   if (!res.ok) throw new Error("Template Excel WPT tidak dapat dimuat.");
   const buf = await res.arrayBuffer();
 
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load(buf);
+
   const ws = wb.worksheets.find((w) => /wpt/i.test(w.name)) ?? wb.worksheets[0];
 
   // Kosongkan kolom jawaban testee lalu isi sesuai jawaban kandidat
