@@ -53,24 +53,20 @@ export function useCandidatesRealtime(options?: { notify?: boolean }) {
 
     const channel = supabase
       .channel("staff-candidates-sync")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "candidates" },
-        (payload) => {
-          const row = (payload.new ?? payload.old) as { id?: string; full_name?: string } | null;
-          if (row?.id) {
-            qc.invalidateQueries({ queryKey: ["candidate", row.id], refetchType: "active" });
-          }
-          if (payload.eventType === "UPDATE") {
-            const name = (payload.new as { full_name?: string } | null)?.full_name;
-            if (name) pendingName = name;
-          }
-          // Batch rapid updates (e.g. autosave typing) into one refetch.
-          if (!debounceTimer) {
-            debounceTimer = setTimeout(flush, 800);
-          }
-        },
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "candidates" }, (payload) => {
+        const row = (payload.new ?? payload.old) as { id?: string; full_name?: string } | null;
+        if (row?.id) {
+          qc.invalidateQueries({ queryKey: ["candidate", row.id], refetchType: "active" });
+        }
+        if (payload.eventType === "UPDATE") {
+          const name = (payload.new as { full_name?: string } | null)?.full_name;
+          if (name) pendingName = name;
+        }
+        // Batch rapid updates (e.g. autosave typing) into one refetch.
+        if (!debounceTimer) {
+          debounceTimer = setTimeout(flush, 800);
+        }
+      })
       .subscribe();
 
     return () => {

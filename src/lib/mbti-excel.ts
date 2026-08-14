@@ -63,7 +63,9 @@ export async function exportMbtiExcel(answers: MbtiExcelAnswer[], meta: MbtiExce
   for (const a of answers) {
     const n = Number(a.question_number);
     if (!Number.isFinite(n) || n < 1 || n > 60) continue;
-    const key = String(a.answer ?? "").trim().toUpperCase();
+    const key = String(a.answer ?? "")
+      .trim()
+      .toUpperCase();
     if (key !== "A" && key !== "B") continue;
     const addr = `${key === "A" ? "D" : "E"}${n + 3}`;
     ws.getCell(addr).value = 1;
@@ -89,7 +91,8 @@ export async function exportMbtiExcel(answers: MbtiExcelAnswer[], meta: MbtiExce
     if (!ok) allOk = false;
     const hCell = ws.getCell(`H${row}`);
     const hf = formulaText(hCell);
-    if (hf) hCell.value = { formula: hf, result: ok ? "OK" : "CEK ULANG" } as ExcelJS.CellFormulaValue;
+    if (hf)
+      hCell.value = { formula: hf, result: ok ? "OK" : "CEK ULANG" } as ExcelJS.CellFormulaValue;
   }
 
   const typeLetters = DIM_ROWS.map((row) => {
@@ -105,11 +108,17 @@ export async function exportMbtiExcel(answers: MbtiExcelAnswer[], meta: MbtiExce
   // Identitas kandidat pada baris tanda tangan
   const nama = [meta.candidateName, meta.candidateCode].filter(Boolean).join(" — ") || "-";
   ws.getCell("B64").value = `Nama lengkap & Usia : ${nama} (${meta.age ?? "-"} th)`;
-  ws.getCell("E64").value = `Pendidikan & Jabatan : ${meta.education ?? "-"} - ${meta.position ?? "-"}`;
+  ws.getCell("E64").value =
+    `Pendidikan & Jabatan : ${meta.education ?? "-"} - ${meta.position ?? "-"}`;
 
   // Paksa Excel menghitung ulang seluruh rumus saat file dibuka
   // Biodata kandidat terisi otomatis pada lembar template (tanpa sheet tambahan)
-  applyInlineBiodata(ws, meta, { startRow: 79, labelCol: "B", valueCol: "D", title: "BIODATA KANDIDAT (PT DOVER CHEMICAL)" });
+  applyInlineBiodata(ws, meta, {
+    startRow: 79,
+    labelCol: "B",
+    valueCol: "D",
+    title: "BIODATA KANDIDAT (PT DOVER CHEMICAL)",
+  });
 
   (wb as any).calcProperties = { ...(wb as any).calcProperties, fullCalcOnLoad: true };
 

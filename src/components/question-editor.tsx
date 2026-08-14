@@ -50,7 +50,6 @@ function useInvalidate() {
     Promise.all(KEYS.map((queryKey) => qc.invalidateQueries({ queryKey, refetchType: "all" })));
 }
 
-
 export type EditableQuestion = {
   id?: string;
   question_number?: number;
@@ -93,7 +92,9 @@ export function QuestionEditorDialog({
 
   const initialRows = useMemo(() => toRows(question?.options), [question?.options]);
   const isJsonOptions =
-    question?.options != null && !Array.isArray(question.options) && typeof question.options === "object";
+    question?.options != null &&
+    !Array.isArray(question.options) &&
+    typeof question.options === "object";
 
   const [number, setNumber] = useState<string>("");
   const [text, setText] = useState("");
@@ -133,7 +134,8 @@ export function QuestionEditorDialog({
           .map((r) => (r.dimension ? r : { key: r.key, label: r.label }));
         if (cleaned.length < 2) throw new Error("Isi minimal 2 pilihan jawaban.");
         const keys = new Set(cleaned.map((r) => r.key.toLowerCase()));
-        if (keys.size !== cleaned.length) throw new Error("Kunci pilihan (kolom kiri) tidak boleh sama.");
+        if (keys.size !== cleaned.length)
+          throw new Error("Kunci pilihan (kolom kiri) tidak boleh sama.");
         const key = correct.trim();
         if (key && !cleaned.some((r) => r.key.toLowerCase() === key.toLowerCase())) {
           throw new Error(`Kunci jawaban "${key}" tidak ada di daftar pilihan.`);
@@ -141,7 +143,8 @@ export function QuestionEditorDialog({
         options = cleaned;
       }
       const n = Number(number);
-      if (!Number.isInteger(n) || n < 1) throw new Error("Nomor soal harus berupa angka mulai dari 1.");
+      if (!Number.isInteger(n) || n < 1)
+        throw new Error("Nomor soal harus berupa angka mulai dari 1.");
       return save({
         data: {
           question_id: question?.id,
@@ -177,7 +180,8 @@ export function QuestionEditorDialog({
         <DialogHeader>
           <DialogTitle>{question?.id ? "Edit Soal" : "Tambah Soal Baru"}</DialogTitle>
           <DialogDescription>
-            Ubah nomor, teks soal, pilihan jawaban, kunci, dan dimensi. Perubahan langsung berlaku untuk kandidat.
+            Ubah nomor, teks soal, pilihan jawaban, kunci, dan dimensi. Perubahan langsung berlaku
+            untuk kandidat.
           </DialogDescription>
         </DialogHeader>
 
@@ -185,7 +189,13 @@ export function QuestionEditorDialog({
           <div className="grid gap-3 sm:grid-cols-[120px_1fr]">
             <div className="space-y-1">
               <Label htmlFor="q-number">Nomor</Label>
-              <Input id="q-number" type="number" min={1} value={number} onChange={(e) => setNumber(e.target.value)} />
+              <Input
+                id="q-number"
+                type="number"
+                min={1}
+                value={number}
+                onChange={(e) => setNumber(e.target.value)}
+              />
             </div>
             <div className="space-y-1">
               <Label htmlFor="q-dim">Dimensi (opsional)</Label>
@@ -214,11 +224,21 @@ export function QuestionEditorDialog({
                         type="button"
                         size="sm"
                         variant="outline"
-                        onClick={() => setRows((r) => [...r, { key: String(r.length + 1), label: "", dimension: "" }])}
+                        onClick={() =>
+                          setRows((r) => [
+                            ...r,
+                            { key: String(r.length + 1), label: "", dimension: "" },
+                          ])
+                        }
                       >
                         <Plus className="mr-1 h-3.5 w-3.5" /> Pilihan
                       </Button>
-                      <Button type="button" size="sm" variant="ghost" onClick={() => setUseOptions(false)}>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setUseOptions(false)}
+                      >
                         Jadikan isian bebas
                       </Button>
                     </>
@@ -249,7 +269,9 @@ export function QuestionEditorDialog({
                         value={r.key}
                         aria-label={`Kunci pilihan ${i + 1}`}
                         onChange={(e) =>
-                          setRows((prev) => prev.map((x, j) => (i === j ? { ...x, key: e.target.value } : x)))
+                          setRows((prev) =>
+                            prev.map((x, j) => (i === j ? { ...x, key: e.target.value } : x)),
+                          )
                         }
                       />
                       <Input
@@ -257,7 +279,9 @@ export function QuestionEditorDialog({
                         aria-label={`Teks pilihan ${i + 1}`}
                         placeholder="Teks pilihan"
                         onChange={(e) =>
-                          setRows((prev) => prev.map((x, j) => (i === j ? { ...x, label: e.target.value } : x)))
+                          setRows((prev) =>
+                            prev.map((x, j) => (i === j ? { ...x, label: e.target.value } : x)),
+                          )
                         }
                       />
                       <Input
@@ -265,7 +289,9 @@ export function QuestionEditorDialog({
                         aria-label={`Dimensi pilihan ${i + 1}`}
                         placeholder="Dim"
                         onChange={(e) =>
-                          setRows((prev) => prev.map((x, j) => (i === j ? { ...x, dimension: e.target.value } : x)))
+                          setRows((prev) =>
+                            prev.map((x, j) => (i === j ? { ...x, dimension: e.target.value } : x)),
+                          )
                         }
                       />
                       <Button
@@ -291,7 +317,13 @@ export function QuestionEditorDialog({
           {useJson && (
             <div className="space-y-1">
               <Label htmlFor="q-json">Data soal (JSON lanjutan)</Label>
-              <Textarea id="q-json" rows={8} className="font-mono text-xs" value={json} onChange={(e) => setJson(e.target.value)} />
+              <Textarea
+                id="q-json"
+                rows={8}
+                className="font-mono text-xs"
+                value={json}
+                onChange={(e) => setJson(e.target.value)}
+              />
               <p className="text-xs text-muted-foreground">
                 Format khusus (mis. deret angka Pauli). Ubah dengan hati-hati agar tetap valid.
               </p>
@@ -301,10 +333,16 @@ export function QuestionEditorDialog({
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1">
               <Label htmlFor="q-key">Kunci jawaban (opsional)</Label>
-              <Input id="q-key" value={correct} onChange={(e) => setCorrect(e.target.value)} className="w-48" />
+              <Input
+                id="q-key"
+                value={correct}
+                onChange={(e) => setCorrect(e.target.value)}
+                className="w-48"
+              />
             </div>
             <Button type="button" size="sm" variant="ghost" onClick={() => setUseJson((v) => !v)}>
-              <Settings2 className="mr-1 h-3.5 w-3.5" /> {useJson ? "Mode pilihan biasa" : "Mode JSON lanjutan"}
+              <Settings2 className="mr-1 h-3.5 w-3.5" />{" "}
+              {useJson ? "Mode pilihan biasa" : "Mode JSON lanjutan"}
             </Button>
           </div>
         </div>
@@ -407,7 +445,9 @@ export function TestMetaEditor({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Informasi Test</DialogTitle>
-          <DialogDescription>Ubah nama dan deskripsi test yang tampil untuk kandidat.</DialogDescription>
+          <DialogDescription>
+            Ubah nama dan deskripsi test yang tampil untuk kandidat.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1">

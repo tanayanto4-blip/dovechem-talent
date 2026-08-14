@@ -20,7 +20,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileDown, Eye, BarChart3, FolderOpen, ChevronDown, ChevronRight, Users, FileSpreadsheet, Trash2 } from "lucide-react";
+import {
+  FileDown,
+  Eye,
+  BarChart3,
+  FolderOpen,
+  ChevronDown,
+  ChevronRight,
+  Users,
+  FileSpreadsheet,
+  Trash2,
+} from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,13 +47,19 @@ export const Route = createFileRoute("/admin/results")({
   head: () => ({
     meta: [
       { title: "Bank Data Hasil Psikotest | Dover Chemical HR" },
-      { name: "description", content: "Rekap seluruh hasil psikotest kandidat PT Dover Chemical untuk admin dan HR." },
+      {
+        name: "description",
+        content: "Rekap seluruh hasil psikotest kandidat PT Dover Chemical untuk admin dan HR.",
+      },
       { property: "og:title", content: "Bank Data Hasil Psikotest | Dover Chemical HR" },
-      { property: "og:description", content: "Rekap seluruh hasil psikotest kandidat PT Dover Chemical untuk admin dan HR." },
+      {
+        property: "og:description",
+        content: "Rekap seluruh hasil psikotest kandidat PT Dover Chemical untuk admin dan HR.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-        { name: "robots", content: "noindex" },
-  ],
+      { name: "robots", content: "noindex" },
+    ],
   }),
 });
 
@@ -57,7 +73,8 @@ function summarize(r: any) {
   if (t === "mbti" && res.type) return `Tipe ${res.type}`;
   if (t === "disc" && res.dominant) return `Dominan ${res.dominant}`;
   if (t === "eq" && res.dominant) return `Terkuat ${res.dominant}`;
-  if (t === "ishihara" && typeof res.correct === "number") return `Benar ${res.correct} / Salah ${res.wrong ?? 0}`;
+  if (t === "ishihara" && typeof res.correct === "number")
+    return `Benar ${res.correct} / Salah ${res.wrong ?? 0}`;
   if (res.requires_manual_review) return "Perlu penilaian manual";
   return "-";
 }
@@ -76,7 +93,10 @@ type Group = {
 function ResultsBank() {
   const fn = useServerFn(listAllAttempts);
   const detailFn = useServerFn(getAttemptDetail);
-  const { data, isLoading } = useQuery({ queryKey: ["admin-all-attempts"], queryFn: () => fn({ data: { limit: 1000 } }) });
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-all-attempts"],
+    queryFn: () => fn({ data: { limit: 1000 } }),
+  });
   const [q, setQ] = useState("");
   const [type, setType] = useState("all");
   const [track, setTrack] = useState<CandidateType>("magang");
@@ -105,17 +125,27 @@ function ResultsBank() {
 
   async function answerRows(id: string) {
     const d: any = await detailFn({ data: { id } });
-    const map = new Map<string, any>((d.attempt?.test_answers ?? []).map((x: any) => [x.question_id, x]));
+    const map = new Map<string, any>(
+      (d.attempt?.test_answers ?? []).map((x: any) => [x.question_id, x]),
+    );
     return {
       d,
-      rows: (d.questions ?? []).map((q: any) => ({ question_number: q.question_number, answer: map.get(q.id)?.answer })),
+      rows: (d.questions ?? []).map((q: any) => ({
+        question_number: q.question_number,
+        answer: map.get(q.id)?.answer,
+      })),
       map,
     };
   }
 
   /** Unduh dokumen hasil (Excel) untuk satu attempt. Return true kalau tipe test didukung. */
   async function exportAttemptDoc(r: any, g: Group) {
-    const meta = { candidateName: g.name, candidateCode: g.code, position: g.position, finishedAt: r.finished_at };
+    const meta = {
+      candidateName: g.name,
+      candidateCode: g.code,
+      position: g.position,
+      finishedAt: r.finished_at,
+    };
     const t = r.tests?.test_type;
     if (t === "mbti") {
       const { rows } = await answerRows(r.id);
@@ -141,7 +171,9 @@ function ResultsBank() {
       const { d, map } = await answerRows(r.id);
       const picks: Record<number, string> = {};
       for (const q of d.questions ?? []) {
-        const ans = String(map.get(q.id)?.answer ?? "").trim().toUpperCase();
+        const ans = String(map.get(q.id)?.answer ?? "")
+          .trim()
+          .toUpperCase();
         if (ans === "A" || ans === "B") picks[q.question_number] = ans;
       }
       await exportPapiExcel(picks, meta);
@@ -165,7 +197,8 @@ function ResultsBank() {
     const summary: Array<[string, string]> = [];
     if (typeof res.correct === "number") summary.push(["Jawaban benar", String(res.correct)]);
     if (typeof res.wrong === "number") summary.push(["Jawaban salah", String(res.wrong)]);
-    if (d.attempt?.score !== null && d.attempt?.score !== undefined) summary.push(["Skor", String(d.attempt.score)]);
+    if (d.attempt?.score !== null && d.attempt?.score !== undefined)
+      summary.push(["Skor", String(d.attempt.score)]);
     return exportResultSheetPdf({
       testName: d.attempt?.tests?.name ?? "Psikotest",
       testType: d.attempt?.tests?.test_type,
@@ -178,7 +211,6 @@ function ResultsBank() {
       },
     });
   }
-
 
   const [resumeKey, setResumeKey] = useState<string | null>(null);
 
@@ -202,7 +234,9 @@ function ResultsBank() {
         : null;
 
       const testDate =
-        [ishA, wptA, pauliA, base].find((a) => a?.finished_at)?.finished_at ?? base.started_at ?? null;
+        [ishA, wptA, pauliA, base].find((a) => a?.finished_at)?.finished_at ??
+        base.started_at ??
+        null;
 
       await exportResumeExcel({
         candidate: {
@@ -230,7 +264,6 @@ function ResultsBank() {
 
   const [bulkKey, setBulkKey] = useState<string | null>(null);
 
-
   async function downloadGroupDocs(g: Group) {
     setBulkKey(g.key);
     let ok = 0;
@@ -246,7 +279,10 @@ function ResultsBank() {
         }
         await new Promise((res) => setTimeout(res, 350));
       }
-      if (ok) toast.success(`${ok} dokumen hasil ${g.name} diunduh${skipped ? ` · ${skipped} dilewati` : ""}`);
+      if (ok)
+        toast.success(
+          `${ok} dokumen hasil ${g.name} diunduh${skipped ? ` · ${skipped} dilewati` : ""}`,
+        );
       else toast.error("Tidak ada dokumen hasil yang bisa diunduh untuk kandidat ini");
     } finally {
       setBulkKey(null);
@@ -261,7 +297,12 @@ function ResultsBank() {
       if (type !== "all" && a.tests?.test_type !== type) return false;
       if (status !== "all" && a.status !== status) return false;
       if (!needle) return true;
-      return [a.candidates?.full_name, a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot, a.candidates?.position_applied, a.tests?.name]
+      return [
+        a.candidates?.full_name,
+        a.candidates?.candidate_codes?.code ?? a.candidates?.code_snapshot,
+        a.candidates?.position_applied,
+        a.tests?.name,
+      ]
         .filter(Boolean)
         .some((v: string) => v.toLowerCase().includes(needle));
     });
@@ -289,10 +330,15 @@ function ResultsBank() {
     });
     const list = Array.from(map.values());
     list.forEach((g) => {
-      g.attempts.sort((a, b) => new Date(a.started_at ?? 0).getTime() - new Date(b.started_at ?? 0).getTime());
+      g.attempts.sort(
+        (a, b) => new Date(a.started_at ?? 0).getTime() - new Date(b.started_at ?? 0).getTime(),
+      );
       g.finished = g.attempts.filter((a) => a.status === "finished").length;
       g.first = g.attempts[0]?.started_at ?? null;
-      g.last = g.attempts[g.attempts.length - 1]?.finished_at ?? g.attempts[g.attempts.length - 1]?.started_at ?? null;
+      g.last =
+        g.attempts[g.attempts.length - 1]?.finished_at ??
+        g.attempts[g.attempts.length - 1]?.started_at ??
+        null;
     });
     list.sort((a, b) => a.name.localeCompare(b.name, "id"));
     return list;
@@ -307,7 +353,10 @@ function ResultsBank() {
   }, [data]);
 
   const types = useMemo(
-    () => Array.from(new Set(((data?.attempts ?? []) as any[]).map((a) => a.tests?.test_type).filter(Boolean))),
+    () =>
+      Array.from(
+        new Set(((data?.attempts ?? []) as any[]).map((a) => a.tests?.test_type).filter(Boolean)),
+      ),
     [data],
   );
 
@@ -318,24 +367,41 @@ function ResultsBank() {
 
   function exportCsv() {
     const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const header = ["No", "Kandidat", "Kode", "Posisi", "Urutan Test", "Test", "Tipe", "Status", "Skor", "Ringkasan", "Mulai", "Selesai"];
+    const header = [
+      "No",
+      "Kandidat",
+      "Kode",
+      "Posisi",
+      "Urutan Test",
+      "Test",
+      "Tipe",
+      "Status",
+      "Skor",
+      "Ringkasan",
+      "Mulai",
+      "Selesai",
+    ];
     const lines = [header.map(esc).join(",")];
     groups.forEach((g, gi) => {
       g.attempts.forEach((r, ai) => {
-        lines.push([
-          gi + 1,
-          g.name,
-          g.code,
-          g.position,
-          ai + 1,
-          r.tests?.name ?? "-",
-          r.tests?.test_type ?? "-",
-          r.status,
-          r.status === "finished" ? (r.score ?? "") : "",
-          summarize(r),
-          fmt(r.started_at),
-          fmt(r.finished_at),
-        ].map(esc).join(","));
+        lines.push(
+          [
+            gi + 1,
+            g.name,
+            g.code,
+            g.position,
+            ai + 1,
+            r.tests?.name ?? "-",
+            r.tests?.test_type ?? "-",
+            r.status,
+            r.status === "finished" ? (r.score ?? "") : "",
+            summarize(r),
+            fmt(r.started_at),
+            fmt(r.finished_at),
+          ]
+            .map(esc)
+            .join(","),
+        );
       });
     });
     const blob = new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
@@ -353,7 +419,8 @@ function ResultsBank() {
         <div>
           <h1 className="font-display text-3xl font-bold text-primary">Bank Data Hasil</h1>
           <p className="text-sm text-muted-foreground">
-            Tersimpan terpisah per jalur kandidat (Magang / Karyawan). Hanya Admin &amp; HR yang dapat melihat skor.
+            Tersimpan terpisah per jalur kandidat (Magang / Karyawan). Hanya Admin &amp; HR yang
+            dapat melihat skor.
           </p>
           <TrackTabs value={track} onChange={setTrack} counts={trackCounts} className="mt-4" />
         </div>
@@ -391,13 +458,23 @@ function ResultsBank() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
-            <select className="h-9 rounded-md border bg-background px-2 text-sm" value={type} onChange={(e) => setType(e.target.value)}>
+            <select
+              className="h-9 rounded-md border bg-background px-2 text-sm"
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+            >
               <option value="all">Semua tipe</option>
               {types.map((t) => (
-                <option key={t as string} value={t as string}>{String(t).toUpperCase()}</option>
+                <option key={t as string} value={t as string}>
+                  {String(t).toUpperCase()}
+                </option>
               ))}
             </select>
-            <select className="h-9 rounded-md border bg-background px-2 text-sm" value={status} onChange={(e) => setStatus(e.target.value)}>
+            <select
+              className="h-9 rounded-md border bg-background px-2 text-sm"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
               <option value="all">Semua status</option>
               <option value="finished">Selesai</option>
               <option value="in_progress">Berjalan</option>
@@ -421,7 +498,9 @@ function ResultsBank() {
           {isLoading ? (
             <div className="py-8 text-center text-sm text-muted-foreground">Memuat...</div>
           ) : !groups.length ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">Belum ada hasil psikotest.</div>
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              Belum ada hasil psikotest.
+            </div>
           ) : (
             <div className="space-y-3">
               {groups.map((g, gi) => {
@@ -429,65 +508,70 @@ function ResultsBank() {
                 return (
                   <div key={g.key} className="rounded-lg border">
                     <div className="flex items-center gap-1 pr-3">
-                    <button
-                      type="button"
-                      onClick={() => setOpen((o) => ({ ...o, [g.key]: !o[g.key] }))}
-                      className="flex flex-1 flex-wrap items-center gap-3 px-4 py-3 text-left hover:bg-muted/50"
-                    >
-                      {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                      <span className="w-6 text-sm text-muted-foreground">{gi + 1}.</span>
-                      <FolderOpen className="h-4 w-4 text-primary" />
-                      <span className="font-semibold">{g.name}</span>
-                      <span className="font-mono text-xs text-muted-foreground">{g.code}</span>
-                      <span className="text-xs text-muted-foreground">{g.position}</span>
-                      <span className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-                        <Badge variant="outline">{g.attempts.length} test</Badge>
-                        <Badge className="bg-success">{g.finished} selesai</Badge>
-                        <span className="hidden sm:inline">Awal: {fmt(g.first)} → Akhir: {fmt(g.last)}</span>
-                      </span>
-                    </button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="shrink-0"
-                      disabled={resumeKey === g.key}
-                      title="Unduh Recruitment Resume (Excel) kandidat ini"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void downloadResume(g);
-                      }}
-                    >
-                      <FileSpreadsheet className="mr-1 h-3.5 w-3.5" />
-                      {resumeKey === g.key ? "Menyiapkan..." : "Resume"}
-                    </Button>
-                    <Button
-
-                      size="sm"
-                      variant="secondary"
-                      className="shrink-0"
-                      disabled={bulkKey === g.key}
-                      title="Unduh semua dokumen hasil test kandidat ini"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void downloadGroupDocs(g);
-                      }}
-                    >
-                      <FileDown className="mr-1 h-3.5 w-3.5" />
-                      {bulkKey === g.key ? "Menyiapkan..." : "Unduh semua"}
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      aria-label={`Hapus hasil psikotest ${g.name}`}
-                      title="Hapus seluruh hasil test kandidat ini"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setToDelete(g);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      <button
+                        type="button"
+                        onClick={() => setOpen((o) => ({ ...o, [g.key]: !o[g.key] }))}
+                        className="flex flex-1 flex-wrap items-center gap-3 px-4 py-3 text-left hover:bg-muted/50"
+                      >
+                        {isOpen ? (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        <span className="w-6 text-sm text-muted-foreground">{gi + 1}.</span>
+                        <FolderOpen className="h-4 w-4 text-primary" />
+                        <span className="font-semibold">{g.name}</span>
+                        <span className="font-mono text-xs text-muted-foreground">{g.code}</span>
+                        <span className="text-xs text-muted-foreground">{g.position}</span>
+                        <span className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+                          <Badge variant="outline">{g.attempts.length} test</Badge>
+                          <Badge className="bg-success">{g.finished} selesai</Badge>
+                          <span className="hidden sm:inline">
+                            Awal: {fmt(g.first)} → Akhir: {fmt(g.last)}
+                          </span>
+                        </span>
+                      </button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0"
+                        disabled={resumeKey === g.key}
+                        title="Unduh Recruitment Resume (Excel) kandidat ini"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void downloadResume(g);
+                        }}
+                      >
+                        <FileSpreadsheet className="mr-1 h-3.5 w-3.5" />
+                        {resumeKey === g.key ? "Menyiapkan..." : "Resume"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="shrink-0"
+                        disabled={bulkKey === g.key}
+                        title="Unduh semua dokumen hasil test kandidat ini"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void downloadGroupDocs(g);
+                        }}
+                      >
+                        <FileDown className="mr-1 h-3.5 w-3.5" />
+                        {bulkKey === g.key ? "Menyiapkan..." : "Unduh semua"}
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        aria-label={`Hapus hasil psikotest ${g.name}`}
+                        title="Hapus seluruh hasil test kandidat ini"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setToDelete(g);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
 
                     {isOpen && (
@@ -512,21 +596,41 @@ function ResultsBank() {
                                   <td className="py-2 pr-2 text-muted-foreground">{ai + 1}</td>
                                   <td className="py-2 pr-2">
                                     {r.tests?.name ?? "-"}
-                                    <div><Badge variant="outline" className="mt-1 uppercase">{r.tests?.test_type}</Badge></div>
+                                    <div>
+                                      <Badge variant="outline" className="mt-1 uppercase">
+                                        {r.tests?.test_type}
+                                      </Badge>
+                                    </div>
                                   </td>
                                   <td className="py-2 pr-2">
-                                    {r.status === "finished" ? <Badge className="bg-success">Selesai</Badge> : <Badge variant="secondary">Berjalan</Badge>}
+                                    {r.status === "finished" ? (
+                                      <Badge className="bg-success">Selesai</Badge>
+                                    ) : (
+                                      <Badge variant="secondary">Berjalan</Badge>
+                                    )}
                                   </td>
-                                  <td className="py-2 pr-2 font-semibold text-primary">{r.status === "finished" ? (r.score ?? "-") : "-"}</td>
-                                  <td className="py-2 pr-2 text-xs text-muted-foreground">{summarize(r)}</td>
-                                  <td className="py-2 pr-2 text-xs text-muted-foreground">{fmt(r.started_at)}</td>
-                                  <td className="py-2 pr-2 text-xs text-muted-foreground">{fmt(r.finished_at)}</td>
+                                  <td className="py-2 pr-2 font-semibold text-primary">
+                                    {r.status === "finished" ? (r.score ?? "-") : "-"}
+                                  </td>
+                                  <td className="py-2 pr-2 text-xs text-muted-foreground">
+                                    {summarize(r)}
+                                  </td>
+                                  <td className="py-2 pr-2 text-xs text-muted-foreground">
+                                    {fmt(r.started_at)}
+                                  </td>
+                                  <td className="py-2 pr-2 text-xs text-muted-foreground">
+                                    {fmt(r.finished_at)}
+                                  </td>
                                   <td className="py-2">
                                     <div className="flex gap-2">
                                       <Button asChild size="sm" variant="outline">
-                                        <Link to="/admin/attempts/$id" params={{ id: r.id }}><Eye className="mr-1 h-3.5 w-3.5" /> Detail</Link>
+                                        <Link to="/admin/attempts/$id" params={{ id: r.id }}>
+                                          <Eye className="mr-1 h-3.5 w-3.5" /> Detail
+                                        </Link>
                                       </Button>
-                                      {!["mbti", "eq", "wpt", "disc", "papi"].includes(String(r.tests?.test_type)) && (
+                                      {!["mbti", "eq", "wpt", "disc", "papi"].includes(
+                                        String(r.tests?.test_type),
+                                      ) && (
                                         <Button
                                           size="sm"
                                           variant="secondary"
@@ -535,11 +639,14 @@ function ResultsBank() {
                                               await exportGenericSheet(r);
                                               toast.success("Lembar hasil PDF diunduh");
                                             } catch (e: any) {
-                                              toast.error(e?.message ?? "Gagal membuat lembar hasil");
+                                              toast.error(
+                                                e?.message ?? "Gagal membuat lembar hasil",
+                                              );
                                             }
                                           }}
                                         >
-                                          <FileSpreadsheet className="mr-1 h-3.5 w-3.5" /> Lembar Hasil
+                                          <FileSpreadsheet className="mr-1 h-3.5 w-3.5" /> Lembar
+                                          Hasil
                                         </Button>
                                       )}
                                       {r.tests?.test_type === "mbti" && (
@@ -549,7 +656,12 @@ function ResultsBank() {
                                           onClick={async () => {
                                             try {
                                               const d: any = await detailFn({ data: { id: r.id } });
-                                              const map = new Map<string, any>((d.attempt?.test_answers ?? []).map((x: any) => [x.question_id, x]));
+                                              const map = new Map<string, any>(
+                                                (d.attempt?.test_answers ?? []).map((x: any) => [
+                                                  x.question_id,
+                                                  x,
+                                                ]),
+                                              );
                                               const rows = (d.questions ?? []).map((q: any) => ({
                                                 question_number: q.question_number,
                                                 answer: map.get(q.id)?.answer,
@@ -560,7 +672,9 @@ function ResultsBank() {
                                                 position: g.position,
                                                 finishedAt: r.finished_at,
                                               });
-                                              toast.success(`Excel MBTI diunduh — tipe ${type} (${filled}/60 jawaban)`);
+                                              toast.success(
+                                                `Excel MBTI diunduh — tipe ${type} (${filled}/60 jawaban)`,
+                                              );
                                             } catch (e: any) {
                                               toast.error(e?.message ?? "Gagal membuat file Excel");
                                             }
@@ -576,18 +690,26 @@ function ResultsBank() {
                                           onClick={async () => {
                                             try {
                                               const d: any = await detailFn({ data: { id: r.id } });
-                                              const map = new Map<string, any>((d.attempt?.test_answers ?? []).map((x: any) => [x.question_id, x]));
+                                              const map = new Map<string, any>(
+                                                (d.attempt?.test_answers ?? []).map((x: any) => [
+                                                  x.question_id,
+                                                  x,
+                                                ]),
+                                              );
                                               const rows = (d.questions ?? []).map((q: any) => ({
                                                 question_number: q.question_number,
                                                 answer: map.get(q.id)?.answer,
                                               }));
-                                              const { filled, strongest, summary } = await exportEqExcel(rows, {
-                                                candidateName: g.name,
-                                                candidateCode: g.code,
-                                                position: g.position,
-                                                finishedAt: r.finished_at,
-                                              });
-                                              toast.success(`Excel EQ diunduh — terkuat ${summary[strongest].label} (${filled}/50 jawaban)`);
+                                              const { filled, strongest, summary } =
+                                                await exportEqExcel(rows, {
+                                                  candidateName: g.name,
+                                                  candidateCode: g.code,
+                                                  position: g.position,
+                                                  finishedAt: r.finished_at,
+                                                });
+                                              toast.success(
+                                                `Excel EQ diunduh — terkuat ${summary[strongest].label} (${filled}/50 jawaban)`,
+                                              );
                                             } catch (e: any) {
                                               toast.error(e?.message ?? "Gagal membuat file Excel");
                                             }
@@ -603,18 +725,28 @@ function ResultsBank() {
                                           onClick={async () => {
                                             try {
                                               const d: any = await detailFn({ data: { id: r.id } });
-                                              const map = new Map<string, any>((d.attempt?.test_answers ?? []).map((x: any) => [x.question_id, x]));
+                                              const map = new Map<string, any>(
+                                                (d.attempt?.test_answers ?? []).map((x: any) => [
+                                                  x.question_id,
+                                                  x,
+                                                ]),
+                                              );
                                               const rows = (d.questions ?? []).map((q: any) => ({
                                                 question_number: q.question_number,
                                                 answer: map.get(q.id)?.answer,
                                               }));
-                                              const { total, iq, category } = await exportWptExcel(rows, {
-                                                candidateName: g.name,
-                                                candidateCode: g.code,
-                                                position: g.position,
-                                                finishedAt: r.finished_at,
-                                              });
-                                              toast.success(`Excel WPT diunduh — benar ${total}/50, IQ ${iq} (${category})`);
+                                              const { total, iq, category } = await exportWptExcel(
+                                                rows,
+                                                {
+                                                  candidateName: g.name,
+                                                  candidateCode: g.code,
+                                                  position: g.position,
+                                                  finishedAt: r.finished_at,
+                                                },
+                                              );
+                                              toast.success(
+                                                `Excel WPT diunduh — benar ${total}/50, IQ ${iq} (${category})`,
+                                              );
                                             } catch (e: any) {
                                               toast.error(e?.message ?? "Gagal membuat file Excel");
                                             }
@@ -630,11 +762,19 @@ function ResultsBank() {
                                           onClick={async () => {
                                             try {
                                               const d: any = await detailFn({ data: { id: r.id } });
-                                              const map = new Map<string, any>((d.attempt?.test_answers ?? []).map((x: any) => [x.question_id, x]));
+                                              const map = new Map<string, any>(
+                                                (d.attempt?.test_answers ?? []).map((x: any) => [
+                                                  x.question_id,
+                                                  x,
+                                                ]),
+                                              );
                                               const picks: Record<number, string> = {};
                                               for (const q of d.questions ?? []) {
-                                                const ans = String(map.get(q.id)?.answer ?? "").trim().toUpperCase();
-                                                if (ans === "A" || ans === "B") picks[q.question_number] = ans;
+                                                const ans = String(map.get(q.id)?.answer ?? "")
+                                                  .trim()
+                                                  .toUpperCase();
+                                                if (ans === "A" || ans === "B")
+                                                  picks[q.question_number] = ans;
                                               }
                                               const res = await exportPapiExcel(picks, {
                                                 candidateName: g.name,
@@ -642,7 +782,9 @@ function ResultsBank() {
                                                 position: g.position,
                                                 finishedAt: r.finished_at,
                                               });
-                                              toast.success(`Excel PAPI diunduh — ${res.answered}/${res.total} item, skala tertinggi ${res.highest.join(", ") || "-"}`);
+                                              toast.success(
+                                                `Excel PAPI diunduh — ${res.answered}/${res.total} item, skala tertinggi ${res.highest.join(", ") || "-"}`,
+                                              );
                                             } catch (e: any) {
                                               toast.error(e?.message ?? "Gagal membuat file Excel");
                                             }
@@ -658,7 +800,12 @@ function ResultsBank() {
                                           onClick={async () => {
                                             try {
                                               const d: any = await detailFn({ data: { id: r.id } });
-                                              const map = new Map<string, any>((d.attempt?.test_answers ?? []).map((x: any) => [x.question_id, x]));
+                                              const map = new Map<string, any>(
+                                                (d.attempt?.test_answers ?? []).map((x: any) => [
+                                                  x.question_id,
+                                                  x,
+                                                ]),
+                                              );
                                               const rows = (d.questions ?? []).map((q: any) => ({
                                                 question_number: q.question_number,
                                                 answer: map.get(q.id)?.answer,
@@ -669,7 +816,9 @@ function ResultsBank() {
                                                 position: g.position,
                                                 finishedAt: r.finished_at,
                                               });
-                                              toast.success(`Excel DISC diunduh — ${res?.filled ?? 0}/${res?.total ?? 24} kelompok terisi`);
+                                              toast.success(
+                                                `Excel DISC diunduh — ${res?.filled ?? 0}/${res?.total ?? 24} kelompok terisi`,
+                                              );
                                             } catch (e: any) {
                                               toast.error(e?.message ?? "Gagal membuat file Excel");
                                             }
@@ -679,7 +828,6 @@ function ResultsBank() {
                                         </Button>
                                       )}
                                     </div>
-
                                   </td>
                                 </tr>
                               </Fragment>
@@ -701,8 +849,9 @@ function ResultsBank() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus hasil psikotest kandidat?</AlertDialogTitle>
             <AlertDialogDescription>
-              Seluruh {toDelete?.attempts.length ?? 0} hasil test milik {toDelete?.name ?? "kandidat ini"} beserta lembar
-              jawabannya akan dihapus permanen. Biodata dan kode akses tetap tersimpan.
+              Seluruh {toDelete?.attempts.length ?? 0} hasil test milik{" "}
+              {toDelete?.name ?? "kandidat ini"} beserta lembar jawabannya akan dihapus permanen.
+              Biodata dan kode akses tetap tersimpan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

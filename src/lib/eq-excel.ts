@@ -101,7 +101,12 @@ export async function exportEqExcel(answers: EqExcelAnswer[], meta: EqExcelMeta 
   ws.getCell("F6").value = `Jabatan : ${meta.position ?? "-"}`;
 
   // Biodata kandidat terisi otomatis pada lembar template (tanpa sheet tambahan)
-  applyInlineBiodata(ws, meta, { startRow: 38, labelCol: "B", valueCol: "D", title: "BIODATA KANDIDAT (PT DOVER CHEMICAL)" });
+  applyInlineBiodata(ws, meta, {
+    startRow: 38,
+    labelCol: "B",
+    valueCol: "D",
+    title: "BIODATA KANDIDAT (PT DOVER CHEMICAL)",
+  });
 
   (wb as any).calcProperties = { ...(wb as any).calcProperties, fullCalcOnLoad: true };
 

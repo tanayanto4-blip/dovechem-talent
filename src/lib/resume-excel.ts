@@ -55,8 +55,18 @@ export interface ResumeInput {
 }
 
 const MONTHS = [
-  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
 ];
 
 function fmtDate(v?: string | null) {
@@ -78,7 +88,9 @@ function ageOf(c: ResumeCandidate): CellValue {
 }
 
 function educationOf(c: ResumeCandidate) {
-  const parts = [c.education, c.major, c.school_name].map((v) => (v ?? "").toString().trim()).filter(Boolean);
+  const parts = [c.education, c.major, c.school_name]
+    .map((v) => (v ?? "").toString().trim())
+    .filter(Boolean);
   return parts.length ? parts.join(" - ") : "-";
 }
 
@@ -104,14 +116,15 @@ export async function exportResumeExcel(input: ResumeInput) {
   }
 
   const ish = input.ishihara;
-  const colour: CellValue = ish && (ish.correct != null || ish.wrong != null)
-    ? `B : ${ish.correct ?? 0}\nS : ${ish.wrong ?? 0}`
-    : "-";
+  const colour: CellValue =
+    ish && (ish.correct != null || ish.wrong != null)
+      ? `B : ${ish.correct ?? 0}\nS : ${ish.wrong ?? 0}`
+      : "-";
 
   const pauli = input.pauli;
   const pauliTotal: CellValue =
     pauli && (pauli.attempted != null || pauli.correct != null)
-      ? (Number(pauli.attempted ?? 0) + Number(pauli.correct ?? 0))
+      ? Number(pauli.attempted ?? 0) + Number(pauli.correct ?? 0)
       : "-";
 
   const res = await fetch(templateAsset.url);

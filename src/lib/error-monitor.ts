@@ -115,7 +115,6 @@ export function reportIncident(
 
 let installed = false;
 
-
 /** Install global browser error listeners once (client only). */
 export function installErrorMonitor() {
   if (installed || typeof window === "undefined") return;

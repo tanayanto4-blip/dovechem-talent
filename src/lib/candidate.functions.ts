@@ -2,8 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { papiScore } from "@/lib/papi-key";
 import { DEVICE_CONFLICT_MESSAGE } from "@/lib/candidate-session";
-import { audiencesFor, candidateLevelOf, jobLevelOfPosition, JOB_POSITIONS } from "@/lib/candidate-type";
-
+import {
+  audiencesFor,
+  candidateLevelOf,
+  jobLevelOfPosition,
+  JOB_POSITIONS,
+} from "@/lib/candidate-type";
 
 const CodeInput = z.object({
   code: z.string().trim().min(3).max(64),
@@ -13,6 +17,44 @@ const CodeInput = z.object({
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
+}
+
+/** Log perubahan posisi jabatan/tingkat kandidat ke audit trail. */
+async function logCandidateLevelChange(
+  sb: any,
+  candidateId: string,
+  from: { job_position?: string | null; job_level?: string | null },
+  to: { job_position?: string | null; job_level?: string | null },
+) {
+  try {
+    const { data: meta } = await sb
+      .from("candidates")
+      .select("full_name, candidate_codes(code)", { count: "exact" })
+      .eq("id", candidateId)
+      .maybeSingle();
+    const label = meta?.full_name
+      ? `${meta.full_name} (${meta.candidate_codes?.code ?? "-"})`
+      : `Kandidat ${candidateId}`;
+    await sb.from("audit_logs").insert({
+      actor_id: null,
+      actor_type: "candidate",
+      actor_label: label,
+      action: "candidate.level_change",
+      target_type: "candidate",
+      target_id: candidateId,
+      metadata: {
+        from_job_position: from.job_position ?? null,
+        from_job_level: from.job_level ?? null,
+        to_job_position: to.job_position ?? null,
+        to_job_level: to.job_level ?? null,
+      },
+    });
+  } catch (e) {
+    console.error("audit_log_insert_failed", {
+      action: "candidate.level_change",
+      error: (e as Error).message,
+    });
+  }
 }
 
 /**
@@ -39,7 +81,6 @@ async function resolveActiveCode(sb: any, code: string, device?: string) {
   return row as { id: string; active: boolean; expires_at: string | null; candidate_type: string };
 }
 
-
 /**
  * Kandidat tidak boleh melihat identitas asli test (DISC, MBTI, WPT, dst.) —
  * baik di layar maupun di payload jaringan. Semua endpoint kandidat memakai
@@ -58,7 +99,6 @@ async function activeTestOrder(sb: any, type: string, level?: string | null): Pr
     .order("code");
   return ((data ?? []) as { id: string }[]).map((t) => t.id);
 }
-
 
 function maskTest<T extends { id: string }>(test: T, order: string[]): T {
   const idx = order.indexOf(test.id);
@@ -83,7 +123,6 @@ async function assertTestForType(sb: any, testId: string, type: string, level?: 
     throw new Error("Test ini tidak diperuntukkan bagi jalur kandidat Anda.");
   }
 }
-
 
 /**
  * Staff can close a specific test for a candidate (or re-open it for a retake).
@@ -156,7 +195,9 @@ export const candidateLogin = createServerFn({ method: "POST" })
     await resolveActiveCode(sb, data.code);
     const { data: codeRow, error } = await sb
       .from("candidate_codes")
-      .select("id, code, candidate_name, candidate_email, position_applied, active, expires_at, candidate_type")
+      .select(
+        "id, code, candidate_name, candidate_email, position_applied, active, expires_at, candidate_type",
+      )
       .eq("code", data.code.toUpperCase())
       .maybeSingle();
     if (error || !codeRow) throw new Error("Kode akses tidak ditemukan.");
@@ -169,7 +210,7 @@ export const candidateLogin = createServerFn({ method: "POST" })
         active_device_token: device,
         active_device_at: new Date().toISOString(),
         last_seen_at: new Date().toISOString(),
-        ...(codeRow as any).used_at ? {} : { used_at: new Date().toISOString() },
+        ...((codeRow as any).used_at ? {} : { used_at: new Date().toISOString() }),
       })
       .eq("id", codeRow.id);
 
@@ -181,8 +222,6 @@ export const candidateLogin = createServerFn({ method: "POST" })
       job_level: candidateLevelOf(cand),
     };
   });
-
-
 
 export const candidateGetProfile = createServerFn({ method: "POST" })
   .inputValidator((d) => CodeInput.parse(d))
@@ -199,7 +238,10 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
         .in("audience", audiencesFor(codeRow.candidate_type, candidateLevelOf(cand)))
         .order("code"),
       // Scores/results are staff-only: expose progress fields only.
-      sb.from("test_attempts").select("id, test_id, status, started_at, finished_at").eq("candidate_id", cand.id),
+      sb
+        .from("test_attempts")
+        .select("id, test_id, status, started_at, finished_at")
+        .eq("candidate_id", cand.id),
       sb
         .from("candidate_test_access")
         .select("test_id, is_open, reason, retake_count, last_reopened_at")
@@ -210,11 +252,15 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
       candidate_type: codeRow.candidate_type ?? "karyawan",
       job_level: candidateLevelOf(cand),
       files: filesQ.data ?? [],
-      tests: ((testsQ.data ?? []) as any[]).map((t, _i, all) => maskTest(t, all.map((x: any) => x.id))),
+      tests: ((testsQ.data ?? []) as any[]).map((t, _i, all) =>
+        maskTest(
+          t,
+          all.map((x: any) => x.id),
+        ),
+      ),
       attempts: attemptsQ.data ?? [],
       access: accessQ.data ?? [],
     };
-
   });
 
 /**
@@ -231,7 +277,8 @@ export const candidateSessionStatus = createServerFn({ method: "POST" })
       .eq("code", data.code.toUpperCase())
       .maybeSingle();
     if (!row) return { status: "invalid" as const, message: "Kode akses tidak ditemukan." };
-    if (!row.active) return { status: "invalid" as const, message: "Kode akses sudah dinonaktifkan." };
+    if (!row.active)
+      return { status: "invalid" as const, message: "Kode akses sudah dinonaktifkan." };
     if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) {
       return { status: "invalid" as const, message: "Kode akses sudah melewati masa berlaku." };
     }
@@ -248,11 +295,16 @@ export const candidateSessionStatus = createServerFn({ method: "POST" })
     return { status: "ok" as const, message: "" };
   });
 
-
-const WORK_EXPERIENCE_VALUES = new Set(["Belum bekerja", ...Array.from({ length: 21 }, (_, i) => String(i))]);
-const WorkExperienceSchema = z.string().trim().refine((v) => WORK_EXPERIENCE_VALUES.has(v), {
-  message: "Pengalaman kerja harus salah satu pilihan yang tersedia",
-});
+const WORK_EXPERIENCE_VALUES = new Set([
+  "Belum bekerja",
+  ...Array.from({ length: 21 }, (_, i) => String(i)),
+]);
+const WorkExperienceSchema = z
+  .string()
+  .trim()
+  .refine((v) => WORK_EXPERIENCE_VALUES.has(v), {
+    message: "Pengalaman kerja harus salah satu pilihan yang tersedia",
+  });
 
 const ProfileInput = z.object({
   code: z.string().trim().min(3),
@@ -295,12 +347,26 @@ export const candidateSaveProfile = createServerFn({ method: "POST" })
         );
       }
     }
-    await ensureCandidate(sb, codeRow.id);
-    const { error } = await sb.from("candidates").update({ ...rest, ...(level ? { job_level: level } : {}), data_completed: true }).eq("code_id", codeRow.id);
+    const candidate = await ensureCandidate(sb, codeRow.id);
+    const { error } = await sb
+      .from("candidates")
+      .update({ ...rest, ...(level ? { job_level: level } : {}), data_completed: true })
+      .eq("code_id", codeRow.id);
     if (error) throw new Error(error.message);
+    if (codeRow.candidate_type !== "magang" && level) {
+      const levelChanged =
+        candidate.job_position !== rest.job_position || candidate.job_level !== level;
+      if (levelChanged) {
+        await logCandidateLevelChange(
+          sb,
+          candidate.id,
+          { job_position: candidate.job_position, job_level: candidate.job_level },
+          { job_position: rest.job_position, job_level: level },
+        );
+      }
+    }
     return { ok: true };
   });
-
 
 const ProfileAutosaveInput = z.object({
   code: z.string().trim().min(3),
@@ -324,7 +390,7 @@ export const candidateAutosaveProfile = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sb = await admin();
     const codeRow = await resolveActiveCode(sb, data.code, (data as any).device);
-    await ensureCandidate(sb, codeRow.id);
+    const candidate = await ensureCandidate(sb, codeRow.id);
     const { code: _c, device: _d, ...raw } = data;
     const update: any = {};
     if (raw.full_name?.trim()) update.full_name = raw.full_name.trim();
@@ -338,13 +404,24 @@ export const candidateAutosaveProfile = createServerFn({ method: "POST" })
     if (raw.phone?.trim()) update.phone = raw.phone.trim();
     if (raw.email?.trim()) update.email = raw.email.trim();
     if (raw.position_applied?.trim()) update.position_applied = raw.position_applied.trim();
+    let levelChanged = false;
     if (raw.job_position?.trim() && jobLevelOfPosition(raw.job_position)) {
       update.job_position = raw.job_position.trim();
       update.job_level = jobLevelOfPosition(raw.job_position);
+      levelChanged =
+        candidate.job_position !== update.job_position || candidate.job_level !== update.job_level;
     }
     if (Object.keys(update).length === 0) return { ok: true, saved: [] };
     const { error } = await sb.from("candidates").update(update).eq("code_id", codeRow.id);
     if (error) throw new Error(error.message);
+    if (levelChanged) {
+      await logCandidateLevelChange(
+        sb,
+        candidate.id,
+        { job_position: candidate.job_position, job_level: candidate.job_level },
+        { job_position: update.job_position, job_level: update.job_level },
+      );
+    }
     return { ok: true, saved: Object.keys(update) };
   });
 
@@ -365,7 +442,10 @@ const UploadInput = z.object({
   file_name: z.string().min(1).max(200),
   mime_type: z.string().max(120),
   file_size: z.number().int().nonnegative().max(MAX_UPLOAD_BYTES),
-  base64: z.string().min(1).max(20 * 1024 * 1024),
+  base64: z
+    .string()
+    .min(1)
+    .max(20 * 1024 * 1024),
 });
 
 export const candidateUploadFile = createServerFn({ method: "POST" })
@@ -408,7 +488,11 @@ export const candidateUploadFile = createServerFn({ method: "POST" })
     const nextVersion = ((last?.version as number | undefined) ?? 0) + 1;
 
     // Update current pointer
-    await sb.from("candidate_files").delete().eq("candidate_id", cand.id).eq("file_type", data.file_type);
+    await sb
+      .from("candidate_files")
+      .delete()
+      .eq("candidate_id", cand.id)
+      .eq("file_type", data.file_type);
     const { error } = await sb.from("candidate_files").insert({
       candidate_id: cand.id,
       file_type: data.file_type,
@@ -434,7 +518,11 @@ export const candidateUploadFile = createServerFn({ method: "POST" })
     return { ok: true, path, version: nextVersion };
   });
 
-const StartTestInput = z.object({ code: z.string().min(3), device: z.string().trim().max(128).optional(), test_id: z.string().uuid() });
+const StartTestInput = z.object({
+  code: z.string().min(3),
+  device: z.string().trim().max(128).optional(),
+  test_id: z.string().uuid(),
+});
 export const candidateStartTest = createServerFn({ method: "POST" })
   .inputValidator((d) => StartTestInput.parse(d))
   .handler(async ({ data }) => {
@@ -443,26 +531,55 @@ export const candidateStartTest = createServerFn({ method: "POST" })
     const cand = await ensureCandidate(sb, codeRow.id);
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     if (!cand.data_completed) throw new Error("Lengkapi data diri terlebih dahulu.");
-    await assertTestForType(sb, data.test_id, codeRow.candidate_type, candidateLevelOf(cand));
+
+    let { data: attempt } = await sb
+      .from("test_attempts")
+      .select("*")
+      .eq("candidate_id", cand.id)
+      .eq("test_id", data.test_id)
+      .maybeSingle();
+    // Izinkan melanjutkan attempt yang sudah ada meskipun tingkat jabatan
+    // berubah setelah test dimulai, agar tidak ada error di histori test.
+    if (!attempt) {
+      await assertTestForType(sb, data.test_id, codeRow.candidate_type, candidateLevelOf(cand));
+    }
     await assertTestOpen(sb, cand.id, data.test_id);
 
-    let { data: attempt } = await sb.from("test_attempts").select("*").eq("candidate_id", cand.id).eq("test_id", data.test_id).maybeSingle();
     if (!attempt) {
-      const ins = await sb.from("test_attempts").insert({ candidate_id: cand.id, test_id: data.test_id }).select().single();
+      const ins = await sb
+        .from("test_attempts")
+        .insert({ candidate_id: cand.id, test_id: data.test_id })
+        .select()
+        .single();
       if (ins.error) throw new Error(ins.error.message);
       attempt = ins.data;
     }
     const [test, questions, answers] = await Promise.all([
       sb.from("tests").select("*").eq("id", data.test_id).single(),
-      sb.from("test_questions").select("id, question_number, question_text, options, dimension").eq("test_id", data.test_id).eq("active", true).order("question_number"),
-      sb.from("test_answers").select("question_id, answer").eq("attempt_id", (attempt as any).id),
+      sb
+        .from("test_questions")
+        .select("id, question_number, question_text, options, dimension")
+        .eq("test_id", data.test_id)
+        .eq("active", true)
+        .order("question_number"),
+      sb
+        .from("test_answers")
+        .select("question_id, answer")
+        .eq("attempt_id", (attempt as any).id),
     ]);
-    const maskedTest = test.data ? maskTest(test.data as any, await activeTestOrder(sb, codeRow.candidate_type, candidateLevelOf(cand))) : test.data;
+    const maskedTest = test.data
+      ? maskTest(
+          test.data as any,
+          await activeTestOrder(sb, codeRow.candidate_type, candidateLevelOf(cand)),
+        )
+      : test.data;
     // Auto-lock: an in-progress attempt whose allotted duration has elapsed can
     // no longer be worked on. The client finalises it immediately (late submits
     // are scored from answers autosaved before the deadline).
     const durMin = Number((test.data as any)?.duration_minutes) || 0;
-    const startedMs = (attempt as any)?.started_at ? new Date((attempt as any).started_at).getTime() : NaN;
+    const startedMs = (attempt as any)?.started_at
+      ? new Date((attempt as any).started_at).getTime()
+      : NaN;
     const expired =
       (attempt as any)?.status !== "finished" &&
       durMin > 0 &&
@@ -479,7 +596,6 @@ export const candidateStartTest = createServerFn({ method: "POST" })
       expired,
       server_now: new Date().toISOString(),
     };
-
   });
 
 const SaveAnswerInput = z.object({
@@ -507,7 +623,9 @@ export const candidateSaveAnswer = createServerFn({ method: "POST" })
     if ((attempt as any).status === "finished") throw new Error("Attempt sudah selesai.");
     // Server-side time limit: reject autosaves after the allotted duration.
     const dur = Number((attempt as any).tests?.duration_minutes) || 0;
-    const start = (attempt as any).started_at ? new Date((attempt as any).started_at).getTime() : NaN;
+    const start = (attempt as any).started_at
+      ? new Date((attempt as any).started_at).getTime()
+      : NaN;
     if (dur > 0 && Number.isFinite(start) && Date.now() > start + dur * 60_000 + 60_000) {
       throw new Error("Waktu pengerjaan test sudah habis.");
     }
@@ -523,7 +641,11 @@ export const candidateSaveAnswer = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-const AttemptInput = z.object({ code: z.string().min(3), device: z.string().trim().max(128).optional(), attempt_id: z.string().uuid() });
+const AttemptInput = z.object({
+  code: z.string().min(3),
+  device: z.string().trim().max(128).optional(),
+  attempt_id: z.string().uuid(),
+});
 /**
  * Candidate-facing attempt view. Scoring output (score / result payload) is
  * intentionally NEVER returned here: psikotest results are visible to HR/Admin
@@ -538,18 +660,20 @@ export const candidateGetAttempt = createServerFn({ method: "POST" })
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: attempt, error } = await sb
       .from("test_attempts")
-      .select("id, candidate_id, test_id, status, started_at, finished_at, tests(id, code, name, test_type, duration_minutes)")
+      .select(
+        "id, candidate_id, test_id, status, started_at, finished_at, tests(id, code, name, test_type, duration_minutes)",
+      )
       .eq("id", data.attempt_id)
       .eq("candidate_id", cand.id)
       .single();
     if (error) throw new Error(error.message);
     const order = await activeTestOrder(sb, codeRow.candidate_type, candidateLevelOf(cand));
-    const masked = attempt && (attempt as any).tests
-      ? { ...attempt, tests: maskTest((attempt as any).tests, order) }
-      : attempt;
+    const masked =
+      attempt && (attempt as any).tests
+        ? { ...attempt, tests: maskTest((attempt as any).tests, order) }
+        : attempt;
     return { attempt: masked };
   });
-
 
 const SubmitTestInput = z.object({
   code: z.string().min(3),
@@ -564,7 +688,12 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
     const codeRow = await resolveActiveCode(sb, data.code, (data as any).device);
     const cand = await ensureCandidate(sb, codeRow.id);
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
-    const { data: attempt } = await sb.from("test_attempts").select("*, tests(*)").eq("id", data.attempt_id).eq("candidate_id", cand.id).single();
+    const { data: attempt } = await sb
+      .from("test_attempts")
+      .select("*, tests(*)")
+      .eq("id", data.attempt_id)
+      .eq("candidate_id", cand.id)
+      .single();
     if (!attempt) throw new Error("Attempt tidak valid.");
     await assertTestOpen(sb, cand.id, (attempt as any).test_id);
     // Idempotent: repeat submits are a no-op. Scoring output is never returned
@@ -579,7 +708,9 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
     // discarded and scoring uses whatever was autosaved before the deadline.
     const testRow = (attempt as any).tests;
     const durationMinutes = Number(testRow?.duration_minutes) || 0;
-    const startedAt = (attempt as any).started_at ? new Date((attempt as any).started_at).getTime() : NaN;
+    const startedAt = (attempt as any).started_at
+      ? new Date((attempt as any).started_at).getTime()
+      : NaN;
     const GRACE_MS = 60_000; // tolerate clock skew / in-flight submit
     const isLate =
       durationMinutes > 0 &&
@@ -595,7 +726,10 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
         .select("question_id, answer")
         .eq("attempt_id", data.attempt_id);
       if (saved.error) throw new Error(saved.error.message);
-      answers = (saved.data ?? []).map((a: any) => ({ question_id: a.question_id, answer: a.answer ?? "" }));
+      answers = (saved.data ?? []).map((a: any) => ({
+        question_id: a.question_id,
+        answer: a.answer ?? "",
+      }));
     } else {
       // Persist answers idempotently. Upsert on (attempt_id, question_id) so a
       // retried submit for the same attempt cannot create duplicate rows, and
@@ -608,12 +742,10 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
           .eq("attempt_id", data.attempt_id)
           .not("question_id", "in", `(${questionIds.map((id) => `"${id}"`).join(",")})`);
         if (del.error) throw new Error(del.error.message);
-        const { error } = await sb
-          .from("test_answers")
-          .upsert(
-            answers.map((a) => ({ attempt_id: data.attempt_id, ...a })),
-            { onConflict: "attempt_id,question_id" },
-          );
+        const { error } = await sb.from("test_answers").upsert(
+          answers.map((a) => ({ attempt_id: data.attempt_id, ...a })),
+          { onConflict: "attempt_id,question_id" },
+        );
         if (error) throw new Error(error.message);
       } else {
         const del = await sb.from("test_answers").delete().eq("attempt_id", data.attempt_id);
@@ -642,12 +774,16 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
           const v = JSON.parse(a.answer);
           if (v && most[v.most] !== undefined) most[v.most]++;
           if (v && least[v.least] !== undefined) least[v.least]++;
-        } catch { /* legacy single-letter answer */
+        } catch {
+          /* legacy single-letter answer */
           if (most[a.answer] !== undefined) most[a.answer]++;
         }
       }
       const change: Record<string, number> = {
-        D: most.D - least.D, I: most.I - least.I, S: most.S - least.S, C: most.C - least.C,
+        D: most.D - least.D,
+        I: most.I - least.I,
+        S: most.S - least.S,
+        C: most.C - least.C,
       };
       const dominant = (Object.entries(most).sort((a, b) => b[1] - a[1])[0] ?? ["D", 0])[0];
       const totalGroups = (qs.data ?? []).length || 24;
@@ -680,14 +816,17 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
         JP: { J: counts.J, P: counts.P },
       };
       // Score = average clarity of the dominant letter in each pair (0-100).
-      const clarity = (a: number, b: number) => (a + b === 0 ? 0 : Math.round((Math.max(a, b) / (a + b)) * 100));
+      const clarity = (a: number, b: number) =>
+        a + b === 0 ? 0 : Math.round((Math.max(a, b) / (a + b)) * 100);
       const clarityByPair = {
         EI: clarity(counts.E, counts.I),
         SN: clarity(counts.S, counts.N),
         TF: clarity(counts.T, counts.F),
         JP: clarity(counts.J, counts.P),
       };
-      score = Math.round((clarityByPair.EI + clarityByPair.SN + clarityByPair.TF + clarityByPair.JP) / 4);
+      score = Math.round(
+        (clarityByPair.EI + clarityByPair.SN + clarityByPair.TF + clarityByPair.JP) / 4,
+      );
       result = { type, counts, pairs, clarity: clarityByPair };
     } else if (test.test_type === "eq") {
       // Likert 1..5 per item; group by dimension (SA/ME/MO/EM/SS).
@@ -706,15 +845,22 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       }
       // Per-dimension score normalized to 0-100 (max = count * 5)
       const perDim: Record<string, { raw: number; max: number; percent: number }> = {} as any;
-      let totalPct = 0; let dimsWithData = 0;
+      let totalPct = 0;
+      let dimsWithData = 0;
       for (const d of dims) {
         const max = counts[d] * 5;
         const pct = max > 0 ? Math.round((sums[d] / max) * 100) : 0;
         perDim[d] = { raw: sums[d], max, percent: pct };
-        if (max > 0) { totalPct += pct; dimsWithData++; }
+        if (max > 0) {
+          totalPct += pct;
+          dimsWithData++;
+        }
       }
       score = dimsWithData > 0 ? Math.round(totalPct / dimsWithData) : 0;
-      const dominant = (Object.entries(perDim).sort((a, b) => b[1].percent - a[1].percent)[0] ?? ["SA", { percent: 0 }])[0];
+      const dominant = (Object.entries(perDim).sort((a, b) => b[1].percent - a[1].percent)[0] ?? [
+        "SA",
+        { percent: 0 },
+      ])[0];
       result = { perDim, dominant, sums, counts };
     } else if (test.test_type === "wpt") {
       // WPT: jawaban bebas — tidak ada auto-scoring; menunggu review manual HR.
@@ -747,7 +893,6 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
         highest: papi.highest,
         picks,
       };
-
     } else if (test.test_type === "pauli") {
       // Pauli/Koran: kunci dihitung dari deret angka (jumlah dua angka bersebelahan, ambil digit terakhir).
       const byId = new Map((qs.data ?? []).map((q: any) => [q.id, q]));
@@ -778,11 +923,15 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       result = { attempted, correct, wrong: attempted - correct, accuracy, perColumn };
     } else if (test.test_type === "ishihara") {
       // Tes buta warna: cukup hitung berapa benar dan berapa salah.
-      const map = new Map(answers.map((a) => [a.question_id, (a.answer ?? "").trim().toLowerCase()]));
+      const map = new Map(
+        answers.map((a) => [a.question_id, (a.answer ?? "").trim().toLowerCase()]),
+      );
       const list = qs.data ?? [];
       let correct = 0;
       for (const q of list) {
-        const key = String(q.correct_answer ?? "").trim().toLowerCase();
+        const key = String(q.correct_answer ?? "")
+          .trim()
+          .toLowerCase();
         const ans = map.get(q.id) ?? "";
         if (key && ans && ans === key) correct++;
       }
@@ -792,12 +941,15 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
     }
 
     const finishedAt = new Date().toISOString();
-    const upd = await sb.from("test_attempts").update({
-      status: "finished",
-      finished_at: finishedAt,
-      score,
-      result,
-    }).eq("id", data.attempt_id);
+    const upd = await sb
+      .from("test_attempts")
+      .update({
+        status: "finished",
+        finished_at: finishedAt,
+        score,
+        result,
+      })
+      .eq("id", data.attempt_id);
     if (upd.error) throw new Error(upd.error.message);
 
     // Audit: candidate submission (no auth user; use candidate context).
@@ -809,7 +961,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
         .maybeSingle();
       const label = (candMeta as any)?.candidate_codes?.code
         ? `${(candMeta as any)?.full_name ?? "Kandidat"} (${(candMeta as any)?.candidate_codes?.code})`
-        : (candMeta as any)?.full_name ?? "Kandidat";
+        : ((candMeta as any)?.full_name ?? "Kandidat");
       await sb.from("audit_logs").insert({
         actor_id: null,
         actor_type: "candidate",
@@ -827,13 +979,15 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
         },
       });
     } catch (e) {
-      console.error("audit_log_insert_failed", { action: "attempt.submit", error: (e as Error).message });
+      console.error("audit_log_insert_failed", {
+        action: "attempt.submit",
+        error: (e as Error).message,
+      });
     }
 
     // Score/result stay server-side: only HR/Admin may view psikotest results.
     return { ok: true };
   });
-
 
 /**
  * Intro screen before a test starts: returns test metadata plus the spoken
@@ -841,7 +995,15 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
  * only begins once the candidate presses "Mulai".
  */
 export const candidateGetTestIntro = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ code: z.string().trim().min(3).max(64), device: z.string().trim().max(128).optional(), test_id: z.string().uuid() }).parse(d))
+  .inputValidator((d) =>
+    z
+      .object({
+        code: z.string().trim().min(3).max(64),
+        device: z.string().trim().max(128).optional(),
+        test_id: z.string().uuid(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data }) => {
     const sb = await admin();
     const codeRow = await resolveActiveCode(sb, data.code, (data as any).device);
@@ -849,7 +1011,9 @@ export const candidateGetTestIntro = createServerFn({ method: "POST" })
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     const { data: test, error } = await sb
       .from("tests")
-      .select("id, code, name, description, test_type, duration_minutes, voice_instruction, voice_enabled, voice_lang, voice_rate, voice_autoplay, voice_mode, voice_audio_path, voice_audio_name, voice_audio_mime")
+      .select(
+        "id, code, name, description, test_type, duration_minutes, voice_instruction, voice_enabled, voice_lang, voice_rate, voice_autoplay, voice_mode, voice_audio_path, voice_audio_name, voice_audio_mime",
+      )
       .eq("id", data.test_id)
       .single();
     if (error || !test) throw new Error("Test tidak ditemukan.");
@@ -870,7 +1034,13 @@ export const candidateGetTestIntro = createServerFn({ method: "POST" })
     await assertTestForType(sb, data.test_id, codeRow.candidate_type, candidateLevelOf(cand));
     await assertTestOpen(sb, cand.id, data.test_id);
     return {
-      test: { ...maskTest(test as any, await activeTestOrder(sb, codeRow.candidate_type, candidateLevelOf(cand))), voice_audio_url },
+      test: {
+        ...maskTest(
+          test as any,
+          await activeTestOrder(sb, codeRow.candidate_type, candidateLevelOf(cand)),
+        ),
+        voice_audio_url,
+      },
       resumed: !!attempt && attempt.status !== "finished",
       data_completed: cand.data_completed,
     };

@@ -112,7 +112,9 @@ export function exportPauliPdf(res: PauliPdfData, meta: PauliPdfMeta = {}) {
     doc.setFontSize(7.5);
     let cx = x;
     cols.forEach((c, i) => {
-      doc.text(c, i === 0 ? cx + 4 : cx + cw[i] - 4, yy + 9.5, { align: i === 0 ? "left" : "right" });
+      doc.text(c, i === 0 ? cx + 4 : cx + cw[i] - 4, yy + 9.5, {
+        align: i === 0 ? "left" : "right",
+      });
       cx += cw[i];
     });
     doc.setTextColor(20);
@@ -136,10 +138,18 @@ export function exportPauliPdf(res: PauliPdfData, meta: PauliPdfMeta = {}) {
       doc.rect(x, yy, tableW, rowH);
       doc.setFontSize(7.5);
       const acc = c.filled > 0 ? Math.round((c.correct / c.filled) * 100) : 0;
-      const vals = [`Kolom ${c.column}`, `${c.filled}/${c.total}`, String(c.correct), String(c.wrong), `${acc}%`];
+      const vals = [
+        `Kolom ${c.column}`,
+        `${c.filled}/${c.total}`,
+        String(c.correct),
+        String(c.wrong),
+        `${acc}%`,
+      ];
       let cx = x;
       vals.forEach((v, i) => {
-        doc.text(v, i === 0 ? cx + 4 : cx + cw[i] - 4, yy + 9.5, { align: i === 0 ? "left" : "right" });
+        doc.text(v, i === 0 ? cx + 4 : cx + cw[i] - 4, yy + 9.5, {
+          align: i === 0 ? "left" : "right",
+        });
         cx += cw[i];
       });
       yy += rowH;
@@ -180,7 +190,9 @@ export function exportPauliPdf(res: PauliPdfData, meta: PauliPdfMeta = {}) {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(7);
       doc.setTextColor(21, 62, 117);
-      doc.text(`K${c.column}  ${c.correct}B/${c.wrong}S`, x + colW / 2, sy + 8, { align: "center" });
+      doc.text(`K${c.column}  ${c.correct}B/${c.wrong}S`, x + colW / 2, sy + 8, {
+        align: "center",
+      });
       doc.setTextColor(20);
       doc.setFont("helvetica", "normal");
 
@@ -198,7 +210,11 @@ export function exportPauliPdf(res: PauliPdfData, meta: PauliPdfMeta = {}) {
         doc.text(String(c.digits[cell.index] ?? ""), x + colW / 6, cy + 6.8, { align: "center" });
         doc.text(String(cell.key), x + (colW * 5) / 6, cy + 6.8, { align: "center" });
         doc.setFontSize(7.2);
-        doc.setTextColor(cell.value === null ? 150 : cell.correct ? 22 : 190, cell.value === null ? 150 : cell.correct ? 120 : 40, cell.value === null ? 150 : cell.correct ? 60 : 40);
+        doc.setTextColor(
+          cell.value === null ? 150 : cell.correct ? 22 : 190,
+          cell.value === null ? 150 : cell.correct ? 120 : 40,
+          cell.value === null ? 150 : cell.correct ? 60 : 40,
+        );
         doc.text(cell.value ?? "–", x + colW / 2, cy + 6.8, { align: "center" });
         doc.setTextColor(20);
         cy += cellH;
@@ -223,9 +239,14 @@ export function exportPauliPdf(res: PauliPdfData, meta: PauliPdfMeta = {}) {
     doc.setPage(p);
     doc.setFontSize(7.5);
     doc.setTextColor(140);
-    doc.text(`PT Dover Chemical · Hasil Pauli · Halaman ${p}/${pages}`, pw / 2, ph - 18, { align: "center" });
+    doc.text(`PT Dover Chemical · Hasil Pauli · Halaman ${p}/${pages}`, pw / 2, ph - 18, {
+      align: "center",
+    });
   }
 
-  const safe = (meta.candidateName || "kandidat").replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "_");
+  const safe = (meta.candidateName || "kandidat")
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "_");
   doc.save(`Pauli_${safe}.pdf`);
 }

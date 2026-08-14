@@ -1,7 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getCandidateDetail, getFileSignedUrl, listCandidateFileVersions } from "@/lib/admin.functions";
+import {
+  getCandidateDetail,
+  getFileSignedUrl,
+  listCandidateFileVersions,
+} from "@/lib/admin.functions";
 import { computeChecklist } from "@/lib/document-checklist";
 import { jobLevelLabel } from "@/lib/candidate-type";
 import { TestAccessControl } from "@/components/test-access-control";
@@ -10,23 +14,38 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle2, Download, History, XCircle } from "lucide-react";
 
-export const Route = createFileRoute("/admin/candidates/$id")({ head: () => ({ meta: [
-    { title: "Detail Kandidat — Admin Dover Chemical" },
-    { name: "description", content: "Lihat biodata lengkap, riwayat pengerjaan, dan hasil psikotest satu kandidat PT Dover Chemical." },
-    { property: "og:title", content: "Detail Kandidat — Admin Dover Chemical" },
-    { property: "og:description", content: "Lihat biodata lengkap, riwayat pengerjaan, dan hasil psikotest satu kandidat PT Dover Chemical." },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary" },
-    { name: "robots", content: "noindex" },
-  ] }),
-  component: CandidateDetail });
+export const Route = createFileRoute("/admin/candidates/$id")({
+  head: () => ({
+    meta: [
+      { title: "Detail Kandidat — Admin Dover Chemical" },
+      {
+        name: "description",
+        content:
+          "Lihat biodata lengkap, riwayat pengerjaan, dan hasil psikotest satu kandidat PT Dover Chemical.",
+      },
+      { property: "og:title", content: "Detail Kandidat — Admin Dover Chemical" },
+      {
+        property: "og:description",
+        content:
+          "Lihat biodata lengkap, riwayat pengerjaan, dan hasil psikotest satu kandidat PT Dover Chemical.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: CandidateDetail,
+});
 
 function CandidateDetail() {
   const { id } = Route.useParams();
   const detail = useServerFn(getCandidateDetail);
   const signed = useServerFn(getFileSignedUrl);
   const versionsFn = useServerFn(listCandidateFileVersions);
-  const { data } = useQuery({ queryKey: ["candidate", id], queryFn: () => detail({ data: { id } }) });
+  const { data } = useQuery({
+    queryKey: ["candidate", id],
+    queryFn: () => detail({ data: { id } }),
+  });
   const { data: vData } = useQuery({
     queryKey: ["candidate-file-versions", id],
     queryFn: () => versionsFn({ data: { candidate_id: id } }),
@@ -46,18 +65,31 @@ function CandidateDetail() {
   if (!c) return <div className="text-muted-foreground">Memuat...</div>;
 
   const Field = ({ label, value }: { label: string; value: any }) => (
-    <div><div className="text-xs uppercase tracking-widest text-muted-foreground">{label}</div><div className="mt-1 font-medium">{value ?? "-"}</div></div>
+    <div>
+      <div className="text-xs uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className="mt-1 font-medium">{value ?? "-"}</div>
+    </div>
   );
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm"><Link to="/admin/candidates"><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Link></Button>
+      <Button asChild variant="ghost" size="sm">
+        <Link to="/admin/candidates">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
+        </Link>
+      </Button>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold text-primary">{c.full_name ?? "Kandidat"}</h1>
+          <h1 className="font-display text-3xl font-bold text-primary">
+            {c.full_name ?? "Kandidat"}
+          </h1>
           <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
             <span className="font-mono">{c.candidate_codes?.code ?? c.code_snapshot ?? "-"}</span>
-            {c.data_completed ? <Badge className="bg-success">Data lengkap</Badge> : <Badge variant="secondary">Belum lengkap</Badge>}
+            {c.data_completed ? (
+              <Badge className="bg-success">Data lengkap</Badge>
+            ) : (
+              <Badge variant="secondary">Belum lengkap</Badge>
+            )}
           </div>
         </div>
       </div>
@@ -65,10 +97,15 @@ function CandidateDetail() {
       <TestAccessControl candidateId={id} />
 
       <Card className="shadow-card">
-        <CardHeader><CardTitle>Data Diri</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Data Diri</CardTitle>
+        </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
           <Field label="NIK" value={c.nik} />
-          <Field label="Tempat/Tgl Lahir" value={`${c.birth_place ?? "-"} / ${c.birth_date ?? "-"}`} />
+          <Field
+            label="Tempat/Tgl Lahir"
+            value={`${c.birth_place ?? "-"} / ${c.birth_date ?? "-"}`}
+          />
           <Field label="Jenis Kelamin" value={c.gender} />
           <Field label="Email" value={c.email} />
           <Field label="No HP" value={c.phone} />
@@ -87,23 +124,35 @@ function CandidateDetail() {
             <span>Berkas Upload</span>
             {(() => {
               const cl = computeChecklist(c.candidate_files);
-              return cl.complete
-                ? <Badge className="bg-success">Dokumen wajib lengkap</Badge>
-                : <Badge variant="secondary">Dokumen wajib: {cl.done}/{cl.total}</Badge>;
+              return cl.complete ? (
+                <Badge className="bg-success">Dokumen wajib lengkap</Badge>
+              ) : (
+                <Badge variant="secondary">
+                  Dokumen wajib: {cl.done}/{cl.total}
+                </Badge>
+              );
             })()}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Checklist Kelengkapan</div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Checklist Kelengkapan
+            </div>
             <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-5">
               {computeChecklist(c.candidate_files).items.map((i) => (
                 <div
                   key={i.key}
                   className={`flex items-center gap-2 rounded-md border p-2 text-sm ${i.uploaded ? "border-success/40 bg-success/5" : "border-muted"}`}
                 >
-                  {i.uploaded ? <CheckCircle2 className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
-                  <span className={i.uploaded ? "font-medium" : "text-muted-foreground"}>{i.label}</span>
+                  {i.uploaded ? (
+                    <CheckCircle2 className="h-4 w-4 text-success" />
+                  ) : (
+                    <XCircle className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <span className={i.uploaded ? "font-medium" : "text-muted-foreground"}>
+                    {i.label}
+                  </span>
                 </div>
               ))}
             </div>
@@ -116,16 +165,28 @@ function CandidateDetail() {
                 const vs = groupedVersions[f.file_type] ?? [];
                 const currentV = vs[0]?.version;
                 return (
-                  <div key={f.id} className="flex items-center justify-between rounded-md border p-3">
+                  <div
+                    key={f.id}
+                    className="flex items-center justify-between rounded-md border p-3"
+                  >
                     <div>
                       <div className="flex items-center gap-2 text-xs uppercase text-secondary">
                         <span>{f.file_type}</span>
-                        {currentV ? <Badge variant="outline" className="text-[10px]">v{currentV}</Badge> : null}
+                        {currentV ? (
+                          <Badge variant="outline" className="text-[10px]">
+                            v{currentV}
+                          </Badge>
+                        ) : null}
                       </div>
                       <div className="text-sm font-medium">{f.file_name}</div>
-                      <div className="text-xs text-muted-foreground">{Math.round((f.file_size ?? 0) / 1024)} KB · diunggah {new Date(f.uploaded_at).toLocaleString("id-ID")}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {Math.round((f.file_size ?? 0) / 1024)} KB · diunggah{" "}
+                        {new Date(f.uploaded_at).toLocaleString("id-ID")}
+                      </div>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => openFile(f.file_path)}><Download className="mr-2 h-3.5 w-3.5" /> Buka</Button>
+                    <Button size="sm" variant="outline" onClick={() => openFile(f.file_path)}>
+                      <Download className="mr-2 h-3.5 w-3.5" /> Buka
+                    </Button>
                   </div>
                 );
               })}
@@ -136,16 +197,22 @@ function CandidateDetail() {
 
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><History className="h-4 w-4" /> Riwayat Unggahan Dokumen</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-4 w-4" /> Riwayat Unggahan Dokumen
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {versions.length === 0 ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">Belum ada riwayat unggahan.</div>
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              Belum ada riwayat unggahan.
+            </div>
           ) : (
             <div className="space-y-5">
               {Object.entries(groupedVersions).map(([ft, list]) => (
                 <div key={ft}>
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-secondary">{ft} · {list.length} versi</div>
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-secondary">
+                    {ft} · {list.length} versi
+                  </div>
                   <div className="overflow-hidden rounded-md border">
                     <table className="w-full text-sm">
                       <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
@@ -164,20 +231,32 @@ function CandidateDetail() {
                             <td className="px-3 py-2">
                               <div className="flex items-center gap-2">
                                 <span className="font-mono">v{v.version}</span>
-                                {idx === 0 ? <Badge className="bg-success text-[10px]">Terkini</Badge> : null}
+                                {idx === 0 ? (
+                                  <Badge className="bg-success text-[10px]">Terkini</Badge>
+                                ) : null}
                               </div>
                             </td>
                             <td className="px-3 py-2">{v.file_name}</td>
-                            <td className="px-3 py-2 text-muted-foreground">{Math.round((v.file_size ?? 0) / 1024)} KB</td>
-                            <td className="px-3 py-2 text-muted-foreground">{new Date(v.uploaded_at).toLocaleString("id-ID")}</td>
+                            <td className="px-3 py-2 text-muted-foreground">
+                              {Math.round((v.file_size ?? 0) / 1024)} KB
+                            </td>
+                            <td className="px-3 py-2 text-muted-foreground">
+                              {new Date(v.uploaded_at).toLocaleString("id-ID")}
+                            </td>
                             <td className="px-3 py-2">
                               <div className="flex flex-col">
                                 <span>{v.uploader_label ?? "-"}</span>
-                                <span className="text-xs uppercase text-muted-foreground">{v.uploader_kind}</span>
+                                <span className="text-xs uppercase text-muted-foreground">
+                                  {v.uploader_kind}
+                                </span>
                               </div>
                             </td>
                             <td className="px-3 py-2 text-right">
-                              <Button size="sm" variant="ghost" onClick={() => openFile(v.file_path)}>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => openFile(v.file_path)}
+                              >
                                 <Download className="mr-2 h-3.5 w-3.5" /> Buka
                               </Button>
                             </td>
@@ -194,10 +273,14 @@ function CandidateDetail() {
       </Card>
 
       <Card className="shadow-card">
-        <CardHeader><CardTitle>Hasil Psikotest</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Hasil Psikotest</CardTitle>
+        </CardHeader>
         <CardContent>
           {(c.test_attempts ?? []).length === 0 ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">Belum ada test yang dikerjakan.</div>
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              Belum ada test yang dikerjakan.
+            </div>
           ) : (
             <div className="space-y-3">
               {c.test_attempts.map((a: any) => (
@@ -205,33 +288,51 @@ function CandidateDetail() {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="font-semibold">{a.tests?.name}</div>
-                      <div className="text-xs text-muted-foreground uppercase">{a.tests?.test_type}</div>
+                      <div className="text-xs text-muted-foreground uppercase">
+                        {a.tests?.test_type}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge className={a.status === "finished" ? "bg-success" : ""} variant={a.status === "finished" ? "default" : "secondary"}>
+                      <Badge
+                        className={a.status === "finished" ? "bg-success" : ""}
+                        variant={a.status === "finished" ? "default" : "secondary"}
+                      >
                         {a.status === "finished" ? `Skor: ${a.score}` : "In progress"}
                       </Badge>
                       <Button asChild size="sm" variant="outline">
-                        <Link to="/admin/attempts/$id" params={{ id: a.id }}>Lihat Jawaban</Link>
+                        <Link to="/admin/attempts/$id" params={{ id: a.id }}>
+                          Lihat Jawaban
+                        </Link>
                       </Button>
                     </div>
                   </div>
                   {a.result && a.tests?.test_type === "disc" && a.result.most ? (
                     <div className="mt-3 space-y-2">
-                      <div className="text-xs font-semibold uppercase text-muted-foreground">Profil DISC — Dominan: <span className="text-primary">{a.result.dominant}</span></div>
+                      <div className="text-xs font-semibold uppercase text-muted-foreground">
+                        Profil DISC — Dominan:{" "}
+                        <span className="text-primary">{a.result.dominant}</span>
+                      </div>
                       <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                        {(["D","I","S","C"] as const).map((k) => (
+                        {(["D", "I", "S", "C"] as const).map((k) => (
                           <div key={k} className="rounded border bg-muted/40 p-2">
                             <div className="text-lg font-bold text-primary">{k}</div>
-                            <div>Most: <b>{a.result.most?.[k] ?? 0}</b></div>
-                            <div>Least: <b>{a.result.least?.[k] ?? 0}</b></div>
-                            <div>Change: <b>{a.result.change?.[k] ?? 0}</b></div>
+                            <div>
+                              Most: <b>{a.result.most?.[k] ?? 0}</b>
+                            </div>
+                            <div>
+                              Least: <b>{a.result.least?.[k] ?? 0}</b>
+                            </div>
+                            <div>
+                              Change: <b>{a.result.change?.[k] ?? 0}</b>
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
                   ) : a.result ? (
-                    <pre className="mt-3 overflow-x-auto rounded bg-muted p-2 text-xs">{JSON.stringify(a.result, null, 2)}</pre>
+                    <pre className="mt-3 overflow-x-auto rounded bg-muted p-2 text-xs">
+                      {JSON.stringify(a.result, null, 2)}
+                    </pre>
                   ) : null}
                 </div>
               ))}

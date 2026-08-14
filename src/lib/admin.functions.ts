@@ -22,7 +22,12 @@ async function logAudit(
     });
   } catch (e) {
     // Do not block the primary action on audit-log failure; surface in server logs.
-    console.error("audit_log_insert_failed", { action, target_type, target_id, error: (e as Error).message });
+    console.error("audit_log_insert_failed", {
+      action,
+      target_type,
+      target_id,
+      error: (e as Error).message,
+    });
   }
 }
 
@@ -51,17 +56,15 @@ export const logStaffAccess = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-
-
-
-
-
 /** Bootstrap: if no admin exists, promote current user to admin. */
 export const claimFirstAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { count } = await supabaseAdmin.from("user_roles").select("*", { count: "exact", head: true }).eq("role", "admin");
+    const { count } = await supabaseAdmin
+      .from("user_roles")
+      .select("*", { count: "exact", head: true })
+      .eq("role", "admin");
     if ((count ?? 0) === 0) {
       await supabaseAdmin.from("user_roles").insert({ user_id: context.userId, role: "admin" });
       return { promoted: true };
@@ -72,7 +75,10 @@ export const claimFirstAdmin = createServerFn({ method: "POST" })
 export const getMyRoles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    const { data } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
     return { roles: (data ?? []).map((r) => r.role as string) };
   });
 
@@ -159,8 +165,14 @@ export const bulkCreateCandidateCodes = createServerFn({ method: "POST" })
       const chunk = rows.slice(i, i + 100);
       let attempt = 0;
       while (attempt < 5) {
-        const { data: ok, error } = await context.supabase.from("candidate_codes").insert(chunk).select();
-        if (!error) { inserted.push(...(ok ?? [])); break; }
+        const { data: ok, error } = await context.supabase
+          .from("candidate_codes")
+          .insert(chunk)
+          .select();
+        if (!error) {
+          inserted.push(...(ok ?? []));
+          break;
+        }
         // collision on unique(code): regenerate all in chunk and retry
         for (const r of chunk) r.code = gen();
         attempt++;
@@ -191,11 +203,22 @@ export const bulkSetCodesActive = createServerFn({ method: "POST" })
 
 export const listCandidateCodes = createServerFn({ method: "POST" })
   .middleware([requireStaff])
-  .inputValidator((d) => z.object({ limit: z.number().int().min(1).max(1000).optional(), offset: z.number().int().min(0).optional() }).parse(d ?? {}))
+  .inputValidator((d) =>
+    z
+      .object({
+        limit: z.number().int().min(1).max(1000).optional(),
+        offset: z.number().int().min(0).optional(),
+      })
+      .parse(d ?? {}),
+  )
   .handler(async ({ context, data }) => {
     const limit = data.limit ?? 500;
     const offset = data.offset ?? 0;
-    const { data: rows, error, count } = await context.supabase
+    const {
+      data: rows,
+      error,
+      count,
+    } = await context.supabase
       .from("candidate_codes")
       .select("*, candidates(id, data_completed, updated_at)", { count: "exact" })
       .order("created_at", { ascending: false })
@@ -215,7 +238,10 @@ export const toggleCode = createServerFn({ method: "POST" })
       .select("code")
       .eq("id", data.id)
       .maybeSingle();
-    const { error } = await context.supabase.from("candidate_codes").update({ active: data.active }).eq("id", data.id);
+    const { error } = await context.supabase
+      .from("candidate_codes")
+      .update({ active: data.active })
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
     await logAudit(
       context,
@@ -226,7 +252,6 @@ export const toggleCode = createServerFn({ method: "POST" })
     );
     return { ok: true };
   });
-
 
 export const deleteCode = createServerFn({ method: "POST" })
   .middleware([requireStaff])
@@ -239,7 +264,9 @@ export const deleteCode = createServerFn({ method: "POST" })
       .maybeSingle();
     const { error } = await context.supabase.from("candidate_codes").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
-    await logAudit(context, "code.delete", "candidate_code", data.id, { code: existing?.code ?? null });
+    await logAudit(context, "code.delete", "candidate_code", data.id, {
+      code: existing?.code ?? null,
+    });
     return { ok: true };
   });
 
@@ -255,23 +282,30 @@ export const deleteAllCodes = createServerFn({ method: "POST" })
     const { count } = await context.supabase
       .from("candidate_codes")
       .select("id", { count: "exact", head: true });
-    const { error } = await context.supabase
-      .from("candidate_codes")
-      .delete()
-      .not("id", "is", null);
+    const { error } = await context.supabase.from("candidate_codes").delete().not("id", "is", null);
     if (error) throw new Error(error.message);
     await logAudit(context, "code.delete_all", "candidate_code", null, { deleted: count ?? 0 });
     return { deleted: count ?? 0 };
   });
 
-
 export const listCandidates = createServerFn({ method: "POST" })
   .middleware([requireStaff])
-  .inputValidator((d) => z.object({ limit: z.number().int().min(1).max(1000).optional(), offset: z.number().int().min(0).optional() }).parse(d ?? {}))
+  .inputValidator((d) =>
+    z
+      .object({
+        limit: z.number().int().min(1).max(1000).optional(),
+        offset: z.number().int().min(0).optional(),
+      })
+      .parse(d ?? {}),
+  )
   .handler(async ({ context, data }) => {
     const limit = data.limit ?? 500;
     const offset = data.offset ?? 0;
-    const { data: rows, error, count } = await context.supabase
+    const {
+      data: rows,
+      error,
+      count,
+    } = await context.supabase
       .from("candidates")
       .select(
         "*, candidate_codes(code, active, candidate_type, last_seen_at), candidate_files(id, file_type), test_attempts(id, score, status, tests(name, test_type))",
@@ -334,12 +368,17 @@ export const deleteCandidateResults = createServerFn({ method: "POST" })
     if (listErr) throw new Error(listErr.message);
     const ids = (attempts ?? []).map((a) => a.id);
     if (ids.length) {
-      const { error: ansErr } = await context.supabase.from("test_answers").delete().in("attempt_id", ids);
+      const { error: ansErr } = await context.supabase
+        .from("test_answers")
+        .delete()
+        .in("attempt_id", ids);
       if (ansErr) throw new Error(ansErr.message);
       const { error: attErr } = await context.supabase.from("test_attempts").delete().in("id", ids);
       if (attErr) throw new Error(attErr.message);
     }
-    await logAudit(context, "candidate.results_delete", "candidate", data.candidate_id, { deleted: ids.length });
+    await logAudit(context, "candidate.results_delete", "candidate", data.candidate_id, {
+      deleted: ids.length,
+    });
     return { ok: true, deleted: ids.length };
   });
 
@@ -349,9 +388,16 @@ export const deleteCandidate = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     const sb = context.supabase;
-    const { data: cand } = await sb.from("candidates").select("full_name").eq("id", data.id).maybeSingle();
+    const { data: cand } = await sb
+      .from("candidates")
+      .select("full_name")
+      .eq("id", data.id)
+      .maybeSingle();
 
-    const { data: attempts, error: listErr } = await sb.from("test_attempts").select("id").eq("candidate_id", data.id);
+    const { data: attempts, error: listErr } = await sb
+      .from("test_attempts")
+      .select("id")
+      .eq("candidate_id", data.id);
     if (listErr) throw new Error(listErr.message);
     const ids = (attempts ?? []).map((a) => a.id);
     if (ids.length) {
@@ -373,9 +419,6 @@ export const deleteCandidate = createServerFn({ method: "POST" })
     return { ok: true, deleted_attempts: ids.length };
   });
 
-
-
-
 export const getCandidateDetail = createServerFn({ method: "POST" })
   .middleware([requireStaff])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
@@ -394,7 +437,9 @@ export const getFileSignedUrl = createServerFn({ method: "POST" })
   .middleware([requireStaff])
   .inputValidator((d) => z.object({ path: z.string() }).parse(d))
   .handler(async ({ context, data }) => {
-    const { data: signed, error } = await context.supabase.storage.from("candidate-files").createSignedUrl(data.path, 60 * 10);
+    const { data: signed, error } = await context.supabase.storage
+      .from("candidate-files")
+      .createSignedUrl(data.path, 60 * 10);
     if (error) throw new Error(error.message);
     await logAudit(context, "candidate.file.view", "file", null, { path: data.path });
     return { url: signed.signedUrl };
@@ -403,12 +448,23 @@ export const getFileSignedUrl = createServerFn({ method: "POST" })
 /** Document bank: list every uploaded candidate file with candidate identity for staff/admin. */
 export const listAllCandidateFiles = createServerFn({ method: "POST" })
   .middleware([requireStaff])
-  .inputValidator((d) => z.object({ limit: z.number().int().min(1).max(1000).optional(), offset: z.number().int().min(0).optional() }).parse(d ?? {}))
+  .inputValidator((d) =>
+    z
+      .object({
+        limit: z.number().int().min(1).max(1000).optional(),
+        offset: z.number().int().min(0).optional(),
+      })
+      .parse(d ?? {}),
+  )
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const limit = data.limit ?? 500;
     const offset = data.offset ?? 0;
-    const { data: rows, error, count } = await supabaseAdmin
+    const {
+      data: rows,
+      error,
+      count,
+    } = await supabaseAdmin
       .from("candidate_files")
       .select(
         "id, file_type, file_name, file_path, file_size, mime_type, uploaded_at, candidate_id, candidates(id, full_name, nik, position_applied, code_snapshot, candidate_codes(code, candidate_type))",
@@ -423,7 +479,9 @@ export const listAllCandidateFiles = createServerFn({ method: "POST" })
 
 export const listCandidateFileVersions = createServerFn({ method: "POST" })
   .middleware([requireStaff])
-  .inputValidator((d) => z.object({ candidate_id: z.string().uuid(), file_type: z.string().optional() }).parse(d))
+  .inputValidator((d) =>
+    z.object({ candidate_id: z.string().uuid(), file_type: z.string().optional() }).parse(d),
+  )
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     let q = supabaseAdmin
@@ -445,17 +503,30 @@ export const listTests = createServerFn({ method: "GET" })
       .select("*, test_questions(id)")
       .order("code");
     if (error) throw new Error(error.message);
-    return { tests: (data ?? []).map((t: any) => ({ ...t, question_count: t.test_questions?.length ?? 0 })) };
+    return {
+      tests: (data ?? []).map((t: any) => ({
+        ...t,
+        question_count: t.test_questions?.length ?? 0,
+      })),
+    };
   });
 
 /** Super Admin menentukan paket test: khusus magang, khusus karyawan, atau keduanya. */
 export const setTestAudience = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .inputValidator((d) =>
-    z.object({ id: z.string().uuid(), audience: z.enum(["magang", "karyawan", "karyawan_staff", "karyawan_spv", "both"]) }).parse(d),
+    z
+      .object({
+        id: z.string().uuid(),
+        audience: z.enum(["magang", "karyawan", "karyawan_staff", "karyawan_spv", "both"]),
+      })
+      .parse(d),
   )
   .handler(async ({ context, data }) => {
-    const { error } = await context.supabase.from("tests").update({ audience: data.audience }).eq("id", data.id);
+    const { error } = await context.supabase
+      .from("tests")
+      .update({ audience: data.audience })
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
     await logAudit(context, "test.audience", "test", data.id, { audience: data.audience });
     return { ok: true };
@@ -468,7 +539,11 @@ export const getTestWithQuestions = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [t, q] = await Promise.all([
       supabaseAdmin.from("tests").select("*").eq("id", data.id).single(),
-      supabaseAdmin.from("test_questions").select("*").eq("test_id", data.id).order("question_number"),
+      supabaseAdmin
+        .from("test_questions")
+        .select("*")
+        .eq("test_id", data.id)
+        .order("question_number"),
     ]);
     if (t.error) throw new Error(t.error.message);
     return { test: t.data, questions: q.data ?? [] };
@@ -520,7 +595,10 @@ export const listAuditLogs = createServerFn({ method: "POST" })
     const offset = data.offset ?? 0;
     let q = context.supabase
       .from("audit_logs")
-      .select("id, actor_id, actor_type, actor_label, action, target_type, target_id, metadata, created_at", { count: "exact" })
+      .select(
+        "id, actor_id, actor_type, actor_label, action, target_type, target_id, metadata, created_at",
+        { count: "exact" },
+      )
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
     if (data.only_denied) q = q.eq("action", "admin.access.denied");
@@ -540,7 +618,8 @@ export const listAuditLogs = createServerFn({ method: "POST" })
         .from("profiles")
         .select("id, full_name, username")
         .in("id", ids);
-      for (const p of profs ?? []) actors[(p as any).id] = { full_name: (p as any).full_name, username: (p as any).username };
+      for (const p of profs ?? [])
+        actors[(p as any).id] = { full_name: (p as any).full_name, username: (p as any).username };
     }
     return {
       logs: (rows ?? []).map((r: any) => ({ ...r, actor: actors[r.actor_id] ?? null })),
@@ -549,7 +628,6 @@ export const listAuditLogs = createServerFn({ method: "POST" })
       limit,
     };
   });
-
 
 export const dashboardStats = createServerFn({ method: "GET" })
   .middleware([requireStaff])
@@ -567,7 +645,9 @@ export const dashboardStats = createServerFn({ method: "GET" })
       total_attempts: attempts.data?.length ?? 0,
       finished_attempts: (attempts.data ?? []).filter((a) => a.status === "finished").length,
       avg_score: (() => {
-        const done = (attempts.data ?? []).filter((a) => a.status === "finished" && a.score != null);
+        const done = (attempts.data ?? []).filter(
+          (a) => a.status === "finished" && a.score != null,
+        );
         if (!done.length) return 0;
         return Math.round(done.reduce((s, a) => s + Number(a.score), 0) / done.length);
       })(),
@@ -576,9 +656,14 @@ export const dashboardStats = createServerFn({ method: "GET" })
 
 export const setCodeExpiry = createServerFn({ method: "POST" })
   .middleware([requireStaff])
-  .inputValidator((d) => z.object({ id: z.string().uuid(), expires_at: z.string().datetime().nullable() }).parse(d))
+  .inputValidator((d) =>
+    z.object({ id: z.string().uuid(), expires_at: z.string().datetime().nullable() }).parse(d),
+  )
   .handler(async ({ context, data }) => {
-    const { error } = await context.supabase.from("candidate_codes").update({ expires_at: data.expires_at }).eq("id", data.id);
+    const { error } = await context.supabase
+      .from("candidate_codes")
+      .update({ expires_at: data.expires_at })
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -601,19 +686,36 @@ export const setTestActive = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ id: z.string().uuid(), active: z.boolean() }).parse(d))
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const before = await supabaseAdmin.from("tests").select("name, code, test_type, active").eq("id", data.id).single();
-    const { error } = await supabaseAdmin.from("tests").update({ active: data.active }).eq("id", data.id);
+    const before = await supabaseAdmin
+      .from("tests")
+      .select("name, code, test_type, active")
+      .eq("id", data.id)
+      .single();
+    const { error } = await supabaseAdmin
+      .from("tests")
+      .update({ active: data.active })
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
     const t: any = before.data ?? {};
     const isMbti = t.test_type === "mbti";
     await logAudit(
       context,
       isMbti
-        ? (data.active ? "mbti.test.publish" : "mbti.test.unpublish")
-        : (data.active ? "test.publish" : "test.unpublish"),
+        ? data.active
+          ? "mbti.test.publish"
+          : "mbti.test.unpublish"
+        : data.active
+          ? "test.publish"
+          : "test.unpublish",
       "test",
       data.id,
-      { active: data.active, previous_active: t.active ?? null, test_name: t.name ?? null, test_code: t.code ?? null, test_type: t.test_type ?? null },
+      {
+        active: data.active,
+        previous_active: t.active ?? null,
+        test_name: t.name ?? null,
+        test_code: t.code ?? null,
+        test_type: t.test_type ?? null,
+      },
     );
     return { ok: true };
   });
@@ -622,10 +724,12 @@ export const setTestActive = createServerFn({ method: "POST" })
 export const setQuestionsPublished = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .inputValidator((d) =>
-    z.object({
-      ids: z.array(z.string().uuid()).min(1).max(1000),
-      active: z.boolean(),
-    }).parse(d),
+    z
+      .object({
+        ids: z.array(z.string().uuid()).min(1).max(1000),
+        active: z.boolean(),
+      })
+      .parse(d),
   )
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -678,8 +782,6 @@ export const setAllQuestionsPublished = createServerFn({ method: "POST" })
     return { ok: true, updated: count ?? 0 };
   });
 
-
-
 const MbtiOption = z.object({
   key: z.enum(["A", "B"]),
   label: z.string().trim().min(1).max(500),
@@ -717,18 +819,30 @@ export const upsertMbtiQuestion = createServerFn({ method: "POST" })
         .select("question_number, question_text, options, dimension")
         .eq("id", data.question_id)
         .maybeSingle();
-      const { error } = await supabaseAdmin.from("test_questions").update(payload).eq("id", data.question_id);
+      const { error } = await supabaseAdmin
+        .from("test_questions")
+        .update(payload)
+        .eq("id", data.question_id);
       if (error) throw new Error(error.message);
       await logAudit(context, "mbti.question.update", "test_question", data.question_id, {
         test_id: data.test_id,
         question_number: data.question_number,
         dimension,
         before: prev.data ?? null,
-        after: { question_number: data.question_number, question_text: data.question_text, options: data.options, dimension },
+        after: {
+          question_number: data.question_number,
+          question_text: data.question_text,
+          options: data.options,
+          dimension,
+        },
       });
       return { ok: true, id: data.question_id };
     }
-    const { data: ins, error } = await supabaseAdmin.from("test_questions").insert(payload).select("id").single();
+    const { data: ins, error } = await supabaseAdmin
+      .from("test_questions")
+      .insert(payload)
+      .select("id")
+      .single();
     if (error) throw new Error(error.message);
     await logAudit(context, "mbti.question.create", "test_question", (ins as any).id, {
       test_id: data.test_id,
@@ -743,8 +857,6 @@ export const upsertMbtiQuestion = createServerFn({ method: "POST" })
 /* ------------------------------------------------------------------ */
 /* Editor soal generik (semua jenis test di Bank Soal) — khusus admin   */
 /* ------------------------------------------------------------------ */
-
-
 
 /**
  * Normalisasi & validasi opsi jawaban agar bentuknya selalu aman dibaca
@@ -793,7 +905,9 @@ export const upsertTestQuestion = createServerFn({ method: "POST" })
     const options = normalizeQuestionOptions(data.options ?? null, testType);
     const correct = data.correct_answer?.trim() ? data.correct_answer.trim() : null;
     if (correct && Array.isArray(options)) {
-      const ok = (options as any[]).some((o) => String(o.key).toLowerCase() === correct.toLowerCase());
+      const ok = (options as any[]).some(
+        (o) => String(o.key).toLowerCase() === correct.toLowerCase(),
+      );
       if (!ok) throw new Error(`Kunci jawaban "${correct}" tidak ada di daftar pilihan.`);
     }
 
@@ -805,7 +919,8 @@ export const upsertTestQuestion = createServerFn({ method: "POST" })
       .eq("question_number", data.question_number)
       .limit(2);
     const clash = (dupe.data ?? []).some((r: any) => r.id !== data.question_id);
-    if (clash) throw new Error(`Nomor ${data.question_number} sudah dipakai soal lain pada test ini.`);
+    if (clash)
+      throw new Error(`Nomor ${data.question_number} sudah dipakai soal lain pada test ini.`);
 
     const payload: Record<string, unknown> = {
       test_id: data.test_id,
@@ -824,7 +939,10 @@ export const upsertTestQuestion = createServerFn({ method: "POST" })
         .select("question_number, question_text, options, dimension, correct_answer, active")
         .eq("id", data.question_id)
         .maybeSingle();
-      const { error } = await supabaseAdmin.from("test_questions").update(payload as any).eq("id", data.question_id);
+      const { error } = await supabaseAdmin
+        .from("test_questions")
+        .update(payload as any)
+        .eq("id", data.question_id);
       if (error) throw new Error(error.message);
       await logAudit(context, "question.update", "test_question", data.question_id, {
         test_id: data.test_id,
@@ -874,11 +992,13 @@ export const deleteTestQuestion = createServerFn({ method: "POST" })
 export const updateTestMeta = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .inputValidator((d) =>
-    z.object({
-      id: z.string().uuid(),
-      name: z.string().trim().min(1).max(160),
-      description: z.string().trim().max(2000).nullable().optional(),
-    }).parse(d),
+    z
+      .object({
+        id: z.string().uuid(),
+        name: z.string().trim().min(1).max(160),
+        description: z.string().trim().max(2000).nullable().optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -917,10 +1037,12 @@ export const deleteMbtiQuestion = createServerFn({ method: "POST" })
 export const setMbtiQuestionsActive = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .inputValidator((d) =>
-    z.object({
-      ids: z.array(z.string().uuid()).min(1).max(500),
-      active: z.boolean(),
-    }).parse(d),
+    z
+      .object({
+        ids: z.array(z.string().uuid()).min(1).max(500),
+        active: z.boolean(),
+      })
+      .parse(d),
   )
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -961,7 +1083,9 @@ export const deleteMbtiQuestions = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const before = await supabaseAdmin
       .from("test_questions")
-      .select("id, test_id, question_number, question_text, options, dimension, tests!inner(test_type)")
+      .select(
+        "id, test_id, question_number, question_text, options, dimension, tests!inner(test_type)",
+      )
       .in("id", data.ids);
     const rows = ((before.data ?? []) as any[]).filter((r) => r.tests?.test_type === "mbti");
     if (rows.length === 0) throw new Error("Tidak ada soal MBTI yang cocok.");
@@ -978,22 +1102,27 @@ export const deleteMbtiQuestions = createServerFn({ method: "POST" })
       numbers: rows.map((r) => r.question_number),
       test_ids: Array.from(new Set(rows.map((r) => r.test_id))),
       snapshot: rows.map((r) => ({
-        id: r.id, test_id: r.test_id, question_number: r.question_number,
-        question_text: r.question_text, options: r.options, dimension: r.dimension,
+        id: r.id,
+        test_id: r.test_id,
+        question_number: r.question_number,
+        question_text: r.question_text,
+        options: r.options,
+        dimension: r.dimension,
       })),
     });
     return { ok: true, deleted: count ?? ids.length, skipped: data.ids.length - ids.length };
   });
 
-
 /** Reassign question_number for MBTI questions to match the given ID order (1..N). */
 export const reorderMbtiQuestions = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .inputValidator((d) =>
-    z.object({
-      test_id: z.string().uuid(),
-      ordered_ids: z.array(z.string().uuid()).min(1).max(500),
-    }).parse(d),
+    z
+      .object({
+        test_id: z.string().uuid(),
+        ordered_ids: z.array(z.string().uuid()).min(1).max(500),
+      })
+      .parse(d),
   )
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -1072,20 +1201,28 @@ export const logMbtiExport = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-
-
-
 /**
  * Bank Data Hasil — staff-only listing of every psikotest attempt across all
  * candidates. Scores/results are visible to admin & HR only.
  */
 export const listAllAttempts = createServerFn({ method: "POST" })
   .middleware([requireStaff])
-  .inputValidator((d) => z.object({ limit: z.number().int().min(1).max(1000).optional(), offset: z.number().int().min(0).optional() }).parse(d ?? {}))
+  .inputValidator((d) =>
+    z
+      .object({
+        limit: z.number().int().min(1).max(1000).optional(),
+        offset: z.number().int().min(0).optional(),
+      })
+      .parse(d ?? {}),
+  )
   .handler(async ({ context, data }) => {
     const limit = data.limit ?? 500;
     const offset = data.offset ?? 0;
-    const { data: rows, error, count } = await context.supabase
+    const {
+      data: rows,
+      error,
+      count,
+    } = await context.supabase
       .from("test_attempts")
       .select(
         "id, status, score, result, started_at, finished_at, test_id, candidate_id, tests(id, code, name, test_type), candidates(id, full_name, position_applied, job_position, job_level, code_snapshot, candidate_codes(code, candidate_type))",
@@ -1098,7 +1235,6 @@ export const listAllAttempts = createServerFn({ method: "POST" })
     return { attempts: rows ?? [], total: count ?? 0, limit, offset };
   });
 
-
 /* ---------------- Instruksi Suara per Test (Admin & HR) ---------------- */
 
 /** Staff-only: list every test with its voice-instruction settings. */
@@ -1107,7 +1243,9 @@ export const listVoiceInstructions = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("tests")
-      .select("id, code, name, test_type, active, duration_minutes, voice_instruction, voice_enabled, voice_lang, voice_rate, voice_autoplay, voice_mode, voice_audio_path, voice_audio_name, voice_audio_mime")
+      .select(
+        "id, code, name, test_type, active, duration_minutes, voice_instruction, voice_enabled, voice_lang, voice_rate, voice_autoplay, voice_mode, voice_audio_path, voice_audio_name, voice_audio_mime",
+      )
       .order("code");
     if (error) throw new Error(error.message);
     const tests = await Promise.all(
@@ -1176,7 +1314,10 @@ export const listCandidateTestAccess = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ candidate_id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     const [testsQ, attemptsQ, accessQ] = await Promise.all([
-      context.supabase.from("tests").select("id, code, name, test_type, duration_minutes, active").order("code"),
+      context.supabase
+        .from("tests")
+        .select("id, code, name, test_type, duration_minutes, active")
+        .order("code"),
       context.supabase
         .from("test_attempts")
         .select("id, test_id, status, started_at, finished_at, score")
@@ -1217,10 +1358,16 @@ export const setCandidateTestAccess = createServerFn({ method: "POST" })
       { onConflict: "candidate_id,test_id" },
     );
     if (error) throw new Error(error.message);
-    await logAudit(context, data.is_open ? "test.access.open" : "test.access.close", "candidate", data.candidate_id, {
-      test_id: data.test_id,
-      reason: data.reason ?? null,
-    });
+    await logAudit(
+      context,
+      data.is_open ? "test.access.open" : "test.access.close",
+      "candidate",
+      data.candidate_id,
+      {
+        test_id: data.test_id,
+        reason: data.reason ?? null,
+      },
+    );
     return { ok: true };
   });
 
@@ -1228,7 +1375,13 @@ export const setCandidateTestAccess = createServerFn({ method: "POST" })
 export const setAllCandidateTestAccess = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .inputValidator((d) =>
-    z.object({ candidate_id: z.string().uuid(), is_open: z.boolean(), reason: z.string().trim().max(300).optional().nullable() }).parse(d),
+    z
+      .object({
+        candidate_id: z.string().uuid(),
+        is_open: z.boolean(),
+        reason: z.string().trim().max(300).optional().nullable(),
+      })
+      .parse(d),
   )
   .handler(async ({ context, data }) => {
     const { data: tests } = await context.supabase.from("tests").select("id").eq("active", true);
@@ -1245,10 +1398,16 @@ export const setAllCandidateTestAccess = createServerFn({ method: "POST" })
         .upsert(rows, { onConflict: "candidate_id,test_id" });
       if (error) throw new Error(error.message);
     }
-    await logAudit(context, data.is_open ? "test.access.open_all" : "test.access.close_all", "candidate", data.candidate_id, {
-      count: rows.length,
-      reason: data.reason ?? null,
-    });
+    await logAudit(
+      context,
+      data.is_open ? "test.access.open_all" : "test.access.close_all",
+      "candidate",
+      data.candidate_id,
+      {
+        count: rows.length,
+        reason: data.reason ?? null,
+      },
+    );
     return { ok: true, count: rows.length };
   });
 
@@ -1277,7 +1436,10 @@ export const reopenCandidateTest = createServerFn({ method: "POST" })
 
     if (attempt) {
       if (data.clear_answers) {
-        const del = await context.supabase.from("test_answers").delete().eq("attempt_id", attempt.id);
+        const del = await context.supabase
+          .from("test_answers")
+          .delete()
+          .eq("attempt_id", attempt.id);
         if (del.error) throw new Error(del.error.message);
       }
       const upd = await context.supabase
@@ -1349,7 +1511,13 @@ async function performReopen(
     }
     const upd = await context.supabase
       .from("test_attempts")
-      .update({ status: "in_progress", finished_at: null, score: null, result: null, started_at: new Date().toISOString() })
+      .update({
+        status: "in_progress",
+        finished_at: null,
+        score: null,
+        result: null,
+        started_at: new Date().toISOString(),
+      })
       .eq("id", attempt.id);
     if (upd.error) throw new Error(upd.error.message);
   }
@@ -1397,7 +1565,8 @@ export const requestCandidateRetake = createServerFn({ method: "POST" })
       .eq("test_id", data.test_id)
       .eq("status", "pending")
       .maybeSingle();
-    if (existing.data) throw new Error("Sudah ada permintaan yang menunggu persetujuan untuk test ini.");
+    if (existing.data)
+      throw new Error("Sudah ada permintaan yang menunggu persetujuan untuk test ini.");
 
     const { data: row, error } = await context.supabase
       .from("candidate_retake_requests")
@@ -1423,7 +1592,9 @@ export const requestCandidateRetake = createServerFn({ method: "POST" })
 export const listRetakeRequests = createServerFn({ method: "POST" })
   .middleware([requireStaff])
   .inputValidator((d) =>
-    z.object({ status: z.enum(["pending", "approved", "rejected", "all"]).default("pending") }).parse(d ?? {}),
+    z
+      .object({ status: z.enum(["pending", "approved", "rejected", "all"]).default("pending") })
+      .parse(d ?? {}),
   )
   .handler(async ({ context, data }) => {
     let q = context.supabase
@@ -1461,7 +1632,13 @@ export const decideRetakeRequest = createServerFn({ method: "POST" })
 
     let reset: { attempt_id: string | null; previous_status: string | null } | null = null;
     if (data.approve) {
-      reset = await performReopen(context, req.candidate_id, req.test_id, data.clear_answers, data.note ?? req.reason ?? null);
+      reset = await performReopen(
+        context,
+        req.candidate_id,
+        req.test_id,
+        data.clear_answers,
+        data.note ?? req.reason ?? null,
+      );
     }
 
     const { error } = await context.supabase
@@ -1475,13 +1652,19 @@ export const decideRetakeRequest = createServerFn({ method: "POST" })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
 
-    await logAudit(context, data.approve ? "test.retake.approved" : "test.retake.rejected", "candidate", req.candidate_id, {
-      request_id: req.id,
-      test_id: req.test_id,
-      cleared_answers: data.approve ? data.clear_answers : false,
-      attempt_id: reset?.attempt_id ?? null,
-      note: data.note ?? null,
-    });
+    await logAudit(
+      context,
+      data.approve ? "test.retake.approved" : "test.retake.rejected",
+      "candidate",
+      req.candidate_id,
+      {
+        request_id: req.id,
+        test_id: req.test_id,
+        cleared_answers: data.approve ? data.clear_answers : false,
+        attempt_id: reset?.attempt_id ?? null,
+        note: data.note ?? null,
+      },
+    );
     return { ok: true };
   });
 

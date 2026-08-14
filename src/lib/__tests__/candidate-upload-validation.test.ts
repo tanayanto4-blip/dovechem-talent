@@ -94,7 +94,9 @@ describe("candidateUploadFile — static validation guarantees", () => {
 
   it("only accepts the whitelisted file_type enum values", () => {
     // Guardrails against silently accepting arbitrary future types.
-    expect(src).toMatch(/file_type:\s*z\.enum\(\[\s*"ktp",\s*"kk",\s*"cv",\s*"ijazah",\s*"transkrip",\s*"foto",\s*"npwp"\s*\]\)/);
+    expect(src).toMatch(
+      /file_type:\s*z\.enum\(\[\s*"ktp",\s*"kk",\s*"cv",\s*"ijazah",\s*"transkrip",\s*"foto",\s*"npwp"\s*\]\)/,
+    );
   });
 });
 

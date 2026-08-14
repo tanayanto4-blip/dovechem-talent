@@ -39,7 +39,6 @@ function extractHandlerBody(src: string, name: string): string {
   return src.slice(start, nextExport === -1 ? undefined : nextExport);
 }
 
-
 describe("candidate endpoints never expose correct_answer", () => {
   it("exports the candidate-facing server functions we expect to audit", () => {
     for (const name of CANDIDATE_RPC_FNS) {
@@ -65,7 +64,9 @@ describe("candidate endpoints never expose correct_answer", () => {
       for (const m of matches) {
         const projection = m[2].trim();
         expect(projection, `${name} must not select "*" from test_questions`).not.toBe("*");
-        expect(projection, `${name} must not include correct_answer in projection`).not.toMatch(/\bcorrect_answer\b/);
+        expect(projection, `${name} must not include correct_answer in projection`).not.toMatch(
+          /\bcorrect_answer\b/,
+        );
       }
     }
     // At least one candidate-facing handler must actually serve questions.
@@ -77,10 +78,11 @@ describe("candidate endpoints never expose correct_answer", () => {
     // Grab everything inside the handler's return statements.
     const returns = [...body.matchAll(/return\s+([\s\S]*?);/g)].map((m) => m[1]);
     for (const r of returns) {
-      expect(r, "candidateSubmitTest return must not expose correct_answer").not.toMatch(/\bcorrect_answer\b/);
+      expect(r, "candidateSubmitTest return must not expose correct_answer").not.toMatch(
+        /\bcorrect_answer\b/,
+      );
     }
   });
-
 
   it("never mentions correct_answer inside candidateGetAttempt / candidateStartTest bodies", () => {
     // Extract each candidate-facing handler body and assert correct_answer

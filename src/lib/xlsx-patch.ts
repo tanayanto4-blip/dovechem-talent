@@ -78,7 +78,9 @@ export async function sheetPaths(zip: JSZip) {
   const relMap = new Map<string, string>();
   for (const m of rels.matchAll(/<Relationship\b[^>]*>/g)) {
     const id = attr(m[0], "Id");
-    const t = attr(m[0], "Target").replace(/^\/?xl\//, "").replace(/^\.\//, "");
+    const t = attr(m[0], "Target")
+      .replace(/^\/?xl\//, "")
+      .replace(/^\.\//, "");
     if (id) relMap.set(id, `xl/${t}`);
   }
   const out: Array<{ name: string; path: string }> = [];

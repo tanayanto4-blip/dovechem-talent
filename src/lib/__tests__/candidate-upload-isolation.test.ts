@@ -72,9 +72,7 @@ describe("candidateUploadFile — static ownership guarantees", () => {
 
   it("storage path is prefixed with the resolved candidate id (per-candidate folder)", () => {
     // Path template like `${cand.id}/${data.file_type}-...`.
-    expect(body).toMatch(
-      /storage\.from\(["']candidate-files["']\)\.upload\(\s*path\s*,/,
-    );
+    expect(body).toMatch(/storage\.from\(["']candidate-files["']\)\.upload\(\s*path\s*,/);
     expect(body).toMatch(/`\$\{cand\.id\}\/[^`]*`/);
     // Guard against ever using an untrusted input for the folder segment.
     expect(body).not.toMatch(/`\$\{data\.candidate_id\}\//);
@@ -83,9 +81,7 @@ describe("candidateUploadFile — static ownership guarantees", () => {
 
   it("candidate_files insert uses the derived cand.id, not client input", () => {
     // Match the insert payload up to its closing brace.
-    const insertMatch = body.match(
-      /\.from\(["']candidate_files["']\)\.insert\(\{[\s\S]*?\}\)/,
-    );
+    const insertMatch = body.match(/\.from\(["']candidate_files["']\)\.insert\(\{[\s\S]*?\}\)/);
     expect(insertMatch, "candidate_files insert not found").toBeTruthy();
     const payload = insertMatch![0];
     expect(payload).toMatch(/candidate_id:\s*cand\.id/);
@@ -95,7 +91,7 @@ describe("candidateUploadFile — static ownership guarantees", () => {
   it("replaces prior same-type file only within the same candidate scope", () => {
     // The pre-insert delete must be scoped by both candidate_id and file_type.
     expect(body).toMatch(
-      /\.from\(["']candidate_files["']\)\.delete\(\)[\s\S]{0,200}\.eq\(["']candidate_id["'],\s*cand\.id\)[\s\S]{0,200}\.eq\(["']file_type["']/,
+      /\.from\(["']candidate_files["']\)\s*\.\s*delete\(\)[\s\S]{0,200}\.eq\(["']candidate_id["'],\s*cand\.id\)[\s\S]{0,200}\.eq\(["']file_type["']/,
     );
   });
 });

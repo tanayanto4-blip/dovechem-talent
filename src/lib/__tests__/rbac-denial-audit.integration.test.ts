@@ -27,8 +27,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL =
-  process.env.INTEGRATION_SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
+const SUPABASE_URL = process.env.INTEGRATION_SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
 const SUPABASE_KEY =
   process.env.INTEGRATION_SUPABASE_PUBLISHABLE_KEY ??
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
@@ -37,8 +36,7 @@ const ADMIN_EMAIL = process.env.INTEGRATION_ADMIN_EMAIL ?? "";
 const ADMIN_PASSWORD = process.env.INTEGRATION_ADMIN_PASSWORD ?? "";
 const BASE_URL = (process.env.INTEGRATION_BASE_URL ?? "").replace(/\/$/, "");
 
-const canRun =
-  Boolean(SUPABASE_URL && SUPABASE_KEY && ADMIN_EMAIL && ADMIN_PASSWORD && BASE_URL);
+const canRun = Boolean(SUPABASE_URL && SUPABASE_KEY && ADMIN_EMAIL && ADMIN_PASSWORD && BASE_URL);
 
 // Endpoints that are intentionally NOT guarded (bootstrap / session helpers).
 const PUBLIC_ALLOWLIST = new Set([
@@ -48,10 +46,7 @@ const PUBLIC_ALLOWLIST = new Set([
   "getMyRoles",
 ]);
 
-const ADMIN_FILES = [
-  "src/lib/admin.functions.ts",
-  "src/lib/users.functions.ts",
-];
+const ADMIN_FILES = ["src/lib/admin.functions.ts", "src/lib/users.functions.ts"];
 
 function extractGuardedEndpoints(): string[] {
   const names: string[] = [];
@@ -152,7 +147,8 @@ describe("integration wiring", () => {
   it("declares required env vars for CI operators", () => {
     const missing: string[] = [];
     if (!SUPABASE_URL) missing.push("INTEGRATION_SUPABASE_URL / VITE_SUPABASE_URL");
-    if (!SUPABASE_KEY) missing.push("INTEGRATION_SUPABASE_PUBLISHABLE_KEY / VITE_SUPABASE_PUBLISHABLE_KEY");
+    if (!SUPABASE_KEY)
+      missing.push("INTEGRATION_SUPABASE_PUBLISHABLE_KEY / VITE_SUPABASE_PUBLISHABLE_KEY");
     if (!ADMIN_EMAIL || !ADMIN_PASSWORD) missing.push("INTEGRATION_ADMIN_EMAIL / _PASSWORD");
     if (!BASE_URL) missing.push("INTEGRATION_BASE_URL");
     expect(Array.isArray(missing)).toBe(true);

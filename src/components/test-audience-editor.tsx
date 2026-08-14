@@ -8,7 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
 import { TEST_AUDIENCES, testAudienceLabel, type TestAudience } from "@/lib/candidate-type";
 
-const KEYS = [["admin-tests"], ["admin-test"], ["candidate-tests"], ["candidate-profile"], ["test-intro"]];
+const KEYS = [
+  ["admin-tests"],
+  ["admin-test"],
+  ["candidate-tests"],
+  ["candidate-profile"],
+  ["test-intro"],
+];
 
 /**
  * Super Admin menentukan test ini muncul di portal kandidat Magang, Karyawan,
@@ -68,7 +74,9 @@ export function TestAudienceEditor({
           ))}
         </div>
       ) : (
-        <p className="text-[11px] text-muted-foreground">Hanya Super Admin yang dapat mengubah jalur kandidat.</p>
+        <p className="text-[11px] text-muted-foreground">
+          Hanya Super Admin yang dapat mengubah jalur kandidat.
+        </p>
       )}
     </div>
   );

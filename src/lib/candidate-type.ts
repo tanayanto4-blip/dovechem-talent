@@ -10,7 +10,13 @@
 export const CANDIDATE_TYPES = ["magang", "karyawan"] as const;
 export type CandidateType = (typeof CANDIDATE_TYPES)[number];
 
-export const TEST_AUDIENCES = ["magang", "karyawan", "karyawan_staff", "karyawan_spv", "both"] as const;
+export const TEST_AUDIENCES = [
+  "magang",
+  "karyawan",
+  "karyawan_staff",
+  "karyawan_spv",
+  "both",
+] as const;
 export type TestAudience = (typeof TEST_AUDIENCES)[number];
 
 export const JOB_LEVELS = ["staff", "spv_up"] as const;
@@ -29,7 +35,13 @@ export const JOB_POSITIONS: { value: string; level: JobLevel }[] = [
 ];
 
 export function jobLevelOfPosition(position?: string | null): JobLevel | null {
-  const found = JOB_POSITIONS.find((p) => p.value.toLowerCase() === String(position ?? "").trim().toLowerCase());
+  const found = JOB_POSITIONS.find(
+    (p) =>
+      p.value.toLowerCase() ===
+      String(position ?? "")
+        .trim()
+        .toLowerCase(),
+  );
   return found?.level ?? null;
 }
 

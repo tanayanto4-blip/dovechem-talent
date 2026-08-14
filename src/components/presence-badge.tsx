@@ -27,7 +27,9 @@ export function PresenceBadge({ lastSeenAt }: { lastSeenAt?: string | null }) {
   return (
     <Badge
       variant={online ? "default" : "outline"}
-      className={online ? "gap-1.5 bg-success text-success-foreground" : "gap-1.5 text-muted-foreground"}
+      className={
+        online ? "gap-1.5 bg-success text-success-foreground" : "gap-1.5 text-muted-foreground"
+      }
       title={online ? "Kandidat sedang membuka portal" : `Terakhir aktif: ${relative(lastSeenAt)}`}
     >
       <span

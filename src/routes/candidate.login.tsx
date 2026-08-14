@@ -15,9 +15,17 @@ export const Route = createFileRoute("/candidate/login")({
   head: () => ({
     meta: [
       { title: "Login Kandidat — PT Dover Chemical" },
-      { name: "description", content: "Masuk sebagai kandidat PT Dover Chemical menggunakan kode akses dari tim HR untuk mengisi biodata dan mengerjakan rangkaian psikotest online." },
+      {
+        name: "description",
+        content:
+          "Masuk sebagai kandidat PT Dover Chemical menggunakan kode akses dari tim HR untuk mengisi biodata dan mengerjakan rangkaian psikotest online.",
+      },
       { property: "og:title", content: "Login Kandidat — PT Dover Chemical" },
-      { property: "og:description", content: "Masuk sebagai kandidat PT Dover Chemical menggunakan kode akses dari tim HR untuk mengisi biodata dan mengerjakan rangkaian psikotest online." },
+      {
+        property: "og:description",
+        content:
+          "Masuk sebagai kandidat PT Dover Chemical menggunakan kode akses dari tim HR untuk mengisi biodata dan mengerjakan rangkaian psikotest online.",
+      },
       { property: "og:url", content: "https://test-dovechem.lovable.app/candidate/login" },
     ],
     links: [{ rel: "canonical", href: "https://test-dovechem.lovable.app/candidate/login" }],
@@ -50,19 +58,30 @@ function CandidateLogin() {
       navigate({ to: "/candidate/portal" });
     } catch (e: any) {
       toast.error(e.message ?? "Kode tidak valid");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="touch-ui min-h-screen bg-hero p-4">
       <div className="mx-auto max-w-md pt-8">
-        <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm text-white/80 hover:text-white">
+        <Link
+          to="/"
+          className="mb-6 inline-flex items-center gap-2 text-sm text-white/80 hover:text-white"
+        >
           <ArrowLeft className="h-4 w-4" /> Kembali
         </Link>
         <Card className="shadow-elegant">
           <CardHeader className="text-center">
-            <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="mx-auto h-12 w-auto object-contain" />
-            <h1 className="mt-3 font-display text-2xl font-semibold leading-none tracking-tight">Login Kandidat — Portal Psikotest</h1>
+            <img
+              src={doverLogo.url}
+              alt="Logo PT Dover Chemical"
+              className="mx-auto h-12 w-auto object-contain"
+            />
+            <h1 className="mt-3 font-display text-2xl font-semibold leading-none tracking-tight">
+              Login Kandidat — Portal Psikotest
+            </h1>
             <CardDescription>Masukkan kode akses yang dikirim tim HR</CardDescription>
           </CardHeader>
           <CardContent>
@@ -86,7 +105,9 @@ function CandidateLogin() {
               <Button type="submit" size="lg" className="h-12 w-full text-base" disabled={loading}>
                 {loading ? "Memverifikasi..." : "Masuk"}
               </Button>
-              <p className="text-center text-xs text-muted-foreground">Belum punya kode? Hubungi tim rekrutmen PT Dover Chemical.</p>
+              <p className="text-center text-xs text-muted-foreground">
+                Belum punya kode? Hubungi tim rekrutmen PT Dover Chemical.
+              </p>
             </form>
           </CardContent>
         </Card>

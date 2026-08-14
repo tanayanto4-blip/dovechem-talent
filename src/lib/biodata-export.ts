@@ -18,7 +18,12 @@ export const BIODATA_FIELDS: BiodataField[] = [
 const BRAND = { r: 12, g: 58, b: 110 };
 
 export function safeName(s: string) {
-  return (s || "kandidat").replace(/[^a-zA-Z0-9-_ ]/g, "").trim().replace(/\s+/g, "_") || "kandidat";
+  return (
+    (s || "kandidat")
+      .replace(/[^a-zA-Z0-9-_ ]/g, "")
+      .trim()
+      .replace(/\s+/g, "_") || "kandidat"
+  );
 }
 
 function codeOf(c: any) {
@@ -94,7 +99,11 @@ export function exportCandidateBiodataPdf(c: any) {
 
   doc.setFontSize(8);
   doc.setTextColor(130, 130, 130);
-  doc.text("Dokumen internal rekrutmen — PT Dover Chemical", 40, doc.internal.pageSize.getHeight() - 30);
+  doc.text(
+    "Dokumen internal rekrutmen — PT Dover Chemical",
+    40,
+    doc.internal.pageSize.getHeight() - 30,
+  );
   doc.save(`biodata_${safeName(c.full_name ?? "")}.pdf`);
 }
 
@@ -110,7 +119,9 @@ export function exportAllBiodataPdf(list: any[]) {
   ];
   const fixed = 100;
   const each = (W - 80 - fixed) / BIODATA_FIELDS.length;
-  cols.forEach((c, i) => { if (i >= 2) c.w = each; });
+  cols.forEach((c, i) => {
+    if (i >= 2) c.w = each;
+  });
 
   let page = 1;
   const drawHead = () => {
@@ -188,7 +199,12 @@ async function buildWorkbook(list: any[], sheetName: string) {
     cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 10 };
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0C3A6E" } };
     cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
-    cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+    };
   });
   head.height = 28;
 
@@ -197,8 +213,14 @@ async function buildWorkbook(list: any[], sheetName: string) {
     row.eachCell((cell: any) => {
       cell.alignment = { vertical: "middle", wrapText: true };
       cell.font = { size: 10 };
-      cell.border = { top: { style: "hair" }, left: { style: "hair" }, bottom: { style: "hair" }, right: { style: "hair" } };
-      if (i % 2 === 0) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF4F7FB" } };
+      cell.border = {
+        top: { style: "hair" },
+        left: { style: "hair" },
+        bottom: { style: "hair" },
+        right: { style: "hair" },
+      };
+      if (i % 2 === 0)
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF4F7FB" } };
     });
   });
 
@@ -216,5 +238,8 @@ async function buildWorkbook(list: any[], sheetName: string) {
 export async function exportBiodataExcel(list: any[], filename: string, sheetName = "Biodata") {
   const wb = await buildWorkbook(list, sheetName);
   const buf = await wb.xlsx.writeBuffer();
-  saveBlob(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), filename);
+  saveBlob(
+    new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
+    filename,
+  );
 }

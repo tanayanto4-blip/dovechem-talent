@@ -40,7 +40,9 @@ export function TrackTabs({
           <Icon className="h-4 w-4" />
           {label}
           {counts?.[key] != null && (
-            <span className="rounded-full bg-muted px-1.5 text-[11px] tabular-nums">{counts[key]}</span>
+            <span className="rounded-full bg-muted px-1.5 text-[11px] tabular-nums">
+              {counts[key]}
+            </span>
           )}
         </button>
       ))}

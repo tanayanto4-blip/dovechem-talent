@@ -8,10 +8,7 @@ import { join } from "path";
  * written to public.audit_logs.
  */
 
-const ADMIN_FILES = [
-  "src/lib/admin.functions.ts",
-  "src/lib/users.functions.ts",
-];
+const ADMIN_FILES = ["src/lib/admin.functions.ts", "src/lib/users.functions.ts"];
 
 const PUBLIC_ALLOWLIST = new Set([
   // Public bootstrap surface — safe by design (only works when no admin exists).

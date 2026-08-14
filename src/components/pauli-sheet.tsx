@@ -17,9 +17,6 @@ export function pauliFilledCount(value: string | undefined) {
   return (value ?? "").split("").filter((c) => /\d/.test(c)).length;
 }
 
-
-
-
 export function PauliSheet({
   questions,
   answers,
@@ -32,7 +29,6 @@ export function PauliSheet({
   /** Tampilkan status deret/baris & petunjuk (hanya untuk halaman latihan). */
   showGuide?: boolean;
 }) {
-
   // Cursor = posisi soal aktif (kolom + celah antar dua angka)
   const [col, setCol] = useState(0);
   const [row, setRow] = useState(0);
@@ -55,7 +51,10 @@ export function PauliSheet({
     }
     return map;
   }, [questions, answers]);
-  const totalFilled = useMemo(() => Object.values(filledPerQuestion).reduce((s, n) => s + n, 0), [filledPerQuestion]);
+  const totalFilled = useMemo(
+    () => Object.values(filledPerQuestion).reduce((s, n) => s + n, 0),
+    [filledPerQuestion],
+  );
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -115,11 +114,7 @@ export function PauliSheet({
         </div>
       )}
 
-
-      <div
-        className="rounded-lg border bg-card p-8"
-        onClick={() => inputRef.current?.focus()}
-      >
+      <div className="rounded-lg border bg-card p-8" onClick={() => inputRef.current?.focus()}>
         <div className="mx-auto flex w-max items-start gap-4">
           {/* kolom angka */}
           <div className="flex flex-col items-center">
@@ -157,8 +152,14 @@ export function PauliSheet({
                     e.preventDefault();
                     back();
                   }
-                  if (e.key === "ArrowUp") { e.preventDefault(); back(); }
-                  if (e.key === "ArrowDown" || e.key === "Enter") { e.preventDefault(); advance(); }
+                  if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    back();
+                  }
+                  if (e.key === "ArrowDown" || e.key === "Enter") {
+                    e.preventDefault();
+                    advance();
+                  }
                 }}
                 aria-label={`Jawaban baris ${row + 1} deret ${col + 1}`}
                 className="h-9 w-9 rounded border-2 border-primary bg-primary/5 text-center font-mono text-base font-bold text-primary outline-none focus:ring-2 focus:ring-primary/40"
@@ -170,13 +171,11 @@ export function PauliSheet({
 
         {showGuide && (
           <p className="mt-6 text-center text-[11px] text-muted-foreground">
-            Jumlahkan dua angka pada kotak, tulis <b>angka terakhir</b> hasilnya. Contoh: 7 + 8 = 15 → tulis{" "}
-            <b>5</b>. Setelah menjawab, otomatis bergeser ke pasangan berikutnya.
+            Jumlahkan dua angka pada kotak, tulis <b>angka terakhir</b> hasilnya. Contoh: 7 + 8 = 15
+            → tulis <b>5</b>. Setelah menjawab, otomatis bergeser ke pasangan berikutnya.
           </p>
         )}
-
       </div>
     </div>
   );
 }
-
