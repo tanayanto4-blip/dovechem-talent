@@ -89,7 +89,12 @@ function TestsList() {
         <p className="text-sm text-muted-foreground">
           Bank soal dipisah per jalur kandidat. Pilih jalur untuk melihat paket test-nya.
         </p>
-        <TrackTabs value={track} onChange={(v) => { setTrack(v); setTestId("all"); }} counts={trackCounts} className="mt-4" />
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <TrackTabs value={track} onChange={(v) => { setTrack(v); setTestId("all"); setLevel("all"); }} counts={trackCounts} />
+          {track === "karyawan" && (
+            <LevelTabs value={level} onChange={(v) => { setLevel(v); setTestId("all"); }} counts={levelCounts} />
+          )}
+        </div>
       </div>
 
       <Card className="shadow-card">
