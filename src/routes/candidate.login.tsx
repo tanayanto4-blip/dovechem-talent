@@ -54,7 +54,7 @@ function CandidateLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-hero p-4">
+    <div className="touch-ui min-h-screen bg-hero p-4">
       <div className="mx-auto max-w-md pt-8">
         <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm text-white/80 hover:text-white">
           <ArrowLeft className="h-4 w-4" /> Kembali
@@ -66,7 +66,7 @@ function CandidateLogin() {
             <CardDescription>Masukkan kode akses yang dikirim tim HR</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={onSubmit} className="space-y-4">
+            <form onSubmit={onSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="code">Kode Akses</Label>
                 <div className="relative">
@@ -78,12 +78,12 @@ function CandidateLogin() {
                     placeholder="DOV-XXXXXX"
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    className="pl-9 uppercase tracking-widest"
+                    className="h-12 pl-10 text-base uppercase tracking-widest"
                     maxLength={32}
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" size="lg" className="h-12 w-full text-base" disabled={loading}>
                 {loading ? "Memverifikasi..." : "Masuk"}
               </Button>
               <p className="text-center text-xs text-muted-foreground">Belum punya kode? Hubungi tim rekrutmen PT Dover Chemical.</p>

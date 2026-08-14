@@ -125,3 +125,25 @@
   main, [role="main"] { padding: 0 !important; }
   @page { margin: 14mm; }
 }
+
+/* Touch targets untuk kandidat di browser HP: min 44px, font 16px agar
+   Chrome/Safari mobile tidak auto-zoom saat fokus ke input. */
+@media (max-width: 767px) {
+  .touch-ui input:not([type="checkbox"]):not([type="radio"]),
+  .touch-ui select,
+  .touch-ui textarea,
+  .touch-ui button[role="combobox"] {
+    min-height: 2.75rem;
+    font-size: 16px;
+  }
+  .touch-ui button:not([role="combobox"]),
+  .touch-ui a[role="button"] {
+    min-height: 2.75rem;
+  }
+  [data-radix-popper-content-wrapper] [role="option"] {
+    min-height: 2.75rem;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+  }
+}

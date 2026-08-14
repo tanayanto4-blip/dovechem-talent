@@ -138,7 +138,7 @@ function PortalLayout() {
   ];
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-subtle">
+    <div className="touch-ui min-h-screen overflow-x-hidden bg-subtle">
       <header className="sticky top-0 z-40 border-b bg-card text-foreground shadow-sm">
         <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:px-6 sm:py-4">
           <Link to="/" className="flex min-w-0 items-center gap-2.5">
@@ -159,14 +159,14 @@ function PortalLayout() {
             </Button>
           </div>
         </div>
-        <nav className="flex gap-1.5 overflow-x-auto border-t px-4 py-2 md:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <nav className="flex gap-2 overflow-x-auto border-t px-4 py-2.5 md:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {nav_items.map((it) => {
             const active = it.exact ? pathname === it.to : pathname.startsWith(it.to);
             return (
               <Link
                 key={it.to}
                 to={it.to}
-                className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"}`}
+                className={`flex shrink-0 items-center gap-1.5 min-h-11 rounded-full border px-4 py-2 text-sm font-medium ${active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"}`}
               >
                 <it.icon className="h-3.5 w-3.5" />
                 {it.label}

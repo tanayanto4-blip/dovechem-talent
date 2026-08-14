@@ -192,7 +192,7 @@ function DataForm() {
         </p>
       </CardHeader>
       <CardContent>
-        <form onSubmit={onSubmit} className="grid gap-4 md:grid-cols-2">
+        <form onSubmit={onSubmit} className="grid gap-5 md:grid-cols-2 md:gap-4">
           <Field label="Nama Lengkap" required>
             <Input
               value={form.full_name ?? ""}
@@ -316,8 +316,8 @@ function DataForm() {
               required
             />
           </Field>
-          <div className="md:col-span-2 flex flex-wrap items-center gap-3">
-            <Button type="submit" disabled={saving}>
+          <div className="md:col-span-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={saving}>
               {saving ? "Menyimpan…" : "Simpan Data"}
             </Button>
             {saveStatus === "saving" && (
