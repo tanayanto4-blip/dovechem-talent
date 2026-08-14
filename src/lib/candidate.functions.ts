@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { papiScore } from "@/lib/papi-key";
 import { DEVICE_CONFLICT_MESSAGE } from "@/lib/candidate-session";
+import { audiencesFor, candidateLevelOf, jobLevelOfPosition, JOB_POSITIONS } from "@/lib/candidate-type";
 
 
 const CodeInput = z.object({
@@ -48,12 +49,12 @@ async function resolveActiveCode(sb: any, code: string, device?: string) {
  * Urutan dihitung per jalur kandidat (magang / karyawan) karena paket testnya
  * berbeda — nomor test harus runtut untuk masing-masing jalur.
  */
-async function activeTestOrder(sb: any, type: string): Promise<string[]> {
+async function activeTestOrder(sb: any, type: string, level?: string | null): Promise<string[]> {
   const { data } = await sb
     .from("tests")
     .select("id, audience")
     .eq("active", true)
-    .in("audience", ["both", type])
+    .in("audience", audiencesFor(type, level))
     .order("code");
   return ((data ?? []) as { id: string }[]).map((t) => t.id);
 }
@@ -75,10 +76,10 @@ function maskTest<T extends { id: string }>(test: T, order: string[]): T {
  * diperuntukkan bagi jalur kandidat ini tidak boleh dibuka walaupun ID-nya
  * ditebak.
  */
-async function assertTestForType(sb: any, testId: string, type: string) {
+async function assertTestForType(sb: any, testId: string, type: string, level?: string | null) {
   const { data } = await sb.from("tests").select("audience").eq("id", testId).maybeSingle();
   const audience = (data?.audience as string | undefined) ?? "both";
-  if (audience !== "both" && audience !== type) {
+  if (!audiencesFor(type, level).includes(audience)) {
     throw new Error("Test ini tidak diperuntukkan bagi jalur kandidat Anda.");
   }
 }
@@ -177,6 +178,7 @@ export const candidateLogin = createServerFn({ method: "POST" })
       code: codeRow.code,
       device,
       candidate_type: (codeRow as any).candidate_type ?? "karyawan",
+      job_level: candidateLevelOf(cand),
     };
   });
 
@@ -194,7 +196,7 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
         .from("tests")
         .select("*")
         .eq("active", true)
-        .in("audience", ["both", codeRow.candidate_type])
+        .in("audience", audiencesFor(codeRow.candidate_type, candidateLevelOf(cand)))
         .order("code"),
       // Scores/results are staff-only: expose progress fields only.
       sb.from("test_attempts").select("id, test_id, status, started_at, finished_at").eq("candidate_id", cand.id),
@@ -206,6 +208,7 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
     return {
       candidate: cand,
       candidate_type: codeRow.candidate_type ?? "karyawan",
+      job_level: candidateLevelOf(cand),
       files: filesQ.data ?? [],
       tests: ((testsQ.data ?? []) as any[]).map((t, _i, all) => maskTest(t, all.map((x: any) => x.id))),
       attempts: attemptsQ.data ?? [],
@@ -265,6 +268,7 @@ const ProfileInput = z.object({
   phone: z.string().trim().min(6, "Nomor telepon wajib diisi").max(30),
   email: z.string().trim().email("Email tidak valid").max(200),
   position_applied: z.string().trim().min(2, "Posisi yang dilamar wajib diisi").max(120),
+  job_position: z.string().trim().max(60).optional(),
 });
 
 export const candidateSaveProfile = createServerFn({ method: "POST" })
@@ -275,15 +279,24 @@ export const candidateSaveProfile = createServerFn({ method: "POST" })
     const { code: _c, device: _d, ...rest } = data;
     // Field wajib berbeda per jalur: magang mengisi semester, karyawan mengisi
     // lama pengalaman kerja.
+    let level: string | null = null;
     if (codeRow.candidate_type === "magang") {
       if (!rest.semester?.trim()) throw new Error("Semester saat ini wajib diisi.");
       delete (rest as any).work_experience;
+      delete (rest as any).job_position;
     } else {
       if (!rest.work_experience?.trim()) throw new Error("Pengalaman kerja wajib dipilih.");
       delete (rest as any).semester;
+      // Posisi jabatan menentukan tingkat (Staff / SPV ke atas) dan porsi soal.
+      level = jobLevelOfPosition(rest.job_position ?? null);
+      if (!level) {
+        throw new Error(
+          `Posisi jabatan wajib dipilih: ${JOB_POSITIONS.map((p) => p.value).join(", ")}.`,
+        );
+      }
     }
     await ensureCandidate(sb, codeRow.id);
-    const { error } = await sb.from("candidates").update({ ...rest, data_completed: true }).eq("code_id", codeRow.id);
+    const { error } = await sb.from("candidates").update({ ...rest, ...(level ? { job_level: level } : {}), data_completed: true }).eq("code_id", codeRow.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -303,6 +316,7 @@ const ProfileAutosaveInput = z.object({
   phone: z.string().trim().max(30).optional(),
   email: z.string().trim().email("Email tidak valid").max(200).optional(),
   position_applied: z.string().trim().max(120).optional(),
+  job_position: z.string().trim().max(60).optional(),
 });
 
 export const candidateAutosaveProfile = createServerFn({ method: "POST" })
@@ -324,6 +338,10 @@ export const candidateAutosaveProfile = createServerFn({ method: "POST" })
     if (raw.phone?.trim()) update.phone = raw.phone.trim();
     if (raw.email?.trim()) update.email = raw.email.trim();
     if (raw.position_applied?.trim()) update.position_applied = raw.position_applied.trim();
+    if (raw.job_position?.trim() && jobLevelOfPosition(raw.job_position)) {
+      update.job_position = raw.job_position.trim();
+      update.job_level = jobLevelOfPosition(raw.job_position);
+    }
     if (Object.keys(update).length === 0) return { ok: true, saved: [] };
     const { error } = await sb.from("candidates").update(update).eq("code_id", codeRow.id);
     if (error) throw new Error(error.message);
@@ -425,7 +443,7 @@ export const candidateStartTest = createServerFn({ method: "POST" })
     const cand = await ensureCandidate(sb, codeRow.id);
     if (!cand) throw new Error("Kandidat tidak ditemukan.");
     if (!cand.data_completed) throw new Error("Lengkapi data diri terlebih dahulu.");
-    await assertTestForType(sb, data.test_id, codeRow.candidate_type);
+    await assertTestForType(sb, data.test_id, codeRow.candidate_type, candidateLevelOf(cand));
     await assertTestOpen(sb, cand.id, data.test_id);
 
     let { data: attempt } = await sb.from("test_attempts").select("*").eq("candidate_id", cand.id).eq("test_id", data.test_id).maybeSingle();
@@ -439,7 +457,7 @@ export const candidateStartTest = createServerFn({ method: "POST" })
       sb.from("test_questions").select("id, question_number, question_text, options, dimension").eq("test_id", data.test_id).eq("active", true).order("question_number"),
       sb.from("test_answers").select("question_id, answer").eq("attempt_id", (attempt as any).id),
     ]);
-    const maskedTest = test.data ? maskTest(test.data as any, await activeTestOrder(sb, codeRow.candidate_type)) : test.data;
+    const maskedTest = test.data ? maskTest(test.data as any, await activeTestOrder(sb, codeRow.candidate_type, candidateLevelOf(cand))) : test.data;
     // Auto-lock: an in-progress attempt whose allotted duration has elapsed can
     // no longer be worked on. The client finalises it immediately (late submits
     // are scored from answers autosaved before the deadline).
@@ -525,7 +543,7 @@ export const candidateGetAttempt = createServerFn({ method: "POST" })
       .eq("candidate_id", cand.id)
       .single();
     if (error) throw new Error(error.message);
-    const order = await activeTestOrder(sb, codeRow.candidate_type);
+    const order = await activeTestOrder(sb, codeRow.candidate_type, candidateLevelOf(cand));
     const masked = attempt && (attempt as any).tests
       ? { ...attempt, tests: maskTest((attempt as any).tests, order) }
       : attempt;
@@ -849,10 +867,10 @@ export const candidateGetTestIntro = createServerFn({ method: "POST" })
         .createSignedUrl((test as any).voice_audio_path, 60 * 60);
       voice_audio_url = signed?.signedUrl ?? null;
     }
-    await assertTestForType(sb, data.test_id, codeRow.candidate_type);
+    await assertTestForType(sb, data.test_id, codeRow.candidate_type, candidateLevelOf(cand));
     await assertTestOpen(sb, cand.id, data.test_id);
     return {
-      test: { ...maskTest(test as any, await activeTestOrder(sb, codeRow.candidate_type)), voice_audio_url },
+      test: { ...maskTest(test as any, await activeTestOrder(sb, codeRow.candidate_type, candidateLevelOf(cand))), voice_audio_url },
       resumed: !!attempt && attempt.status !== "finished",
       data_completed: cand.data_completed,
     };

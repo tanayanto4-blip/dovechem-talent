@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Trash2, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { TrackTabs } from "@/components/track-tabs";
-import { candidateTrackOf, candidateTypeShort, type CandidateType } from "@/lib/candidate-type";
+import { candidateLevelOf, candidateTrackOf, candidateTypeShort, jobLevelLabel, type CandidateType } from "@/lib/candidate-type";
+import { LevelTabs, type LevelFilter } from "@/components/level-tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +46,7 @@ function CandidatesList() {
   const [deleting, setDeleting] = useState(false);
   const [track, setTrack] = useState<CandidateType>("magang");
   const [search, setSearch] = useState("");
+  const [level, setLevel] = useState<LevelFilter>("all");
 
   const all = (data?.candidates ?? []) as any[];
   const counts = useMemo(
@@ -54,10 +56,19 @@ function CandidatesList() {
     }),
     [all],
   );
+  const levelCounts = useMemo(() => {
+    const kar = all.filter((c) => candidateTrackOf(c) === "karyawan");
+    return {
+      all: kar.length,
+      staff: kar.filter((c) => candidateLevelOf(c) === "staff").length,
+      spv_up: kar.filter((c) => candidateLevelOf(c) === "spv_up").length,
+    };
+  }, [all]);
   const rows = useMemo(() => {
     const s = search.trim().toLowerCase();
     return all
       .filter((c) => candidateTrackOf(c) === track)
+      .filter((c) => track !== "karyawan" || level === "all" || candidateLevelOf(c) === level)
       .filter((c) =>
         !s
           ? true
@@ -65,10 +76,10 @@ function CandidatesList() {
               .toLowerCase()
               .includes(s),
       );
-  }, [all, track, search]);
+  }, [all, track, search, level]);
 
   const isMagang = track === "magang";
-  const colCount = 9;
+  const colCount = isMagang ? 9 : 10;
 
   async function confirmDelete() {
     if (!toDelete) return;
@@ -93,7 +104,10 @@ function CandidatesList() {
         <p className="text-muted-foreground">
           Data kandidat dipisah per jalur. Pilih jalur untuk melihat daftarnya.
         </p>
-        <TrackTabs value={track} onChange={setTrack} counts={counts} className="mt-4" />
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <TrackTabs value={track} onChange={setTrack} counts={counts} />
+          {track === "karyawan" && <LevelTabs value={level} onChange={setLevel} counts={levelCounts} />}
+        </div>
       </div>
 
       <Card className="shadow-card">
@@ -116,7 +130,8 @@ function CandidatesList() {
         </CardHeader>
         <CardContent>
           <div className="mb-3 text-xs text-muted-foreground">
-            Menampilkan {rows.length} dari {counts[track]} kandidat {candidateTypeShort(track).toLowerCase()}.
+            Menampilkan {rows.length} dari {counts[track]} kandidat {candidateTypeShort(track).toLowerCase()}
+            {track === "karyawan" && level !== "all" ? ` (tingkat ${jobLevelLabel(level)})` : ""}.
           </div>
           <div className="overflow-x-auto">
             <Table>
@@ -129,6 +144,7 @@ function CandidatesList() {
                   <TableHead>Pendidikan</TableHead>
                   <TableHead>{isMagang ? "Sekolah / Kampus" : "Posisi"}</TableHead>
                   <TableHead>{isMagang ? "Semester" : "Lama Bekerja"}</TableHead>
+                  {!isMagang && <TableHead>Jabatan</TableHead>}
                   <TableHead>Biodata</TableHead>
                   <TableHead>Test</TableHead>
                   <TableHead></TableHead>
@@ -149,6 +165,20 @@ function CandidatesList() {
                       <TableCell className="text-sm">{c.education ?? "-"}</TableCell>
                       <TableCell className="text-sm">{(isMagang ? c.school_name : c.position_applied) ?? "-"}</TableCell>
                       <TableCell className="text-sm">{(isMagang ? c.semester : c.work_experience) ?? "-"}</TableCell>
+                      {!isMagang && (
+                        <TableCell className="text-sm">
+                          {c.job_position ? (
+                            <div>
+                              <div>{c.job_position}</div>
+                              <Badge variant="secondary" className="mt-0.5 text-[10px]">
+                                {jobLevelLabel(candidateLevelOf(c))}
+                              </Badge>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                      )}
                       <TableCell>{c.data_completed ? <Badge className="bg-success">Lengkap</Badge> : <Badge variant="secondary">Belum</Badge>}</TableCell>
                       <TableCell className="whitespace-nowrap text-sm">{finished} selesai</TableCell>
                       <TableCell>

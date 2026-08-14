@@ -321,6 +321,8 @@ export type Database = {
           full_name: string | null
           gender: string | null
           id: string
+          job_level: string | null
+          job_position: string | null
           major: string | null
           marital_status: string | null
           nik: string | null
@@ -345,6 +347,8 @@ export type Database = {
           full_name?: string | null
           gender?: string | null
           id?: string
+          job_level?: string | null
+          job_position?: string | null
           major?: string | null
           marital_status?: string | null
           nik?: string | null
@@ -369,6 +373,8 @@ export type Database = {
           full_name?: string | null
           gender?: string | null
           id?: string
+          job_level?: string | null
+          job_position?: string | null
           major?: string | null
           marital_status?: string | null
           nik?: string | null

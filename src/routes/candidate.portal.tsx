@@ -42,7 +42,7 @@ function PortalLayout() {
   const getProfile = useServerFn(candidateGetProfile);
   // One shared session check: children reuse this cache entry, so an invalid /
   // expired code shows one clear message instead of an error on every page.
-  const { error: sessionError } = useQuery({
+  const { data: profile, error: sessionError } = useQuery({
     queryKey: ["candidate-profile", session?.code],
     queryFn: () => getProfile({ data: { code: session!.code, device: session!.device } }),
     enabled: !!session,
@@ -146,7 +146,7 @@ function PortalLayout() {
             <img src={doverLogo.url} alt="Logo PT Dover Chemical" className="h-8 w-auto shrink-0 rounded p-0.5 object-contain" />
             <div className="min-w-0">
               <div className="truncate font-display text-xs font-bold sm:text-sm">PT DOVER CHEMICAL</div>
-              <div className="truncate text-[10px] uppercase tracking-widest text-muted-foreground">{candidateTypeLabel(session?.type)}</div>
+              <div className="truncate text-[10px] uppercase tracking-widest text-muted-foreground">{candidateTypeLabel(session?.type, (profile as any)?.job_level)}</div>
             </div>
           </Link>
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">

@@ -44,18 +44,26 @@ export function TestAudienceEditor({
         <Badge variant="secondary">{testAudienceLabel(current)}</Badge>
       </div>
       {isAdmin ? (
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {TEST_AUDIENCES.map((a) => (
             <Button
               key={a}
               type="button"
               size="sm"
               variant={current === a ? "default" : "outline"}
-              className="flex-1 text-xs"
+              className="text-xs"
               disabled={mut.isPending}
               onClick={() => mut.mutate(a)}
             >
-              {a === "both" ? "Keduanya" : a === "magang" ? "Magang" : "Karyawan"}
+              {a === "both"
+                ? "Keduanya"
+                : a === "magang"
+                  ? "Magang"
+                  : a === "karyawan"
+                    ? "Semua Karyawan"
+                    : a === "karyawan_staff"
+                      ? "Staff"
+                      : "SPV ke atas"}
             </Button>
           ))}
         </div>
