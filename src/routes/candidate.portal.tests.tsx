@@ -35,13 +35,32 @@ function TestsPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-3xl font-bold text-primary">Daftar Test</h1>
-      {!data?.candidate?.data_completed && (
+      {error && (
+        <Card className="border-destructive/40 bg-destructive/10">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4 text-sm">
+            <span>Daftar test gagal dimuat. Periksa koneksi internet Anda.</span>
+            <Button size="sm" variant="outline" onClick={() => void refetch()}>Muat ulang</Button>
+          </CardContent>
+        </Card>
+      )}
+      {isLoading && (
+        <div className="grid gap-4 md:grid-cols-2">
+          {[0, 1, 2, 3].map((i) => (
+            <Card key={i} className="shadow-card"><CardContent className="p-6">
+              <div className="h-6 w-28 animate-pulse rounded bg-muted" />
+              <div className="mt-4 h-10 w-full animate-pulse rounded bg-muted" />
+            </CardContent></Card>
+          ))}
+        </div>
+      )}
+      {!isLoading && !error && !data?.candidate?.data_completed && (
         <Card className="border-warning/40 bg-warning/10">
           <CardContent className="py-4 text-sm">Lengkapi <b>Data Diri</b> terlebih dahulu sebelum mengerjakan test.</CardContent>
         </Card>
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
+
         {(data?.tests ?? []).map((t: any, idx: number) => {
           const attempt = attempts.get(t.id) as any;
           const acc = access.get(t.id) as any;
