@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getCandidateDetail, getFileSignedUrl, listCandidateFileVersions } from "@/lib/admin.functions";
 import { computeChecklist } from "@/lib/document-checklist";
+import { jobLevelLabel } from "@/lib/candidate-type";
 import { TestAccessControl } from "@/components/test-access-control";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -74,6 +75,8 @@ function CandidateDetail() {
           <Field label="Status" value={c.marital_status} />
           <Field label="Pendidikan" value={c.education} />
           <Field label="Posisi" value={c.position_applied} />
+          <Field label="Posisi Jabatan" value={c.job_position} />
+          <Field label="Tingkat Jabatan" value={c.job_level ? jobLevelLabel(c.job_level) : null} />
           <Field label="Alamat" value={c.address} />
         </CardContent>
       </Card>
