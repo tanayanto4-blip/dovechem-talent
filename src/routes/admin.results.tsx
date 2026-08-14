@@ -397,6 +397,21 @@ function ResultsBank() {
                     </button>
                     <Button
                       size="sm"
+                      variant="outline"
+                      className="shrink-0"
+                      disabled={resumeKey === g.key}
+                      title="Unduh Recruitment Resume (Excel) kandidat ini"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void downloadResume(g);
+                      }}
+                    >
+                      <FileSpreadsheet className="mr-1 h-3.5 w-3.5" />
+                      {resumeKey === g.key ? "Menyiapkan..." : "Resume"}
+                    </Button>
+                    <Button
+
+                      size="sm"
                       variant="secondary"
                       className="shrink-0"
                       disabled={bulkKey === g.key}
