@@ -13,7 +13,7 @@ import { TestDurationEditor } from "@/components/test-duration-editor";
 import { TestPublishToggle } from "@/components/publish-toggle";
 import { TestAudienceEditor } from "@/components/test-audience-editor";
 import { TrackTabs } from "@/components/track-tabs";
-import { audienceMatches, testAudienceLabel, jobLevelLabel, type CandidateType } from "@/lib/candidate-type";
+import { audienceMatches, testAudienceLabel, type CandidateType } from "@/lib/candidate-type";
 import { LevelTabs, type LevelFilter } from "@/components/level-tabs";
 
 
