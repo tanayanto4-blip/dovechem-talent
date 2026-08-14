@@ -12,6 +12,7 @@ export const BIODATA_FIELDS: BiodataField[] = [
   { key: "phone", label: "Telp/HP" },
   { key: "email", label: "Email" },
   { key: "position_applied", label: "Posisi" },
+  { key: "job_position", label: "Posisi Jabatan" },
 ];
 
 const BRAND = { r: 12, g: 58, b: 110 };
