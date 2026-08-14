@@ -13,7 +13,7 @@ export type Question = {
   dimension?: string | null;
 };
 
-type TestType = "mcq" | "disc" | "kraepelin" | "mbti" | "eq" | "wpt" | "papi" | "pauli";
+type TestType = "mcq" | "disc" | "kraepelin" | "mbti" | "eq" | "wpt" | "papi" | "pauli" | "ishihara";
 
 export interface TestQuestionCardProps {
   q: Question;
