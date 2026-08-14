@@ -178,7 +178,56 @@ function ResultsBank() {
   }
 
 
+  const [resumeKey, setResumeKey] = useState<string | null>(null);
+
+  /** Recruitment Resume (Excel) — biodata + hasil buta warna, IQ (WPT), dan Pauli. */
+  async function downloadResume(g: Group) {
+    setResumeKey(g.key);
+    try {
+      const byType = (t: string) => g.attempts.find((a) => a.tests?.test_type === t);
+      const ishA = byType("ishihara");
+      const wptA = byType("wpt");
+      const pauliA = byType("pauli");
+      const base = wptA ?? ishA ?? pauliA ?? g.attempts[0];
+      if (!base) throw new Error("Belum ada hasil test untuk kandidat ini");
+
+      const baseDetail = await answerRows(base.id);
+      const cand = baseDetail.d.attempt?.candidates ?? {};
+      const wptAnswers = wptA
+        ? wptA.id === base.id
+          ? baseDetail.rows
+          : (await answerRows(wptA.id)).rows
+        : null;
+
+      const testDate =
+        [ishA, wptA, pauliA, base].find((a) => a?.finished_at)?.finished_at ?? base.started_at ?? null;
+
+      await exportResumeExcel({
+        candidate: {
+          full_name: cand.full_name ?? g.name,
+          position_applied: cand.position_applied ?? g.position,
+          education: cand.education,
+          major: cand.major,
+          school_name: cand.school_name,
+          age: cand.age,
+          birth_date: cand.birth_date,
+          work_experience: cand.work_experience,
+        },
+        testDate,
+        ishihara: ishA?.result ?? null,
+        wptAnswers,
+        pauli: pauliA?.result ?? null,
+      });
+      toast.success(`Recruitment Resume ${g.name} diunduh`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal membuat Recruitment Resume");
+    } finally {
+      setResumeKey(null);
+    }
+  }
+
   const [bulkKey, setBulkKey] = useState<string | null>(null);
+
 
   async function downloadGroupDocs(g: Group) {
     setBulkKey(g.key);
