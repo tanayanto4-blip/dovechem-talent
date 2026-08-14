@@ -83,17 +83,17 @@ describe("candidateSubmitTest — static guarantees", () => {
 
   it("replaces answers for the attempt (scoped to attempt_id, upsert-idempotent)", () => {
     expect(body).toMatch(
-      /from\(["']test_answers["']\)[\s\S]{0,80}\.delete\(\)[\s\S]{0,80}\.eq\(["']attempt_id["'],\s*data\.attempt_id\)/,
+      /from\(["']test_answers["']\)[\s\S]{0,80}\.\s*delete\(\)[\s\S]{0,80}\.eq\(["']attempt_id["'],\s*data\.attempt_id\)/,
     );
     expect(body).toMatch(
-      /from\(["']test_answers["']\)[\s\S]{0,80}\.upsert\([\s\S]*?attempt_id:\s*data\.attempt_id/,
+      /from\(["']test_answers["']\)[\s\S]{0,80}\s*\.\s*upsert\([\s\S]*?attempt_id:\s*data\.attempt_id/,
     );
     expect(body).toMatch(/onConflict:\s*["']attempt_id,question_id["']/);
   });
 
   it("updates the attempt row with status/finished_at/score/result", () => {
     expect(body).toMatch(
-      /from\(["']test_attempts["']\)\.update\(\{[\s\S]*status:\s*["']finished["'][\s\S]*finished_at[\s\S]*score,[\s\S]*result,?[\s\S]*\}\)\.eq\(["']id["'],\s*data\.attempt_id\)/,
+      /from\(["']test_attempts["']\)\s*\.\s*update\(\{[\s\S]*status:\s*["']finished["'][\s\S]*finished_at[\s\S]*score,[\s\S]*result,?[\s\S]*\}\)\.eq\(["']id["'],\s*data\.attempt_id\)/,
     );
   });
 
