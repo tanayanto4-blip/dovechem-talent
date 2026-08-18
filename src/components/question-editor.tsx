@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { upsertTestQuestion, deleteTestQuestion, updateTestMeta } from "@/lib/admin.functions";
-import { useIsAdmin } from "@/components/publish-toggle";
+import { useIsAdmin, useIsStaff } from "@/components/publish-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -85,7 +85,7 @@ export function QuestionEditorDialog({
   nextNumber?: number;
   label?: string;
 }) {
-  const isAdmin = useIsAdmin();
+  const isAdmin = useIsStaff();
   const invalidate = useInvalidate();
   const save = useServerFn(upsertTestQuestion);
   const [open, setOpen] = useState(false);
@@ -362,7 +362,7 @@ export function QuestionEditorDialog({
 
 /** Tombol hapus satu soal (Super Admin). */
 export function QuestionDeleteButton({ id, number }: { id: string; number?: number }) {
-  const isAdmin = useIsAdmin();
+  const isAdmin = useIsStaff();
   const invalidate = useInvalidate();
   const del = useServerFn(deleteTestQuestion);
   const mutation = useMutation({

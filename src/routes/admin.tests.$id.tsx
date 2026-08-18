@@ -18,6 +18,8 @@ import {
   QuestionDeleteButton,
   TestMetaEditor,
 } from "@/components/question-editor";
+import { QuestionImportDialog } from "@/components/question-import";
+import { QuestionReorderButtons } from "@/components/question-reorder";
 
 export const Route = createFileRoute("/admin/tests/$id")({
   head: () => ({
@@ -93,6 +95,7 @@ function TestDetail() {
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <BulkQuestionPublish testId={t.id} />
+          <QuestionImportDialog testId={t.id} />
           <TestMetaEditor testId={t.id} name={t.name} description={t.description} />
           <QuestionEditorDialog
             testId={t.id}
@@ -113,6 +116,11 @@ function TestDetail() {
                 </CardTitle>
                 <div className="flex flex-wrap items-center gap-2">
                   {q.dimension && <Badge variant="outline">Dim: {q.dimension}</Badge>}
+                  <QuestionReorderButtons
+                    testId={t.id}
+                    orderedIds={(data.questions as any[]).map((x) => x.id)}
+                    index={i}
+                  />
                   <QuestionPublishToggle id={q.id} active={q.active !== false} />
                   <QuestionEditorDialog testId={t.id} question={q} />
                   <QuestionDeleteButton id={q.id} number={q.question_number ?? i + 1} />
