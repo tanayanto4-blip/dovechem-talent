@@ -826,8 +826,20 @@ function TakeTest() {
           />
         )}
 
-        <div className={isPauli || isWpt ? "hidden" : "space-y-4"}>
-          {(isPauli || isWpt ? [] : data.questions).map((q: any, i: number) => (
+        {isRmib && (
+          <RmibSheet
+            questions={data.questions as any}
+            answers={answers}
+            gender={(data as any).gender}
+            onChange={(qid, value) => {
+              setAnswers((prev) => ({ ...prev, [qid]: value }));
+              persistDebounced(qid, value, 800);
+            }}
+          />
+        )}
+
+        <div className={isPauli || isWpt || isRmib ? "hidden" : "space-y-4"}>
+          {(isPauli || isWpt || isRmib ? [] : data.questions).map((q: any, i: number) => (
             <TestQuestionCard
               key={q.id}
               q={q}
