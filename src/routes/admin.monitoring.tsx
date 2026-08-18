@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LiveMonitor } from "@/components/live-monitor";
+import { TestErrorMonitor } from "@/components/test-error-monitor";
+
 import { AlertTriangle, CheckCircle2, RefreshCw, Trash2, Download } from "lucide-react";
 
 export const Route = createFileRoute("/admin/monitoring")({
