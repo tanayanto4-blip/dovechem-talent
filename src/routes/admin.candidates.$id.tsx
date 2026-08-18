@@ -98,25 +98,32 @@ function CandidateDetail() {
 
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle>Data Diri</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <span>Data Diri</span>
+            <Badge variant="secondary">{isMagang ? "Magang" : "Karyawan"}</Badge>
+          </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
-          <Field label="NIK" value={c.nik} />
-          <Field
-            label="Tempat/Tgl Lahir"
-            value={`${c.birth_place ?? "-"} / ${c.birth_date ?? "-"}`}
-          />
+          <Field label="Nama Lengkap" value={c.full_name} />
           <Field label="Jenis Kelamin" value={c.gender} />
-          <Field label="Email" value={c.email} />
-          <Field label="No HP" value={c.phone} />
-          <Field label="Status" value={c.marital_status} />
+          <Field label="Usia" value={c.age ? `${c.age} tahun` : null} />
+          <Field label="Nama Sekolah / Universitas" value={c.school_name} />
           <Field label="Pendidikan" value={c.education} />
-          <Field label="Posisi" value={c.position_applied} />
-          <Field label="Posisi Jabatan" value={c.job_position} />
-          <Field label="Tingkat Jabatan" value={c.job_level ? jobLevelLabel(c.job_level) : null} />
-          <Field label="Alamat" value={c.address} />
+          <Field label="Jurusan" value={c.major} />
+          <Field label="Telp / HP" value={c.phone} />
+          <Field label="Email" value={c.email} />
+          <Field label="Posisi Dilamar" value={c.position_applied} />
+          {!isMagang && <Field label="Pernah Bekerja" value={c.work_experience} />}
+          {!isMagang && <Field label="Posisi Jabatan" value={c.job_position} />}
+          {!isMagang && (
+            <Field
+              label="Tingkat Jabatan"
+              value={c.job_level ? jobLevelLabel(c.job_level) : null}
+            />
+          )}
         </CardContent>
       </Card>
+
 
       <Card className="shadow-card">
         <CardHeader>
