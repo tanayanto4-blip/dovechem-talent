@@ -552,7 +552,7 @@ export const candidateStartTest = createServerFn({ method: "POST" })
       attempt = ins.data;
     }
     const [test, questions, answers] = await Promise.all([
-      sb.from("tests").select("*").eq("id", data.test_id).maybeSingle(),
+      sb.from("tests").select("*").eq("id", data.test_id).single(),
       sb
         .from("test_questions")
         .select("id, question_number, question_text, options, dimension")
@@ -616,8 +616,8 @@ export const candidateSaveAnswer = createServerFn({ method: "POST" })
       .select("id, status, test_id, started_at, tests(duration_minutes)")
       .eq("id", data.attempt_id)
       .eq("candidate_id", cand.id)
-      .maybeSingle();
-    if (!attempt) throw new Error("Sesi test tidak ditemukan atau sudah direset oleh tim HR. Silakan kembali ke daftar test.");
+      .single();
+    if (!attempt) throw new Error("Attempt tidak valid.");
     if ((attempt as any).status === "finished") throw new Error("Attempt sudah selesai.");
     // Server-side time limit: reject autosaves after the allotted duration.
     const dur = Number((attempt as any).tests?.duration_minutes) || 0;
@@ -663,9 +663,8 @@ export const candidateGetAttempt = createServerFn({ method: "POST" })
       )
       .eq("id", data.attempt_id)
       .eq("candidate_id", cand.id)
-      .maybeSingle();
+      .single();
     if (error) throw new Error(error.message);
-    if (!attempt) throw new Error("Sesi test tidak ditemukan. Silakan kembali ke daftar test.");
     const order = await activeTestOrder(sb, codeRow.candidate_type, candidateLevelOf(cand));
     const masked =
       attempt && (attempt as any).tests
@@ -692,8 +691,8 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       .select("*, tests(*)")
       .eq("id", data.attempt_id)
       .eq("candidate_id", cand.id)
-      .maybeSingle();
-    if (!attempt) throw new Error("Sesi test tidak ditemukan atau sudah direset oleh tim HR. Silakan kembali ke daftar test.");
+      .single();
+    if (!attempt) throw new Error("Attempt tidak valid.");
     await assertTestOpen(sb, cand.id, (attempt as any).test_id);
     // Idempotent: repeat submits are a no-op. Scoring output is never returned
     // to the candidate — results are staff-only.
@@ -1062,7 +1061,7 @@ export const candidateGetTestIntro = createServerFn({ method: "POST" })
         "id, code, name, description, test_type, duration_minutes, voice_instruction, voice_enabled, voice_lang, voice_rate, voice_autoplay, voice_mode, voice_audio_path, voice_audio_name, voice_audio_mime",
       )
       .eq("id", data.test_id)
-      .maybeSingle();
+      .single();
     if (error || !test) throw new Error("Test tidak ditemukan.");
     const { data: attempt } = await sb
       .from("test_attempts")

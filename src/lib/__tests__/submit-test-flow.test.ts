@@ -74,7 +74,7 @@ describe("candidateSubmitTest — static guarantees", () => {
   });
 
   it("rejects an unknown attempt and short-circuits a finished attempt", () => {
-    expect(body).toMatch(/if\s*\(!attempt\)\s*throw new Error\(/);
+    expect(body).toMatch(/if\s*\(!attempt\)\s*throw new Error\(["']Attempt tidak valid\.["']\)/);
     // Re-submitting a finished attempt is an idempotent no-op (no re-scoring).
     expect(body).toMatch(
       /attempt\.status\s*===\s*["']finished["'][\s\S]{0,120}return\s*\{\s*ok:\s*true,\s*idempotent:\s*true/,

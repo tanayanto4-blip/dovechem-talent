@@ -63,37 +63,19 @@ const TRANSIENT_NETWORK = [
   "err_internet_disconnected",
 ];
 
-/**
- * Peringatan internal React / ekstensi browser: bukan gangguan yang dialami
- * kandidat, jadi tidak perlu masuk daftar error yang harus ditangani.
- */
-const IGNORED = [
-  "hydration failed",
-  "server rendered html didn't match",
-  "error while hydrating",
-  "minified react error #418",
-  "minified react error #423",
-  "minified react error #425",
-  "resizeobserver loop",
-  "script error",
-  "chrome-extension://",
-];
-
 let pageUnloading = false;
 
-function matches(message: string, list: string[]) {
+function isTransientNetwork(message: string) {
   const m = message.toLowerCase();
-  return list.some((p) => m.includes(p));
+  return TRANSIENT_NETWORK.some((p) => m.includes(p));
 }
 
 export function captureAppError(error: unknown, context: Record<string, unknown> = {}) {
   if (typeof window === "undefined") return;
   const { message, stack } = describe(error);
   if (!message) return;
-  if (matches(message, IGNORED)) return;
   // Halaman sedang ditutup / perangkat offline: request yang batal tidak dicatat.
-  if (matches(message, TRANSIENT_NETWORK) && (pageUnloading || navigator.onLine === false)) return;
-
+  if (isTransientNetwork(message) && (pageUnloading || navigator.onLine === false)) return;
   const route = window.location.pathname;
   if (!shouldEmit(`${route}|${message}`)) return;
 
