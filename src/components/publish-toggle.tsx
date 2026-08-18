@@ -88,7 +88,7 @@ export function TestPublishToggle({
 
 /** Toggle publish untuk satu soal. */
 export function QuestionPublishToggle({ id, active }: { id: string; active: boolean }) {
-  const isAdmin = useIsAdmin();
+  const isAdmin = useIsStaff();
   const invalidate = useInvalidate();
   const save = useServerFn(setQuestionsPublished);
 
@@ -118,7 +118,7 @@ export function QuestionPublishToggle({ id, active }: { id: string; active: bool
 
 /** Publish/unpublish semua soal pada satu test. */
 export function BulkQuestionPublish({ testId }: { testId: string }) {
-  const isAdmin = useIsAdmin();
+  const isAdmin = useIsStaff();
   const invalidate = useInvalidate();
   const save = useServerFn(setAllQuestionsPublished);
 
