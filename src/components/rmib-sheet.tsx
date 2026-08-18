@@ -246,13 +246,6 @@ export function RmibSheet({
         </CardContent>
       </Card>
 
-      {missingSideCount > 0 && (
-        <div className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-foreground">
-          <AlertCircle className="mb-1 inline h-4 w-4 text-warning" /> <b>{missingSideCount}</b>{" "}
-          baris sudah diisi angka tetapi belum memilih kolom Laki-laki atau Perempuan. Ketuk salah
-          satu kolom di setiap baris.
-        </div>
-      )}
     </div>
   );
 }
