@@ -160,28 +160,19 @@ export function RmibSheet({
               <tbody className="divide-y">
                 {jobs.map((job, i) => {
                   const v = values[i];
-                  const side = sides[i];
                   const dup = v !== null && dups.has(v);
-                  const selectedLabel = side === "M" ? job.male : side === "F" ? job.female : null;
+                  const label = activeSide === "F" ? job.female : job.male;
                   return (
                     <tr key={i} className="align-middle">
                       <td className="border-r px-2 py-2 text-center text-xs text-muted-foreground">
                         {i + 1}
                       </td>
                       <td
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => setSide(i, "M")}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") setSide(i, "M");
-                        }}
-                        className={`border-r px-3 py-2 text-[13px] leading-snug sm:text-sm cursor-pointer transition ${
-                          side === "M"
-                            ? "bg-primary/10 font-semibold text-primary"
-                            : "text-foreground hover:bg-accent/50"
+                        className={`border-r px-3 py-2 text-[13px] leading-snug sm:text-sm ${
+                          activeSide === "M"
+                            ? "font-semibold text-foreground"
+                            : "text-muted-foreground/60"
                         }`}
-                        aria-label={`Pilih pekerjaan laki-laki: ${job.male}`}
-                        aria-pressed={side === "M"}
                       >
                         {job.male}
                       </td>
@@ -190,38 +181,26 @@ export function RmibSheet({
                           inputMode="numeric"
                           value={v === null ? "" : String(v)}
                           onChange={(e) => setAt(i, e.target.value)}
-                          placeholder={side ? "_" : "pilih"}
-                          disabled={side !== "M" && side !== "F"}
-                          aria-label={
-                            selectedLabel
-                              ? `Peringkat untuk ${selectedLabel}`
-                              : `Pilih pekerjaan laki-laki atau perempuan baris ${i + 1} terlebih dahulu`
-                          }
+                          placeholder="_"
+                          aria-label={`Peringkat untuk ${label}`}
                           className={`mx-auto h-10 w-14 px-0 text-center font-bold ${
                             dup ? "border-destructive text-destructive" : ""
                           }`}
                         />
                       </td>
                       <td
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => setSide(i, "F")}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") setSide(i, "F");
-                        }}
-                        className={`px-3 py-2 text-[13px] leading-snug sm:text-sm cursor-pointer transition ${
-                          side === "F"
-                            ? "bg-primary/10 font-semibold text-primary"
-                            : "text-foreground hover:bg-accent/50"
+                        className={`px-3 py-2 text-[13px] leading-snug sm:text-sm ${
+                          activeSide === "F"
+                            ? "font-semibold text-foreground"
+                            : "text-muted-foreground/60"
                         }`}
-                        aria-label={`Pilih pekerjaan perempuan: ${job.female}`}
-                        aria-pressed={side === "F"}
                       >
                         {job.female}
                       </td>
                     </tr>
                   );
                 })}
+
               </tbody>
             </table>
           </div>
