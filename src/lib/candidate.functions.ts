@@ -317,7 +317,6 @@ const ProfileInput = z.object({
   education: z.string().trim().min(1, "Pendidikan wajib dipilih").max(120),
   major: z.string().trim().min(1, "Jurusan wajib diisi").max(120),
   work_experience: WorkExperienceSchema.optional(),
-  semester: z.string().trim().max(40).optional(),
   age: z.coerce.number().int().min(15, "Usia wajib dipilih").max(70),
   phone: z.string().trim().min(6, "Nomor telepon wajib diisi").max(30),
   email: z.string().trim().email("Email tidak valid").max(200),
@@ -331,16 +330,14 @@ export const candidateSaveProfile = createServerFn({ method: "POST" })
     const sb = await admin();
     const codeRow = await resolveActiveCode(sb, data.code, (data as any).device);
     const { code: _c, device: _d, ...rest } = data;
-    // Field wajib berbeda per jalur: magang mengisi semester, karyawan mengisi
-    // lama pengalaman kerja.
+    // Field wajib berbeda per jalur: magang cukup biodata dasar, karyawan
+    // mengisi lama pengalaman kerja dan posisi jabatan.
     let level: string | null = null;
     if (codeRow.candidate_type === "magang") {
-      if (!rest.semester?.trim()) throw new Error("Semester saat ini wajib diisi.");
       delete (rest as any).work_experience;
       delete (rest as any).job_position;
     } else {
       if (!rest.work_experience?.trim()) throw new Error("Pengalaman kerja wajib dipilih.");
-      delete (rest as any).semester;
       // Posisi jabatan menentukan tingkat (Staff / Senior Staff) dan porsi soal.
       level = jobLevelOfPosition(rest.job_position ?? null);
       if (!level) {
@@ -379,7 +376,6 @@ const ProfileAutosaveInput = z.object({
   education: z.string().trim().max(120).optional(),
   major: z.string().trim().max(120).optional(),
   work_experience: WorkExperienceSchema.optional(),
-  semester: z.string().trim().max(40).optional(),
   age: z.coerce.number().int().min(15).max(70).optional(),
   phone: z.string().trim().max(30).optional(),
   email: z.string().trim().email("Email tidak valid").max(200).optional(),
@@ -401,7 +397,6 @@ export const candidateAutosaveProfile = createServerFn({ method: "POST" })
     if (raw.education?.trim()) update.education = raw.education.trim();
     if (raw.major?.trim()) update.major = raw.major.trim();
     if (raw.work_experience?.trim()) update.work_experience = raw.work_experience.trim();
-    if (raw.semester?.trim()) update.semester = raw.semester.trim();
     if (raw.age != null) update.age = raw.age;
     if (raw.phone?.trim()) update.phone = raw.phone.trim();
     if (raw.email?.trim()) update.email = raw.email.trim();

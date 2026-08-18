@@ -252,7 +252,7 @@ function CandidatesList() {
                   <TableHead>No. HP</TableHead>
                   <TableHead>Pendidikan</TableHead>
                   <TableHead>{isMagang ? "Sekolah / Kampus" : "Posisi"}</TableHead>
-                  <TableHead>{isMagang ? "Semester" : "Lama Bekerja"}</TableHead>
+                  <TableHead>{isMagang ? "Jurusan" : "Lama Bekerja"}</TableHead>
                   {!isMagang && <TableHead>Jabatan</TableHead>}
                   <TableHead>Biodata</TableHead>
                   <TableHead>Test</TableHead>
@@ -282,7 +282,7 @@ function CandidatesList() {
                         {(isMagang ? c.school_name : c.position_applied) ?? "-"}
                       </TableCell>
                       <TableCell className="text-sm">
-                        {(isMagang ? c.semester : c.work_experience) ?? "-"}
+                        {(isMagang ? c.major : c.work_experience) ?? "-"}
                       </TableCell>
                       {!isMagang && (
                         <TableCell className="text-sm">
