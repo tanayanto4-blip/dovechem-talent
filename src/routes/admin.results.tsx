@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listAllAttempts, getAttemptDetail, deleteCandidateResults } from "@/lib/admin.functions";
 import { exportMbtiExcel } from "@/lib/mbti-excel";
+import { exportProfilingExcel } from "@/lib/profiling-excel";
 import { exportEqExcel } from "@/lib/eq-excel";
 import { exportWptExcel } from "@/lib/wpt-excel";
 import { exportPapiExcel } from "@/lib/papi-excel";
