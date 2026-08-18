@@ -191,12 +191,17 @@ function MonitoringPage() {
       <Tabs defaultValue="live">
         <TabsList>
           <TabsTrigger value="live">Live Kandidat</TabsTrigger>
+          <TabsTrigger value="test">Error Test</TabsTrigger>
           <TabsTrigger value="error">Monitor Error</TabsTrigger>
         </TabsList>
         <TabsContent value="live" className="mt-4">
           <LiveMonitor isAdmin={isAdmin} />
         </TabsContent>
+        <TabsContent value="test" className="mt-4">
+          <TestErrorMonitor isAdmin={isAdmin} />
+        </TabsContent>
         <TabsContent value="error" className="mt-4 space-y-6">
+
           <div className="grid gap-4 sm:grid-cols-3">
             <Card>
               <CardContent className="p-4">
