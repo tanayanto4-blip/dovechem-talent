@@ -52,7 +52,7 @@ export function RmibSheet({
 
   const groupIndex = Math.max(0, q.question_number - 1);
   const group = RMIB_GROUPS[groupIndex];
-  const code = (q.options as any)?.code ?? group?.code ?? String(q.question_number);
+  const code = q.options?.code ?? group?.code ?? String(q.question_number);
   const jobs = jobsFor(q, groupIndex);
   const defaultSide: RmibSide = String(gender ?? "")
     .toLowerCase()
