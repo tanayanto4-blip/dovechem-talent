@@ -73,6 +73,54 @@ export function LiveMonitor({ isAdmin }: { isAdmin: boolean }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const autoFn = useServerFn(autoRecoverStuckCandidates);
+  const [autoOn, setAutoOn] = useState(false);
+  const [lastRun, setLastRun] = useState<{ at: string; count: number } | null>(null);
+  const runningRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setAutoOn(window.localStorage.getItem("auto-recovery") === "on");
+  }, []);
+
+  const autoRecover = useMutation({
+    mutationFn: () => autoFn({ data: { dry_run: false } }),
+    onSuccess: (res) => {
+      setLastRun({ at: res.ran_at, count: res.actions.length });
+      if (res.actions.length) {
+        toast.success(`Auto-recovery: ${res.actions.length} tindakan perbaikan dijalankan`);
+        invalidate();
+      }
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  useEffect(() => {
+    if (!autoOn || !isAdmin) return;
+    const tick = async () => {
+      if (runningRef.current) return;
+      runningRef.current = true;
+      try {
+        await autoRecover.mutateAsync();
+      } catch {
+        /* error sudah ditampilkan lewat toast */
+      } finally {
+        runningRef.current = false;
+      }
+    };
+    void tick();
+    const id = setInterval(tick, 60_000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOn, isAdmin]);
+
+  const toggleAuto = (v: boolean) => {
+    setAutoOn(v);
+    window.localStorage.setItem("auto-recovery", v ? "on" : "off");
+    toast.info(v ? "Mode auto-recovery aktif" : "Mode auto-recovery dimatikan");
+  };
+
+
   const s = data?.summary;
   const cards = [
     { label: "Kandidat online", value: s?.online ?? 0, icon: Users },
