@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { testErrorMonitor, resolveErrorsBulk } from "@/lib/monitoring.functions";
+import { testErrorMonitor, resolveErrorsBulk, resolveErrorEvent } from "@/lib/monitoring.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { AlertTriangle, CheckCircle2, RefreshCw, Bug, FlaskConical } from "lucide-react";
 
 const INCIDENT_LABEL: Record<string, string> = {
@@ -30,10 +33,12 @@ export function TestErrorMonitor({ isAdmin }: { isAdmin: boolean }) {
   const qc = useQueryClient();
   const listFn = useServerFn(testErrorMonitor);
   const bulkFn = useServerFn(resolveErrorsBulk);
+  const oneFn = useServerFn(resolveErrorEvent);
+  const [onlyOpen, setOnlyOpen] = useState(true);
 
   const { data, isFetching, refetch } = useQuery({
-    queryKey: ["test-error-monitor"],
-    queryFn: () => listFn({ data: { limit: 300 } }),
+    queryKey: ["test-error-monitor", onlyOpen],
+    queryFn: () => listFn({ data: { onlyOpen, limit: 300 } }),
     refetchInterval: 20_000,
   });
 
@@ -47,6 +52,15 @@ export function TestErrorMonitor({ isAdmin }: { isAdmin: boolean }) {
     mutationFn: (ids: string[]) => bulkFn({ data: { ids, resolved: true } }),
     onSuccess: (r) => {
       toast.success(`${r.count} error ditandai sudah ditangani`);
+      invalidate();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const one = useMutation({
+    mutationFn: (v: { id: string; resolved: boolean }) => oneFn({ data: v }),
+    onSuccess: () => {
+      toast.success("Status error diperbarui");
       invalidate();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -77,6 +91,12 @@ export function TestErrorMonitor({ isAdmin }: { isAdmin: boolean }) {
         </Card>
         <Card>
           <CardContent className="flex flex-wrap items-center gap-3 p-4">
+            <div className="flex items-center gap-2">
+              <Switch id="test-only-open" checked={onlyOpen} onCheckedChange={setOnlyOpen} />
+              <Label htmlFor="test-only-open" className="text-sm">
+                Hanya yang belum ditangani
+              </Label>
+            </div>
             <Button
               size="sm"
               variant="outline"
@@ -102,7 +122,7 @@ export function TestErrorMonitor({ isAdmin }: { isAdmin: boolean }) {
             <CardTitle className="flex flex-wrap items-center gap-2 text-base">
               <Bug className="h-4 w-4 text-destructive" />
               {g.test_name}
-              <Badge variant="destructive">{g.open} terbuka</Badge>
+              <Badge variant={g.open ? "destructive" : "secondary"}>{g.open} terbuka</Badge>
               <Badge variant="outline">{g.total} kejadian</Badge>
               {g.last_at && (
                 <span className="text-xs font-normal text-muted-foreground">
@@ -115,7 +135,7 @@ export function TestErrorMonitor({ isAdmin }: { isAdmin: boolean }) {
                   variant="outline"
                   className="ml-auto"
                   disabled={bulk.isPending}
-                  onClick={() => bulk.mutate(g.items.map((i) => i.id))}
+                  onClick={() => bulk.mutate(g.items.filter((i) => !i.resolved).map((i) => i.id))}
                 >
                   <CheckCircle2 className="mr-2 h-4 w-4" /> Tandai semua ditangani
                 </Button>
@@ -126,7 +146,9 @@ export function TestErrorMonitor({ isAdmin }: { isAdmin: boolean }) {
             {g.items.map((i) => (
               <div key={i.id} className="rounded-md border p-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="destructive">Terbuka</Badge>
+                  <Badge variant={i.resolved ? "secondary" : "destructive"}>
+                    {i.resolved ? "Ditangani" : "Terbuka"}
+                  </Badge>
                   <Badge variant="outline">{label(i.source)}</Badge>
                   {i.practice && (
                     <Badge variant="secondary" className="gap-1">
@@ -158,10 +180,12 @@ export function TestErrorMonitor({ isAdmin }: { isAdmin: boolean }) {
                   <div className="mt-3">
                     <Button
                       size="sm"
-                      disabled={bulk.isPending}
-                      onClick={() => bulk.mutate([i.id])}
+                      variant={i.resolved ? "outline" : "default"}
+                      disabled={one.isPending}
+                      onClick={() => one.mutate({ id: i.id, resolved: !i.resolved })}
                     >
-                      <CheckCircle2 className="mr-2 h-4 w-4" /> Tandai sudah ditangani
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      {i.resolved ? "Buka kembali" : "Tandai sudah ditangani"}
                     </Button>
                   </div>
                 )}

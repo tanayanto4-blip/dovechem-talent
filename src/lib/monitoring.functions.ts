@@ -447,6 +447,7 @@ export const testErrorMonitor = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z
       .object({
+        onlyOpen: z.boolean().default(true),
         limit: z.number().int().min(1).max(500).default(300),
       })
       .parse(d ?? {}),
@@ -454,12 +455,13 @@ export const testErrorMonitor = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: rows, error } = await supabaseAdmin
+    let q = supabaseAdmin
       .from("error_events")
       .select("*")
-      .eq("resolved", false)
       .order("occurred_at", { ascending: false })
       .limit(data.limit);
+    if (data.onlyOpen) q = q.eq("resolved", false);
+    const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
 
     const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -482,6 +484,7 @@ export const testErrorMonitor = createServerFn({ method: "POST" })
       route: string | null;
       actor_label: string | null;
       stack: string | null;
+      resolved: boolean;
       candidate_id: string | null;
       practice: boolean;
     };
@@ -502,6 +505,7 @@ export const testErrorMonitor = createServerFn({ method: "POST" })
         route: r.route,
         actor_label: r.actor_label,
         stack: r.stack,
+        resolved: r.resolved,
         candidate_id:
           typeof ctx["candidate_id"] === "string" && UUID.test(ctx["candidate_id"])
             ? ctx["candidate_id"]
@@ -527,7 +531,7 @@ export const testErrorMonitor = createServerFn({ method: "POST" })
         test_id: g.test_id,
         test_name: g.test_id ? (names.get(g.test_id) ?? "Test tidak dikenal") : "Tanpa test",
         total: g.items.length,
-        open: g.items.length,
+        open: g.items.filter((i) => !i.resolved).length,
         last_at: g.items[0]?.occurred_at ?? null,
         candidates: [...new Set(g.items.map((i) => i.actor_label).filter(Boolean))].length,
         items: g.items.slice(0, 25),
@@ -536,7 +540,8 @@ export const testErrorMonitor = createServerFn({ method: "POST" })
 
     return {
       groups: result,
-      totalOpen: relevant.length,
+      totalOpen: relevant.filter((r) => !r.resolved).length,
+      totalAll: relevant.length,
       generated_at: new Date().toISOString(),
     };
   });
