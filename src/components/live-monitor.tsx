@@ -151,6 +151,44 @@ export function LiveMonitor({ isAdmin }: { isAdmin: boolean }) {
         ))}
       </div>
 
+      {isAdmin && (
+        <Card>
+          <CardContent className="flex flex-wrap items-center gap-3 p-4">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <div className="min-w-[220px] flex-1">
+              <Label htmlFor="auto-recovery" className="text-sm font-semibold">
+                Mode auto-recovery
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Setiap menit sistem memeriksa test yang macet dan menjalankan perbaikan terukur:
+                membuka ulang test yang lewat durasi +5 menit saat kandidat sudah tidak aktif
+                (jawaban tetap disimpan, maksimal 5 tindakan sekali jalan, satu test hanya
+                dipulihkan sekali per 6 jam), serta melepas kunci perangkat kandidat yang lama
+                tidak terlihat. Semua tindakan tercatat di Audit Log.
+              </p>
+              {lastRun && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Terakhir dijalankan {new Date(lastRun.at).toLocaleTimeString("id-ID")} ·{" "}
+                  {lastRun.count} tindakan
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={autoRecover.isPending}
+                onClick={() => autoRecover.mutate()}
+              >
+                <TimerReset className="mr-2 h-4 w-4" /> Jalankan sekarang
+              </Button>
+              <Switch id="auto-recovery" checked={autoOn} onCheckedChange={toggleAuto} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Kandidat sedang online</CardTitle>
