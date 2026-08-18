@@ -110,37 +110,66 @@ export function RmibSheet({
             </div>
           </div>
 
-          <div className="grid grid-cols-[2.75rem_minmax(0,1fr)] items-center border-b bg-background px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:px-4 sm:text-[11px]">
-            <span className="text-center">No</span>
-            <span>Jenis pekerjaan</span>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] border-collapse text-left">
+              <thead>
+                <tr className="border-b bg-background text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-[11px]">
+                  <th className="w-10 border-r px-2 py-2 text-center font-semibold">No</th>
+                  <th
+                    className={`border-r px-3 py-2 font-semibold ${isFemale ? "" : "bg-primary/10 text-primary"}`}
+                  >
+                    Laki-laki
+                  </th>
+                  <th
+                    className={`border-r px-3 py-2 font-semibold ${isFemale ? "bg-primary/10 text-primary" : ""}`}
+                  >
+                    Perempuan
+                  </th>
+                  <th className="w-16 px-2 py-2 text-center font-semibold">Jawaban</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {jobs.map((job, i) => {
+                  const v = values[i];
+                  const dup = v !== null && dups.has(v);
+                  return (
+                    <tr key={i} className="align-middle">
+                      <td className="border-r px-2 py-2 text-center text-xs text-muted-foreground">
+                        {i + 1}
+                      </td>
+                      <td
+                        className={`border-r px-3 py-2 text-[13px] leading-snug sm:text-sm ${
+                          isFemale ? "text-muted-foreground" : "bg-primary/5 font-medium"
+                        }`}
+                      >
+                        {job.male}
+                      </td>
+                      <td
+                        className={`border-r px-3 py-2 text-[13px] leading-snug sm:text-sm ${
+                          isFemale ? "bg-primary/5 font-medium" : "text-muted-foreground"
+                        }`}
+                      >
+                        {job.female}
+                      </td>
+                      <td className="px-2 py-1.5 text-center">
+                        <Input
+                          inputMode="numeric"
+                          value={v === null ? "" : String(v)}
+                          onChange={(e) => setAt(i, e.target.value)}
+                          placeholder="_"
+                          aria-label={`Peringkat baris ${i + 1}: ${isFemale ? job.female : job.male}`}
+                          className={`mx-auto h-10 w-12 px-0 text-center font-bold ${
+                            dup ? "border-destructive text-destructive" : ""
+                          }`}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
 
-          <div className="divide-y">
-            {jobs.map((job, i) => {
-              const v = values[i];
-              const dup = v !== null && dups.has(v);
-              return (
-                <div
-                  key={i}
-                  className="grid grid-cols-[2.75rem_minmax(0,1fr)] items-center gap-2 px-3 py-2 sm:px-4"
-                >
-                  <Input
-                    inputMode="numeric"
-                    value={v === null ? "" : String(v)}
-                    onChange={(e) => setAt(i, e.target.value)}
-                    placeholder="_"
-                    aria-label={`Peringkat untuk ${isFemale ? job.female : job.male}`}
-                    className={`h-10 w-11 px-0 text-center font-bold ${
-                      dup ? "border-destructive text-destructive" : ""
-                    }`}
-                  />
-                  <span className="min-w-0 break-words text-[13px] leading-snug sm:text-sm">
-                    {isFemale ? job.female : job.male}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2 border-t bg-muted/40 px-3 py-2 text-[11px] sm:px-4">
             {dups.size > 0 ? (
