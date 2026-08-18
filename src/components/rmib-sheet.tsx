@@ -77,11 +77,7 @@ export function RmibSheet({
     const n = parseInt(digits, 10);
     const next = [...values];
     next[row] = digits === "" ? null : Number.isFinite(n) && n >= 1 && n <= 12 ? n : null;
-    const nextSides = [...sides];
-    if (nextSides[row] !== "M" && nextSides[row] !== "F") {
-      nextSides[row] = defaultSide;
-    }
-    onChange(q.id, serializeRmibAnswer(next, nextSides));
+    onChange(q.id, serializeRmibAnswer(next, sides));
   };
 
   const missingSideCount = values.filter(
@@ -124,7 +120,7 @@ export function RmibSheet({
               {ordered.length > 1 ? ` — ${slide + 1}/${ordered.length}` : ""}
             </div>
             <div className="text-[11px] text-muted-foreground">
-              Isi angka 1–12 · 1 = paling disukai, 12 = paling tidak disukai
+              Ketuk <b>Laki-laki</b> atau <b>Perempuan</b>, lalu ketik peringkat 1–12 di tengah
             </div>
           </div>
 
@@ -219,8 +215,7 @@ export function RmibSheet({
               </span>
             ) : (
               <span className="text-muted-foreground">
-                Terisi {rmibFilledCount(value)}/12 — pilih kolom laki-laki/perempuan lalu isi
-                peringkat
+                Terisi {rmibFilledCount(value)}/12 — ketuk Laki-laki/Perempuan lalu ketik peringkat
               </span>
             )}
 
