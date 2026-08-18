@@ -1,3 +1,4 @@
+import { RMIB_GROUPS } from "@/lib/rmib-key";
 /**
  * Contoh soal + petunjuk untuk halaman latihan (terpisah dari halaman soal asli).
  * Bentuk soal & lembar jawaban contoh dibuat SAMA PERSIS dengan halaman test asli,
@@ -14,7 +15,8 @@ export type PracticeTestType =
   | "msdt"
   | "pauli"
   | "kraepelin"
-  | "ishihara";
+  | "ishihara"
+  | "rmib";
 
 export type PracticeQuestion = {
   id: string;
@@ -197,6 +199,23 @@ const SAMPLES: Record<string, PracticeSample> = {
     },
     answerKey: "5",
     explanation: "Betul: hanya angka terakhir (satuan) yang ditulis pada kotak jawaban.",
+  },
+  rmib: {
+    testType: "rmib",
+    instructions: [
+      "Anda akan melihat kelompok-kelompok daftar pekerjaan; slide pertama adalah kelompok A, lalu berlanjut ke kelompok berikutnya.",
+      "Setiap kelompok berisi 12 jenis pekerjaan dan berbentuk tabel.",
+      "Tulis sendiri angkanya di dalam kotak: 1 untuk pekerjaan yang paling Anda sukai, sampai 12 untuk yang paling tidak Anda sukai.",
+      "Setiap angka 1-12 hanya boleh dipakai satu kali dalam satu kelompok, dan tidak boleh ada kotak yang kosong.",
+      "Daftar pekerjaan menyesuaikan jenis kelamin Anda secara otomatis. Kerjakan cepat sesuai kesan pertama.",
+    ],
+    question: {
+      id: "sample-rmib",
+      question_number: 1,
+      options: { code: "A", jobs: RMIB_GROUPS[0]!.jobs },
+    },
+    explanation:
+      "Seperti itu: isi seluruh 12 kotak dengan angka 1 sampai 12 tanpa ada angka yang kembar, lalu lanjut ke kelompok berikutnya.",
   },
   ishihara: {
     testType: "ishihara",

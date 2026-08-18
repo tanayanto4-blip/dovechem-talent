@@ -8,6 +8,8 @@ import { practiceSampleFor } from "@/lib/practice-samples";
 import { TestQuestionCard } from "@/components/test-question-card";
 import { PauliSheet, pauliFilledCount } from "@/components/pauli-sheet";
 import { WptSheet } from "@/components/wpt-sheet";
+import { RmibSheet } from "@/components/rmib-sheet";
+import { rmibGroupComplete } from "@/lib/rmib-key";
 import { ISHIHARA_PLATES } from "@/lib/ishihara-plates";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -66,10 +68,13 @@ function PracticePage() {
   const isPauli = sample.testType === "pauli";
   const isWpt = sample.testType === "wpt";
   const isDisc = sample.testType === "disc";
+  const isRmib = sample.testType === "rmib";
 
   const tried = isDisc
     ? !!(disc.most && disc.least && disc.most !== disc.least)
-    : isPauli
+    : isRmib
+      ? rmibGroupComplete(answer)
+      : isPauli
       ? pauliFilledCount(answer) > 0
       : answer.trim() !== "";
 
@@ -147,6 +152,13 @@ function PracticePage() {
             answers={{ [q.id]: answer }}
             onChange={(_qid, value) => setAnswer(value)}
             showGuide
+          />
+        ) : isRmib ? (
+          <RmibSheet
+            questions={[q as any]}
+            answers={{ [q.id]: answer }}
+            gender={(profileQ.data as any)?.candidate?.gender}
+            onChange={(_qid, value) => setAnswer(value)}
           />
         ) : isWpt ? (
           <WptSheet

@@ -11,6 +11,8 @@ import {
 } from "@/lib/candidate.functions";
 import { VoiceInstructionPlayer } from "@/components/voice-instruction";
 import { PauliSheet, pauliFilledCount } from "@/components/pauli-sheet";
+import { RmibSheet } from "@/components/rmib-sheet";
+import { rmibGroupComplete } from "@/lib/rmib-key";
 import { TestQuestionCard } from "@/components/test-question-card";
 import { voiceTemplateFor } from "@/lib/voice-templates";
 import { RotateCcw, Volume2 } from "lucide-react";
@@ -731,12 +733,15 @@ function TakeTest() {
   const isDisc = data.test.test_type === "disc";
   const isWpt = data.test.test_type === "wpt";
   const isPauli = data.test.test_type === "pauli";
+  const isRmib = data.test.test_type === "rmib";
 
   const answered = isDisc
     ? Object.values(discPicks).filter((p) => p.most && p.least && p.most !== p.least).length
     : isPauli
       ? data.questions.filter((q: any) => pauliFilledCount(answers[q.id]) > 0).length
-      : Object.keys(answers).filter((k) => (answers[k] ?? "").trim() !== "").length;
+      : isRmib
+        ? data.questions.filter((q: any) => rmibGroupComplete(answers[q.id])).length
+        : Object.keys(answers).filter((k) => (answers[k] ?? "").trim() !== "").length;
 
   return (
     <div className="space-y-6">
@@ -821,8 +826,20 @@ function TakeTest() {
           />
         )}
 
-        <div className={isPauli || isWpt ? "hidden" : "space-y-4"}>
-          {(isPauli || isWpt ? [] : data.questions).map((q: any, i: number) => (
+        {isRmib && (
+          <RmibSheet
+            questions={data.questions as any}
+            answers={answers}
+            gender={(data as any).gender}
+            onChange={(qid, value) => {
+              setAnswers((prev) => ({ ...prev, [qid]: value }));
+              persistDebounced(qid, value, 800);
+            }}
+          />
+        )}
+
+        <div className={isPauli || isWpt || isRmib ? "hidden" : "space-y-4"}>
+          {(isPauli || isWpt || isRmib ? [] : data.questions).map((q: any, i: number) => (
             <TestQuestionCard
               key={q.id}
               q={q}

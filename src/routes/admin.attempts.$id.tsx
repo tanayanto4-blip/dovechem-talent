@@ -16,6 +16,7 @@ import { exportPapiExcel } from "@/lib/papi-excel";
 import { PauliResult } from "@/components/pauli-result";
 import { papiScore, PAPI_SCALE_LABEL, PAPI_TOP_ORDER, PAPI_BOTTOM_ORDER } from "@/lib/papi-key";
 import { msdtScore, MSDT_STYLE_COLUMNS, MSDT_STYLE_LABEL } from "@/lib/msdt-key";
+import { rmibScore } from "@/lib/rmib-key";
 import { exportMsdtExcel } from "@/lib/msdt-excel";
 import { buildCandidateMeta } from "@/lib/candidate-meta";
 import { toast } from "sonner";
@@ -64,6 +65,7 @@ function AttemptDetail() {
   const isPapi = t?.test_type === "papi";
   const isPauli = t?.test_type === "pauli";
   const isMsdt = t?.test_type === "msdt";
+  const isRmib = t?.test_type === "rmib";
   const candId = a.candidates?.id;
   const papiPicks: Record<number, string> = {};
   if (isPapi) {
@@ -81,6 +83,15 @@ function AttemptDetail() {
     }
   }
   const msdt = isMsdt ? msdtScore(msdtPicks) : null;
+
+  const rmibGroups: Record<string, string> = {};
+  if (isRmib) {
+    for (const q of (data?.questions ?? []) as any[]) {
+      const code = (q.options as any)?.code ?? String(q.question_number);
+      rmibGroups[code] = String(answerMap.get(q.id)?.answer ?? "");
+    }
+  }
+  const rmib = isRmib ? rmibScore(rmibGroups) : null;
 
   return (
     <div className="space-y-6 print-area">
@@ -385,6 +396,43 @@ function AttemptDetail() {
       )}
 
 
+
+      {isRmib && rmib && (
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle>
+              Hasil RMIB — {rmib.answeredGroups}/{rmib.totalGroups} kelompok terisi
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid gap-2 sm:grid-cols-2">
+              {rmib.order.map((o) => (
+                <div
+                  key={o.category}
+                  className="flex items-center gap-3 rounded border bg-muted/30 px-3 py-2"
+                >
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded bg-primary text-xs font-bold text-primary-foreground">
+                    {o.rank}
+                  </span>
+                  <span className="flex-1 truncate text-xs">{o.label}</span>
+                  <b className="w-10 text-right text-xs">{o.total}</b>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Total kecil = minat lebih tinggi (jumlah peringkat dari 9 kelompok). Tiga minat
+              teratas:{" "}
+              <b className="text-foreground">
+                {rmib.order
+                  .slice(0, 3)
+                  .map((o) => o.label.split(" — ")[0])
+                  .join(", ")}
+              </b>
+              .
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {isPauli && (
         <PauliResult
