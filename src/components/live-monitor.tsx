@@ -1,13 +1,21 @@
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { liveMonitorOverview, resetCandidateDevice } from "@/lib/monitoring.functions";
+import {
+  liveMonitorOverview,
+  resetCandidateDevice,
+  autoRecoverStuckCandidates,
+} from "@/lib/monitoring.functions";
 import { reopenCandidateTest } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { PresenceBadge } from "@/components/presence-badge";
-import { Activity, Smartphone, TimerReset, Users, AlertCircle } from "lucide-react";
+import { Activity, Smartphone, TimerReset, Users, AlertCircle, ShieldCheck } from "lucide-react";
+
 
 const INCIDENT_LABEL: Record<string, string> = {
   "koneksi-terputus": "Sinyal kandidat terputus",
