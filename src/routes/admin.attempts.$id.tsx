@@ -18,6 +18,7 @@ import { papiScore, PAPI_SCALE_LABEL, PAPI_TOP_ORDER, PAPI_BOTTOM_ORDER } from "
 import { msdtScore, MSDT_STYLE_COLUMNS, MSDT_STYLE_LABEL } from "@/lib/msdt-key";
 import { rmibScore } from "@/lib/rmib-key";
 import { exportMsdtExcel } from "@/lib/msdt-excel";
+import { exportRmibExcel } from "@/lib/rmib-excel";
 import { buildCandidateMeta } from "@/lib/candidate-meta";
 import { toast } from "sonner";
 
