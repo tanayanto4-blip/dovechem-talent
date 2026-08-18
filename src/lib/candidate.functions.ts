@@ -595,6 +595,7 @@ export const candidateStartTest = createServerFn({ method: "POST" })
       questions: questions.data ?? [],
       answers: answers.data ?? [],
       expired,
+      gender: (cand as any).gender ?? null,
       server_now: new Date().toISOString(),
     };
   });
