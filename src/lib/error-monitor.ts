@@ -146,6 +146,19 @@ export function installErrorMonitor() {
   if (installed || typeof window === "undefined") return;
   installed = true;
 
+  // Tandai halaman sedang ditutup agar request yang batal tidak dilaporkan.
+  window.addEventListener("pagehide", () => {
+    pageUnloading = true;
+  });
+  window.addEventListener("beforeunload", () => {
+    pageUnloading = true;
+  });
+  window.addEventListener("pageshow", () => {
+    pageUnloading = false;
+  });
+
+
+
   window.addEventListener("error", (e) => {
     captureAppError(e.error ?? e.message, { source: "window.onerror", filename: e.filename });
   });
