@@ -733,12 +733,15 @@ function TakeTest() {
   const isDisc = data.test.test_type === "disc";
   const isWpt = data.test.test_type === "wpt";
   const isPauli = data.test.test_type === "pauli";
+  const isRmib = data.test.test_type === "rmib";
 
   const answered = isDisc
     ? Object.values(discPicks).filter((p) => p.most && p.least && p.most !== p.least).length
     : isPauli
       ? data.questions.filter((q: any) => pauliFilledCount(answers[q.id]) > 0).length
-      : Object.keys(answers).filter((k) => (answers[k] ?? "").trim() !== "").length;
+      : isRmib
+        ? data.questions.filter((q: any) => rmibGroupComplete(answers[q.id])).length
+        : Object.keys(answers).filter((k) => (answers[k] ?? "").trim() !== "").length;
 
   return (
     <div className="space-y-6">
