@@ -3,7 +3,7 @@
  * Jalur ditentukan saat Super Admin / HR membuat kode akses, lalu menentukan
  * paket test (kolom `tests.audience`), field biodata, dan label portal.
  *
- * Khusus jalur Karyawan ada dua tingkat jabatan: Staff dan SPV ke atas.
+ * Khusus jalur Karyawan ada dua tingkat jabatan: Staff dan Senior Staff.
  * Tingkat ditentukan dari pilihan "Posisi Jabatan" saat kandidat mengisi
  * biodata, dan menentukan porsi soal yang muncul di portalnya.
  */
@@ -43,7 +43,7 @@ export function jobLevelOfPosition(position?: string | null): JobLevel | null {
 }
 
 export function jobLevelLabel(level?: string | null): string {
-  return level === "spv_up" ? "SPV ke atas" : level === "staff" ? "Staff" : "Belum ditentukan";
+  return level === "spv_up" ? "Senior Staff" : level === "staff" ? "Staff" : "Belum ditentukan";
 }
 
 /** Tingkat jabatan kandidat (hanya relevan untuk jalur Karyawan). */
@@ -55,7 +55,7 @@ export function candidateLevelOf(candidate: any): JobLevel | null {
 
 export function candidateTypeLabel(t?: string | null, level?: string | null): string {
   if (t === "magang") return "Kandidat Magang";
-  if (level === "spv_up") return "Kandidat Karyawan — SPV ke atas";
+  if (level === "spv_up") return "Kandidat Karyawan — Senior Staff";
   if (level === "staff") return "Kandidat Karyawan — Staff";
   return "Kandidat Karyawan";
 }
@@ -68,7 +68,7 @@ export function testAudienceLabel(a?: string | null): string {
   if (a === "magang") return "Khusus Magang";
   if (a === "karyawan") return "Semua Karyawan";
   if (a === "karyawan_staff") return "Karyawan — Staff";
-  if (a === "karyawan_spv") return "Karyawan — SPV ke atas";
+  if (a === "karyawan_spv") return "Karyawan — Senior Staff";
   return "Magang & Karyawan";
 }
 

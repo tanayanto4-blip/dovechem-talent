@@ -339,7 +339,7 @@ export const candidateSaveProfile = createServerFn({ method: "POST" })
     } else {
       if (!rest.work_experience?.trim()) throw new Error("Pengalaman kerja wajib dipilih.");
       delete (rest as any).semester;
-      // Posisi jabatan menentukan tingkat (Staff / SPV ke atas) dan porsi soal.
+      // Posisi jabatan menentukan tingkat (Staff / Senior Staff) dan porsi soal.
       level = jobLevelOfPosition(rest.job_position ?? null);
       if (!level) {
         throw new Error(
