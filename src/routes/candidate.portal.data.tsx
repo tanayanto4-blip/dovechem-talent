@@ -290,25 +290,7 @@ function DataForm() {
               </SelectContent>
             </Select>
           </Field>
-          {isMagang ? (
-            <Field label="Semester Saat Ini" required>
-              <Select
-                value={form.semester ?? ""}
-                onValueChange={(v) => setForm({ ...form, semester: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih semester" />
-                </SelectTrigger>
-                <SelectContent className="max-h-64">
-                  {semesterOptions.map((v) => (
-                    <SelectItem key={v} value={v}>
-                      Semester {v}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-          ) : (
+          {!isMagang && (
             <Field label="Pernah Bekerja Berapa Lama" required>
               <Select
                 value={form.work_experience ?? ""}
