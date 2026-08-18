@@ -7,7 +7,7 @@ import {
   listCandidateFileVersions,
 } from "@/lib/admin.functions";
 import { computeChecklist } from "@/lib/document-checklist";
-import { jobLevelLabel } from "@/lib/candidate-type";
+import { candidateTrackOf, jobLevelLabel } from "@/lib/candidate-type";
 import { TestAccessControl } from "@/components/test-access-control";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
