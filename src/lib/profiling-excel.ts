@@ -92,10 +92,14 @@ export async function exportProfilingExcel(input: ProfilingInput) {
 
   // MBTI -> persentase tiap dimensi (0..1, format persen mengikuti template)
   let mbti: Record<string, number> | null = null;
+  let mbtiType: string | null = null;
   if (input.mbtiAnswers?.length) {
     try {
       const r = await computeMbtiScores(input.mbtiAnswers);
-      if (r.filled > 0) mbti = r.scores;
+      if (r.filled > 0) {
+        mbti = r.scores;
+        mbtiType = r.typeLetters.join("");
+      }
     } catch {
       /* persentase MBTI dilewati bila template MBTI gagal dimuat */
     }
