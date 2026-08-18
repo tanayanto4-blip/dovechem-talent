@@ -69,7 +69,7 @@ export function TestAudienceEditor({
                     ? "Semua Karyawan"
                     : a === "karyawan_staff"
                       ? "Staff"
-                      : "SPV ke atas"}
+                      : "Senior Staff"}
             </Button>
           ))}
         </div>

@@ -5,7 +5,7 @@ import type { JobLevel } from "@/lib/candidate-type";
 export type LevelFilter = "all" | JobLevel;
 
 /**
- * Sub-filter tingkat jabatan untuk jalur Karyawan (Staff / SPV ke atas).
+ * Sub-filter tingkat jabatan untuk jalur Karyawan (Staff / Senior Staff).
  * Dipakai Super Admin dan HR di Bank Soal dan Data Kandidat.
  */
 export function LevelTabs({
@@ -22,7 +22,7 @@ export function LevelTabs({
   const items: Array<{ key: LevelFilter; label: string; Icon: typeof Users }> = [
     { key: "all", label: "Semua", Icon: Layers },
     { key: "staff", label: "Staff", Icon: Users },
-    { key: "spv_up", label: "SPV ke atas", Icon: UserCog },
+    { key: "spv_up", label: "Senior Staff", Icon: UserCog },
   ];
   return (
     <div className={cn("inline-flex rounded-lg border bg-muted/40 p-1", className)} role="tablist">
