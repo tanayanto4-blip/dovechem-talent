@@ -54,7 +54,11 @@ export function RmibSheet({
   const group = RMIB_GROUPS[groupIndex];
   const code = (q.options as any)?.code ?? group?.code ?? String(q.question_number);
   const jobs = jobsFor(q, groupIndex);
-  const defaultSide: RmibSide = String(gender ?? "").toLowerCase().startsWith("p") ? "F" : "M";
+  const defaultSide: RmibSide = String(gender ?? "")
+    .toLowerCase()
+    .startsWith("p")
+    ? "F"
+    : "M";
 
   const value = answers[q.id] ?? "";
   const values = parseRmibAnswer(value);
@@ -80,7 +84,9 @@ export function RmibSheet({
     onChange(q.id, serializeRmibAnswer(next, nextSides));
   };
 
-  const missingSideCount = values.filter((v, i) => v !== null && sides[i] !== "M" && sides[i] !== "F").length;
+  const missingSideCount = values.filter(
+    (v, i) => v !== null && sides[i] !== "M" && sides[i] !== "F",
+  ).length;
 
   return (
     <div className="space-y-3">
@@ -245,9 +251,9 @@ export function RmibSheet({
 
       {missingSideCount > 0 && (
         <div className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-foreground">
-          <AlertCircle className="mb-1 inline h-4 w-4 text-warning" />{" "}
-          <b>{missingSideCount}</b> baris sudah diisi angka tetapi belum memilih kolom Laki-laki atau
-          Perempuan. Ketuk salah satu kolom di setiap baris.
+          <AlertCircle className="mb-1 inline h-4 w-4 text-warning" /> <b>{missingSideCount}</b>{" "}
+          baris sudah diisi angka tetapi belum memilih kolom Laki-laki atau Perempuan. Ketuk salah
+          satu kolom di setiap baris.
         </div>
       )}
     </div>

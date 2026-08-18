@@ -242,10 +242,7 @@ export function parseRmibSides(value: string | undefined | null): RmibSide[] {
   return parseRmibData(value).sides;
 }
 
-export function serializeRmibAnswer(
-  ranks: (number | null)[],
-  sides?: RmibSide[],
-): string {
+export function serializeRmibAnswer(ranks: (number | null)[], sides?: RmibSide[]): string {
   const hasSide = sides?.some((s) => s === "M" || s === "F");
   if (hasSide) {
     return JSON.stringify({ ranks, sides });
