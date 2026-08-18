@@ -131,11 +131,17 @@ function MonitoringPage() {
 
   const clearM = useMutation({
     mutationFn: () => clearFn({ data: {} as never }),
-    onSuccess: () => {
-      toast.success("Error yang sudah ditangani dihapus");
+    onSuccess: (r) => {
+      const n = (r as { count?: number } | undefined)?.count ?? 0;
+      toast.success(
+        n > 0 ? `${n} error yang sudah ditangani dihapus` : "Tidak ada error yang perlu dihapus",
+      );
       qc.invalidateQueries({ queryKey: ["error-events"] });
+      qc.invalidateQueries({ queryKey: ["error-open-count"] });
+      qc.invalidateQueries({ queryKey: ["test-error-monitor"] });
+      void refetch();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message || "Gagal menghapus error"),
   });
 
   function exportCsv() {
