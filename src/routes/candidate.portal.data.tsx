@@ -62,14 +62,12 @@ const baseFields: [string, string][] = [
   ["position_applied", "Posisi dilamar"],
 ];
 
-/** Magang mengisi semester berjalan; karyawan mengisi lama pengalaman kerja. */
+/** Magang cukup biodata dasar; karyawan mengisi pengalaman kerja & jabatan. */
 function fieldsFor(type: string): [string, string][] {
   return type === "magang"
-    ? [...baseFields, ["semester", "Semester saat ini"]]
+    ? baseFields
     : [...baseFields, ["work_experience", "Pengalaman kerja"], ["job_position", "Posisi jabatan"]];
 }
-
-const semesterOptions = Array.from({ length: 14 }, (_, i) => String(i + 1));
 
 const ageOptions = Array.from({ length: 56 }, (_, i) => String(i + 15));
 const workOptions = ["Belum bekerja", ...Array.from({ length: 21 }, (_, i) => String(i))];
