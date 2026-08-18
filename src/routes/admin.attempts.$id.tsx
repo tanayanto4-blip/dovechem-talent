@@ -275,6 +275,26 @@ function AttemptDetail() {
               <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel MSDT
             </Button>
           )}
+          {isRmib && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const res = await exportRmibExcel(rmibGroups, {
+                    ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
+                  });
+                  toast.success(
+                    `Excel RMIB diunduh — ${res.answeredGroups}/${res.totalGroups} kelompok terisi`,
+                  );
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Gagal membuat file Excel");
+                }
+              }}
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel RMIB
+            </Button>
+          )}
           <Button size="sm" onClick={() => window.print()}>
             <Printer className="mr-2 h-4 w-4" /> Cetak
           </Button>
