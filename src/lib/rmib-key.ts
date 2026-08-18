@@ -60,6 +60,8 @@ export const RMIB_CATEGORY_LABEL: Record<RmibCategory, string> = {
 export type RmibJob = { male: string; female: string };
 export type RmibGroup = { code: string; jobs: RmibJob[] };
 
+export type RmibSide = "M" | "F" | null;
+
 const g = (code: string, rows: [string, string][]): RmibGroup => ({
   code,
   jobs: rows.map(([male, female]) => ({ male, female })),
@@ -199,17 +201,56 @@ export function rmibCategoryAt(groupIndex: number, rowIndex: number): RmibCatego
   return RMIB_CATEGORIES[(groupIndex + rowIndex) % 12]!;
 }
 
-/** Jawaban satu kelompok: "1,5,,3,..." (12 slot, boleh kosong). */
-export function parseRmibAnswer(value: string | undefined | null): (number | null)[] {
-  const parts = (value ?? "").split(",");
-  return Array.from({ length: 12 }, (_, i) => {
+export type RmibAnswerData = {
+  ranks: (number | null)[];
+  sides: RmibSide[];
+};
+
+function parseRmibData(value: string | undefined | null): RmibAnswerData {
+  const raw = value ?? "";
+  if (raw.trim().startsWith("{")) {
+    try {
+      const parsed = JSON.parse(raw) as { ranks?: unknown[]; sides?: unknown[] };
+      const ranks = Array.from({ length: 12 }, (_, i) => {
+        const n = parsed?.ranks?.[i];
+        return typeof n === "number" && n >= 1 && n <= 12 ? n : null;
+      });
+      const sides = Array.from({ length: 12 }, (_, i) => {
+        const s = parsed?.sides?.[i];
+        return s === "M" || s === "F" ? s : null;
+      });
+      return { ranks, sides };
+    } catch {
+      // fall through to legacy format
+    }
+  }
+  // Legacy comma-separated ranks only
+  const parts = raw.split(",");
+  const ranks = Array.from({ length: 12 }, (_, i) => {
     const n = parseInt((parts[i] ?? "").trim(), 10);
     return Number.isFinite(n) && n >= 1 && n <= 12 ? n : null;
   });
+  return { ranks, sides: Array(12).fill(null) };
 }
 
-export function serializeRmibAnswer(values: (number | null)[]): string {
-  return Array.from({ length: 12 }, (_, i) => values[i] ?? "").join(",");
+/** Jawaban satu kelompok: "1,5,,3,..." (12 slot, boleh kosong) atau JSON. */
+export function parseRmibAnswer(value: string | undefined | null): (number | null)[] {
+  return parseRmibData(value).ranks;
+}
+
+export function parseRmibSides(value: string | undefined | null): RmibSide[] {
+  return parseRmibData(value).sides;
+}
+
+export function serializeRmibAnswer(
+  ranks: (number | null)[],
+  sides?: RmibSide[],
+): string {
+  const hasSide = sides?.some((s) => s === "M" || s === "F");
+  if (hasSide) {
+    return JSON.stringify({ ranks, sides });
+  }
+  return Array.from({ length: 12 }, (_, i) => ranks[i] ?? "").join(",");
 }
 
 /** Satu kelompok dianggap selesai bila 12 angka terisi dan tidak ada yang kembar. */
