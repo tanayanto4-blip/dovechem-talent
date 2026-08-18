@@ -337,6 +337,55 @@ function AttemptDetail() {
         </Card>
       )}
 
+      {isMsdt && msdt && (
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle>
+              Skor MSDT — {msdt.answered}/{msdt.total} terisi
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-2 sm:grid-cols-2">
+              {MSDT_STYLE_COLUMNS.map((style) => {
+                const c = msdt.columns[style];
+                return (
+                  <div
+                    key={style}
+                    className="flex items-center gap-3 rounded border bg-muted/30 px-3 py-2"
+                  >
+                    <span className="grid h-7 w-9 shrink-0 place-items-center rounded bg-primary text-xs font-bold text-primary-foreground">
+                      {style}
+                    </span>
+                    <span className="flex-1 truncate text-xs">{MSDT_STYLE_LABEL[style]}</span>
+                    <span className="text-xs text-muted-foreground">
+                      A {c.A} · B {c.B} · K {c.koreksi}
+                    </span>
+                    <b className="w-8 text-right text-xs">{c.jumlah}</b>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="grid gap-2 sm:grid-cols-4">
+              {(["TO", "RO", "E", "O"] as const).map((d) => (
+                <div key={d} className="rounded border bg-muted/30 px-3 py-2 text-center">
+                  <div className="text-xs text-muted-foreground">{d}</div>
+                  <div className="text-lg font-bold">{msdt.dims[d]}</div>
+                  <div className="text-xs text-muted-foreground">
+                    konversi {msdt.konversi[d].toFixed(1)}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Gaya dominan: <b className="text-foreground">{msdt.dominantLabel}</b>. Nilai ini sama
+              dengan sheet “Otomatis Scoring” pada template Excel MSDT.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+
+
       {isPauli && (
         <PauliResult
           questions={data.questions as any[]}
