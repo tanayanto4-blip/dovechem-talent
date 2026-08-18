@@ -7,6 +7,7 @@ import { exportMbtiExcel } from "@/lib/mbti-excel";
 import { exportEqExcel } from "@/lib/eq-excel";
 import { exportWptExcel } from "@/lib/wpt-excel";
 import { exportPapiExcel } from "@/lib/papi-excel";
+import { exportMsdtExcel } from "@/lib/msdt-excel";
 import { exportDiscExcel } from "@/lib/disc-excel";
 import { exportResultSheetPdf } from "@/lib/result-sheet-pdf";
 import { exportResumeExcel } from "@/lib/resume-excel";
@@ -177,6 +178,18 @@ function ResultsBank() {
         if (ans === "A" || ans === "B") picks[q.question_number] = ans;
       }
       await exportPapiExcel(picks, meta);
+      return true;
+    }
+    if (t === "msdt") {
+      const { d, map } = await answerRows(r.id);
+      const picks: Record<number, string> = {};
+      for (const q of d.questions ?? []) {
+        const ans = String(map.get(q.id)?.answer ?? "")
+          .trim()
+          .toUpperCase();
+        if (ans === "A" || ans === "B") picks[q.question_number] = ans;
+      }
+      await exportMsdtExcel(picks, meta);
       return true;
     }
     // Test tanpa file skoring Excel -> lembar hasil PDF berkop logo Dover.
@@ -628,7 +641,7 @@ function ResultsBank() {
                                           <Eye className="mr-1 h-3.5 w-3.5" /> Detail
                                         </Link>
                                       </Button>
-                                      {!["mbti", "eq", "wpt", "disc", "papi"].includes(
+                                      {!["mbti", "eq", "wpt", "disc", "papi", "msdt"].includes(
                                         String(r.tests?.test_type),
                                       ) && (
                                         <Button
@@ -746,6 +759,44 @@ function ResultsBank() {
                                               );
                                               toast.success(
                                                 `Excel WPT diunduh — benar ${total}/50, IQ ${iq} (${category})`,
+                                              );
+                                            } catch (e: any) {
+                                              toast.error(e?.message ?? "Gagal membuat file Excel");
+                                            }
+                                          }}
+                                        >
+                                          <FileSpreadsheet className="mr-1 h-3.5 w-3.5" /> Excel
+                                        </Button>
+                                      )}
+                                      {r.tests?.test_type === "msdt" && (
+                                        <Button
+                                          size="sm"
+                                          variant="secondary"
+                                          onClick={async () => {
+                                            try {
+                                              const d: any = await detailFn({ data: { id: r.id } });
+                                              const map = new Map<string, any>(
+                                                (d.attempt?.test_answers ?? []).map((x: any) => [
+                                                  x.question_id,
+                                                  x,
+                                                ]),
+                                              );
+                                              const picks: Record<number, string> = {};
+                                              for (const q of d.questions ?? []) {
+                                                const ans = String(map.get(q.id)?.answer ?? "")
+                                                  .trim()
+                                                  .toUpperCase();
+                                                if (ans === "A" || ans === "B")
+                                                  picks[q.question_number] = ans;
+                                              }
+                                              const res = await exportMsdtExcel(picks, {
+                                                candidateName: g.name,
+                                                candidateCode: g.code,
+                                                position: g.position,
+                                                finishedAt: r.finished_at,
+                                              });
+                                              toast.success(
+                                                `Excel MSDT diunduh — ${res.answered}/${res.total} item, gaya dominan ${res.dominant}`,
                                               );
                                             } catch (e: any) {
                                               toast.error(e?.message ?? "Gagal membuat file Excel");
