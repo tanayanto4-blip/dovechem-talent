@@ -215,8 +215,7 @@ export function RmibSheet({
               </span>
             ) : (
               <span className="text-muted-foreground">
-                Terisi {rmibFilledCount(value)}/12 — pilih kolom laki-laki/perempuan lalu isi
-                peringkat
+                Terisi {rmibFilledCount(value)}/12 — ketuk Laki-laki/Perempuan lalu ketik peringkat
               </span>
             )}
 
