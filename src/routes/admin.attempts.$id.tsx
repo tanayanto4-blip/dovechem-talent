@@ -15,6 +15,8 @@ import { exportPapiPdf } from "@/lib/papi-pdf";
 import { exportPapiExcel } from "@/lib/papi-excel";
 import { PauliResult } from "@/components/pauli-result";
 import { papiScore, PAPI_SCALE_LABEL, PAPI_TOP_ORDER, PAPI_BOTTOM_ORDER } from "@/lib/papi-key";
+import { msdtScore, MSDT_STYLE_COLUMNS, MSDT_STYLE_LABEL } from "@/lib/msdt-key";
+import { exportMsdtExcel } from "@/lib/msdt-excel";
 import { buildCandidateMeta } from "@/lib/candidate-meta";
 import { toast } from "sonner";
 
@@ -61,6 +63,7 @@ function AttemptDetail() {
   const isWpt = t?.test_type === "wpt";
   const isPapi = t?.test_type === "papi";
   const isPauli = t?.test_type === "pauli";
+  const isMsdt = t?.test_type === "msdt";
   const candId = a.candidates?.id;
   const papiPicks: Record<number, string> = {};
   if (isPapi) {
@@ -70,6 +73,14 @@ function AttemptDetail() {
     }
   }
   const papi = isPapi ? papiScore(papiPicks) : null;
+  const msdtPicks: Record<number, string> = {};
+  if (isMsdt) {
+    for (const q of data.questions as any[]) {
+      const ans = (answerMap.get(q.id)?.answer ?? "").trim().toUpperCase();
+      if (ans === "A" || ans === "B") msdtPicks[q.question_number] = ans;
+    }
+  }
+  const msdt = isMsdt ? msdtScore(msdtPicks) : null;
 
   return (
     <div className="space-y-6 print-area">
@@ -230,6 +241,26 @@ function AttemptDetail() {
               }}
             >
               <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel PAPI
+            </Button>
+          )}
+          {isMsdt && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const res = await exportMsdtExcel(msdtPicks, {
+                    ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
+                  });
+                  toast.success(
+                    `Excel MSDT diunduh — ${res.answered}/${res.total} item terisi, gaya dominan ${res.dominant}`,
+                  );
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Gagal membuat file Excel");
+                }
+              }}
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel MSDT
             </Button>
           )}
           <Button size="sm" onClick={() => window.print()}>
