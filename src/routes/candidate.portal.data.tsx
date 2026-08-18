@@ -172,13 +172,13 @@ function DataForm() {
     }
     setSaving(true);
     try {
-      const { work_experience, semester, job_position, ...common } = form;
+      const { work_experience, job_position, ...common } = form;
       await save({
         data: {
           code: session!.code,
           device: session!.device,
           ...common,
-          ...(isMagang ? { semester } : { work_experience, job_position }),
+          ...(isMagang ? {} : { work_experience, job_position }),
         } as any,
       });
       toast.success("Data tersimpan — lanjut ke psikotest");
