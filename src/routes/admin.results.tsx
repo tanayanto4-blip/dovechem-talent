@@ -76,6 +76,11 @@ function summarize(r: any) {
   if (t === "eq" && res.dominant) return `Terkuat ${res.dominant}`;
   if (t === "ishihara" && typeof res.correct === "number")
     return `Benar ${res.correct} / Salah ${res.wrong ?? 0}`;
+  if (t === "rmib" && Array.isArray(res.order) && res.order.length)
+    return `Minat utama: ${res.order
+      .slice(0, 3)
+      .map((o: any) => String(o.label).split(" — ")[0])
+      .join(", ")}`;
   if (res.requires_manual_review) return "Perlu penilaian manual";
   return "-";
 }
