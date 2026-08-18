@@ -145,6 +145,26 @@ const SAMPLES: Record<string, PracticeSample> = {
     },
     explanation: "Satu pilihan saja per nomor (A atau B). Begitu seterusnya sampai nomor terakhir.",
   },
+  msdt: {
+    testType: "msdt",
+    instructions: [
+      "Setiap nomor berisi dua pernyataan tentang cara Anda memimpin atau bekerja.",
+      "Pilih satu pernyataan saja: opsi A (atas) atau opsi B (bawah) yang paling menggambarkan diri Anda.",
+      "Kadang keduanya terasa kurang sesuai, tetapi Anda tetap harus memilih salah satu.",
+      "Jawablah seluruh 64 nomor tanpa ada yang terlewat.",
+    ],
+    question: {
+      id: "sample-msdt",
+      question_number: 1,
+      question_text: null,
+      options: [
+        { key: "A", label: "Saya membuat keputusan sendiri lalu menyampaikannya kepada tim." },
+        { key: "B", label: "Saya mengajak tim berdiskusi sebelum keputusan diambil." },
+      ],
+    },
+    explanation: "Satu pilihan saja per nomor (A atau B). Begitu seterusnya sampai nomor terakhir.",
+  },
+
   wpt: {
     testType: "wpt",
     instructions: [
