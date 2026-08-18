@@ -123,9 +123,13 @@ export const clearResolvedErrors = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .handler(async () => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("error_events").delete().eq("resolved", true);
+    const { data, error } = await supabaseAdmin
+      .from("error_events")
+      .delete()
+      .eq("resolved", true)
+      .select("id");
     if (error) throw new Error(error.message);
-    return { ok: true };
+    return { ok: true, count: data?.length ?? 0 };
   });
 
 /**
