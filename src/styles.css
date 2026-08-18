@@ -158,6 +158,21 @@
 @utility shadow-card {
   box-shadow: var(--shadow-card);
 }
+@utility bg-deep {
+  background-image: var(--gradient-deep);
+}
+@utility shadow-gold {
+  box-shadow: var(--shadow-gold);
+}
+@utility bg-blueprint {
+  background-image: linear-gradient(oklch(1 0 0 / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(1 0 0 / 0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+@utility rule-gold {
+  background-image: var(--gradient-gold);
+}
+
 
 @media print {
   body {
