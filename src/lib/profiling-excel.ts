@@ -1,0 +1,181 @@
+import JSZip from "jszip";
+import templateAsset from "@/assets/profiling-template.xlsx.asset.json";
+import { computeMbtiScores } from "@/lib/mbti-excel";
+import { computeWptScore } from "@/lib/wpt-excel";
+import {
+  type CellValue,
+  assertTemplateIntact,
+  clearFormulaCache,
+  forceRecalc,
+  patchSheet,
+  sheetPaths,
+  snapshotZip,
+} from "@/lib/xlsx-patch";
+
+/**
+ * Profiling (Key Background Review) PT Dover Chemical.
+ *
+ * Template dipakai APA ADANYA — layout, gaya, dan seluruh rumus tidak diubah.
+ * Sistem hanya mengisi sel data pada sheet PROFILING:
+ *   I6  Nama            I7 Usia          I8 Pendidikan
+ *   I9  Posisi/Depart   I10 Tgl. Pemeriksaan
+ *   D27:E30  Persentase MBTI (I/E, S/N, T/F, J/P) dari hasil test MBTI
+ *   D31 IQ SCORE (WPT)  E31 Kategori IQ  F31 QUALIFIED / UNQUALIFIED (>=102)
+ * Sel kategori MBTI (C33:F33) tetap memakai rumus asli template.
+ */
+
+const QUALIFIED_MIN = 102;
+
+export interface ProfilingCandidate {
+  full_name?: string | null;
+  age?: number | string | null;
+  birth_date?: string | null;
+  education?: string | null;
+  major?: string | null;
+  school_name?: string | null;
+  position_applied?: string | null;
+  department?: string | null;
+}
+
+export interface ProfilingInput {
+  candidate: ProfilingCandidate;
+  testDate?: string | null;
+  /** Jawaban mentah MBTI (A/B) untuk menghitung persentase dimensi. */
+  mbtiAnswers?: Array<{ question_number: number; answer: any }> | null;
+  /** Jawaban mentah WPT untuk menghitung IQ dan kategorinya. */
+  wptAnswers?: Array<{ question_number: number; answer: any }> | null;
+}
+
+const MONTHS = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+];
+
+function fmtDate(v?: string | null) {
+  const d = v ? new Date(v) : new Date();
+  if (Number.isNaN(d.getTime())) return "-";
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function ageOf(c: ProfilingCandidate): string {
+  if (c.age != null && c.age !== "") return `${c.age} th`;
+  if (!c.birth_date) return "-";
+  const d = new Date(c.birth_date);
+  if (Number.isNaN(d.getTime())) return "-";
+  const now = new Date();
+  let a = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) a--;
+  return a >= 0 && a < 120 ? `${a} th` : "-";
+}
+
+function educationOf(c: ProfilingCandidate) {
+  const left = [c.education, c.major].map((v) => (v ?? "").toString().trim()).filter(Boolean);
+  const school = (c.school_name ?? "").toString().trim();
+  const base = left.join(" ");
+  if (base && school) return `${base} - ${school}`;
+  return base || school || "-";
+}
+
+export async function exportProfilingExcel(input: ProfilingInput) {
+  const c = input.candidate ?? {};
+
+  // MBTI -> persentase tiap dimensi (0..1, format persen mengikuti template)
+  let mbti: Record<string, number> | null = null;
+  if (input.mbtiAnswers?.length) {
+    try {
+      const r = await computeMbtiScores(input.mbtiAnswers);
+      if (r.filled > 0) mbti = r.scores;
+    } catch {
+      /* persentase MBTI dilewati bila template MBTI gagal dimuat */
+    }
+  }
+
+  // WPT -> IQ + kategori (Average / Low Average / dst) + status kelulusan
+  let iq: number | null = null;
+  let category: string | null = null;
+  if (input.wptAnswers?.length) {
+    try {
+      const w = await computeWptScore(input.wptAnswers);
+      if (w.valid) {
+        iq = w.iq;
+        category = w.category;
+      }
+    } catch {
+      /* IQ dilewati bila template WPT gagal dimuat */
+    }
+  }
+
+  const res = await fetch(templateAsset.url);
+  if (!res.ok) throw new Error("Template Excel Profiling tidak dapat dimuat.");
+  const zip = await JSZip.loadAsync(await res.arrayBuffer());
+  const before = await snapshotZip(zip);
+  const { wbXml, sheets } = await sheetPaths(zip);
+  const main = sheets.find((s) => /^profiling$/i.test(s.name.trim())) ?? sheets[0];
+
+  const posisi = [c.position_applied, c.department].filter(Boolean).join(" / ") || "-";
+  const edits = new Map<string, CellValue>([
+    ["I6", `: ${c.full_name ?? "-"}`],
+    ["I7", `: ${ageOf(c)}`],
+    ["I8", `: ${educationOf(c)}`],
+    ["I9", `: ${posisi}`],
+    ["I10", `: ${fmtDate(input.testDate)}`],
+  ]);
+
+  if (mbti) {
+    const dims: Array<[number, string, string]> = [
+      [27, "I", "E"],
+      [28, "S", "N"],
+      [29, "T", "F"],
+      [30, "J", "P"],
+    ];
+    for (const [row, left, right] of dims) {
+      edits.set(`D${row}`, Number(mbti[left] ?? 0));
+      edits.set(`E${row}`, Number(mbti[right] ?? 0));
+    }
+  }
+
+  if (iq !== null) {
+    edits.set("D31", iq);
+    edits.set("E31", ` ${(category ?? "").toUpperCase()}`);
+    edits.set("F31", iq >= QUALIFIED_MIN ? "QUALIFIED" : "UNQUALIFIED");
+  }
+
+  const mainFile = zip.file(main.path);
+  if (!mainFile) throw new Error("Sheet PROFILING tidak ditemukan pada template.");
+  zip.file(main.path, patchSheet(await mainFile.async("string"), edits, true));
+
+  const formulaBefore = await clearFormulaCache(zip, sheets, main.path);
+  forceRecalc(zip, wbXml);
+  await assertTemplateIntact(zip, before, main.path, "template Profiling", formulaBefore);
+
+  const blob = await zip.generateAsync({
+    type: "blob",
+    mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    compression: "DEFLATE",
+  });
+  const safe = (c.full_name ?? "kandidat").replace(/[^\w\-]+/g, "_");
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `Profiling_${safe}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  return {
+    iq,
+    category,
+    status: iq === null ? null : iq >= QUALIFIED_MIN ? "QUALIFIED" : "UNQUALIFIED",
+    mbti,
+  };
+}
