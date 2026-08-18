@@ -107,7 +107,7 @@ function DataForm() {
         education: c.education ?? "",
         major: c.major ?? "",
         work_experience: c.work_experience ?? "",
-        semester: (c as any).semester ?? "",
+        job_position: (c as any).job_position ?? "",
         job_position: (c as any).job_position ?? "",
         phone: c.phone ?? "",
         email: c.email ?? "",
