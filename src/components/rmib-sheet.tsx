@@ -77,11 +77,7 @@ export function RmibSheet({
     const n = parseInt(digits, 10);
     const next = [...values];
     next[row] = digits === "" ? null : Number.isFinite(n) && n >= 1 && n <= 12 ? n : null;
-    const nextSides = [...sides];
-    if (nextSides[row] !== "M" && nextSides[row] !== "F") {
-      nextSides[row] = defaultSide;
-    }
-    onChange(q.id, serializeRmibAnswer(next, nextSides));
+    onChange(q.id, serializeRmibAnswer(next, sides));
   };
 
   const missingSideCount = values.filter(
