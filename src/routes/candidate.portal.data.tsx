@@ -108,7 +108,6 @@ function DataForm() {
         major: c.major ?? "",
         work_experience: c.work_experience ?? "",
         job_position: (c as any).job_position ?? "",
-        job_position: (c as any).job_position ?? "",
         phone: c.phone ?? "",
         email: c.email ?? "",
         position_applied: c.position_applied ?? "",
