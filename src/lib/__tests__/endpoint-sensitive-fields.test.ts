@@ -65,7 +65,11 @@ const SELECT_STAR_WHITELIST: Record<string, readonly string[]> = {
 // Admin-only WRITE handlers (requireAdmin) for the question-bank editor.
 // They read/write `correct_answer` by design but return only { ok, id } —
 // the answer key never crosses back to the browser.
-const ADMIN_QUESTION_WRITERS = ["upsertTestQuestion", "deleteTestQuestion"] as const;
+const ADMIN_QUESTION_WRITERS = [
+  "upsertTestQuestion",
+  "deleteTestQuestion",
+  "importTestQuestions",
+] as const;
 
 function walk(dir: string): string[] {
   let out: string[] = [];

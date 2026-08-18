@@ -1703,25 +1703,6 @@ export const setTestDuration = createServerFn({ method: "POST" })
     return { ok: true, duration_minutes: data.duration_minutes };
   });
 
-const ImportRow = z.object({
-  question_number: z.number().int().min(1).max(1000),
-  question_text: z.string().trim().min(1).max(4000),
-  dimension: z.string().trim().max(60).nullable().optional(),
-  correct_answer: z.string().trim().max(200).nullable().optional(),
-  options: z
-    .array(
-      z.object({
-        key: z.string().trim().min(1).max(20),
-        label: z.string().trim().min(1).max(1000),
-        dimension: z.string().trim().max(20).optional(),
-      }),
-    )
-    .max(12)
-    .nullable()
-    .optional(),
-  active: z.boolean().optional(),
-});
-
 /**
  * Impor massal soal ke satu test (Super Admin & HR).
  * mode "append" menambah/menimpa nomor yang sama, "replace" mengganti seluruh
@@ -1734,7 +1715,29 @@ export const importTestQuestions = createServerFn({ method: "POST" })
       .object({
         test_id: z.string().uuid(),
         mode: z.enum(["append", "replace"]).default("append"),
-        rows: z.array(ImportRow).min(1).max(500),
+        rows: z
+          .array(
+            z.object({
+              question_number: z.number().int().min(1).max(1000),
+              question_text: z.string().trim().min(1).max(4000),
+              dimension: z.string().trim().max(60).nullable().optional(),
+              correct_answer: z.string().trim().max(200).nullable().optional(),
+              options: z
+                .array(
+                  z.object({
+                    key: z.string().trim().min(1).max(20),
+                    label: z.string().trim().min(1).max(1000),
+                    dimension: z.string().trim().max(20).optional(),
+                  }),
+                )
+                .max(12)
+                .nullable()
+                .optional(),
+              active: z.boolean().optional(),
+            }),
+          )
+          .min(1)
+          .max(500),
       })
       .parse(d),
   )
