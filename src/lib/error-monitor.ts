@@ -47,16 +47,42 @@ function actorLabel(): string | undefined {
   return undefined;
 }
 
+/**
+ * Kegagalan jaringan sesaat (tab ditutup, pindah halaman, sinyal hilang)
+ * bukan bug aplikasi — jangan dicatat sebagai error test.
+ */
+const TRANSIENT_NETWORK = [
+  "failed to fetch",
+  "load failed",
+  "networkerror",
+  "network request failed",
+  "the operation was aborted",
+  "aborterror",
+  "signal is aborted",
+  "err_network",
+  "err_internet_disconnected",
+];
+
+let pageUnloading = false;
+
+function isTransientNetwork(message: string) {
+  const m = message.toLowerCase();
+  return TRANSIENT_NETWORK.some((p) => m.includes(p));
+}
+
 export function captureAppError(error: unknown, context: Record<string, unknown> = {}) {
   if (typeof window === "undefined") return;
   const { message, stack } = describe(error);
   if (!message) return;
+  // Halaman sedang ditutup / perangkat offline: request yang batal tidak dicatat.
+  if (isTransientNetwork(message) && (pageUnloading || navigator.onLine === false)) return;
   const route = window.location.pathname;
   if (!shouldEmit(`${route}|${message}`)) return;
 
   const area = areaFromPath(route);
   const notify = (context["silent"] as boolean) !== true;
   if (notify) {
+
     toast.error("Terjadi kesalahan pada halaman ini", {
       description: message.slice(0, 160),
       duration: 8000,
