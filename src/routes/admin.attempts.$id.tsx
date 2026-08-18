@@ -18,6 +18,7 @@ import { papiScore, PAPI_SCALE_LABEL, PAPI_TOP_ORDER, PAPI_BOTTOM_ORDER } from "
 import { msdtScore, MSDT_STYLE_COLUMNS, MSDT_STYLE_LABEL } from "@/lib/msdt-key";
 import { rmibScore } from "@/lib/rmib-key";
 import { exportMsdtExcel } from "@/lib/msdt-excel";
+import { exportRmibExcel } from "@/lib/rmib-excel";
 import { buildCandidateMeta } from "@/lib/candidate-meta";
 import { toast } from "sonner";
 
@@ -272,6 +273,26 @@ function AttemptDetail() {
               }}
             >
               <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel MSDT
+            </Button>
+          )}
+          {isRmib && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const res = await exportRmibExcel(rmibGroups, {
+                    ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
+                  });
+                  toast.success(
+                    `Excel RMIB diunduh — ${res.answeredGroups}/${res.totalGroups} kelompok terisi`,
+                  );
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Gagal membuat file Excel");
+                }
+              }}
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel RMIB
             </Button>
           )}
           <Button size="sm" onClick={() => window.print()}>
