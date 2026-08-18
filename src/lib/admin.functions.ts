@@ -1702,3 +1702,150 @@ export const setTestDuration = createServerFn({ method: "POST" })
     });
     return { ok: true, duration_minutes: data.duration_minutes };
   });
+
+const ImportRow = z.object({
+  question_number: z.number().int().min(1).max(1000),
+  question_text: z.string().trim().min(1).max(4000),
+  dimension: z.string().trim().max(60).nullable().optional(),
+  correct_answer: z.string().trim().max(200).nullable().optional(),
+  options: z
+    .array(
+      z.object({
+        key: z.string().trim().min(1).max(20),
+        label: z.string().trim().min(1).max(1000),
+        dimension: z.string().trim().max(20).optional(),
+      }),
+    )
+    .max(12)
+    .nullable()
+    .optional(),
+  active: z.boolean().optional(),
+});
+
+/**
+ * Impor massal soal ke satu test (Super Admin & HR).
+ * mode "append" menambah/menimpa nomor yang sama, "replace" mengganti seluruh
+ * isi bank soal test tersebut. Semua tindakan tercatat di Audit Log.
+ */
+export const importTestQuestions = createServerFn({ method: "POST" })
+  .middleware([requireStaff])
+  .inputValidator((d) =>
+    z
+      .object({
+        test_id: z.string().uuid(),
+        mode: z.enum(["append", "replace"]).default("append"),
+        rows: z.array(ImportRow).min(1).max(500),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const t = await supabaseAdmin
+      .from("tests")
+      .select("id, name")
+      .eq("id", data.test_id)
+      .maybeSingle();
+    if (t.error || !t.data) throw new Error("Test tidak ditemukan.");
+
+    const numbers = data.rows.map((r) => r.question_number);
+    if (new Set(numbers).size !== numbers.length)
+      throw new Error("Ada nomor soal ganda di file yang diimpor.");
+
+    if (data.mode === "replace") {
+      const old = await supabaseAdmin
+        .from("test_questions")
+        .select("id")
+        .eq("test_id", data.test_id);
+      const ids = (old.data ?? []).map((r: any) => r.id);
+      if (ids.length) {
+        await supabaseAdmin.from("test_answers").delete().in("question_id", ids);
+        const del = await supabaseAdmin.from("test_questions").delete().in("id", ids);
+        if (del.error) throw new Error(del.error.message);
+      }
+    }
+
+    const existing = await supabaseAdmin
+      .from("test_questions")
+      .select("id, question_number")
+      .eq("test_id", data.test_id);
+    const byNumber = new Map<number, string>(
+      (existing.data ?? []).map((r: any) => [r.question_number, r.id]),
+    );
+
+    let created = 0;
+    let updated = 0;
+    for (const r of data.rows) {
+      const payload = {
+        test_id: data.test_id,
+        question_number: r.question_number,
+        question_text: r.question_text,
+        dimension: r.dimension?.trim() ? r.dimension.trim() : null,
+        correct_answer: r.correct_answer?.trim() ? r.correct_answer.trim() : null,
+        options: r.options && r.options.length ? r.options : null,
+        active: r.active ?? true,
+      };
+      const id = byNumber.get(r.question_number);
+      if (id) {
+        const { error } = await supabaseAdmin
+          .from("test_questions")
+          .update(payload as any)
+          .eq("id", id);
+        if (error) throw new Error(error.message);
+        updated += 1;
+      } else {
+        const { error } = await supabaseAdmin.from("test_questions").insert(payload as any);
+        if (error) throw new Error(error.message);
+        created += 1;
+      }
+    }
+
+    await logAudit(context, "question.import", "test", data.test_id, {
+      mode: data.mode,
+      created,
+      updated,
+      total: data.rows.length,
+      test_name: (t.data as any).name ?? null,
+    });
+    return { ok: true, created, updated };
+  });
+
+/** Urut ulang tata letak soal (naik/turun) — Super Admin & HR. */
+export const renumberTestQuestions = createServerFn({ method: "POST" })
+  .middleware([requireStaff])
+  .inputValidator((d) =>
+    z
+      .object({
+        test_id: z.string().uuid(),
+        ordered_ids: z.array(z.string().uuid()).min(1).max(1000),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const rows = await supabaseAdmin
+      .from("test_questions")
+      .select("id")
+      .eq("test_id", data.test_id);
+    const valid = new Set((rows.data ?? []).map((r: any) => r.id));
+    const ids = data.ordered_ids.filter((id) => valid.has(id));
+    if (!ids.length) throw new Error("Soal tidak ditemukan pada test ini.");
+
+    // Dua tahap: geser ke nomor sementara agar tidak bentrok dengan nomor lama.
+    for (let i = 0; i < ids.length; i += 1) {
+      await supabaseAdmin
+        .from("test_questions")
+        .update({ question_number: 10000 + i })
+        .eq("id", ids[i]!);
+    }
+    for (let i = 0; i < ids.length; i += 1) {
+      const { error } = await supabaseAdmin
+        .from("test_questions")
+        .update({ question_number: i + 1 })
+        .eq("id", ids[i]!);
+      if (error) throw new Error(error.message);
+    }
+
+    await logAudit(context, "question.reorder", "test", data.test_id, { count: ids.length });
+    return { ok: true, count: ids.length };
+  });
