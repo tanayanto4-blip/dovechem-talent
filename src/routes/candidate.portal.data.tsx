@@ -62,14 +62,12 @@ const baseFields: [string, string][] = [
   ["position_applied", "Posisi dilamar"],
 ];
 
-/** Magang mengisi semester berjalan; karyawan mengisi lama pengalaman kerja. */
+/** Magang cukup biodata dasar; karyawan mengisi pengalaman kerja & jabatan. */
 function fieldsFor(type: string): [string, string][] {
   return type === "magang"
-    ? [...baseFields, ["semester", "Semester saat ini"]]
+    ? baseFields
     : [...baseFields, ["work_experience", "Pengalaman kerja"], ["job_position", "Posisi jabatan"]];
 }
-
-const semesterOptions = Array.from({ length: 14 }, (_, i) => String(i + 1));
 
 const ageOptions = Array.from({ length: 56 }, (_, i) => String(i + 15));
 const workOptions = ["Belum bekerja", ...Array.from({ length: 21 }, (_, i) => String(i))];
@@ -109,7 +107,6 @@ function DataForm() {
         education: c.education ?? "",
         major: c.major ?? "",
         work_experience: c.work_experience ?? "",
-        semester: (c as any).semester ?? "",
         job_position: (c as any).job_position ?? "",
         phone: c.phone ?? "",
         email: c.email ?? "",
@@ -175,13 +172,13 @@ function DataForm() {
     }
     setSaving(true);
     try {
-      const { work_experience, semester, job_position, ...common } = form;
+      const { work_experience, job_position, ...common } = form;
       await save({
         data: {
           code: session!.code,
           device: session!.device,
           ...common,
-          ...(isMagang ? { semester } : { work_experience, job_position }),
+          ...(isMagang ? {} : { work_experience, job_position }),
         } as any,
       });
       toast.success("Data tersimpan — lanjut ke psikotest");
@@ -292,25 +289,7 @@ function DataForm() {
               </SelectContent>
             </Select>
           </Field>
-          {isMagang ? (
-            <Field label="Semester Saat Ini" required>
-              <Select
-                value={form.semester ?? ""}
-                onValueChange={(v) => setForm({ ...form, semester: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih semester" />
-                </SelectTrigger>
-                <SelectContent className="max-h-64">
-                  {semesterOptions.map((v) => (
-                    <SelectItem key={v} value={v}>
-                      Semester {v}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-          ) : (
+          {!isMagang && (
             <Field label="Pernah Bekerja Berapa Lama" required>
               <Select
                 value={form.work_experience ?? ""}
