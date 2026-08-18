@@ -290,7 +290,8 @@ function ResultsBank() {
       const byType = (t: string) => g.attempts.find((a) => a.tests?.test_type === t);
       const mbtiA = byType("mbti");
       const wptA = byType("wpt");
-      const base = mbtiA ?? wptA ?? g.attempts[0];
+      const discA = byType("disc");
+      const base = mbtiA ?? wptA ?? discA ?? g.attempts[0];
       if (!base) throw new Error("Belum ada hasil test untuk kandidat ini");
 
       const baseDetail = await answerRows(base.id);
@@ -300,8 +301,9 @@ function ResultsBank() {
 
       const mbtiAnswers = await rowsFor(mbtiA);
       const wptAnswers = await rowsFor(wptA);
+      const discAnswers = await rowsFor(discA);
       const testDate =
-        [mbtiA, wptA, base].find((a) => a?.finished_at)?.finished_at ?? base.started_at ?? null;
+        [mbtiA, wptA, discA, base].find((a) => a?.finished_at)?.finished_at ?? base.started_at ?? null;
 
       const out = await exportProfilingExcel({
         candidate: {
@@ -316,6 +318,7 @@ function ResultsBank() {
         testDate,
         mbtiAnswers,
         wptAnswers,
+        discAnswers,
       });
       toast.success(
         `Profiling ${g.name} diunduh${out.iq !== null ? ` — IQ ${out.iq} (${out.status})` : ""}`,
