@@ -120,7 +120,7 @@ export function RmibSheet({
               {ordered.length > 1 ? ` — ${slide + 1}/${ordered.length}` : ""}
             </div>
             <div className="text-[11px] text-muted-foreground">
-              Isi angka 1–12 · 1 = paling disukai, 12 = paling tidak disukai
+              Ketuk <b>Laki-laki</b> atau <b>Perempuan</b>, lalu ketik peringkat 1–12 di tengah
             </div>
           </div>
 
