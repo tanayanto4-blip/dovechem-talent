@@ -82,12 +82,42 @@ const STEPS = [
   },
 ];
 
+const HIGHLIGHTS = [
+  {
+    i: ClipboardList,
+    t: "Produsen Bahan Kimia",
+    d: "Resin, hardener, dan bahan kimia industri untuk pasar domestik maupun ekspor.",
+  },
+  {
+    i: ShieldCheck,
+    t: "Standar Mutu & K3",
+    d: "Operasional pabrik mengacu standar mutu, keselamatan kerja, dan lingkungan.",
+  },
+  {
+    i: Users,
+    t: "Pengembangan SDM",
+    d: "Program pelatihan, jenjang karier, dan budaya kerja yang kolaboratif.",
+  },
+  {
+    i: CheckCircle2,
+    t: "Inovasi Berkelanjutan",
+    d: "Tim R&D mengembangkan formulasi baru sesuai kebutuhan pelanggan industri.",
+  },
+];
+
+const STATS = [
+  { n: "40+", l: "Tahun beroperasi" },
+  { n: "1500+", l: "Karyawan" },
+  { n: "20+", l: "Product line" },
+  { n: "ISO", l: "Certified" },
+];
+
 function Home() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
       {/* Nav */}
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-card shadow-sm">
-        <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:px-6 sm:py-4 md:flex md:justify-between">
+      <header className="sticky top-0 z-40 border-b border-border/60 bg-card/85 backdrop-blur">
+        <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:px-6 md:flex md:justify-between">
           <Link to="/" className="flex min-w-0 items-center gap-2.5">
             <img
               src={doverLogo.url}
@@ -95,15 +125,15 @@ function Home() {
               className="h-8 w-auto shrink-0 object-contain sm:h-9"
             />
             <div className="min-w-0 leading-tight">
-              <div className="truncate font-display text-sm font-bold text-primary sm:text-base">
+              <div className="truncate font-display text-sm font-bold tracking-tight text-primary sm:text-base">
                 PT DOVER CHEMICAL
               </div>
-              <div className="truncate text-[10px] uppercase tracking-widest text-muted-foreground">
+              <div className="truncate text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                 Recruitment Portal
               </div>
             </div>
           </Link>
-          <nav className="hidden items-center gap-8 md:flex">
+          <nav className="hidden items-center gap-7 md:flex">
             <a href="#tentang" className="text-sm text-muted-foreground hover:text-primary">
               Tentang
             </a>
@@ -118,182 +148,155 @@ function Home() {
             <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
               <Link to="/auth">Login Admin</Link>
             </Button>
-            <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
+            <Button asChild size="sm">
               <Link to="/candidate/login">Login Kandidat</Link>
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-hero text-primary-foreground">
-        <div
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 20% 20%, white 0, transparent 40%), radial-gradient(circle at 80% 60%, white 0, transparent 40%)",
-          }}
-        />
-        <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 sm:py-20 md:grid-cols-2 md:items-center md:gap-12 md:py-32">
-          <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary-glow" /> Portal Rekrutmen Resmi
-            </div>
-            <h1 className="mt-5 font-display text-3xl font-bold leading-tight sm:text-4xl md:text-6xl">
-              Portal Psikotest &amp; Rekrutmen
-              <br />
-              <span className="text-primary-glow">PT Dover Chemical</span>
-            </h1>
-            <p className="mt-4 max-w-lg text-base text-white/80 sm:mt-6 sm:text-lg">
-              Platform psikotest &amp; administrasi rekrutmen untuk calon karyawan. Kandidat login
-              dengan kode akses dari tim HR, mengisi biodata, lalu mengerjakan rangkaian psikotest
-              resmi secara online.
-            </p>
-            <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap">
-              <Button
-                asChild
-                size="lg"
-                className="w-full bg-primary-glow text-primary-foreground hover:bg-primary-glow/90 sm:w-auto"
-              >
-                <Link to="/candidate/login">
-                  Mulai Test <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="w-full border-white/40 bg-transparent text-primary-foreground hover:bg-white/10 hover:text-primary-foreground sm:w-auto"
-              >
-                <Link to="/auth">Panel Admin HR</Link>
-              </Button>
-            </div>
-            <div className="mt-6 flex flex-wrap gap-2 sm:mt-8">
-              {["Industri Kimia", "Resin & Hardener", "Sejak 1984", "Berorientasi Mutu"].map(
-                (t) => (
-                  <span
-                    key={t}
-                    className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur"
-                  >
-                    {t}
-                  </span>
-                ),
-              )}
-            </div>
-          </div>
-          <div className="hidden md:block">
-            <div className="relative rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur shadow-elegant">
-              <div className="space-y-3">
-                {STEPS.map((s) => (
-                  <div
-                    key={s.n}
-                    className="flex items-start gap-4 rounded-lg border border-white/10 bg-white/5 p-4"
-                  >
-                    <div className="font-display text-2xl font-bold text-primary-glow">{s.n}</div>
-                    <div>
-                      <div className="font-semibold">{s.t}</div>
-                      <div className="text-sm text-white/70">{s.short}</div>
-                    </div>
-                  </div>
-                ))}
+      {/* BENTO HERO */}
+      <section className="mx-auto max-w-6xl px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12">
+        <div className="grid auto-rows-auto gap-3 sm:gap-4 lg:grid-cols-3">
+          {/* Kartu utama */}
+          <div className="relative overflow-hidden rounded-3xl bg-hero p-6 text-primary-foreground shadow-elegant sm:p-10 lg:col-span-2 lg:row-span-2">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-25"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 15% 15%, white 0, transparent 45%), radial-gradient(circle at 85% 75%, white 0, transparent 45%)",
+              }}
+            />
+            <div className="relative">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary-glow" /> Portal Rekrutmen Resmi
+              </div>
+              <h1 className="mt-6 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+                Psikotest &amp; Rekrutmen,
+                <br />
+                <span className="text-primary-glow">satu portal saja.</span>
+              </h1>
+              <p className="mt-5 max-w-md text-sm text-white/80 sm:text-base">
+                Kandidat login dengan kode akses dari tim HR, melengkapi biodata, lalu mengerjakan
+                rangkaian psikotest resmi PT Dover Chemical secara online.
+              </p>
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                <Button
+                  asChild
+                  size="lg"
+                  className="w-full bg-primary-glow text-primary-foreground hover:bg-primary-glow/90 sm:w-auto"
+                >
+                  <Link to="/candidate/login">
+                    Mulai Test <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="w-full border-white/40 bg-transparent text-primary-foreground hover:bg-white/10 hover:text-primary-foreground sm:w-auto"
+                >
+                  <Link to="/auth">Panel Admin HR</Link>
+                </Button>
               </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Tentang */}
-      <section id="tentang" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-24">
-        <div className="grid gap-10 md:grid-cols-2 md:items-center md:gap-12">
-          <div className="min-w-0">
-            <div className="text-xs font-semibold uppercase tracking-widest text-secondary">
-              Tentang
+          {/* Kartu identitas */}
+          <div className="rounded-3xl border bg-card p-6 shadow-card">
+            <Beaker className="h-6 w-6 text-primary-glow" />
+            <div className="mt-4 font-display text-lg font-bold text-primary">
+              Industri kimia sejak 1984
             </div>
-            <h2 className="mt-3 font-display text-2xl font-bold text-primary sm:text-4xl">
-              Industri kimia yang mengutamakan orang
-            </h2>
-            <p className="mt-4 text-sm text-muted-foreground sm:text-base">
-              PT Dover Chemical adalah produsen bahan kimia industri di Indonesia. Kami merekrut
-              individu berkualitas untuk mendukung operasional pabrik, R&D, dan tim manajemen.
-              Portal ini memastikan proses seleksi berjalan transparan, terstruktur, dan aman.
+            <p className="mt-2 text-sm text-muted-foreground">
+              Resin, hardener, dan bahan kimia industri — dengan tim yang terus bertumbuh.
             </p>
-            <div className="mt-8 grid grid-cols-2 gap-6">
-              {[
-                { n: "40+", l: "Tahun beroperasi" },
-                { n: "1500+", l: "Karyawan" },
-                { n: "20+", l: "Product line" },
-                { n: "ISO", l: "Certified" },
-              ].map((s) => (
-                <div key={s.l}>
-                  <div className="font-display text-2xl font-bold text-primary sm:text-3xl">
-                    {s.n}
-                  </div>
-                  <div className="text-sm text-muted-foreground">{s.l}</div>
-                </div>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {["Resin & Hardener", "Berorientasi Mutu", "ISO Certified"].map((t) => (
+                <span
+                  key={t}
+                  className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground"
+                >
+                  {t}
+                </span>
               ))}
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {[
-              {
-                i: ClipboardList,
-                t: "Produsen Bahan Kimia",
-                d: "Memproduksi resin, hardener, dan bahan kimia industri untuk pasar domestik maupun ekspor.",
-              },
-              {
-                i: ShieldCheck,
-                t: "Standar Mutu & K3",
-                d: "Operasional pabrik mengacu pada standar mutu, keselamatan kerja, dan kelestarian lingkungan.",
-              },
-              {
-                i: Users,
-                t: "Pengembangan SDM",
-                d: "Karyawan didukung program pelatihan, jenjang karier, dan budaya kerja yang kolaboratif.",
-              },
-              {
-                i: CheckCircle2,
-                t: "Inovasi Berkelanjutan",
-                d: "Tim R&D terus mengembangkan formulasi baru sesuai kebutuhan pelanggan industri.",
-              },
-            ].map((f) => (
-              <div key={f.t} className="rounded-xl border bg-card p-5 shadow-card">
-                <f.i className="h-6 w-6 text-primary-glow" />
-                <div className="mt-3 font-semibold">{f.t}</div>
-                <div className="mt-1 text-sm text-muted-foreground">{f.d}</div>
+
+          {/* Kartu statistik */}
+          <div className="grid grid-cols-2 gap-3 rounded-3xl border bg-card p-6 shadow-card sm:gap-4">
+            {STATS.map((s) => (
+              <div key={s.l}>
+                <div className="font-display text-2xl font-bold tracking-tight text-primary sm:text-3xl">
+                  {s.n}
+                </div>
+                <div className="text-xs text-muted-foreground sm:text-sm">{s.l}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Proses */}
-      <section id="proses" className="bg-subtle py-14 sm:py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+      {/* Tentang — bento */}
+      <section id="tentang" className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
+        <div className="max-w-2xl">
+          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">
+            Tentang
+          </div>
+          <h2 className="mt-3 font-display text-2xl font-bold tracking-tight text-primary sm:text-4xl">
+            Industri kimia yang mengutamakan orang
+          </h2>
+          <p className="mt-3 text-sm text-muted-foreground sm:text-base">
+            PT Dover Chemical merekrut individu berkualitas untuk operasional pabrik, R&amp;D, dan
+            tim manajemen. Portal ini menjaga proses seleksi tetap transparan, terstruktur, dan
+            aman.
+          </p>
+        </div>
+        <div className="mt-8 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+          {HIGHLIGHTS.map((f) => (
+            <div
+              key={f.t}
+              className="rounded-2xl border bg-card p-5 shadow-card transition-shadow hover:shadow-elegant"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-accent">
+                <f.i className="h-5 w-5 text-primary-glow" />
+              </div>
+              <div className="mt-4 font-display font-semibold text-primary">{f.t}</div>
+              <div className="mt-1.5 text-sm text-muted-foreground">{f.d}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Proses — bento asimetris */}
+      <section id="proses" className="bg-subtle py-12 sm:py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="max-w-2xl">
-            <div className="text-xs font-semibold uppercase tracking-widest text-secondary">
+            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">
               Alur Kandidat
             </div>
-            <h2 className="mt-3 font-display text-2xl font-bold text-primary sm:text-4xl">
+            <h2 className="mt-3 font-display text-2xl font-bold tracking-tight text-primary sm:text-4xl">
               5 langkah dari kode akses hingga hasil
             </h2>
             <p className="mt-3 text-sm text-muted-foreground sm:text-base">
-              Alur terbaru portal rekrutmen PT Dover Chemical — tanpa unggah berkas, cukup biodata
-              dan pengerjaan test online.
+              Tanpa unggah berkas — cukup biodata dan pengerjaan test online.
             </p>
           </div>
-          <div className="mt-8 grid gap-4 sm:mt-12 sm:grid-cols-2 sm:gap-6 lg:grid-cols-5">
+          <div className="mt-8 grid gap-3 sm:gap-4 lg:grid-cols-6">
             {STEPS.map((s, i) => (
-              <div key={s.n} className="relative rounded-xl border bg-card p-5 shadow-card sm:p-6">
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-hero font-display text-lg font-bold text-primary-foreground">
+              <div
+                key={s.n}
+                className={`rounded-2xl border bg-card p-5 shadow-card sm:p-6 ${
+                  i === 0 ? "lg:col-span-3" : i === 1 ? "lg:col-span-3" : "lg:col-span-2"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-hero font-display text-sm font-bold text-primary-foreground">
                     {i + 1}
                   </div>
-                  {i < STEPS.length - 1 && (
-                    <ArrowRight className="hidden h-4 w-4 text-muted-foreground/50 lg:block" />
-                  )}
+                  <div className="font-display font-semibold text-primary">{s.t}</div>
                 </div>
-                <div className="font-semibold text-primary">{s.t}</div>
-                <div className="mt-1 text-sm text-muted-foreground">{s.d}</div>
+                <div className="mt-3 text-sm text-muted-foreground">{s.d}</div>
               </div>
             ))}
           </div>
@@ -301,28 +304,33 @@ function Home() {
       </section>
 
       {/* CTA */}
-      <section id="kontak" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-24">
-        <div className="rounded-2xl bg-hero p-6 text-center text-primary-foreground shadow-elegant sm:p-12 md:p-16">
-          <h2 className="font-display text-2xl font-bold sm:text-4xl md:text-5xl">
-            Siap memulai proses seleksi?
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm text-white/80 sm:text-base">
-            Masuk dengan kode akses yang Anda terima dari tim rekrutmen PT Dover Chemical.
-          </p>
-          <div className="mt-6 flex flex-col justify-center gap-3 sm:mt-8 sm:flex-row sm:flex-wrap">
+      <section id="kontak" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-20">
+        <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
+          <div className="relative overflow-hidden rounded-3xl bg-hero p-6 text-primary-foreground shadow-elegant sm:p-10 lg:col-span-2">
+            <h2 className="font-display text-2xl font-bold tracking-tight sm:text-4xl">
+              Siap memulai proses seleksi?
+            </h2>
+            <p className="mt-3 max-w-lg text-sm text-white/80 sm:text-base">
+              Masuk dengan kode akses yang Anda terima dari tim rekrutmen PT Dover Chemical.
+            </p>
             <Button
               asChild
               size="lg"
-              className="w-full bg-primary-glow hover:bg-primary-glow/90 sm:w-auto"
+              className="mt-6 w-full bg-primary-glow hover:bg-primary-glow/90 sm:w-auto"
             >
-              <Link to="/candidate/login">Login Kandidat</Link>
+              <Link to="/candidate/login">
+                Login Kandidat <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="w-full border-white/40 bg-transparent text-primary-foreground hover:bg-white/10 hover:text-primary-foreground sm:w-auto"
-            >
+          </div>
+          <div className="flex flex-col justify-between rounded-3xl border bg-card p-6 shadow-card">
+            <div>
+              <div className="font-display font-semibold text-primary">Tim HR &amp; Admin</div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Kelola kode akses, bank soal, dan hasil psikotest kandidat dari satu dashboard.
+              </p>
+            </div>
+            <Button asChild variant="outline" size="lg" className="mt-6 w-full">
               <Link to="/auth">Login Admin HR</Link>
             </Button>
           </div>
@@ -330,7 +338,7 @@ function Home() {
       </section>
 
       <footer className="border-t bg-primary py-8 text-primary-foreground">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 text-center sm:px-6 md:flex-row md:text-left">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-center sm:px-6 md:flex-row md:text-left">
           <div className="flex flex-wrap items-center justify-center gap-2">
             <img
               src={doverLogo.url}
@@ -341,7 +349,7 @@ function Home() {
               © {new Date().getFullYear()} PT Dover Chemical Indonesia. All rights reserved.
             </span>
           </div>
-          <div className="text-xs text-white/60">Recruitment & Psychotest Portal</div>
+          <div className="text-xs text-white/60">Recruitment &amp; Psychotest Portal</div>
         </div>
       </footer>
     </div>
