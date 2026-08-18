@@ -43,7 +43,11 @@ function formulaText(cell: ExcelJS.Cell): string | null {
   return null;
 }
 
-export async function exportMbtiExcel(answers: MbtiExcelAnswer[], meta: MbtiExcelMeta = {}) {
+/**
+ * Menghitung skor MBTI (proporsi tiap dimensi) memakai rumus asli template.
+ * Dipakai ulang oleh exporter Excel MBTI maupun rekap Profiling.
+ */
+export async function computeMbtiScores(answers: MbtiExcelAnswer[]) {
   const res = await fetch(templateAsset.url);
   if (!res.ok) throw new Error("Template Excel MBTI tidak dapat dimuat.");
   const buf = await res.arrayBuffer();
@@ -104,6 +108,13 @@ export async function exportMbtiExcel(answers: MbtiExcelAnswer[], meta: MbtiExce
     const f = formulaText(cell);
     if (f) cell.value = { formula: f, result: typeLetters[i] } as ExcelJS.CellFormulaValue;
   });
+
+  return { wb, ws, filled, scores, typeLetters, allOk };
+}
+
+export async function exportMbtiExcel(answers: MbtiExcelAnswer[], meta: MbtiExcelMeta = {}) {
+  const { wb, ws, filled, scores, typeLetters, allOk } = await computeMbtiScores(answers);
+
 
   // Identitas kandidat pada baris tanda tangan
   const nama = [meta.candidateName, meta.candidateCode].filter(Boolean).join(" — ") || "-";
