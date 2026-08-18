@@ -47,16 +47,60 @@ function actorLabel(): string | undefined {
   return undefined;
 }
 
+/**
+ * Kegagalan jaringan sesaat (tab ditutup, pindah halaman, sinyal hilang)
+ * bukan bug aplikasi — jangan dicatat sebagai error test.
+ */
+const TRANSIENT_NETWORK = [
+  "failed to fetch",
+  "load failed",
+  "networkerror",
+  "network request failed",
+  "the operation was aborted",
+  "aborterror",
+  "signal is aborted",
+  "err_network",
+  "err_internet_disconnected",
+];
+
+/**
+ * Peringatan internal React / ekstensi browser: bukan gangguan yang dialami
+ * kandidat, jadi tidak perlu masuk daftar error yang harus ditangani.
+ */
+const IGNORED = [
+  "hydration failed",
+  "server rendered html didn't match",
+  "error while hydrating",
+  "minified react error #418",
+  "minified react error #423",
+  "minified react error #425",
+  "resizeobserver loop",
+  "script error",
+  "chrome-extension://",
+];
+
+let pageUnloading = false;
+
+function matches(message: string, list: string[]) {
+  const m = message.toLowerCase();
+  return list.some((p) => m.includes(p));
+}
+
 export function captureAppError(error: unknown, context: Record<string, unknown> = {}) {
   if (typeof window === "undefined") return;
   const { message, stack } = describe(error);
   if (!message) return;
+  if (matches(message, IGNORED)) return;
+  // Halaman sedang ditutup / perangkat offline: request yang batal tidak dicatat.
+  if (matches(message, TRANSIENT_NETWORK) && (pageUnloading || navigator.onLine === false)) return;
+
   const route = window.location.pathname;
   if (!shouldEmit(`${route}|${message}`)) return;
 
   const area = areaFromPath(route);
   const notify = (context["silent"] as boolean) !== true;
   if (notify) {
+
     toast.error("Terjadi kesalahan pada halaman ini", {
       description: message.slice(0, 160),
       duration: 8000,
@@ -119,6 +163,19 @@ let installed = false;
 export function installErrorMonitor() {
   if (installed || typeof window === "undefined") return;
   installed = true;
+
+  // Tandai halaman sedang ditutup agar request yang batal tidak dilaporkan.
+  window.addEventListener("pagehide", () => {
+    pageUnloading = true;
+  });
+  window.addEventListener("beforeunload", () => {
+    pageUnloading = true;
+  });
+  window.addEventListener("pageshow", () => {
+    pageUnloading = false;
+  });
+
+
 
   window.addEventListener("error", (e) => {
     captureAppError(e.error ?? e.message, { source: "window.onerror", filename: e.filename });
