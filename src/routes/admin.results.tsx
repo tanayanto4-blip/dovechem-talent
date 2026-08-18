@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listAllAttempts, getAttemptDetail, deleteCandidateResults } from "@/lib/admin.functions";
 import { exportMbtiExcel } from "@/lib/mbti-excel";
+import { exportProfilingExcel } from "@/lib/profiling-excel";
 import { exportEqExcel } from "@/lib/eq-excel";
 import { exportWptExcel } from "@/lib/wpt-excel";
 import { exportPapiExcel } from "@/lib/papi-excel";
@@ -279,6 +280,54 @@ function ResultsBank() {
       setResumeKey(null);
     }
   }
+
+  const [profilingKey, setProfilingKey] = useState<string | null>(null);
+
+  /** Profiling (Excel) — persentase MBTI + IQ/kategori WPT + status qualified. */
+  async function downloadProfiling(g: Group) {
+    setProfilingKey(g.key);
+    try {
+      const byType = (t: string) => g.attempts.find((a) => a.tests?.test_type === t);
+      const mbtiA = byType("mbti");
+      const wptA = byType("wpt");
+      const base = mbtiA ?? wptA ?? g.attempts[0];
+      if (!base) throw new Error("Belum ada hasil test untuk kandidat ini");
+
+      const baseDetail = await answerRows(base.id);
+      const cand = baseDetail.d.attempt?.candidates ?? {};
+      const rowsFor = async (a: any) =>
+        a ? (a.id === base.id ? baseDetail.rows : (await answerRows(a.id)).rows) : null;
+
+      const mbtiAnswers = await rowsFor(mbtiA);
+      const wptAnswers = await rowsFor(wptA);
+      const testDate =
+        [mbtiA, wptA, base].find((a) => a?.finished_at)?.finished_at ?? base.started_at ?? null;
+
+      const out = await exportProfilingExcel({
+        candidate: {
+          full_name: cand.full_name ?? g.name,
+          age: cand.age,
+          birth_date: cand.birth_date,
+          education: cand.education,
+          major: cand.major,
+          school_name: cand.school_name,
+          position_applied: cand.position_applied ?? g.position,
+        },
+        testDate,
+        mbtiAnswers,
+        wptAnswers,
+      });
+      toast.success(
+        `Profiling ${g.name} diunduh${out.iq !== null ? ` — IQ ${out.iq} (${out.status})` : ""}`,
+      );
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal membuat Profiling");
+    } finally {
+      setProfilingKey(null);
+    }
+  }
+
+
 
   const [bulkKey, setBulkKey] = useState<string | null>(null);
 
@@ -563,6 +612,21 @@ function ResultsBank() {
                         <FileSpreadsheet className="mr-1 h-3.5 w-3.5" />
                         {resumeKey === g.key ? "Menyiapkan..." : "Resume"}
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0"
+                        disabled={profilingKey === g.key}
+                        title="Unduh Profiling (Excel) — persentase MBTI + IQ WPT"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void downloadProfiling(g);
+                        }}
+                      >
+                        <FileSpreadsheet className="mr-1 h-3.5 w-3.5" />
+                        {profilingKey === g.key ? "Menyiapkan..." : "Profiling"}
+                      </Button>
+
                       <Button
                         size="sm"
                         variant="secondary"
