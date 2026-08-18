@@ -24,14 +24,11 @@ export type JobLevel = (typeof JOB_LEVELS)[number];
 
 /** Pilihan posisi jabatan untuk kandidat karyawan beserta tingkatnya. */
 export const JOB_POSITIONS: { value: string; level: JobLevel }[] = [
-  { value: "Operator", level: "staff" },
-  { value: "Admin / Officer", level: "staff" },
   { value: "Staff", level: "staff" },
   { value: "Supervisor", level: "spv_up" },
   { value: "Superintendent", level: "spv_up" },
   { value: "Manager", level: "spv_up" },
   { value: "General Manager", level: "spv_up" },
-  { value: "Director", level: "spv_up" },
 ];
 
 export function jobLevelOfPosition(position?: string | null): JobLevel | null {
