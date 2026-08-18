@@ -149,6 +149,14 @@ export async function exportProfilingExcel(input: ProfilingInput) {
     }
   }
 
+  // Keterangan tipe MBTI pada kolom kanan (G26 judul, G27:G31 poin, G33 ringkasan)
+  const desc = getMbtiDescription(mbtiType);
+  if (desc) {
+    edits.set("G26", desc.title);
+    for (let i = 0; i < 5; i++) edits.set(`G${27 + i}`, desc.bullets[i] ?? "");
+    edits.set("G33", desc.summary);
+  }
+
   if (iq !== null) {
     edits.set("D31", iq);
     edits.set("E31", ` ${(category ?? "").toUpperCase()}`);
