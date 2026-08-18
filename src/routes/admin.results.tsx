@@ -565,6 +565,21 @@ function ResultsBank() {
                       </Button>
                       <Button
                         size="sm"
+                        variant="outline"
+                        className="shrink-0"
+                        disabled={profilingKey === g.key}
+                        title="Unduh Profiling (Excel) — persentase MBTI + IQ WPT"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void downloadProfiling(g);
+                        }}
+                      >
+                        <FileSpreadsheet className="mr-1 h-3.5 w-3.5" />
+                        {profilingKey === g.key ? "Menyiapkan..." : "Profiling"}
+                      </Button>
+
+                      <Button
+                        size="sm"
                         variant="secondary"
                         className="shrink-0"
                         disabled={bulkKey === g.key}
