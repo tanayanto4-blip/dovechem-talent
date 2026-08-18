@@ -6,17 +6,19 @@ import { ChevronLeft, ChevronRight, CheckCircle2, AlertCircle } from "lucide-rea
 import {
   RMIB_GROUPS,
   parseRmibAnswer,
+  parseRmibSides,
   serializeRmibAnswer,
   rmibGroupComplete,
   rmibDuplicates,
   type RmibJob,
+  type RmibSide,
 } from "@/lib/rmib-key";
 
 export type RmibQuestion = {
   id: string;
   question_number: number;
   question_text?: string | null;
-  options?: any;
+  options?: { jobs?: RmibJob[]; code?: string } | null;
 };
 
 export function rmibFilledCount(value: string | undefined | null): number {
@@ -24,7 +26,7 @@ export function rmibFilledCount(value: string | undefined | null): number {
 }
 
 function jobsFor(q: RmibQuestion, groupIndex: number): RmibJob[] {
-  const fromDb = (q.options as any)?.jobs;
+  const fromDb = q.options?.jobs;
   if (Array.isArray(fromDb) && fromDb.length === 12) return fromDb as RmibJob[];
   return RMIB_GROUPS[groupIndex]?.jobs ?? [];
 }
@@ -50,24 +52,41 @@ export function RmibSheet({
 
   const groupIndex = Math.max(0, q.question_number - 1);
   const group = RMIB_GROUPS[groupIndex];
-  const code = (q.options as any)?.code ?? group?.code ?? String(q.question_number);
+  const code = q.options?.code ?? group?.code ?? String(q.question_number);
   const jobs = jobsFor(q, groupIndex);
-  const isFemale = String(gender ?? "")
+  const defaultSide: RmibSide = String(gender ?? "")
     .toLowerCase()
-    .startsWith("p");
+    .startsWith("p")
+    ? "F"
+    : "M";
 
   const value = answers[q.id] ?? "";
   const values = parseRmibAnswer(value);
+  const sides = parseRmibSides(value);
   const dups = rmibDuplicates(value);
   const done = rmibGroupComplete(value);
+
+  const setSide = (row: number, side: RmibSide) => {
+    const next = [...sides];
+    next[row] = side;
+    onChange(q.id, serializeRmibAnswer(values, next));
+  };
 
   const setAt = (row: number, raw: string) => {
     const digits = raw.replace(/[^0-9]/g, "").slice(0, 2);
     const n = parseInt(digits, 10);
     const next = [...values];
     next[row] = digits === "" ? null : Number.isFinite(n) && n >= 1 && n <= 12 ? n : null;
-    onChange(q.id, serializeRmibAnswer(next));
+    const nextSides = [...sides];
+    if (nextSides[row] !== "M" && nextSides[row] !== "F") {
+      nextSides[row] = defaultSide;
+    }
+    onChange(q.id, serializeRmibAnswer(next, nextSides));
   };
+
+  const missingSideCount = values.filter(
+    (v, i) => v !== null && sides[i] !== "M" && sides[i] !== "F",
+  ).length;
 
   return (
     <div className="space-y-3">
@@ -105,8 +124,7 @@ export function RmibSheet({
               {ordered.length > 1 ? ` — ${slide + 1}/${ordered.length}` : ""}
             </div>
             <div className="text-[11px] text-muted-foreground">
-              Daftar: <b className="text-foreground">{isFemale ? "Perempuan" : "Laki-laki"}</b> ·
-              Isi angka 1–12
+              Isi angka 1–12 · 1 = paling disukai, 12 = paling tidak disukai
             </div>
           </div>
 
@@ -115,53 +133,72 @@ export function RmibSheet({
               <thead>
                 <tr className="border-b bg-background text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-[11px]">
                   <th className="w-10 border-r px-2 py-2 text-center font-semibold">No</th>
-                  <th
-                    className={`border-r px-3 py-2 font-semibold ${isFemale ? "" : "bg-primary/10 text-primary"}`}
-                  >
-                    Laki-laki
-                  </th>
-                  <th
-                    className={`border-r px-3 py-2 font-semibold ${isFemale ? "bg-primary/10 text-primary" : ""}`}
-                  >
-                    Perempuan
-                  </th>
-                  <th className="w-16 px-2 py-2 text-center font-semibold">Jawaban</th>
+                  <th className="border-r px-3 py-2 text-center font-semibold">Laki-laki</th>
+                  <th className="w-20 border-r px-2 py-2 text-center font-semibold">Jawaban</th>
+                  <th className="px-3 py-2 text-center font-semibold">Perempuan</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {jobs.map((job, i) => {
                   const v = values[i];
+                  const side = sides[i];
                   const dup = v !== null && dups.has(v);
+                  const selectedLabel = side === "M" ? job.male : side === "F" ? job.female : null;
                   return (
                     <tr key={i} className="align-middle">
                       <td className="border-r px-2 py-2 text-center text-xs text-muted-foreground">
                         {i + 1}
                       </td>
                       <td
-                        className={`border-r px-3 py-2 text-[13px] leading-snug sm:text-sm ${
-                          isFemale ? "text-muted-foreground" : "bg-primary/5 font-medium"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setSide(i, "M")}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") setSide(i, "M");
+                        }}
+                        className={`border-r px-3 py-2 text-[13px] leading-snug sm:text-sm cursor-pointer transition ${
+                          side === "M"
+                            ? "bg-primary/10 font-semibold text-primary"
+                            : "text-foreground hover:bg-accent/50"
                         }`}
+                        aria-label={`Pilih pekerjaan laki-laki: ${job.male}`}
+                        aria-pressed={side === "M"}
                       >
                         {job.male}
                       </td>
-                      <td
-                        className={`border-r px-3 py-2 text-[13px] leading-snug sm:text-sm ${
-                          isFemale ? "bg-primary/5 font-medium" : "text-muted-foreground"
-                        }`}
-                      >
-                        {job.female}
-                      </td>
-                      <td className="px-2 py-1.5 text-center">
+                      <td className="border-r px-2 py-1.5 text-center">
                         <Input
                           inputMode="numeric"
                           value={v === null ? "" : String(v)}
                           onChange={(e) => setAt(i, e.target.value)}
-                          placeholder="_"
-                          aria-label={`Peringkat baris ${i + 1}: ${isFemale ? job.female : job.male}`}
-                          className={`mx-auto h-10 w-12 px-0 text-center font-bold ${
+                          placeholder={side ? "_" : "pilih"}
+                          disabled={side !== "M" && side !== "F"}
+                          aria-label={
+                            selectedLabel
+                              ? `Peringkat untuk ${selectedLabel}`
+                              : `Pilih pekerjaan laki-laki atau perempuan baris ${i + 1} terlebih dahulu`
+                          }
+                          className={`mx-auto h-10 w-14 px-0 text-center font-bold ${
                             dup ? "border-destructive text-destructive" : ""
                           }`}
                         />
+                      </td>
+                      <td
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setSide(i, "F")}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") setSide(i, "F");
+                        }}
+                        className={`px-3 py-2 text-[13px] leading-snug sm:text-sm cursor-pointer transition ${
+                          side === "F"
+                            ? "bg-primary/10 font-semibold text-primary"
+                            : "text-foreground hover:bg-accent/50"
+                        }`}
+                        aria-label={`Pilih pekerjaan perempuan: ${job.female}`}
+                        aria-pressed={side === "F"}
+                      >
+                        {job.female}
                       </td>
                     </tr>
                   );
@@ -169,7 +206,6 @@ export function RmibSheet({
               </tbody>
             </table>
           </div>
-
 
           <div className="flex flex-wrap items-center justify-between gap-2 border-t bg-muted/40 px-3 py-2 text-[11px] sm:px-4">
             {dups.size > 0 ? (
@@ -183,7 +219,8 @@ export function RmibSheet({
               </span>
             ) : (
               <span className="text-muted-foreground">
-                Terisi {rmibFilledCount(value)}/12 — 1 = paling disukai, 12 = paling tidak disukai
+                Terisi {rmibFilledCount(value)}/12 — pilih kolom laki-laki/perempuan lalu isi
+                peringkat
               </span>
             )}
 
@@ -211,6 +248,14 @@ export function RmibSheet({
           </div>
         </CardContent>
       </Card>
+
+      {missingSideCount > 0 && (
+        <div className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-foreground">
+          <AlertCircle className="mb-1 inline h-4 w-4 text-warning" /> <b>{missingSideCount}</b>{" "}
+          baris sudah diisi angka tetapi belum memilih kolom Laki-laki atau Perempuan. Ketuk salah
+          satu kolom di setiap baris.
+        </div>
+      )}
     </div>
   );
 }
