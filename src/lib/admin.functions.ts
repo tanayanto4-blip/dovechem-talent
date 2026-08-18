@@ -722,7 +722,7 @@ export const setTestActive = createServerFn({ method: "POST" })
 
 /** Publish/unpublish satu atau beberapa soal (semua jenis test). */
 export const setQuestionsPublished = createServerFn({ method: "POST" })
-  .middleware([requireAdmin])
+  .middleware([requireStaff])
   .inputValidator((d) =>
     z
       .object({
@@ -763,7 +763,7 @@ export const setQuestionsPublished = createServerFn({ method: "POST" })
 
 /** Publish/unpublish seluruh soal pada satu test sekaligus. */
 export const setAllQuestionsPublished = createServerFn({ method: "POST" })
-  .middleware([requireAdmin])
+  .middleware([requireStaff])
   .inputValidator((d) => z.object({ test_id: z.string().uuid(), active: z.boolean() }).parse(d))
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -890,7 +890,7 @@ function normalizeQuestionOptions(raw: unknown, testType: string): unknown {
 
 /** Create or update ANY test question (multiple choice, DISC, free text, Pauli, dll). */
 export const upsertTestQuestion = createServerFn({ method: "POST" })
-  .middleware([requireAdmin])
+  .middleware([requireStaff])
   .inputValidator((d) => QuestionUpsertInput.parse(d))
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -969,7 +969,7 @@ export const upsertTestQuestion = createServerFn({ method: "POST" })
 
 /** Delete ANY test question. */
 export const deleteTestQuestion = createServerFn({ method: "POST" })
-  .middleware([requireAdmin])
+  .middleware([requireStaff])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
