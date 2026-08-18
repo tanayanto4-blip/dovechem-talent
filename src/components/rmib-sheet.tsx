@@ -62,14 +62,13 @@ export function RmibSheet({
 
   const value = answers[q.id] ?? "";
   const values = parseRmibAnswer(value);
-  const sides = parseRmibSides(value);
+  const storedSides = parseRmibSides(value);
+  const activeSide: RmibSide = storedSides.find((s) => s === "M" || s === "F") ?? defaultSide;
   const dups = rmibDuplicates(value);
   const done = rmibGroupComplete(value);
 
-  const setSide = (row: number, side: RmibSide) => {
-    const next = [...sides];
-    next[row] = side;
-    onChange(q.id, serializeRmibAnswer(values, next));
+  const setSide = (side: RmibSide) => {
+    onChange(q.id, serializeRmibAnswer(values, Array(12).fill(side)));
   };
 
   const setAt = (row: number, raw: string) => {
@@ -77,12 +76,9 @@ export function RmibSheet({
     const n = parseInt(digits, 10);
     const next = [...values];
     next[row] = digits === "" ? null : Number.isFinite(n) && n >= 1 && n <= 12 ? n : null;
-    onChange(q.id, serializeRmibAnswer(next, sides));
+    onChange(q.id, serializeRmibAnswer(next, Array(12).fill(activeSide)));
   };
 
-  const missingSideCount = values.filter(
-    (v, i) => v !== null && sides[i] !== "M" && sides[i] !== "F",
-  ).length;
 
   return (
     <div className="space-y-3">
