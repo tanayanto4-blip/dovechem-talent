@@ -37,6 +37,15 @@ export function useIsAdmin() {
   return !!(data as any)?.roles?.includes("admin");
 }
 
+/** True bila user saat ini Super Admin atau HR (boleh mengelola bank soal). */
+export function useIsStaff() {
+  const fn = useServerFn(getMyRoles);
+  const { data } = useQuery({ queryKey: ["my-roles"], queryFn: () => fn({ data: {} as never }) });
+  const roles = ((data as any)?.roles ?? []) as string[];
+  return roles.includes("admin") || roles.includes("hr");
+}
+
+
 /** Toggle publish/draft untuk satu test di Bank Soal. */
 export function TestPublishToggle({
   testId,
