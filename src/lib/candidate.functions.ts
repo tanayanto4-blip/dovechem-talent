@@ -920,6 +920,28 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
         dominant_label: msdt.dominantLabel,
         picks,
       };
+    } else if (test.test_type === "rmib") {
+      // RMIB: 9 kelompok x 12 pekerjaan, kandidat menulis peringkat 1-12 di tiap kotak.
+      const qMap = new Map((qs.data ?? []).map((q: any) => [q.id, q]));
+      const byGroup: Record<string, string> = {};
+      for (const a of answers) {
+        const q: any = qMap.get(a.question_id);
+        const code = (q?.options as any)?.code ?? String(q?.question_number ?? "");
+        if (code) byGroup[code] = a.answer ?? "";
+      }
+      const rmib = rmibScore(byGroup);
+      score = 0;
+      result = {
+        requires_manual_review: true,
+        answered: rmib.answeredGroups,
+        total: rmib.totalGroups,
+        unanswered: rmib.totalGroups - rmib.answeredGroups,
+        totals: rmib.totals,
+        ranks: rmib.ranks,
+        order: rmib.order,
+        top3: rmib.top3,
+        groups: byGroup,
+      };
     } else if (test.test_type === "pauli") {
 
       // Pauli/Koran: kunci dihitung dari deret angka (jumlah dua angka bersebelahan, ambil digit terakhir).
