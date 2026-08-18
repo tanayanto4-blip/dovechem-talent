@@ -96,7 +96,12 @@ export async function sheetPaths(zip: JSZip) {
 /** Tandai workbook agar seluruh rumus dihitung ulang saat file dibuka. */
 export function forceRecalc(zip: JSZip, wbXml: string) {
   const wb = /<calcPr\b[^>]*\/>/.test(wbXml)
-    ? wbXml.replace(/<calcPr\b([^>]*)\/>/, '<calcPr$1 fullCalcOnLoad="1" calcMode="auto"/>')
+    ? wbXml.replace(/<calcPr\b([^>]*)\/>/, (_m, rest: string) => {
+        const clean = rest
+          .replace(/\sfullCalcOnLoad="[^"]*"/g, "")
+          .replace(/\scalcMode="[^"]*"/g, "");
+        return `<calcPr${clean} fullCalcOnLoad="1" calcMode="auto"/>`;
+      })
     : wbXml.replace("</workbook>", '<calcPr fullCalcOnLoad="1" calcMode="auto"/></workbook>');
   zip.file("xl/workbook.xml", wb);
   zip.remove("xl/calcChain.xml");
