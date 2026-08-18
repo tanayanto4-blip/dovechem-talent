@@ -1,6 +1,7 @@
 import JSZip from "jszip";
 import templateAsset from "@/assets/profiling-template.xlsx.asset.json";
 import { computeMbtiScores } from "@/lib/mbti-excel";
+import { getMbtiDescription } from "@/lib/mbti-descriptions";
 import { computeWptScore } from "@/lib/wpt-excel";
 import {
   type CellValue,
@@ -92,10 +93,14 @@ export async function exportProfilingExcel(input: ProfilingInput) {
 
   // MBTI -> persentase tiap dimensi (0..1, format persen mengikuti template)
   let mbti: Record<string, number> | null = null;
+  let mbtiType: string | null = null;
   if (input.mbtiAnswers?.length) {
     try {
       const r = await computeMbtiScores(input.mbtiAnswers);
-      if (r.filled > 0) mbti = r.scores;
+      if (r.filled > 0) {
+        mbti = r.scores;
+        mbtiType = r.typeLetters.join("");
+      }
     } catch {
       /* persentase MBTI dilewati bila template MBTI gagal dimuat */
     }
@@ -143,6 +148,14 @@ export async function exportProfilingExcel(input: ProfilingInput) {
       edits.set(`D${row}`, Number(mbti[left] ?? 0));
       edits.set(`E${row}`, Number(mbti[right] ?? 0));
     }
+  }
+
+  // Keterangan tipe MBTI pada kolom kanan (G26 judul, G27:G31 poin, G33 ringkasan)
+  const desc = getMbtiDescription(mbtiType);
+  if (desc) {
+    edits.set("G26", desc.title);
+    for (let i = 0; i < 5; i++) edits.set(`G${27 + i}`, desc.bullets[i] ?? "");
+    edits.set("G33", desc.summary);
   }
 
   if (iq !== null) {
