@@ -38,6 +38,11 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-brand-gold: var(--brand-gold);
+  --color-brand-gold-strong: var(--brand-gold-strong);
+  --color-brand-gold-foreground: var(--brand-gold-foreground);
+  --color-brand-ink: var(--brand-ink);
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -84,15 +89,30 @@
   --input: oklch(0.92 0.015 250);
   --ring: oklch(0.58 0.18 260);
 
+  /* Aksen emas korporat untuk halaman publik */
+  --brand-gold: oklch(0.78 0.13 85);
+  --brand-gold-strong: oklch(0.68 0.14 80);
+  --brand-gold-foreground: oklch(0.22 0.06 260);
+  --brand-ink: oklch(0.19 0.06 262);
+
   --gradient-hero: linear-gradient(
     135deg,
     oklch(0.28 0.09 260) 0%,
     oklch(0.35 0.13 260) 50%,
     oklch(0.58 0.18 260) 100%
   );
+  --gradient-deep: radial-gradient(
+      120% 100% at 85% 0%,
+      oklch(0.42 0.15 262 / 0.9) 0%,
+      transparent 60%
+    ),
+    linear-gradient(160deg, oklch(0.19 0.06 262) 0%, oklch(0.24 0.08 261) 55%, oklch(0.17 0.05 262) 100%);
+  --gradient-gold: linear-gradient(90deg, transparent, var(--brand-gold), transparent);
   --gradient-subtle: linear-gradient(180deg, oklch(0.985 0.005 240), oklch(0.94 0.03 250));
   --shadow-elegant: 0 20px 60px -20px oklch(0.28 0.09 260 / 0.35);
   --shadow-card: 0 4px 24px -8px oklch(0.28 0.09 260 / 0.12);
+  --shadow-gold: 0 18px 45px -22px oklch(0.68 0.14 80 / 0.75);
+
 
   --sidebar: oklch(0.28 0.09 260);
   --sidebar-foreground: oklch(0.985 0.005 240);
@@ -138,6 +158,21 @@
 @utility shadow-card {
   box-shadow: var(--shadow-card);
 }
+@utility bg-deep {
+  background-image: var(--gradient-deep);
+}
+@utility shadow-gold {
+  box-shadow: var(--shadow-gold);
+}
+@utility bg-blueprint {
+  background-image: linear-gradient(oklch(1 0 0 / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(1 0 0 / 0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+@utility rule-gold {
+  background-image: var(--gradient-gold);
+}
+
 
 @media print {
   body {
