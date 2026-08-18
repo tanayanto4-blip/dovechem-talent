@@ -18,7 +18,7 @@ export type RmibQuestion = {
   id: string;
   question_number: number;
   question_text?: string | null;
-  options?: any;
+  options?: { jobs?: RmibJob[]; code?: string } | null;
 };
 
 export function rmibFilledCount(value: string | undefined | null): number {
@@ -26,7 +26,7 @@ export function rmibFilledCount(value: string | undefined | null): number {
 }
 
 function jobsFor(q: RmibQuestion, groupIndex: number): RmibJob[] {
-  const fromDb = (q.options as any)?.jobs;
+  const fromDb = q.options?.jobs;
   if (Array.isArray(fromDb) && fromDb.length === 12) return fromDb as RmibJob[];
   return RMIB_GROUPS[groupIndex]?.jobs ?? [];
 }
