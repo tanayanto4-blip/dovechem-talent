@@ -893,7 +893,33 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
         highest: papi.highest,
         picks,
       };
+    } else if (test.test_type === "msdt") {
+      // MSDT: forced-choice A/B (64 item) -> 8 gaya kepemimpinan + TO/RO/E.
+      const qMap = new Map((qs.data ?? []).map((q: any) => [q.id, q]));
+      const picks: Record<number, string> = {};
+      for (const a of answers) {
+        const key = (a.answer ?? "").trim().toUpperCase();
+        if (key !== "A" && key !== "B") continue;
+        const q: any = qMap.get(a.question_id);
+        if (q?.question_number) picks[q.question_number] = key;
+      }
+      const msdt = msdtScore(picks);
+      const total = (qs.data ?? []).length || 64;
+      score = 0;
+      result = {
+        requires_manual_review: true,
+        answered: msdt.answered,
+        total,
+        unanswered: total - msdt.answered,
+        columns: msdt.columns,
+        dims: msdt.dims,
+        konversi: msdt.konversi,
+        dominant: msdt.dominant,
+        dominant_label: msdt.dominantLabel,
+        picks,
+      };
     } else if (test.test_type === "pauli") {
+
       // Pauli/Koran: kunci dihitung dari deret angka (jumlah dua angka bersebelahan, ambil digit terakhir).
       const byId = new Map((qs.data ?? []).map((q: any) => [q.id, q]));
       let attempted = 0;
