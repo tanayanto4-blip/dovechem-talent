@@ -11,6 +11,7 @@ export type PracticeTestType =
   | "eq"
   | "wpt"
   | "papi"
+  | "msdt"
   | "pauli"
   | "kraepelin"
   | "ishihara";

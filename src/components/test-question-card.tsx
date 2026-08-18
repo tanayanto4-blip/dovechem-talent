@@ -21,6 +21,7 @@ type TestType =
   | "eq"
   | "wpt"
   | "papi"
+  | "msdt"
   | "pauli"
   | "ishihara";
 
@@ -88,7 +89,7 @@ export const TestQuestionCard = memo(function TestQuestionCard({
   const isMbti = testType === "mbti";
   const isEq = testType === "eq";
   const isWpt = testType === "wpt";
-  const isPapi = testType === "papi";
+  const isPapi = testType === "papi" || testType === "msdt";
   const isKraepelin = testType === "kraepelin";
   const isIshihara = testType === "ishihara";
 
