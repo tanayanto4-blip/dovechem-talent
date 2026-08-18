@@ -64,6 +64,9 @@ function CandidateDetail() {
 
   if (!c) return <div className="text-muted-foreground">Memuat...</div>;
 
+  const isMagang = candidateTrackOf(c) === "magang";
+
+
   const Field = ({ label, value }: { label: string; value: any }) => (
     <div>
       <div className="text-xs uppercase tracking-widest text-muted-foreground">{label}</div>
