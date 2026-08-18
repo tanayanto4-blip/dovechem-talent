@@ -3,6 +3,8 @@ import templateAsset from "@/assets/profiling-template.xlsx.asset.json";
 import { computeMbtiScores } from "@/lib/mbti-excel";
 import { getMbtiDescription } from "@/lib/mbti-descriptions";
 import { computeWptScore } from "@/lib/wpt-excel";
+import { computeDiscScores } from "@/lib/disc-score";
+import { getDiscDescription } from "@/lib/disc-descriptions";
 import {
   type CellValue,
   assertTemplateIntact,
@@ -45,6 +47,8 @@ export interface ProfilingInput {
   mbtiAnswers?: Array<{ question_number: number; answer: any }> | null;
   /** Jawaban mentah WPT untuk menghitung IQ dan kategorinya. */
   wptAnswers?: Array<{ question_number: number; answer: any }> | null;
+  /** Jawaban mentah DISC untuk mengisi SUMMARY PERSONALITY BACKGROUND. */
+  discAnswers?: Array<{ question_number: number; answer: any }> | null;
 }
 
 const MONTHS = [
@@ -121,6 +125,13 @@ export async function exportProfilingExcel(input: ProfilingInput) {
     }
   }
 
+  // DISC -> tipe dominan (total terbesar Line 3 pada sheet Result template)
+  let discType: string | null = null;
+  if (input.discAnswers?.length) {
+    const d = computeDiscScores(input.discAnswers);
+    if (d.valid) discType = d.type;
+  }
+
   const res = await fetch(templateAsset.url);
   if (!res.ok) throw new Error("Template Excel Profiling tidak dapat dimuat.");
   const zip = await JSZip.loadAsync(await res.arrayBuffer());
@@ -158,6 +169,19 @@ export async function exportProfilingExcel(input: ProfilingInput) {
     edits.set("G33", desc.summary);
   }
 
+  // SUMMARY PERSONALITY BACKGROUND (B14 judul, B15:B17 uraian, B20:B23 perlakuan)
+  const discDesc = getDiscDescription(discType);
+  if (discDesc) {
+    edits.set("B14", discDesc.title);
+    for (let i = 0; i < 3; i++) edits.set(`B${15 + i}`, discDesc.paragraphs[i] ?? "");
+    edits.set("B19", discDesc.treatmentHeader);
+    const t = discDesc.treatments;
+    for (let i = 0; i < 4; i++) {
+      const val = i === 3 ? t.slice(3).join("\n") : (t[i] ?? "");
+      edits.set(`B${20 + i}`, val);
+    }
+  }
+
   if (iq !== null) {
     edits.set("D31", iq);
     edits.set("E31", ` ${(category ?? "").toUpperCase()}`);
@@ -190,5 +214,6 @@ export async function exportProfilingExcel(input: ProfilingInput) {
     category,
     status: iq === null ? null : iq >= QUALIFIED_MIN ? "QUALIFIED" : "UNQUALIFIED",
     mbti,
+    disc: discType,
   };
 }
