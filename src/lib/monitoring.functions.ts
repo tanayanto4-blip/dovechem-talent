@@ -435,3 +435,140 @@ export const autoRecoverStuckCandidates = createServerFn({ method: "POST" })
 
     return { ran_at: new Date().toISOString(), dry_run: data.dry_run, actions, skipped };
   });
+
+/**
+ * Super Admin: monitor error khusus pengerjaan TEST.
+ * Mengelompokkan semua kegagalan yang terjadi di halaman test / latihan
+ * (termasuk insiden kandidat) per test, agar perbaikan bisa langsung
+ * dilakukan dari dashboard.
+ */
+export const testErrorMonitor = createServerFn({ method: "POST" })
+  .middleware([requireStaff])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        onlyOpen: z.boolean().default(true),
+        limit: z.number().int().min(1).max(500).default(300),
+      })
+      .parse(d ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    let q = supabaseAdmin
+      .from("error_events")
+      .select("*")
+      .order("occurred_at", { ascending: false })
+      .limit(data.limit);
+    if (data.onlyOpen) q = q.eq("resolved", false);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+
+    const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+    const isTestRelated = (r: { route: string | null; source: string; area: string }) => {
+      const route = r.route ?? "";
+      return (
+        route.includes("/portal/test") ||
+        route.includes("/portal/latihan") ||
+        (r.area === "candidate" && r.source.startsWith("insiden:"))
+      );
+    };
+
+    const relevant = (rows ?? []).filter(isTestRelated);
+
+    type Item = {
+      id: string;
+      occurred_at: string;
+      source: string;
+      message: string;
+      route: string | null;
+      actor_label: string | null;
+      stack: string | null;
+      resolved: boolean;
+      candidate_id: string | null;
+      practice: boolean;
+    };
+    const groups = new Map<string, { test_id: string | null; items: Item[] }>();
+
+    for (const r of relevant) {
+      const ctx = (r.context ?? {}) as Record<string, unknown>;
+      const routeId = (r.route ?? "").match(UUID)?.[0] ?? null;
+      const test_id =
+        typeof ctx["test_id"] === "string" && UUID.test(ctx["test_id"]) ? ctx["test_id"] : routeId;
+      const key = test_id ?? "tanpa-test";
+      const g = groups.get(key) ?? { test_id, items: [] };
+      g.items.push({
+        id: r.id,
+        occurred_at: r.occurred_at,
+        source: r.source,
+        message: r.message,
+        route: r.route,
+        actor_label: r.actor_label,
+        stack: r.stack,
+        resolved: r.resolved,
+        candidate_id:
+          typeof ctx["candidate_id"] === "string" && UUID.test(ctx["candidate_id"])
+            ? ctx["candidate_id"]
+            : null,
+        practice: (r.route ?? "").includes("/portal/latihan"),
+      });
+      groups.set(key, g);
+    }
+
+    const testIds = [...groups.values()].map((g) => g.test_id).filter((v): v is string => !!v);
+    const names = new Map<string, string>();
+    if (testIds.length) {
+      const { data: tests } = await supabaseAdmin
+        .from("tests")
+        .select("id,name,code")
+        .in("id", testIds);
+      for (const t of tests ?? []) names.set(t.id, `${t.code} — ${t.name}`);
+    }
+
+    const result = [...groups.entries()]
+      .map(([key, g]) => ({
+        key,
+        test_id: g.test_id,
+        test_name: g.test_id ? (names.get(g.test_id) ?? "Test tidak dikenal") : "Tanpa test",
+        total: g.items.length,
+        open: g.items.filter((i) => !i.resolved).length,
+        last_at: g.items[0]?.occurred_at ?? null,
+        candidates: [...new Set(g.items.map((i) => i.actor_label).filter(Boolean))].length,
+        items: g.items.slice(0, 25),
+      }))
+      .sort((a, b) => (b.last_at ?? "").localeCompare(a.last_at ?? ""));
+
+    return {
+      groups: result,
+      totalOpen: relevant.filter((r) => !r.resolved).length,
+      totalAll: relevant.length,
+      generated_at: new Date().toISOString(),
+    };
+  });
+
+/** Super Admin: tandai sekumpulan error test sekaligus sebagai sudah ditangani. */
+export const resolveErrorsBulk = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        ids: z.array(z.string().uuid()).min(1).max(200),
+        resolved: z.boolean().default(true),
+        note: z.string().trim().max(500).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("error_events")
+      .update({
+        resolved: data.resolved,
+        resolved_by: data.resolved ? context.userId : null,
+        resolved_at: data.resolved ? new Date().toISOString() : null,
+        resolution_note: data.note ?? null,
+      })
+      .in("id", data.ids);
+    if (error) throw new Error(error.message);
+    return { ok: true, count: data.ids.length };
+  });
