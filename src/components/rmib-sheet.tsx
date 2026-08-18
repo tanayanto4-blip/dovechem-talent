@@ -115,10 +115,37 @@ export function RmibSheet({
               Kelompok {code}
               {ordered.length > 1 ? ` — ${slide + 1}/${ordered.length}` : ""}
             </div>
-            <div className="text-[11px] text-muted-foreground">
-              Ketuk <b>Laki-laki</b> atau <b>Perempuan</b>, lalu ketik peringkat 1–12 di tengah
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-muted-foreground">Daftar pekerjaan:</span>
+              <div className="inline-flex overflow-hidden rounded-md border">
+                <button
+                  type="button"
+                  onClick={() => setSide("M")}
+                  className={`px-3 py-1.5 text-xs font-semibold transition ${
+                    activeSide === "M"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-background text-muted-foreground hover:bg-accent"
+                  }`}
+                  aria-pressed={activeSide === "M"}
+                >
+                  Laki-laki
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSide("F")}
+                  className={`border-l px-3 py-1.5 text-xs font-semibold transition ${
+                    activeSide === "F"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-background text-muted-foreground hover:bg-accent"
+                  }`}
+                  aria-pressed={activeSide === "F"}
+                >
+                  Perempuan
+                </button>
+              </div>
             </div>
           </div>
+
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[520px] border-collapse text-left">
