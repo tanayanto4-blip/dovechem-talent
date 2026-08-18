@@ -11,6 +11,8 @@ import {
 } from "@/lib/candidate.functions";
 import { VoiceInstructionPlayer } from "@/components/voice-instruction";
 import { PauliSheet, pauliFilledCount } from "@/components/pauli-sheet";
+import { RmibSheet } from "@/components/rmib-sheet";
+import { rmibGroupComplete } from "@/lib/rmib-key";
 import { TestQuestionCard } from "@/components/test-question-card";
 import { voiceTemplateFor } from "@/lib/voice-templates";
 import { RotateCcw, Volume2 } from "lucide-react";
