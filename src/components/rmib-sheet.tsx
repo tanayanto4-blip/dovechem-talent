@@ -62,14 +62,13 @@ export function RmibSheet({
 
   const value = answers[q.id] ?? "";
   const values = parseRmibAnswer(value);
-  const sides = parseRmibSides(value);
+  const storedSides = parseRmibSides(value);
+  const activeSide: RmibSide = storedSides.find((s) => s === "M" || s === "F") ?? defaultSide;
   const dups = rmibDuplicates(value);
   const done = rmibGroupComplete(value);
 
-  const setSide = (row: number, side: RmibSide) => {
-    const next = [...sides];
-    next[row] = side;
-    onChange(q.id, serializeRmibAnswer(values, next));
+  const setSide = (side: RmibSide) => {
+    onChange(q.id, serializeRmibAnswer(values, Array(12).fill(side)));
   };
 
   const setAt = (row: number, raw: string) => {
@@ -77,12 +76,9 @@ export function RmibSheet({
     const n = parseInt(digits, 10);
     const next = [...values];
     next[row] = digits === "" ? null : Number.isFinite(n) && n >= 1 && n <= 12 ? n : null;
-    onChange(q.id, serializeRmibAnswer(next, sides));
+    onChange(q.id, serializeRmibAnswer(next, Array(12).fill(activeSide)));
   };
 
-  const missingSideCount = values.filter(
-    (v, i) => v !== null && sides[i] !== "M" && sides[i] !== "F",
-  ).length;
 
   return (
     <div className="space-y-3">
@@ -119,10 +115,37 @@ export function RmibSheet({
               Kelompok {code}
               {ordered.length > 1 ? ` — ${slide + 1}/${ordered.length}` : ""}
             </div>
-            <div className="text-[11px] text-muted-foreground">
-              Ketuk <b>Laki-laki</b> atau <b>Perempuan</b>, lalu ketik peringkat 1–12 di tengah
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-muted-foreground">Daftar pekerjaan:</span>
+              <div className="inline-flex overflow-hidden rounded-md border">
+                <button
+                  type="button"
+                  onClick={() => setSide("M")}
+                  className={`px-3 py-1.5 text-xs font-semibold transition ${
+                    activeSide === "M"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-background text-muted-foreground hover:bg-accent"
+                  }`}
+                  aria-pressed={activeSide === "M"}
+                >
+                  Laki-laki
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSide("F")}
+                  className={`border-l px-3 py-1.5 text-xs font-semibold transition ${
+                    activeSide === "F"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-background text-muted-foreground hover:bg-accent"
+                  }`}
+                  aria-pressed={activeSide === "F"}
+                >
+                  Perempuan
+                </button>
+              </div>
             </div>
           </div>
+
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[520px] border-collapse text-left">
@@ -137,28 +160,19 @@ export function RmibSheet({
               <tbody className="divide-y">
                 {jobs.map((job, i) => {
                   const v = values[i];
-                  const side = sides[i];
                   const dup = v !== null && dups.has(v);
-                  const selectedLabel = side === "M" ? job.male : side === "F" ? job.female : null;
+                  const label = activeSide === "F" ? job.female : job.male;
                   return (
                     <tr key={i} className="align-middle">
                       <td className="border-r px-2 py-2 text-center text-xs text-muted-foreground">
                         {i + 1}
                       </td>
                       <td
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => setSide(i, "M")}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") setSide(i, "M");
-                        }}
-                        className={`border-r px-3 py-2 text-[13px] leading-snug sm:text-sm cursor-pointer transition ${
-                          side === "M"
-                            ? "bg-primary/10 font-semibold text-primary"
-                            : "text-foreground hover:bg-accent/50"
+                        className={`border-r px-3 py-2 text-[13px] leading-snug sm:text-sm ${
+                          activeSide === "M"
+                            ? "font-semibold text-foreground"
+                            : "text-muted-foreground/60"
                         }`}
-                        aria-label={`Pilih pekerjaan laki-laki: ${job.male}`}
-                        aria-pressed={side === "M"}
                       >
                         {job.male}
                       </td>
@@ -167,38 +181,26 @@ export function RmibSheet({
                           inputMode="numeric"
                           value={v === null ? "" : String(v)}
                           onChange={(e) => setAt(i, e.target.value)}
-                          placeholder={side ? "_" : "pilih"}
-                          disabled={side !== "M" && side !== "F"}
-                          aria-label={
-                            selectedLabel
-                              ? `Peringkat untuk ${selectedLabel}`
-                              : `Pilih pekerjaan laki-laki atau perempuan baris ${i + 1} terlebih dahulu`
-                          }
+                          placeholder="_"
+                          aria-label={`Peringkat untuk ${label}`}
                           className={`mx-auto h-10 w-14 px-0 text-center font-bold ${
                             dup ? "border-destructive text-destructive" : ""
                           }`}
                         />
                       </td>
                       <td
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => setSide(i, "F")}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") setSide(i, "F");
-                        }}
-                        className={`px-3 py-2 text-[13px] leading-snug sm:text-sm cursor-pointer transition ${
-                          side === "F"
-                            ? "bg-primary/10 font-semibold text-primary"
-                            : "text-foreground hover:bg-accent/50"
+                        className={`px-3 py-2 text-[13px] leading-snug sm:text-sm ${
+                          activeSide === "F"
+                            ? "font-semibold text-foreground"
+                            : "text-muted-foreground/60"
                         }`}
-                        aria-label={`Pilih pekerjaan perempuan: ${job.female}`}
-                        aria-pressed={side === "F"}
                       >
                         {job.female}
                       </td>
                     </tr>
                   );
                 })}
+
               </tbody>
             </table>
           </div>
@@ -215,7 +217,7 @@ export function RmibSheet({
               </span>
             ) : (
               <span className="text-muted-foreground">
-                Terisi {rmibFilledCount(value)}/12 — ketuk Laki-laki/Perempuan lalu ketik peringkat
+                Terisi {rmibFilledCount(value)}/12 — ketik peringkat 1–12 di kolom tengah
               </span>
             )}
 
@@ -244,13 +246,6 @@ export function RmibSheet({
         </CardContent>
       </Card>
 
-      {missingSideCount > 0 && (
-        <div className="rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-foreground">
-          <AlertCircle className="mb-1 inline h-4 w-4 text-warning" /> <b>{missingSideCount}</b>{" "}
-          baris sudah diisi angka tetapi belum memilih kolom Laki-laki atau Perempuan. Ketuk salah
-          satu kolom di setiap baris.
-        </div>
-      )}
     </div>
   );
 }
