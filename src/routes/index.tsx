@@ -47,7 +47,7 @@ export const Route = createFileRoute("/")({
             },
             {
               "@type": "WebSite",
-              name: "Portal Psikotest & Rekrutmen PT Dover Chemical",
+              name: "Psikotest & Rekrutment PT Dover Chemical",
               url: "https://test-dovechem.lovable.app/",
             },
           ],
