@@ -112,6 +112,25 @@ const STATS = [
   { n: "ISO", l: "Certified" },
 ];
 
+const FOOTER_COLUMNS: {
+  t: string;
+  items: string[];
+  t2?: string;
+  items2?: string[];
+}[] = [
+  {
+    t: "About",
+    items: ["Company Profile", "History", "Awards & Certifications", "Customer Testimonials"],
+  },
+  { t: "Product & Services", items: ["DC Products", "DC Logistic", "Jetty & Terminals"] },
+  {
+    t: "News",
+    items: ["News", "Gallery"],
+    t2: "Career",
+    items2: ["Company Culture", "Open Positions", "Testimonials", "Values"],
+  },
+
+
 function Home() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
@@ -335,21 +354,58 @@ function Home() {
         </div>
       </section>
 
-      <footer className="border-t bg-primary py-8 text-primary-foreground">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-center sm:px-6 md:flex-row md:text-left">
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <img
-              src={doverLogo.url}
-              alt="Logo PT Dover Chemical"
-              className="h-6 w-auto rounded bg-white/95 p-0.5 object-contain"
-            />
-            <span className="text-xs sm:text-sm">
-              © {new Date().getFullYear()} PT Dover Chemical Indonesia. All rights reserved.
-            </span>
+      <footer className="border-t bg-secondary py-12 text-primary-foreground">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="lg:col-span-1">
+              <img
+                src={doverLogo.url}
+                alt="Logo PT Dover Chemical"
+                className="h-10 w-auto rounded bg-white/95 p-1 object-contain"
+              />
+            </div>
+            {FOOTER_COLUMNS.map((col) => (
+              <div key={col.t}>
+                <div className="font-display text-base font-bold">{col.t}</div>
+                <ul className="mt-3 space-y-2">
+                  {col.items.map((it) => (
+                    <li key={it} className="text-sm text-white/85">
+                      {it}
+                    </li>
+                  ))}
+                </ul>
+                {col.t2 && (
+                  <>
+                    <div className="mt-6 font-display text-base font-bold">{col.t2}</div>
+                    <ul className="mt-3 space-y-2">
+                      {col.items2?.map((it) => (
+                        <li key={it} className="text-sm text-white/85">
+                          {it}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            ))}
+            <div>
+              <div className="font-display text-base font-bold">Contact</div>
+              <address className="mt-3 space-y-1.5 text-sm not-italic text-white/85">
+                <div>Gedung Blugreen-Boutique Office</div>
+                <div>3rd Floor, Suite BG-03 &amp; BC-03</div>
+                <div>Jl. Lingkar Luar Barat Kav. 88,</div>
+                <div>Puri Kembangan, Jakarta 11610</div>
+                <div>Tel: +62-21-2952 7180</div>
+                <div>Fax: +62-21-2952 7183</div>
+              </address>
+            </div>
           </div>
-          <div className="text-xs text-white/60">Recruitment &amp; Psychotest Portal</div>
+          <div className="mt-10 text-center text-xs text-white/70">
+            © {new Date().getFullYear()} PT. Dover Chemical. All rights reserved.
+          </div>
         </div>
       </footer>
+
     </div>
   );
 }
