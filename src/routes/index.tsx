@@ -129,6 +129,7 @@ const FOOTER_COLUMNS: {
     t2: "Career",
     items2: ["Company Culture", "Open Positions", "Testimonials", "Values"],
   },
+];
 
 
 function Home() {
