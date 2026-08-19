@@ -323,12 +323,12 @@ function Home() {
 
       {/* CTA */}
       <section id="kontak" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-20">
-        <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
-          <div className="relative overflow-hidden rounded-3xl bg-hero p-6 text-primary-foreground shadow-elegant sm:p-10 lg:col-span-2">
+        <div className="flex flex-col gap-4">
+          <div className="relative overflow-hidden rounded-3xl bg-hero p-6 text-primary-foreground shadow-elegant sm:p-10">
             <h2 className="font-display text-2xl font-bold tracking-tight sm:text-4xl">
               Siap memulai proses seleksi?
             </h2>
-            <p className="mt-3 max-w-lg text-sm text-white/80 sm:text-base">
+            <p className="mt-3 max-w-2xl text-sm text-white/80 sm:text-base">
               Masuk dengan kode akses yang Anda terima dari tim rekrutmen PT Dover Chemical.
             </p>
             <Button
@@ -341,69 +341,31 @@ function Home() {
               </Link>
             </Button>
           </div>
-          <div className="flex flex-col justify-between rounded-3xl border bg-card p-6 shadow-card">
-            <div>
-              <div className="font-display font-semibold text-primary">Tim HR &amp; Admin</div>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Kelola kode akses, bank soal, dan hasil psikotest kandidat dari satu dashboard.
-              </p>
-            </div>
-            <Button asChild variant="outline" size="lg" className="mt-6 w-full">
+          <div className="rounded-3xl border bg-card p-6 shadow-card sm:p-10">
+            <div className="font-display text-lg font-semibold text-primary">Tim HR &amp; Admin</div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Kelola kode akses, bank soal, dan hasil psikotest kandidat dari satu dashboard.
+            </p>
+            <Button asChild variant="outline" size="lg" className="mt-6 w-full sm:w-auto">
               <Link to="/auth">Login Admin HR</Link>
             </Button>
           </div>
         </div>
       </section>
 
-      <footer className="border-t bg-secondary py-12 text-primary-foreground">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
-            <div className="lg:col-span-1">
-              <img
-                src={doverLogo.url}
-                alt="Logo PT Dover Chemical"
-                className="h-10 w-auto rounded bg-white/95 p-1 object-contain"
-              />
-            </div>
-            {FOOTER_COLUMNS.map((col) => (
-              <div key={col.t}>
-                <div className="font-display text-base font-bold">{col.t}</div>
-                <ul className="mt-3 space-y-2">
-                  {col.items.map((it) => (
-                    <li key={it} className="text-sm text-white/85">
-                      {it}
-                    </li>
-                  ))}
-                </ul>
-                {col.t2 && (
-                  <>
-                    <div className="mt-6 font-display text-base font-bold">{col.t2}</div>
-                    <ul className="mt-3 space-y-2">
-                      {col.items2?.map((it) => (
-                        <li key={it} className="text-sm text-white/85">
-                          {it}
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
-              </div>
-            ))}
-            <div>
-              <div className="font-display text-base font-bold">Contact</div>
-              <address className="mt-3 space-y-1.5 text-sm not-italic text-white/85">
-                <div>Gedung Blugreen-Boutique Office</div>
-                <div>3rd Floor, Suite BG-03 &amp; BC-03</div>
-                <div>Jl. Lingkar Luar Barat Kav. 88,</div>
-                <div>Puri Kembangan, Jakarta 11610</div>
-                <div>Tel: +62-21-2952 7180</div>
-                <div>Fax: +62-21-2952 7183</div>
-              </address>
-            </div>
+      <footer className="bg-secondary py-6 text-primary-foreground">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6">
+          <div className="flex items-center gap-3">
+            <img
+              src={doverLogo.url}
+              alt="Logo PT Dover Chemical"
+              className="h-8 w-auto rounded bg-white/95 p-1 object-contain"
+            />
+            <span className="text-sm">
+              © {new Date().getFullYear()} PT Dover Chemical Indonesia. All rights reserved.
+            </span>
           </div>
-          <div className="mt-10 text-center text-xs text-white/70">
-            © {new Date().getFullYear()} PT. Dover Chemical. All rights reserved.
-          </div>
+          <div className="text-sm text-white/80">Recruitment &amp; Psychotest Portal</div>
         </div>
       </footer>
 
