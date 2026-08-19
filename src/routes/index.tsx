@@ -172,9 +172,7 @@ function Home() {
                 <span className="h-1.5 w-1.5 rounded-full bg-primary-glow" /> Portal Rekrutmen Resmi
               </div>
               <h1 className="mt-6 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
-                Psikotest &amp; Rekrutmen,
-                <br />
-                <span className="text-primary-glow">satu portal saja.</span>
+                Psikotest &amp; Rekrutmen
               </h1>
               <p className="mt-5 max-w-md text-sm text-white/80 sm:text-base">
                 Kandidat login dengan kode akses dari tim HR, melengkapi biodata, lalu mengerjakan
