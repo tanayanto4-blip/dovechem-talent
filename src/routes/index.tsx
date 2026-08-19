@@ -361,6 +361,14 @@ function Home() {
         </div>
       </footer>
 
+      {/* Sticky CTA (mobile) */}
+      <div className="sticky bottom-0 z-40 border-t border-border/60 bg-card/95 p-3 backdrop-blur md:hidden">
+        <Button asChild size="lg" className="h-12 w-full">
+          <Link to="/candidate/login">
+            Login Kandidat &amp; Mulai Test <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
+        </Button>
+      </div>
     </div>
   );
 }
