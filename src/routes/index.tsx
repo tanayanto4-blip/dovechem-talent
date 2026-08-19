@@ -106,8 +106,8 @@ const HIGHLIGHTS = [
 ];
 
 const STATS = [
-  { n: "40+", l: "Tahun beroperasi" },
-  { n: "1500+", l: "Karyawan" },
+  { n: "60+", l: "Tahun beroperasi" },
+  { n: "600+", l: "Karyawan" },
   { n: "20+", l: "Product line" },
   { n: "ISO", l: "Certified" },
 ];
@@ -172,7 +172,7 @@ function Home() {
                 <span className="h-1.5 w-1.5 rounded-full bg-primary-glow" /> Portal Rekrutmen Resmi
               </div>
               <h1 className="mt-6 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
-                Psikotest &amp; Rekrutmen
+                Psikotest &amp; Rekrutment
               </h1>
               <p className="mt-5 max-w-md text-sm text-white/80 sm:text-base">
                 Kandidat login dengan kode akses dari tim HR, melengkapi biodata, lalu mengerjakan
@@ -204,7 +204,7 @@ function Home() {
           <div className="rounded-3xl border bg-card p-6 shadow-card">
             <Beaker className="h-6 w-6 text-primary-glow" />
             <div className="mt-4 font-display text-lg font-bold text-primary">
-              Industri kimia sejak 1984
+              Industri kimia sejak 1960
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
               Resin, hardener, dan bahan kimia industri — dengan tim yang terus bertumbuh.
