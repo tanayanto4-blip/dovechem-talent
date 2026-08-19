@@ -112,24 +112,6 @@ const STATS = [
   { n: "ISO", l: "Certified" },
 ];
 
-const FOOTER_COLUMNS: {
-  t: string;
-  items: string[];
-  t2?: string;
-  items2?: string[];
-}[] = [
-  {
-    t: "About",
-    items: ["Company Profile", "History", "Awards & Certifications", "Customer Testimonials"],
-  },
-  { t: "Product & Services", items: ["DC Products", "DC Logistic", "Jetty & Terminals"] },
-  {
-    t: "News",
-    items: ["News", "Gallery"],
-    t2: "Career",
-    items2: ["Company Culture", "Open Positions", "Testimonials", "Values"],
-  },
-];
 
 
 function Home() {
