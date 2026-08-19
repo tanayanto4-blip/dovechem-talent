@@ -6,21 +6,31 @@ import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Portal Psikotest & Rekrutmen PT Dover Chemical" },
+      { title: "Psikotest & Rekrutment PT Dover Chemical | Portal Kandidat" },
       {
         name: "description",
         content:
-          "Portal resmi psikotest & rekrutmen PT Dover Chemical Indonesia. Kandidat login dengan kode akses, mengisi biodata, lalu mengerjakan psikotest online.",
+          "Portal psikotest & rekrutment PT Dover Chemical Indonesia — industri kimia sejak 1960 dengan 600+ karyawan. Login kode akses, isi biodata, kerjakan test online.",
       },
-      { property: "og:title", content: "Portal Psikotest & Rekrutmen PT Dover Chemical" },
+      { property: "og:title", content: "Psikotest & Rekrutment PT Dover Chemical | Portal Kandidat" },
       {
         property: "og:description",
         content:
-          "Portal resmi psikotest & rekrutmen PT Dover Chemical Indonesia. Kandidat login dengan kode akses, mengisi biodata, lalu mengerjakan psikotest online.",
+          "Portal psikotest & rekrutment PT Dover Chemical Indonesia — industri kimia sejak 1960 dengan 600+ karyawan. Login kode akses, isi biodata, kerjakan test online.",
       },
+      { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "PT Dover Chemical Indonesia" },
       { property: "og:url", content: "https://test-dovechem.lovable.app/" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Psikotest & Rekrutment PT Dover Chemical" },
+      {
+        name: "twitter:description",
+        content:
+          "Industri kimia sejak 1960, 600+ karyawan. Login kode akses untuk mengerjakan psikotest online.",
+      },
     ],
     links: [{ rel: "canonical", href: "https://test-dovechem.lovable.app/" }],
+
     scripts: [
       {
         type: "application/ld+json",
@@ -37,7 +47,7 @@ export const Route = createFileRoute("/")({
             },
             {
               "@type": "WebSite",
-              name: "Portal Psikotest & Rekrutmen PT Dover Chemical",
+              name: "Psikotest & Rekrutment PT Dover Chemical",
               url: "https://test-dovechem.lovable.app/",
             },
           ],
@@ -351,6 +361,14 @@ function Home() {
         </div>
       </footer>
 
+      {/* Sticky CTA (mobile) */}
+      <div className="sticky bottom-0 z-40 border-t border-border/60 bg-card/95 p-3 backdrop-blur md:hidden">
+        <Button asChild size="lg" className="h-12 w-full">
+          <Link to="/candidate/login">
+            Login Kandidat &amp; Mulai Test <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
+        </Button>
+      </div>
     </div>
   );
 }
