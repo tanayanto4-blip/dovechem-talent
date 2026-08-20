@@ -6,27 +6,27 @@ import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Psikotest & Rekrutment PT Dover Chemical | Portal Kandidat" },
+      { title: "DOVECHEM TALENT — PT Dover Chemical Indonesia" },
       {
         name: "description",
         content:
-          "Portal psikotest & rekrutment PT Dover Chemical Indonesia — industri kimia sejak 1960 dengan 600+ karyawan. Login kode akses, isi biodata, kerjakan test online.",
+          "DOVECHEM TALENT, platform talenta resmi PT Dover Chemical Indonesia — industri kimia sejak 1960 dengan 600+ karyawan.",
       },
-      { property: "og:title", content: "Psikotest & Rekrutment PT Dover Chemical | Portal Kandidat" },
+      { property: "og:title", content: "DOVECHEM TALENT — PT Dover Chemical Indonesia" },
       {
         property: "og:description",
         content:
-          "Portal psikotest & rekrutment PT Dover Chemical Indonesia — industri kimia sejak 1960 dengan 600+ karyawan. Login kode akses, isi biodata, kerjakan test online.",
+          "DOVECHEM TALENT, platform talenta resmi PT Dover Chemical Indonesia — industri kimia sejak 1960 dengan 600+ karyawan.",
       },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "PT Dover Chemical Indonesia" },
       { property: "og:url", content: "https://test-dovechem.lovable.app/" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Psikotest & Rekrutment PT Dover Chemical" },
+      { name: "twitter:title", content: "DOVECHEM TALENT — PT Dover Chemical Indonesia" },
       {
         name: "twitter:description",
         content:
-          "Industri kimia sejak 1960, 600+ karyawan. Login kode akses untuk mengerjakan psikotest online.",
+          "DOVECHEM TALENT, platform talenta resmi PT Dover Chemical Indonesia — industri kimia sejak 1960 dengan 600+ karyawan.",
       },
     ],
     links: [{ rel: "canonical", href: "https://test-dovechem.lovable.app/" }],
@@ -43,11 +43,11 @@ export const Route = createFileRoute("/")({
               url: "https://test-dovechem.lovable.app/",
               logo: "https://test-dovechem.lovable.app/favicon.ico",
               description:
-                "Perusahaan industri kimia dengan portal psikotest & rekrutmen online untuk calon karyawan.",
+                "DOVECHEM TALENT, platform talenta resmi PT Dover Chemical Indonesia.",
             },
             {
               "@type": "WebSite",
-              name: "Psikotest & Rekrutment PT Dover Chemical",
+              name: "DOVECHEM TALENT — PT Dover Chemical Indonesia",
               url: "https://test-dovechem.lovable.app/",
             },
           ],
@@ -141,7 +141,7 @@ function Home() {
                 PT DOVER CHEMICAL
               </div>
               <div className="truncate text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                Recruitment Portal
+                DOVECHEM TALENT
               </div>
             </div>
           </Link>
@@ -184,11 +184,10 @@ function Home() {
                 <span className="h-1.5 w-1.5 rounded-full bg-primary-glow" /> Portal Rekrutmen Resmi
               </div>
               <h1 className="mt-6 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
-                Psikotest &amp; Rekrutment
+                DOVECHEM TALENT
               </h1>
               <p className="mt-5 max-w-md text-sm text-white/80 sm:text-base">
-                Kandidat login dengan kode akses dari tim HR, melengkapi biodata, lalu mengerjakan
-                rangkaian psikotest resmi PT Dover Chemical secara online.
+                Platform talenta resmi PT Dover Chemical Indonesia.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Button
@@ -357,7 +356,7 @@ function Home() {
               © {new Date().getFullYear()} PT Dover Chemical Indonesia. All rights reserved.
             </span>
           </div>
-          <div className="text-sm text-white/80">Recruitment &amp; Psychotest Portal</div>
+          <div className="text-sm text-white/80">DOVECHEM TALENT</div>
         </div>
       </footer>
 
