@@ -969,29 +969,15 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
       result = { attempted, correct, wrong: attempted - correct, accuracy, perColumn };
     } else if (test.test_type === "ishihara") {
       // Tes buta warna: cukup hitung berapa benar dan berapa salah.
-      // Lembar tanpa angka boleh dijawab dengan tanda strip atau kata "tidak terlihat".
-      const normIsh = (v: string) => {
-        const s = v.trim().toLowerCase().replace(/\s+/g, " ");
-        if (
-          s === "-" ||
-          s === "–" ||
-          s === "—" ||
-          /^-+$/.test(s) ||
-          s === "tidak terlihat" ||
-          s === "tidak ada" ||
-          s === "tidak ada angka" ||
-          s === "kosong" ||
-          s === "x"
-        ) {
-          return "-";
-        }
-        return s;
-      };
-      const map = new Map(answers.map((a) => [a.question_id, normIsh(a.answer ?? "")]));
+      const map = new Map(
+        answers.map((a) => [a.question_id, (a.answer ?? "").trim().toLowerCase()]),
+      );
       const list = qs.data ?? [];
       let correct = 0;
       for (const q of list) {
-        const key = normIsh(String(q.correct_answer ?? ""));
+        const key = String(q.correct_answer ?? "")
+          .trim()
+          .toLowerCase();
         const ans = map.get(q.id) ?? "";
         if (key && ans && ans === key) correct++;
       }

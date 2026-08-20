@@ -136,13 +136,11 @@ export const TestQuestionCard = memo(function TestQuestionCard({
               </figure>
             )}
             <div className="flex flex-wrap items-center justify-end gap-2">
-              <span className="text-xs text-muted-foreground">
-                Tulis angka — jika tidak terlihat, tulis strip ( - )
-              </span>
+              <span className="text-xs text-muted-foreground">Tulis jawaban Anda</span>
               <Input
                 value={answer}
                 onChange={(e) => handleText(e.target.value)}
-                placeholder="- / angka"
+                placeholder="_____"
                 maxLength={30}
                 className="h-9 w-40 text-center font-mono"
                 aria-label={`Jawaban soal ${index + 1}`}
