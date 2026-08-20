@@ -327,16 +327,29 @@ function Home() {
       </section>
 
       {/* Certification strip */}
-      <section className="border-y border-border/60 bg-background py-8 sm:py-10">
+      <section className="border-y border-border/60 bg-background py-10 sm:py-12">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <img
-            src={certStrip.url}
-            alt="Sertifikasi dan penghargaan PT Dover Chemical: SGS, K3, dan ISO"
-            loading="lazy"
-            className="mx-auto h-auto w-full max-w-3xl object-contain"
-          />
+          <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            Sertifikasi &amp; Penghargaan
+          </p>
+          <div className="mt-6 grid grid-cols-2 items-center gap-4 sm:gap-6 md:grid-cols-4">
+            {CERT_LOGOS.map((c) => (
+              <div
+                key={c.alt}
+                className="flex h-24 items-center justify-center rounded-xl border border-border/60 bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
+              >
+                <img
+                  src={c.src}
+                  alt={c.alt}
+                  loading="lazy"
+                  className="max-h-14 w-auto max-w-full object-contain"
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </section>
+
 
 
       {/* Corporate footer */}
