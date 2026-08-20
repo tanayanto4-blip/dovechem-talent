@@ -35,13 +35,13 @@ import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Panel Admin & HR — PT Dover Chemical" },
+      { title: "Panel Admin & HR — DOVECHEM TALENT" },
       {
         name: "description",
         content:
           "Area kerja tim HR PT Dover Chemical untuk mengelola kandidat, kode akses, bank soal, dan hasil psikotest.",
       },
-      { property: "og:title", content: "Panel Admin & HR — PT Dover Chemical" },
+      { property: "og:title", content: "Panel Admin & HR — DOVECHEM TALENT" },
       {
         property: "og:description",
         content:
@@ -140,7 +140,7 @@ function AdminLayout() {
                 PT DOVER CHEMICAL
               </div>
               <div className="truncate text-[10px] uppercase tracking-widest text-muted-foreground">
-                Admin HR Panel
+                DOVECHEM TALENT
               </div>
             </div>
           </Link>

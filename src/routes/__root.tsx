@@ -66,25 +66,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "google-site-verification", content: "Fr53bESxOjTZJxjA-u_qFchiNGWH73I5pr-_9iZ9vVU" },
-      { title: "PT Dover Chemical — Portal Psikotest Rekrutmen" },
+      { title: "DOVECHEM TALENT — PT Dover Chemical Indonesia" },
       {
         name: "description",
         content:
-          "Portal resmi psikotest & rekrutmen PT Dover Chemical Indonesia. Kandidat login dengan kode akses, tim HR mengelola seluruh proses seleksi.",
+          "DOVECHEM TALENT, platform talenta resmi PT Dover Chemical Indonesia.",
       },
-      { property: "og:title", content: "PT Dover Chemical — Portal Psikotest Rekrutmen" },
+      { property: "og:title", content: "DOVECHEM TALENT — PT Dover Chemical Indonesia" },
       {
         property: "og:description",
         content:
-          "Portal resmi psikotest & rekrutmen PT Dover Chemical Indonesia. Kandidat login dengan kode akses, tim HR mengelola seluruh proses seleksi.",
+          "DOVECHEM TALENT, platform talenta resmi PT Dover Chemical Indonesia.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "PT Dover Chemical — Portal Psikotest Rekrutmen" },
+      { name: "twitter:title", content: "DOVECHEM TALENT — PT Dover Chemical Indonesia" },
       {
         name: "twitter:description",
         content:
-          "Portal resmi psikotest & rekrutmen PT Dover Chemical Indonesia. Kandidat login dengan kode akses, tim HR mengelola seluruh proses seleksi.",
+          "DOVECHEM TALENT, platform talenta resmi PT Dover Chemical Indonesia.",
       },
       {
         property: "og:image",
