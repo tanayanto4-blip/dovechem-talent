@@ -231,7 +231,8 @@ const SAMPLES: Record<string, PracticeSample> = {
       question_text: "Tuliskan angka yang Anda lihat pada gambar berikut.",
     },
     answerKey: "12",
-    explanation: "Jawaban cukup ditulis angkanya saja, misalnya 12.",
+    explanation:
+      "Jawaban cukup ditulis angkanya saja, misalnya 12. Bila tidak ada angka yang terlihat, tulis tanda strip ( - ).",
   },
   kraepelin: {
     testType: "pauli",
