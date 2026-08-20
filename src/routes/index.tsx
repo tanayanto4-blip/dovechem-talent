@@ -327,29 +327,15 @@ function Home() {
       {/* Certification strip */}
       <section className="border-y border-border/60 bg-background py-8 sm:py-10">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="grid grid-cols-2 place-items-center gap-6 sm:grid-cols-4">
-            {[
-              { t: "ISO 9001", s: "Quality Management" },
-              { t: "ISO 14001", s: "Environment" },
-              { t: "SMK3", s: "Occupational Safety" },
-              { t: "Responsible Care", s: "Product Stewardship" },
-            ].map((b) => (
-              <div
-                key={b.t}
-                className="flex w-full max-w-[180px] items-center gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-sm"
-              >
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-secondary text-primary-foreground">
-                  <ShieldCheck className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-bold text-primary">{b.t}</div>
-                  <div className="truncate text-[10px] text-muted-foreground">{b.s}</div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <img
+            src={certStrip.url}
+            alt="Sertifikasi dan penghargaan PT Dover Chemical: SGS, K3, dan ISO"
+            loading="lazy"
+            className="mx-auto h-auto w-full max-w-3xl object-contain"
+          />
         </div>
       </section>
+
 
       {/* Corporate footer */}
       <footer id="kontak" className="bg-secondary text-primary-foreground">
