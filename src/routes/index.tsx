@@ -14,6 +14,8 @@ import {
   MessageCircle,
 } from "lucide-react";
 import doverLogo from "@/assets/dover-logo.jpg.asset.json";
+import certStrip from "@/assets/certifications-strip.png.asset.json";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
