@@ -222,7 +222,7 @@ const SAMPLES: Record<string, PracticeSample> = {
     instructions: [
       "Tes ini mengukur kemampuan penglihatan warna Anda.",
       "Lihat setiap lembar warna, lalu tuliskan sendiri angka yang Anda lihat pada kolom jawaban.",
-      "Jika Anda tidak melihat angka apa pun pada sebuah lembar, tulis: tidak terlihat.",
+      "Beberapa lembar memang tidak memuat angka. Jika Anda tidak melihat angka apa pun, cukup tulis tanda strip ( - ).",
       "Lihat gambar dari jarak normal (sekitar 60–75 cm) dan jangan terlalu lama pada satu lembar.",
     ],
     question: {
