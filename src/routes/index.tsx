@@ -1,6 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Beaker, ShieldCheck, ClipboardList, Users, ArrowRight, CheckCircle2 } from "lucide-react";
+import {
+  Beaker,
+  ShieldCheck,
+  ClipboardList,
+  Users,
+  ArrowRight,
+  CheckCircle2,
+  Phone,
+  Mail,
+  MapPin,
+  ChevronUp,
+  MessageCircle,
+} from "lucide-react";
 import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/")({
