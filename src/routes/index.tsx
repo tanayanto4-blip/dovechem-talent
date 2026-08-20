@@ -1,6 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Beaker, ShieldCheck, ClipboardList, Users, ArrowRight, CheckCircle2 } from "lucide-react";
+import {
+  Beaker,
+  ShieldCheck,
+  ClipboardList,
+  Users,
+  ArrowRight,
+  CheckCircle2,
+  Phone,
+  Mail,
+  MapPin,
+  ChevronUp,
+  MessageCircle,
+} from "lucide-react";
 import doverLogo from "@/assets/dover-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/")({
@@ -312,53 +324,196 @@ function Home() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section id="kontak" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-20">
-        <div className="flex flex-col gap-4">
-          <div className="relative overflow-hidden rounded-3xl bg-hero p-6 text-primary-foreground shadow-elegant sm:p-10">
-            <h2 className="font-display text-2xl font-bold tracking-tight sm:text-4xl">
-              Siap memulai proses seleksi?
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm text-white/80 sm:text-base">
-              Masuk dengan kode akses yang Anda terima dari tim rekrutmen PT Dover Chemical.
-            </p>
-            <Button
-              asChild
-              size="lg"
-              className="mt-6 w-full bg-primary-glow hover:bg-primary-glow/90 sm:w-auto"
-            >
-              <Link to="/candidate/login">
-                Login Kandidat <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-          <div className="rounded-3xl border bg-card p-6 shadow-card sm:p-10">
-            <div className="font-display text-lg font-semibold text-primary">Tim HR &amp; Admin</div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Kelola kode akses, bank soal, dan hasil psikotest kandidat dari satu dashboard.
-            </p>
-            <Button asChild variant="outline" size="lg" className="mt-6 w-full sm:w-auto">
-              <Link to="/auth">Login Admin HR</Link>
-            </Button>
+      {/* Certification strip */}
+      <section className="border-y border-border/60 bg-background py-8 sm:py-10">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="grid grid-cols-2 place-items-center gap-6 sm:grid-cols-4">
+            {[
+              { t: "ISO 9001", s: "Quality Management" },
+              { t: "ISO 14001", s: "Environment" },
+              { t: "SMK3", s: "Occupational Safety" },
+              { t: "Responsible Care", s: "Product Stewardship" },
+            ].map((b) => (
+              <div
+                key={b.t}
+                className="flex w-full max-w-[180px] items-center gap-3 rounded-xl border border-border/60 bg-card p-3 shadow-sm"
+              >
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-secondary text-primary-foreground">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-bold text-primary">{b.t}</div>
+                  <div className="truncate text-[10px] text-muted-foreground">{b.s}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <footer className="bg-secondary py-6 text-primary-foreground">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6">
-          <div className="flex items-center gap-3">
-            <img
-              src={doverLogo.url}
-              alt="Logo PT Dover Chemical"
-              className="h-8 w-auto rounded bg-white/95 p-1 object-contain"
-            />
-            <span className="text-sm">
-              © {new Date().getFullYear()} PT Dover Chemical Indonesia. All rights reserved.
-            </span>
+      {/* Corporate footer */}
+      <footer id="kontak" className="bg-secondary text-primary-foreground">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
+            {/* About */}
+            <div>
+              <h3 className="mb-4 font-display text-sm font-bold uppercase tracking-wide">About</h3>
+              <ul className="space-y-2.5 text-sm text-white/85">
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Company Profile
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    History
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Awards &amp; Certifications
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Customer Testimonials
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Product & Services */}
+            <div>
+              <h3 className="mb-4 font-display text-sm font-bold uppercase tracking-wide">
+                Product &amp; Services
+              </h3>
+              <ul className="space-y-2.5 text-sm text-white/85">
+                <li>
+                  <a href="#" className="hover:text-white">
+                    DC Products
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    DC Logistic
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Jetty &amp; Terminals
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* News */}
+            <div>
+              <h3 className="mb-4 font-display text-sm font-bold uppercase tracking-wide">News</h3>
+              <ul className="space-y-2.5 text-sm text-white/85">
+                <li>
+                  <a href="#" className="hover:text-white">
+                    News
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Gallery
+                  </a>
+                </li>
+              </ul>
+              <h3 className="mb-3 mt-6 font-display text-sm font-bold uppercase tracking-wide">
+                Career
+              </h3>
+              <ul className="space-y-2.5 text-sm text-white/85">
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Company Culture
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Open Positions
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Testimonials
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Values
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div className="lg:col-span-2">
+              <h3 className="mb-4 font-display text-sm font-bold uppercase tracking-wide">Contact</h3>
+              <ul className="space-y-3 text-sm text-white/85">
+                <li className="flex items-start gap-2.5">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-white/70" />
+                  <span>
+                    Gedung Blugreen-Boutique Office, 3rd Floor, Suite BG-03 &amp; BC-03,
+                    Jl. Lingkar Luar Barat Kav. 88, Puri Kembangan, Jakarta 11610
+                  </span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Phone className="h-4 w-4 shrink-0 text-white/70" />
+                  <span>Tel: +62-21-2952 7180</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Phone className="h-4 w-4 shrink-0 text-white/70" />
+                  <span>Fax: +62-21-2952 7183</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Mail className="h-4 w-4 shrink-0 text-white/70" />
+                  <span>recruitment@doverchemical.co.id</span>
+                </li>
+              </ul>
+            </div>
           </div>
-          <div className="text-sm text-white/80">DOVECHEM TALENT</div>
+        </div>
+
+        {/* Copyright bar */}
+        <div className="border-t border-white/10 bg-secondary py-5">
+          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 sm:flex-row sm:px-6">
+            <div className="flex items-center gap-3">
+              <img
+                src={doverLogo.url}
+                alt="Logo PT Dover Chemical"
+                className="h-8 w-auto rounded bg-white/95 p-1 object-contain"
+              />
+              <span className="text-sm text-white/90">
+                © {new Date().getFullYear()} PT Dover Chemical Indonesia. All rights reserved.
+              </span>
+            </div>
+            <div className="text-sm font-semibold text-white/80">DOVECHEM TALENT</div>
+          </div>
         </div>
       </footer>
+
+      {/* Floating WhatsApp */}
+      <a
+        href="https://wa.me/622129527180"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-5 left-5 z-40 grid h-12 w-12 place-items-center rounded-full bg-[#25D366] text-white shadow-lg transition-transform hover:scale-105 sm:bottom-6 sm:left-6 sm:h-14 sm:w-14"
+        aria-label="Hubungi kami via WhatsApp"
+      >
+        <MessageCircle className="h-6 w-6 fill-current sm:h-7 sm:w-7" />
+      </a>
+
+      {/* Scroll to top */}
+      <button
+        type="button"
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        className="fixed bottom-5 right-5 z-40 grid h-12 w-12 place-items-center rounded-full bg-white/90 text-secondary shadow-lg backdrop-blur transition-transform hover:scale-105 sm:bottom-6 sm:right-6 sm:h-14 sm:w-14"
+        aria-label="Kembali ke atas"
+      >
+        <ChevronUp className="h-6 w-6 sm:h-7 sm:w-7" />
+      </button>
 
       {/* Sticky CTA (mobile) */}
       <div className="sticky bottom-0 z-40 border-t border-border/60 bg-card/95 p-3 backdrop-blur md:hidden">
