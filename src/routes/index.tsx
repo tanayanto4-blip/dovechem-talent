@@ -19,12 +19,6 @@ import certSgs from "@/assets/cert-sgs.png.asset.json";
 import certK3 from "@/assets/cert-k3.png.asset.json";
 import certIso from "@/assets/cert-iso.png.asset.json";
 
-const CERT_LOGOS = [
-  { src: certDover.url, alt: "PT Dover Chemical" },
-  { src: certSgs.url, alt: "SGS Certified" },
-  { src: certK3.url, alt: "Penghargaan K3 Kementerian Ketenagakerjaan" },
-  { src: certIso.url, alt: "ISO International Organization for Standardization" },
-];
 
 
 
