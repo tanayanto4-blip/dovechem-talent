@@ -134,6 +134,10 @@ export async function exportProfilingExcel(input: ProfilingInput) {
     if (d.valid) discType = d.type;
   }
 
+  // Pauli -> jumlah jawaban benar untuk status qualified/unqualified.
+  const pauliCorrect: number | null =
+    input.pauli?.correct != null ? Number(input.pauli.correct) : null;
+
   const res = await fetch(templateAsset.url);
   if (!res.ok) throw new Error("Template Excel Profiling tidak dapat dimuat.");
   const zip = await JSZip.loadAsync(await res.arrayBuffer());
