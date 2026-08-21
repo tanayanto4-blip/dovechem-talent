@@ -169,6 +169,47 @@ function DataForm() {
     };
   }, [form, c, session, doAutosave]);
 
+  async function onPickFoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !session) return;
+    const ext = (file.name.split(".").pop() || "").toLowerCase();
+    if (!["jpg", "jpeg", "png", "webp"].includes(ext)) {
+      toast.error("Format foto harus JPG, PNG, atau WEBP.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Ukuran foto maksimal 5MB.");
+      return;
+    }
+    setUploadingFoto(true);
+    try {
+      const buf = await file.arrayBuffer();
+      let binary = "";
+      const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.length; i += 8192) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+      }
+      await uploadFile({
+        data: {
+          code: session.code,
+          device: session.device ?? undefined,
+          file_type: "foto",
+          file_name: file.name,
+          mime_type: file.type || `image/${ext === "jpg" ? "jpeg" : ext}`,
+          file_size: file.size,
+          base64: btoa(binary),
+        },
+      });
+      toast.success("Foto formal berhasil diunggah");
+      await qc.invalidateQueries({ queryKey: ["candidate-profile"] });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Gagal mengunggah foto");
+    } finally {
+      setUploadingFoto(false);
+    }
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const missing = requiredFields.filter(([k]) => !String(form[k] ?? "").trim()).map(([, l]) => l);
@@ -176,6 +217,11 @@ function DataForm() {
       toast.error(`Wajib diisi: ${missing.join(", ")}`);
       return;
     }
+    if (!fotoUrl) {
+      toast.error("Foto formal wajib diunggah.");
+      return;
+    }
+
     setSaving(true);
     try {
       const { work_experience, job_position, ...common } = form;
