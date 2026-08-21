@@ -293,7 +293,7 @@ function ResultsBank() {
         testDate,
         ishihara: ishA?.result ?? null,
         wptAnswers,
-        pauli: pauliA?.result ?? null,
+        pauli: pauliCorrect != null ? { correct: pauliCorrect } : null,
       });
       toast.success(`Recruitment Resume ${g.name} diunduh`);
     } catch (e: any) {
