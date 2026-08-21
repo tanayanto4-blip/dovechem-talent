@@ -12,6 +12,7 @@ import { exportMsdtExcel } from "@/lib/msdt-excel";
 import { exportDiscExcel } from "@/lib/disc-excel";
 import { exportResultSheetPdf } from "@/lib/result-sheet-pdf";
 import { exportResumeExcel } from "@/lib/resume-excel";
+import { computePauli } from "@/components/pauli-result";
 
 import { buildCandidateMeta } from "@/lib/candidate-meta";
 
@@ -256,6 +257,23 @@ function ResultsBank() {
           : (await answerRows(wptA.id)).rows
         : null;
 
+      // Hitung ulang jawaban benar Pauli dari lembar jawaban (presisi),
+      // fallback ke hasil tersimpan bila detail tidak tersedia.
+      let pauliCorrect: number | null =
+        typeof pauliA?.result?.correct === "number" ? pauliA.result.correct : null;
+      if (pauliA) {
+        try {
+          const pd = pauliA.id === base.id ? baseDetail : await answerRows(pauliA.id);
+          const computed = computePauli(
+            (pd.d.questions ?? []) as any,
+            (id: string) => pd.map.get(id)?.answer as string | undefined,
+          );
+          if (computed.total > 0) pauliCorrect = computed.correct;
+        } catch {
+          /* pakai nilai tersimpan */
+        }
+      }
+
       const testDate =
         [ishA, wptA, pauliA, base].find((a) => a?.finished_at)?.finished_at ??
         base.started_at ??
@@ -275,7 +293,7 @@ function ResultsBank() {
         testDate,
         ishihara: ishA?.result ?? null,
         wptAnswers,
-        pauli: pauliA?.result ?? null,
+        pauli: pauliCorrect != null ? { correct: pauliCorrect } : null,
       });
       toast.success(`Recruitment Resume ${g.name} diunduh`);
     } catch (e: any) {
