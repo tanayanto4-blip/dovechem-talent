@@ -15,6 +15,8 @@ import {
   snapshotZip,
 } from "@/lib/xlsx-patch";
 
+const PAULI_QUALIFIED_MIN = 2300;
+
 /**
  * Profiling (Key Background Review) PT Dover Chemical.
  *
