@@ -256,6 +256,23 @@ function ResultsBank() {
           : (await answerRows(wptA.id)).rows
         : null;
 
+      // Hitung ulang jawaban benar Pauli dari lembar jawaban (presisi),
+      // fallback ke hasil tersimpan bila detail tidak tersedia.
+      let pauliCorrect: number | null =
+        typeof pauliA?.result?.correct === "number" ? pauliA.result.correct : null;
+      if (pauliA) {
+        try {
+          const pd = pauliA.id === base.id ? baseDetail : await answerRows(pauliA.id);
+          const computed = computePauli(
+            (pd.d.questions ?? []) as any,
+            (id: string) => pd.map.get(id)?.answer as string | undefined,
+          );
+          if (computed.total > 0) pauliCorrect = computed.correct;
+        } catch {
+          /* pakai nilai tersimpan */
+        }
+      }
+
       const testDate =
         [ishA, wptA, pauliA, base].find((a) => a?.finished_at)?.finished_at ??
         base.started_at ??
