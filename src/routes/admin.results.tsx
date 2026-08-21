@@ -170,8 +170,12 @@ function ResultsBank() {
       return true;
     }
     if (t === "disc") {
-      const { rows } = await answerRows(r.id);
-      await exportDiscExcel(rows, meta);
+      const { rows, d } = await answerRows(r.id);
+      await exportDiscExcel(rows, {
+        ...buildCandidateMeta(d.attempt?.candidates ?? {}, { finishedAt: r.finished_at }),
+        candidateName: meta.candidateName ?? undefined,
+        candidateCode: meta.candidateCode ?? undefined,
+      });
       return true;
     }
     if (t === "papi") {
@@ -933,12 +937,14 @@ function ResultsBank() {
                                                 question_number: q.question_number,
                                                 answer: map.get(q.id)?.answer,
                                               }));
-                                              const res: any = await exportDiscExcel(rows, {
-                                                candidateName: g.name,
-                                                candidateCode: g.code,
-                                                position: g.position,
-                                                finishedAt: r.finished_at,
-                                              });
+                                               const res: any = await exportDiscExcel(rows, {
+                                                 ...buildCandidateMeta(
+                                                   d.attempt?.candidates ?? {},
+                                                   { finishedAt: r.finished_at },
+                                                 ),
+                                                 candidateName: g.name,
+                                                 candidateCode: g.code,
+                                               });
                                               toast.success(
                                                 `Excel DISC diunduh — ${res?.filled ?? 0}/${res?.total ?? 24} kelompok terisi`,
                                               );
