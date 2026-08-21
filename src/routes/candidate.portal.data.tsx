@@ -6,7 +6,9 @@ import {
   candidateAutosaveProfile,
   candidateGetProfile,
   candidateSaveProfile,
+  candidateUploadFile,
 } from "@/lib/candidate.functions";
+
 import { useCandidateSession } from "@/lib/candidate-session";
 import {
   candidateTypeLabel,
