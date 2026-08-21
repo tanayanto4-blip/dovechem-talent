@@ -191,7 +191,9 @@ export async function exportProfilingExcel(input: ProfilingInput) {
   if (iq !== null) {
     edits.set("D31", iq);
     edits.set("E31", ` ${(category ?? "").toUpperCase()}`);
-    edits.set("F31", iq >= QUALIFIED_MIN ? "QUALIFIED" : "UNQUALIFIED");
+  }
+  if (pauliCorrect !== null) {
+    edits.set("F31", pauliCorrect >= PAULI_QUALIFIED_MIN ? "QUALIFIED" : "UNQUALIFIED");
   }
 
   const mainFile = zip.file(main.path);
