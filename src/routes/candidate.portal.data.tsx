@@ -403,6 +403,45 @@ function DataForm() {
               required
             />
           </Field>
+          <Field label="Foto Formal" required className="md:col-span-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="flex h-32 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted">
+                {fotoUrl ? (
+                  <img
+                    src={fotoUrl}
+                    alt="Foto formal kandidat"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="px-2 text-center text-xs text-muted-foreground">
+                    Belum ada foto
+                  </span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <input
+                  id="foto-formal"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={onPickFoto}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  disabled={uploadingFoto}
+                  onClick={() => document.getElementById("foto-formal")?.click()}
+                >
+                  {uploadingFoto ? "Mengunggah…" : fotoUrl ? "Ganti Foto" : "Unggah Foto Formal"}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Foto formal terbaru, latar polos, wajah terlihat jelas. JPG/PNG/WEBP, maks 5MB.
+                </p>
+              </div>
+            </div>
+          </Field>
+
           <div className="md:col-span-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={saving}>
               {saving ? "Menyimpan…" : "Simpan Data"}
