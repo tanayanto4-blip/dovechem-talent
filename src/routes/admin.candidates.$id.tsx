@@ -6,13 +6,12 @@ import {
   getFileSignedUrl,
   listCandidateFileVersions,
 } from "@/lib/admin.functions";
-import { computeChecklist } from "@/lib/document-checklist";
 import { candidateTrackOf, jobLevelLabel } from "@/lib/candidate-type";
 import { TestAccessControl } from "@/components/test-access-control";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle2, Download, History, XCircle } from "lucide-react";
+import { ArrowLeft, Download, History } from "lucide-react";
 
 export const Route = createFileRoute("/admin/candidates/$id")({
   head: () => ({
