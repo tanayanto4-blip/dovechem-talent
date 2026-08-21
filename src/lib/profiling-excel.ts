@@ -29,8 +29,6 @@ const PAULI_QUALIFIED_MIN = 2300;
  * Sel kategori MBTI (C33:F33) tetap memakai rumus asli template.
  */
 
-const QUALIFIED_MIN = 102;
-
 export interface ProfilingCandidate {
   full_name?: string | null;
   age?: number | string | null;
@@ -51,6 +49,8 @@ export interface ProfilingInput {
   wptAnswers?: Array<{ question_number: number; answer: any }> | null;
   /** Jawaban mentah DISC untuk mengisi SUMMARY PERSONALITY BACKGROUND. */
   discAnswers?: Array<{ question_number: number; answer: any }> | null;
+  /** Hasil test Pauli: jumlah jawaban benar untuk menentukan qualified/unqualified. */
+  pauli?: { correct?: number | null } | null;
 }
 
 const MONTHS = [
