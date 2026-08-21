@@ -15,6 +15,8 @@ import {
   snapshotZip,
 } from "@/lib/xlsx-patch";
 
+const PAULI_QUALIFIED_MIN = 2300;
+
 /**
  * Profiling (Key Background Review) PT Dover Chemical.
  *
@@ -26,8 +28,6 @@ import {
  *   D31 IQ SCORE (WPT)  E31 Kategori IQ  F31 QUALIFIED / UNQUALIFIED (>=102)
  * Sel kategori MBTI (C33:F33) tetap memakai rumus asli template.
  */
-
-const QUALIFIED_MIN = 102;
 
 export interface ProfilingCandidate {
   full_name?: string | null;
@@ -49,6 +49,8 @@ export interface ProfilingInput {
   wptAnswers?: Array<{ question_number: number; answer: any }> | null;
   /** Jawaban mentah DISC untuk mengisi SUMMARY PERSONALITY BACKGROUND. */
   discAnswers?: Array<{ question_number: number; answer: any }> | null;
+  /** Hasil test Pauli: jumlah jawaban benar untuk menentukan qualified/unqualified. */
+  pauli?: { correct?: number | null } | null;
 }
 
 const MONTHS = [
@@ -132,6 +134,10 @@ export async function exportProfilingExcel(input: ProfilingInput) {
     if (d.valid) discType = d.type;
   }
 
+  // Pauli -> jumlah jawaban benar untuk status qualified/unqualified.
+  const pauliCorrect: number | null =
+    input.pauli?.correct != null ? Number(input.pauli.correct) : null;
+
   const res = await fetch(templateAsset.url);
   if (!res.ok) throw new Error("Template Excel Profiling tidak dapat dimuat.");
   const zip = await JSZip.loadAsync(await res.arrayBuffer());
@@ -185,7 +191,9 @@ export async function exportProfilingExcel(input: ProfilingInput) {
   if (iq !== null) {
     edits.set("D31", iq);
     edits.set("E31", ` ${(category ?? "").toUpperCase()}`);
-    edits.set("F31", iq >= QUALIFIED_MIN ? "QUALIFIED" : "UNQUALIFIED");
+  }
+  if (pauliCorrect !== null) {
+    edits.set("F31", pauliCorrect >= PAULI_QUALIFIED_MIN ? "QUALIFIED" : "UNQUALIFIED");
   }
 
   const mainFile = zip.file(main.path);
@@ -212,7 +220,13 @@ export async function exportProfilingExcel(input: ProfilingInput) {
   return {
     iq,
     category,
-    status: iq === null ? null : iq >= QUALIFIED_MIN ? "QUALIFIED" : "UNQUALIFIED",
+    pauliCorrect,
+    status:
+      pauliCorrect === null
+        ? null
+        : pauliCorrect >= PAULI_QUALIFIED_MIN
+          ? "QUALIFIED"
+          : "UNQUALIFIED",
     mbti,
     disc: discType,
   };
