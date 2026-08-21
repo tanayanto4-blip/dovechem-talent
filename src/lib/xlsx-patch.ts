@@ -71,6 +71,44 @@ export function patchSheet(xml: string, edits: Map<string, CellValue>, clearCach
   });
 }
 
+/**
+ * Menambahkan BARIS BARU di bawah area terpakai sheet (tidak menimpa apa pun).
+ * Dipakai untuk menempelkan biodata kandidat pada lembar skoring.
+ */
+export function appendRows(xml: string, edits: Map<string, CellValue>) {
+  const byRow = new Map<number, Array<[string, CellValue]>>();
+  for (const [ref, val] of edits) {
+    const r = Number(ref.replace(/[A-Z]+/, ""));
+    if (!byRow.has(r)) byRow.set(r, []);
+    byRow.get(r)!.push([ref, val]);
+  }
+  const rows = [...byRow.entries()].sort((a, b) => a[0] - b[0]);
+  if (!rows.length) return xml;
+
+  let out = "";
+  for (const [r, cells] of rows) {
+    if (new RegExp(`<row\\b[^>]*\\sr="${r}"`).test(xml)) continue;
+    const inner = cells
+      .sort(
+        (a, b) =>
+          colToNum(a[0].replace(/\d+/, "")) - colToNum(b[0].replace(/\d+/, "")),
+      )
+      .map(([ref, val]) => buildCell(ref, "", val))
+      .join("");
+    out += `<row r="${r}">${inner}</row>`;
+  }
+  if (!out) return xml;
+
+  const maxRow = rows[rows.length - 1][0];
+  let next = xml.includes("</sheetData>")
+    ? xml.replace("</sheetData>", `${out}</sheetData>`)
+    : xml.replace(/<sheetData\s*\/>/, `<sheetData>${out}</sheetData>`);
+  next = next.replace(/<dimension\b[^>]*ref="([A-Z]+\d+):([A-Z]+)(\d+)"[^>]*\/>/, (m, a, c, r) =>
+    Number(r) >= maxRow ? m : `<dimension ref="${a}:${c}${maxRow}"/>`,
+  );
+  return next;
+}
+
 /** Daftar sheet (nama + path XML) sesuai urutan pada workbook. */
 export async function sheetPaths(zip: JSZip) {
   const wb = await zip.file("xl/workbook.xml")!.async("string");
