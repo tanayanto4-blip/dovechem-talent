@@ -220,7 +220,13 @@ export async function exportProfilingExcel(input: ProfilingInput) {
   return {
     iq,
     category,
-    status: iq === null ? null : iq >= QUALIFIED_MIN ? "QUALIFIED" : "UNQUALIFIED",
+    pauliCorrect,
+    status:
+      pauliCorrect === null
+        ? null
+        : pauliCorrect >= PAULI_QUALIFIED_MIN
+          ? "QUALIFIED"
+          : "UNQUALIFIED",
     mbti,
     disc: discType,
   };
