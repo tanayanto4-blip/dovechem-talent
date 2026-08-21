@@ -83,6 +83,7 @@ function DataForm() {
   const getProfile = useServerFn(candidateGetProfile);
   const save = useServerFn(candidateSaveProfile);
   const autosave = useServerFn(candidateAutosaveProfile);
+  const uploadFile = useServerFn(candidateUploadFile);
   const { data, isLoading } = useQuery({
     queryKey: ["candidate-profile", session?.code],
     queryFn: () => getProfile({ data: { code: session!.code, device: session!.device } }),
@@ -92,9 +93,12 @@ function DataForm() {
   const candidateType = (data as any)?.candidate_type ?? session?.type ?? "karyawan";
   const isMagang = candidateType === "magang";
   const requiredFields = fieldsFor(candidateType);
+  const fotoUrl = (data as any)?.foto_url as string | null | undefined;
   const [form, setForm] = useState<Record<string, string>>({});
+  const [uploadingFoto, setUploadingFoto] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+
   const initialFormRef = useRef<Record<string, string> | null>(null);
   const lastSavedRef = useRef<Record<string, string> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
