@@ -121,11 +121,9 @@ export async function exportResumeExcel(input: ResumeInput) {
       ? `B : ${ish.correct ?? 0}\nS : ${ish.wrong ?? 0}`
       : "-";
 
+  // Kolom J (di samping kanan IQ) = TOTAL JAWABAN BENAR test Pauli.
   const pauli = input.pauli;
-  const pauliTotal: CellValue =
-    pauli && (pauli.attempted != null || pauli.correct != null)
-      ? Number(pauli.attempted ?? 0) + Number(pauli.correct ?? 0)
-      : "-";
+  const pauliTotal: CellValue = pauli && pauli.correct != null ? Number(pauli.correct) : "-";
 
   const res = await fetch(templateAsset.url);
   if (!res.ok) throw new Error("Template Excel Recruitment Resume tidak dapat dimuat.");
