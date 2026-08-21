@@ -1,7 +1,6 @@
 import JSZip from "jszip";
 import {
   type CellValue,
-  appendRows,
   assertTemplateIntact,
   clearFormulaCache,
   forceRecalc,
@@ -9,7 +8,7 @@ import {
   sheetPaths,
   snapshotZip,
 } from "@/lib/xlsx-patch";
-import { metaRows, type CandidateMeta } from "@/lib/candidate-meta";
+import type { CandidateMeta } from "@/lib/candidate-meta";
 import templateAsset from "@/assets/disc-template.xlsx.asset.json";
 
 /**
@@ -117,24 +116,12 @@ export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExce
     (meta.finishedAt ? new Date(meta.finishedAt) : new Date()).toLocaleDateString("id-ID"),
   );
 
-  // 2b) Biodata lengkap kandidat (tarik dari data diri) ditempel sebagai baris
-  //     baru di bawah tabel template, jadi tidak menimpa isi/rumus template.
-  const bio = new Map<string, CellValue>();
-  const BIO_START = 58;
-  bio.set(`B${BIO_START}`, "BIODATA KANDIDAT (PT DOVER CHEMICAL)");
-  metaRows({ ...meta, finishedAt: meta.finishedAt ?? new Date().toISOString() }).forEach(
-    ([label, value], i) => {
-      bio.set(`B${BIO_START + 1 + i}`, label);
-      bio.set(`G${BIO_START + 1 + i}`, value);
-    },
-  );
-
   // 3) HANYA sheet 1 yang di-patch. Sheet lain (Input, Result + grafik) sama
   //    sekali tidak disentuh agar rumus & cache-nya tetap terbaca.
   const mainFile = zip.file(main.path);
   if (!mainFile) throw new Error("Sheet utama template DISC tidak ditemukan.");
   const originalMain = await mainFile.async("string");
-  zip.file(main.path, appendRows(patchSheet(originalMain, edits, true), bio));
+  zip.file(main.path, patchSheet(originalMain, edits, true));
 
   // Sheet Input & Result tidak diubah — hanya cache nilai lama dibuang agar
   // terisi otomatis dari sheet 1; rumusnya divalidasi tetap identik.
