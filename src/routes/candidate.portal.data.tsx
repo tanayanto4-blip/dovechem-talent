@@ -6,7 +6,9 @@ import {
   candidateAutosaveProfile,
   candidateGetProfile,
   candidateSaveProfile,
+  candidateUploadFile,
 } from "@/lib/candidate.functions";
+
 import { useCandidateSession } from "@/lib/candidate-session";
 import {
   candidateTypeLabel,
@@ -81,6 +83,7 @@ function DataForm() {
   const getProfile = useServerFn(candidateGetProfile);
   const save = useServerFn(candidateSaveProfile);
   const autosave = useServerFn(candidateAutosaveProfile);
+  const uploadFile = useServerFn(candidateUploadFile);
   const { data, isLoading } = useQuery({
     queryKey: ["candidate-profile", session?.code],
     queryFn: () => getProfile({ data: { code: session!.code, device: session!.device } }),
@@ -90,9 +93,12 @@ function DataForm() {
   const candidateType = (data as any)?.candidate_type ?? session?.type ?? "karyawan";
   const isMagang = candidateType === "magang";
   const requiredFields = fieldsFor(candidateType);
+  const fotoUrl = (data as any)?.foto_url as string | null | undefined;
   const [form, setForm] = useState<Record<string, string>>({});
+  const [uploadingFoto, setUploadingFoto] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+
   const initialFormRef = useRef<Record<string, string> | null>(null);
   const lastSavedRef = useRef<Record<string, string> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -163,6 +169,47 @@ function DataForm() {
     };
   }, [form, c, session, doAutosave]);
 
+  async function onPickFoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !session) return;
+    const ext = (file.name.split(".").pop() || "").toLowerCase();
+    if (!["jpg", "jpeg", "png", "webp"].includes(ext)) {
+      toast.error("Format foto harus JPG, PNG, atau WEBP.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Ukuran foto maksimal 5MB.");
+      return;
+    }
+    setUploadingFoto(true);
+    try {
+      const buf = await file.arrayBuffer();
+      let binary = "";
+      const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.length; i += 8192) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+      }
+      await uploadFile({
+        data: {
+          code: session.code,
+          device: session.device ?? undefined,
+          file_type: "foto",
+          file_name: file.name,
+          mime_type: file.type || `image/${ext === "jpg" ? "jpeg" : ext}`,
+          file_size: file.size,
+          base64: btoa(binary),
+        },
+      });
+      toast.success("Foto formal berhasil diunggah");
+      await qc.invalidateQueries({ queryKey: ["candidate-profile"] });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Gagal mengunggah foto");
+    } finally {
+      setUploadingFoto(false);
+    }
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const missing = requiredFields.filter(([k]) => !String(form[k] ?? "").trim()).map(([, l]) => l);
@@ -170,6 +217,11 @@ function DataForm() {
       toast.error(`Wajib diisi: ${missing.join(", ")}`);
       return;
     }
+    if (!fotoUrl) {
+      toast.error("Foto formal wajib diunggah.");
+      return;
+    }
+
     setSaving(true);
     try {
       const { work_experience, job_position, ...common } = form;
@@ -351,6 +403,45 @@ function DataForm() {
               required
             />
           </Field>
+          <Field label="Foto Formal" required className="md:col-span-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="flex h-32 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted">
+                {fotoUrl ? (
+                  <img
+                    src={fotoUrl}
+                    alt="Foto formal kandidat"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="px-2 text-center text-xs text-muted-foreground">
+                    Belum ada foto
+                  </span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <input
+                  id="foto-formal"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={onPickFoto}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  disabled={uploadingFoto}
+                  onClick={() => document.getElementById("foto-formal")?.click()}
+                >
+                  {uploadingFoto ? "Mengunggah…" : fotoUrl ? "Ganti Foto" : "Unggah Foto Formal"}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Foto formal terbaru, latar polos, wajah terlihat jelas. JPG/PNG/WEBP, maks 5MB.
+                </p>
+              </div>
+            </div>
+          </Field>
+
           <div className="md:col-span-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={saving}>
               {saving ? "Menyimpan…" : "Simpan Data"}
