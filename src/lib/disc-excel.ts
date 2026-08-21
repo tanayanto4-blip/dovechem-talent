@@ -1,7 +1,6 @@
 import JSZip from "jszip";
 import {
   type CellValue,
-  appendRows,
   assertTemplateIntact,
   clearFormulaCache,
   forceRecalc,
@@ -9,7 +8,7 @@ import {
   sheetPaths,
   snapshotZip,
 } from "@/lib/xlsx-patch";
-import { metaRows, type CandidateMeta } from "@/lib/candidate-meta";
+import type { CandidateMeta } from "@/lib/candidate-meta";
 import templateAsset from "@/assets/disc-template.xlsx.asset.json";
 
 /**
