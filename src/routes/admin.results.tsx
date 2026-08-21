@@ -305,7 +305,7 @@ function ResultsBank() {
 
   const [profilingKey, setProfilingKey] = useState<string | null>(null);
 
-  /** Profiling (Excel) — persentase MBTI + IQ/kategori WPT + status qualified. */
+  /** Profiling (Excel) — persentase MBTI + IQ/kategori WPT + status qualified dari Pauli. */
   async function downloadProfiling(g: Group) {
     setProfilingKey(g.key);
     try {
@@ -313,7 +313,8 @@ function ResultsBank() {
       const mbtiA = byType("mbti");
       const wptA = byType("wpt");
       const discA = byType("disc");
-      const base = mbtiA ?? wptA ?? discA ?? g.attempts[0];
+      const pauliA = byType("pauli");
+      const base = mbtiA ?? wptA ?? discA ?? pauliA ?? g.attempts[0];
       if (!base) throw new Error("Belum ada hasil test untuk kandidat ini");
 
       const baseDetail = await answerRows(base.id);
@@ -324,8 +325,27 @@ function ResultsBank() {
       const mbtiAnswers = await rowsFor(mbtiA);
       const wptAnswers = await rowsFor(wptA);
       const discAnswers = await rowsFor(discA);
+
+      // Hitung ulang jawaban benar Pauli dari lembar jawaban (presisi).
+      let pauliCorrect: number | null =
+        typeof pauliA?.result?.correct === "number" ? pauliA.result.correct : null;
+      if (pauliA) {
+        try {
+          const pd = pauliA.id === base.id ? baseDetail : await answerRows(pauliA.id);
+          const computed = computePauli(
+            (pd.d.questions ?? []) as any,
+            (id: string) => pd.map.get(id)?.answer as string | undefined,
+          );
+          if (computed.total > 0) pauliCorrect = computed.correct;
+        } catch {
+          /* pakai nilai tersimpan */
+        }
+      }
+
       const testDate =
-        [mbtiA, wptA, discA, base].find((a) => a?.finished_at)?.finished_at ?? base.started_at ?? null;
+        [mbtiA, wptA, discA, pauliA, base].find((a) => a?.finished_at)?.finished_at ??
+        base.started_at ??
+        null;
 
       const out = await exportProfilingExcel({
         candidate: {
@@ -341,9 +361,10 @@ function ResultsBank() {
         mbtiAnswers,
         wptAnswers,
         discAnswers,
+        pauli: pauliCorrect != null ? { correct: pauliCorrect } : null,
       });
       toast.success(
-        `Profiling ${g.name} diunduh${out.iq !== null ? ` — IQ ${out.iq} (${out.status})` : ""}`,
+        `Profiling ${g.name} diunduh${out.pauliCorrect !== null ? ` — Pauli ${out.pauliCorrect} (${out.status})` : ""}`,
       );
     } catch (e: any) {
       toast.error(e?.message ?? "Gagal membuat Profiling");
