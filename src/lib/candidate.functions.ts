@@ -249,11 +249,22 @@ export const candidateGetProfile = createServerFn({ method: "POST" })
         .select("test_id, is_open, reason, retake_count, last_reopened_at")
         .eq("candidate_id", cand.id),
     ]);
+    const files = filesQ.data ?? [];
+    const fotoRow = (files as any[]).find((f) => f.file_type === "foto");
+    let foto_url: string | null = null;
+    if (fotoRow?.file_path) {
+      const { data: signed } = await sb.storage
+        .from("candidate-files")
+        .createSignedUrl(fotoRow.file_path, 60 * 60);
+      foto_url = signed?.signedUrl ?? null;
+    }
     return {
       candidate: cand,
       candidate_type: codeRow.candidate_type ?? "karyawan",
       job_level: candidateLevelOf(cand),
-      files: filesQ.data ?? [],
+      files,
+      foto_url,
+
       tests: ((testsQ.data ?? []) as any[]).map((t, _i, all) =>
         maskTest(
           t,
