@@ -170,8 +170,12 @@ function ResultsBank() {
       return true;
     }
     if (t === "disc") {
-      const { rows } = await answerRows(r.id);
-      await exportDiscExcel(rows, meta);
+      const { rows, d } = await answerRows(r.id);
+      await exportDiscExcel(rows, {
+        ...buildCandidateMeta(d.attempt?.candidates ?? {}, { finishedAt: r.finished_at }),
+        candidateName: meta.candidateName ?? undefined,
+        candidateCode: meta.candidateCode ?? undefined,
+      });
       return true;
     }
     if (t === "papi") {
