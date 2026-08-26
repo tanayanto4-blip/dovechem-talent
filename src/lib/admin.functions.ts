@@ -567,12 +567,17 @@ export const getAttemptDetail = createServerFn({ method: "POST" })
       .select("*")
       .eq("test_id", (attempt as any).test_id)
       .order("question_number");
+    const historicalAnswerKey = (attempt as any)?.result?.answer_key_snapshot;
+    const questionsForAttempt = (questions ?? []).map((question: any) => {
+      const savedKey = historicalAnswerKey?.[String(question.question_number)];
+      return savedKey === undefined ? question : { ...question, correct_answer: String(savedKey) };
+    });
     await logAudit(context, "attempt.view", "test_attempt", data.id, {
       candidate_id: (attempt as any)?.candidates?.id ?? null,
       test_id: (attempt as any)?.test_id ?? null,
       test_name: (attempt as any)?.tests?.name ?? null,
     });
-    return { attempt, questions: questions ?? [] };
+    return { attempt, questions: questionsForAttempt };
   });
 
 const AuditListInput = z.object({
