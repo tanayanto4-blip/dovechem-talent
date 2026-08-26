@@ -40,6 +40,7 @@ export function PhotoCapture({
   const segRef = useRef<any>(null);
   const rafRef = useRef<number | null>(null);
   const bgRef = useRef<string | null>(null);
+  const lastSegmentAtRef = useRef(0);
   const [bg, setBg] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [segReady, setSegReady] = useState(false);
@@ -52,9 +53,13 @@ export function PhotoCapture({
   const stop = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
+    segRef.current?.close?.();
+    segRef.current = null;
+    lastSegmentAtRef.current = 0;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     setReady(false);
+    setSegReady(false);
   }, []);
 
   useEffect(() => {
@@ -97,7 +102,7 @@ export function PhotoCapture({
           baseOptions: { modelAssetPath: MODEL_URL, delegate: "GPU" },
           runningMode: "VIDEO",
           outputCategoryMask: true,
-          outputConfidenceMasks: false,
+          outputConfidenceMasks: true,
         });
         if (cancelled) {
           seg.close();
@@ -110,53 +115,119 @@ export function PhotoCapture({
       }
     })();
 
-    function loop() {
+    const sourceCanvas = document.createElement("canvas");
+    const personCanvas = document.createElement("canvas");
+    const maskCanvas = document.createElement("canvas");
+    let hasPersonMask = false;
+
+    function updateMask(result: any) {
+      const labels: string[] = segRef.current?.getLabels?.() ?? [];
+      const personIndex = Math.max(
+        0,
+        labels.findIndex((label) => /person|selfie|foreground|hair|body/i.test(label)),
+      );
+      const confidenceMask =
+        result.confidenceMasks?.[personIndex] ??
+        (result.confidenceMasks?.length === 1 ? result.confidenceMasks[0] : undefined);
+      const categoryMask = result.categoryMask;
+      const selectedMask = confidenceMask ?? categoryMask;
+      if (!selectedMask) return;
+
+      const maskWidth = selectedMask.width;
+      const maskHeight = selectedMask.height;
+      if (!maskWidth || !maskHeight) return;
+
+      const floatData = confidenceMask?.getAsFloat32Array?.();
+      const categoryData = categoryMask?.getAsUint8Array?.();
+      if (!floatData && !categoryData) return;
+
+      maskCanvas.width = maskWidth;
+      maskCanvas.height = maskHeight;
+      const maskContext = maskCanvas.getContext("2d");
+      if (!maskContext) return;
+
+      const alphaImage = maskContext.createImageData(maskWidth, maskHeight);
+      for (let index = 0; index < maskWidth * maskHeight; index += 1) {
+        const confidence = floatData
+          ? floatData[index] ?? 0
+          : categoryData?.[index] === personIndex
+            ? 1
+            : 0;
+        // A soft threshold protects facial features and hair while feathering edges.
+        const normalized = Math.min(1, Math.max(0, (confidence - 0.18) / 0.62));
+        const alpha = normalized * normalized * (3 - 2 * normalized);
+        const pixel = index * 4;
+        alphaImage.data[pixel] = 255;
+        alphaImage.data[pixel + 1] = 255;
+        alphaImage.data[pixel + 2] = 255;
+        alphaImage.data[pixel + 3] = Math.round(alpha * 255);
+      }
+      maskContext.putImageData(alphaImage, 0, 0);
+      hasPersonMask = true;
+    }
+
+    function loop(timestamp = performance.now()) {
       const v = videoRef.current;
       const c = canvasRef.current;
       if (!v || !c) return;
-      const ctx = c.getContext("2d", { willReadFrequently: true });
+      const ctx = c.getContext("2d");
       if (ctx && v.videoWidth) {
         if (c.width !== v.videoWidth) {
           c.width = v.videoWidth;
           c.height = v.videoHeight;
+          sourceCanvas.width = c.width;
+          sourceCanvas.height = c.height;
+          personCanvas.width = c.width;
+          personCanvas.height = c.height;
         }
-        ctx.save();
-        ctx.translate(c.width, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(v, 0, 0, c.width, c.height);
-        ctx.restore();
+
+        const sourceContext = sourceCanvas.getContext("2d");
+        if (!sourceContext) return;
+        sourceContext.save();
+        sourceContext.clearRect(0, 0, c.width, c.height);
+        sourceContext.translate(c.width, 0);
+        sourceContext.scale(-1, 1);
+        sourceContext.drawImage(v, 0, 0, c.width, c.height);
+        sourceContext.restore();
 
         const color = bgRef.current;
         const seg = segRef.current;
         if (color && seg) {
-          try {
-            const res = seg.segmentForVideo(v, performance.now());
-            const mask = res.categoryMask?.getAsUint8Array();
-            if (mask) {
-              const img = ctx.getImageData(0, 0, c.width, c.height);
-              const d = img.data;
-              const r = parseInt(color.slice(1, 3), 16);
-              const g = parseInt(color.slice(3, 5), 16);
-              const b = parseInt(color.slice(5, 7), 16);
-              const w = c.width;
-              for (let y = 0; y < c.height; y++) {
-                for (let x = 0; x < w; x++) {
-                  // mask is not mirrored — flip x lookup
-                  const m = mask[y * w + (w - 1 - x)];
-                  if (m === 0) {
-                    const i = (y * w + x) * 4;
-                    d[i] = r;
-                    d[i + 1] = g;
-                    d[i + 2] = b;
-                  }
-                }
-              }
-              ctx.putImageData(img, 0, 0);
+          if (timestamp - lastSegmentAtRef.current >= 70) {
+            try {
+              const result = seg.segmentForVideo(v, timestamp);
+              updateMask(result);
+              result.close?.();
+              lastSegmentAtRef.current = timestamp;
+            } catch {
+              hasPersonMask = false;
             }
-            res.close?.();
-          } catch {
-            /* keep raw frame */
           }
+
+          if (hasPersonMask) {
+            const personContext = personCanvas.getContext("2d");
+            if (personContext) {
+              personContext.clearRect(0, 0, c.width, c.height);
+              personContext.globalCompositeOperation = "source-over";
+              personContext.drawImage(sourceCanvas, 0, 0);
+              personContext.globalCompositeOperation = "destination-in";
+              personContext.save();
+              personContext.filter = "blur(1.5px)";
+              personContext.translate(c.width, 0);
+              personContext.scale(-1, 1);
+              personContext.drawImage(maskCanvas, -2, -2, c.width + 4, c.height + 4);
+              personContext.restore();
+              personContext.globalCompositeOperation = "source-over";
+
+              ctx.fillStyle = color;
+              ctx.fillRect(0, 0, c.width, c.height);
+              ctx.drawImage(personCanvas, 0, 0);
+            }
+          } else {
+            ctx.drawImage(sourceCanvas, 0, 0);
+          }
+        } else {
+          ctx.drawImage(sourceCanvas, 0, 0);
         }
       }
       rafRef.current = requestAnimationFrame(loop);
