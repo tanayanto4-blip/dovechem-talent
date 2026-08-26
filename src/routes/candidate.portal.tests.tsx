@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateGetProfile } from "@/lib/candidate.functions";
 import { useCandidateSession } from "@/lib/candidate-session";
+import { testDisplayName } from "@/lib/test-display-name";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
