@@ -223,17 +223,39 @@ function DataForm() {
     }
   }
 
+  async function onCapturePhoto(photo: CapturedPhoto) {
+    if (!session) return;
+    setUploadingFoto(true);
+    try {
+      await uploadFile({
+        data: {
+          code: session.code,
+          device: session.device ?? undefined,
+          file_type: "foto",
+          file_name: photo.fileName,
+          mime_type: photo.mimeType,
+          file_size: photo.size,
+          base64: photo.base64,
+        },
+      });
+      toast.success("Foto formal tersimpan otomatis");
+      await qc.invalidateQueries({ queryKey: ["candidate-profile"] });
+      setCamOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Gagal menyimpan foto");
+    } finally {
+      setUploadingFoto(false);
+    }
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const missing = requiredFields.filter(([k]) => !String(form[k] ?? "").trim()).map(([, l]) => l);
-    if (missing.length) {
-      toast.error(`Wajib diisi: ${missing.join(", ")}`);
+    setAttempted(true);
+    if (missingLabels.length) {
+      toast.error(`Belum lengkap: ${missingLabels.join(", ")}`);
       return;
     }
-    if (!fotoUrl) {
-      toast.error("Foto formal wajib diunggah.");
-      return;
-    }
+
 
     setSaving(true);
     try {
