@@ -493,17 +493,28 @@ function DataForm() {
                   className="hidden"
                   onChange={onPickFoto}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  disabled={uploadingFoto}
-                  onClick={() => document.getElementById("foto-formal")?.click()}
-                >
-                  {uploadingFoto ? "Mengunggah…" : fotoUrl ? "Ganti Foto" : "Unggah Foto Formal"}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="lg"
+                    disabled={uploadingFoto}
+                    onClick={() => setCamOpen(true)}
+                  >
+                    {fotoUrl ? "Foto Ulang dengan Kamera" : "Ambil Foto dengan Kamera"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    disabled={uploadingFoto}
+                    onClick={() => document.getElementById("foto-formal")?.click()}
+                  >
+                    {uploadingFoto ? "Mengunggah…" : "Unggah dari File"}
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Foto formal terbaru, latar polos, wajah terlihat jelas. JPG/PNG/WEBP, maks 5MB.
+                  Selfie langsung dari kamera laptop, bisa pilih warna latar (merah/biru/putih/abu).
+                  Foto otomatis tersimpan setelah diambil. JPG/PNG/WEBP, maks 5MB.
                 </p>
               </div>
             </div>
