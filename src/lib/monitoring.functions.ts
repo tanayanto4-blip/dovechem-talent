@@ -352,7 +352,8 @@ export const autoRecoverStuckCandidates = createServerFn({ method: "POST" })
           .update({
             status: "in_progress",
             finished_at: null,
-            started_at: new Date().toISOString(),
+            // Waktu baru mulai dihitung saat kandidat membuka test kembali.
+            started_at: null,
           })
           .eq("id", a.id)
           .eq("status", "in_progress");
