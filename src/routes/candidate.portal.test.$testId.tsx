@@ -231,6 +231,9 @@ export const Route = createFileRoute("/candidate/portal/test/$testId")({
       { name: "robots", content: "noindex" },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    siap: search.siap === 1 || search.siap === "1" ? 1 : undefined,
+  }),
   component: TakeTest,
 });
 
@@ -255,7 +258,10 @@ function TakeTest() {
 
   // Instruction gate: the attempt (and timer) only starts after the candidate
   // has listened to / read the spoken instruction and pressed "Mulai Test".
-  const [started, setStarted] = useState(false);
+  // Alur: instruksi + contoh soal dikerjakan di halaman latihan. Bila kandidat
+  // datang dari sana (?siap=1) test langsung dimulai tanpa gerbang instruksi ulang.
+  const { siap } = Route.useSearch();
+  const [started, setStarted] = useState(siap === 1);
   const intro = useQuery({
     queryKey: ["test-intro", testId, session?.code],
     queryFn: () =>

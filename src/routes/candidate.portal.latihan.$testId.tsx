@@ -329,7 +329,11 @@ function PracticePage() {
               <Button
                 onClick={() => {
                   stopVoice();
-                  nav({ to: "/candidate/portal/test/$testId", params: { testId } });
+                  nav({
+                    to: "/candidate/portal/test/$testId",
+                    params: { testId },
+                    search: { siap: 1 },
+                  });
                 }}
               >
                 Mulai {testLabel} <ArrowRight className="ml-2 h-4 w-4" />
