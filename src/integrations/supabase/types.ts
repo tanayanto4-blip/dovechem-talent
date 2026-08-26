@@ -546,7 +546,7 @@ export type Database = {
           id: string
           result: Json | null
           score: number | null
-          started_at: string
+          started_at: string | null
           status: string
           test_id: string
         }
@@ -556,7 +556,7 @@ export type Database = {
           id?: string
           result?: Json | null
           score?: number | null
-          started_at?: string
+          started_at?: string | null
           status?: string
           test_id: string
         }
@@ -566,7 +566,7 @@ export type Database = {
           id?: string
           result?: Json | null
           score?: number | null
-          started_at?: string
+          started_at?: string | null
           status?: string
           test_id?: string
         }
