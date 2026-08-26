@@ -78,7 +78,7 @@ function TestsPage() {
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
-        {(data?.tests ?? []).map((t: any, idx: number) => {
+        {(data?.tests ?? []).map((t: any) => {
           const attempt = attempts.get(t.id) as any;
           const acc = access.get(t.id) as any;
           const closed = acc?.is_open === false;
@@ -88,7 +88,9 @@ function TestsPage() {
             <Card key={t.id} data-testid={`test-card-${t.id}`} className="shadow-card">
               <CardContent className="p-6">
                 <div className="mb-4 flex items-start justify-between gap-3">
-                  <h2 className="font-display text-xl font-bold text-primary">TEST {idx + 1}</h2>
+                  <h2 className="font-display text-xl font-bold text-primary">
+                    {testDisplayName(t)}
+                  </h2>
                   {closed ? (
                     <Badge variant="destructive">
                       <Lock className="mr-1 h-3 w-3" /> Ditutup
