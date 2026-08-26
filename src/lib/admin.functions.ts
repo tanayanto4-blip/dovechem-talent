@@ -1517,7 +1517,8 @@ async function performReopen(
         finished_at: null,
         score: null,
         result: null,
-        started_at: new Date().toISOString(),
+        // Timer test ulang baru berjalan saat kandidat membuka test-nya.
+        started_at: null,
       })
       .eq("id", attempt.id);
     if (upd.error) throw new Error(upd.error.message);
