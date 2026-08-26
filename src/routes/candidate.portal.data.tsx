@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { PhotoCapture, type CapturedPhoto } from "@/components/photo-capture";
 
 export const Route = createFileRoute("/candidate/portal/data")({
   head: () => ({
