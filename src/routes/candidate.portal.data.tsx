@@ -337,14 +337,14 @@ function DataForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="grid gap-5 md:grid-cols-2 md:gap-4">
-          <Field label="Nama Lengkap" required>
+          <Field label="Nama Lengkap" required invalid={isMissing("full_name")}>
             <Input
               value={form.full_name ?? ""}
               onChange={(e) => setForm({ ...form, full_name: e.target.value })}
               required
             />
           </Field>
-          <Field label="Jenis Kelamin" required>
+          <Field label="Jenis Kelamin" required invalid={isMissing("gender")}>
             <Select
               value={form.gender ?? ""}
               onValueChange={(v) => setForm({ ...form, gender: v })}
@@ -361,7 +361,7 @@ function DataForm() {
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Nama Sekolah / Universitas" required>
+          <Field label="Nama Sekolah / Universitas" required invalid={isMissing("school_name")}>
             <Input
               value={form.school_name ?? ""}
               onChange={(e) => setForm({ ...form, school_name: e.target.value })}
@@ -369,7 +369,7 @@ function DataForm() {
               required
             />
           </Field>
-          <Field label="Pendidikan" required>
+          <Field label="Pendidikan" required invalid={isMissing("education")}>
             <Select
               value={form.education ?? ""}
               onValueChange={(v) => setForm({ ...form, education: v })}
@@ -386,7 +386,7 @@ function DataForm() {
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Jurusan" required>
+          <Field label="Jurusan" required invalid={isMissing("major")}>
             <Input
               value={form.major ?? ""}
               onChange={(e) => setForm({ ...form, major: e.target.value })}
@@ -394,7 +394,7 @@ function DataForm() {
               required
             />
           </Field>
-          <Field label="Usia" required>
+          <Field label="Usia" required invalid={isMissing("age")}>
             <Select value={form.age ?? ""} onValueChange={(v) => setForm({ ...form, age: v })}>
               <SelectTrigger>
                 <SelectValue placeholder="Pilih usia" />
@@ -409,7 +409,7 @@ function DataForm() {
             </Select>
           </Field>
           {!isMagang && (
-            <Field label="Pernah Bekerja Berapa Lama" required>
+            <Field label="Pernah Bekerja Berapa Lama" required invalid={isMissing("work_experience")}>
               <Select
                 value={form.work_experience ?? ""}
                 onValueChange={(v) => setForm({ ...form, work_experience: v })}
@@ -428,7 +428,7 @@ function DataForm() {
             </Field>
           )}
           {!isMagang && (
-            <Field label="Posisi Jabatan" required>
+            <Field label="Posisi Jabatan" required invalid={isMissing("job_position")}>
               <Select
                 value={form.job_position ?? ""}
                 onValueChange={(v) => setForm({ ...form, job_position: v })}
@@ -447,7 +447,7 @@ function DataForm() {
             </Field>
           )}
 
-          <Field label="Telp / HP" required>
+          <Field label="Telp / HP" required invalid={isMissing("phone")}>
             <Input
               value={form.phone ?? ""}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -455,7 +455,7 @@ function DataForm() {
               required
             />
           </Field>
-          <Field label="Email" required>
+          <Field label="Email" required invalid={isMissing("email")}>
             <Input
               type="email"
               value={form.email ?? ""}
@@ -463,14 +463,14 @@ function DataForm() {
               required
             />
           </Field>
-          <Field label="Posisi Dilamar" required>
+          <Field label="Posisi Dilamar" required invalid={isMissing("position_applied")}>
             <Input
               value={form.position_applied ?? ""}
               onChange={(e) => setForm({ ...form, position_applied: e.target.value })}
               required
             />
           </Field>
-          <Field label="Foto Formal" required className="md:col-span-2">
+          <Field label="Foto Formal" required invalid={attempted && !fotoUrl} className="md:col-span-2">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="flex h-32 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted">
                 {fotoUrl ? (
@@ -536,18 +536,29 @@ function DataForm() {
           </div>
         </form>
       </CardContent>
+      <PhotoCapture
+        open={camOpen}
+        onOpenChange={setCamOpen}
+        onCapture={onCapturePhoto}
+        busy={uploadingFoto}
+      />
     </Card>
   );
 }
 
-function Field({ label, required, children, className = "" }: any) {
+function Field({ label, required, children, invalid = false, className = "" }: any) {
   return (
-    <div className={`space-y-2 ${className}`}>
-      <Label>
+    <div
+      className={`space-y-2 ${className} ${
+        invalid ? "rounded-lg border border-destructive/50 bg-destructive/5 p-3 -m-1" : ""
+      }`}
+    >
+      <Label className={invalid ? "text-destructive" : ""}>
         {label}
         {required && <span className="text-destructive"> *</span>}
       </Label>
       {children}
+      {invalid && <p className="text-xs text-destructive">Bagian ini belum diisi.</p>}
     </div>
   );
 }
