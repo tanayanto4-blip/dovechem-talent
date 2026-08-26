@@ -302,6 +302,38 @@ function DataForm() {
           Seluruh kolom wajib diisi. Data diri harus dilengkapi terlebih dahulu sebelum Anda dapat
           mengerjakan psikotest. Setiap kolom yang terisi akan otomatis tersimpan.
         </p>
+
+        <div className="mt-4 space-y-2 rounded-lg border bg-muted/40 p-3">
+          <div className="flex items-center justify-between text-sm font-medium">
+            <span>Kelengkapan data diri</span>
+            <span>
+              {filledItems}/{totalItems} ({progress}%)
+            </span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          {missingLabels.length ? (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              <span className="text-xs text-muted-foreground">Belum diisi:</span>
+              {missingLabels.map((l) => (
+                <span
+                  key={l}
+                  className="rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-xs text-destructive"
+                >
+                  {l}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="pt-1 text-xs text-green-600">
+              Semua data diri sudah lengkap — silakan simpan untuk lanjut ke psikotest.
+            </p>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="grid gap-5 md:grid-cols-2 md:gap-4">
