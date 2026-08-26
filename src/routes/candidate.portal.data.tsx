@@ -99,6 +99,18 @@ function DataForm() {
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [attempted, setAttempted] = useState(false);
+  const [camOpen, setCamOpen] = useState(false);
+
+  const missingFields = requiredFields.filter(([k]) => !String(form[k] ?? "").trim());
+  const missingLabels = [
+    ...missingFields.map(([, l]) => l),
+    ...(fotoUrl ? [] : ["Foto formal"]),
+  ];
+  const totalItems = requiredFields.length + 1;
+  const filledItems = totalItems - missingLabels.length;
+  const progress = Math.round((filledItems / totalItems) * 100);
+  const isMissing = (key: string) => attempted && !String(form[key] ?? "").trim();
 
   const initialFormRef = useRef<Record<string, string> | null>(null);
   const lastSavedRef = useRef<Record<string, string> | null>(null);
