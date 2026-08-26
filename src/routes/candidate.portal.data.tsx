@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { PhotoCapture, type CapturedPhoto } from "@/components/photo-capture";
 
 export const Route = createFileRoute("/candidate/portal/data")({
   head: () => ({
@@ -98,6 +99,18 @@ function DataForm() {
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [attempted, setAttempted] = useState(false);
+  const [camOpen, setCamOpen] = useState(false);
+
+  const missingFields = requiredFields.filter(([k]) => !String(form[k] ?? "").trim());
+  const missingLabels = [
+    ...missingFields.map(([, l]) => l),
+    ...(fotoUrl ? [] : ["Foto formal"]),
+  ];
+  const totalItems = requiredFields.length + 1;
+  const filledItems = totalItems - missingLabels.length;
+  const progress = Math.round((filledItems / totalItems) * 100);
+  const isMissing = (key: string) => attempted && !String(form[key] ?? "").trim();
 
   const initialFormRef = useRef<Record<string, string> | null>(null);
   const lastSavedRef = useRef<Record<string, string> | null>(null);
@@ -210,17 +223,39 @@ function DataForm() {
     }
   }
 
+  async function onCapturePhoto(photo: CapturedPhoto) {
+    if (!session) return;
+    setUploadingFoto(true);
+    try {
+      await uploadFile({
+        data: {
+          code: session.code,
+          device: session.device ?? undefined,
+          file_type: "foto",
+          file_name: photo.fileName,
+          mime_type: photo.mimeType,
+          file_size: photo.size,
+          base64: photo.base64,
+        },
+      });
+      toast.success("Foto formal tersimpan otomatis");
+      await qc.invalidateQueries({ queryKey: ["candidate-profile"] });
+      setCamOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Gagal menyimpan foto");
+    } finally {
+      setUploadingFoto(false);
+    }
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const missing = requiredFields.filter(([k]) => !String(form[k] ?? "").trim()).map(([, l]) => l);
-    if (missing.length) {
-      toast.error(`Wajib diisi: ${missing.join(", ")}`);
+    setAttempted(true);
+    if (missingLabels.length) {
+      toast.error(`Belum lengkap: ${missingLabels.join(", ")}`);
       return;
     }
-    if (!fotoUrl) {
-      toast.error("Foto formal wajib diunggah.");
-      return;
-    }
+
 
     setSaving(true);
     try {
@@ -267,17 +302,49 @@ function DataForm() {
           Seluruh kolom wajib diisi. Data diri harus dilengkapi terlebih dahulu sebelum Anda dapat
           mengerjakan psikotest. Setiap kolom yang terisi akan otomatis tersimpan.
         </p>
+
+        <div className="mt-4 space-y-2 rounded-lg border bg-muted/40 p-3">
+          <div className="flex items-center justify-between text-sm font-medium">
+            <span>Kelengkapan data diri</span>
+            <span>
+              {filledItems}/{totalItems} ({progress}%)
+            </span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          {missingLabels.length ? (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              <span className="text-xs text-muted-foreground">Belum diisi:</span>
+              {missingLabels.map((l) => (
+                <span
+                  key={l}
+                  className="rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-xs text-destructive"
+                >
+                  {l}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="pt-1 text-xs text-green-600">
+              Semua data diri sudah lengkap — silakan simpan untuk lanjut ke psikotest.
+            </p>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="grid gap-5 md:grid-cols-2 md:gap-4">
-          <Field label="Nama Lengkap" required>
+          <Field label="Nama Lengkap" required invalid={isMissing("full_name")}>
             <Input
               value={form.full_name ?? ""}
               onChange={(e) => setForm({ ...form, full_name: e.target.value })}
               required
             />
           </Field>
-          <Field label="Jenis Kelamin" required>
+          <Field label="Jenis Kelamin" required invalid={isMissing("gender")}>
             <Select
               value={form.gender ?? ""}
               onValueChange={(v) => setForm({ ...form, gender: v })}
@@ -294,7 +361,7 @@ function DataForm() {
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Nama Sekolah / Universitas" required>
+          <Field label="Nama Sekolah / Universitas" required invalid={isMissing("school_name")}>
             <Input
               value={form.school_name ?? ""}
               onChange={(e) => setForm({ ...form, school_name: e.target.value })}
@@ -302,7 +369,7 @@ function DataForm() {
               required
             />
           </Field>
-          <Field label="Pendidikan" required>
+          <Field label="Pendidikan" required invalid={isMissing("education")}>
             <Select
               value={form.education ?? ""}
               onValueChange={(v) => setForm({ ...form, education: v })}
@@ -319,7 +386,7 @@ function DataForm() {
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Jurusan" required>
+          <Field label="Jurusan" required invalid={isMissing("major")}>
             <Input
               value={form.major ?? ""}
               onChange={(e) => setForm({ ...form, major: e.target.value })}
@@ -327,7 +394,7 @@ function DataForm() {
               required
             />
           </Field>
-          <Field label="Usia" required>
+          <Field label="Usia" required invalid={isMissing("age")}>
             <Select value={form.age ?? ""} onValueChange={(v) => setForm({ ...form, age: v })}>
               <SelectTrigger>
                 <SelectValue placeholder="Pilih usia" />
@@ -342,7 +409,7 @@ function DataForm() {
             </Select>
           </Field>
           {!isMagang && (
-            <Field label="Pernah Bekerja Berapa Lama" required>
+            <Field label="Pernah Bekerja Berapa Lama" required invalid={isMissing("work_experience")}>
               <Select
                 value={form.work_experience ?? ""}
                 onValueChange={(v) => setForm({ ...form, work_experience: v })}
@@ -361,7 +428,7 @@ function DataForm() {
             </Field>
           )}
           {!isMagang && (
-            <Field label="Posisi Jabatan" required>
+            <Field label="Posisi Jabatan" required invalid={isMissing("job_position")}>
               <Select
                 value={form.job_position ?? ""}
                 onValueChange={(v) => setForm({ ...form, job_position: v })}
@@ -380,7 +447,7 @@ function DataForm() {
             </Field>
           )}
 
-          <Field label="Telp / HP" required>
+          <Field label="Telp / HP" required invalid={isMissing("phone")}>
             <Input
               value={form.phone ?? ""}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -388,7 +455,7 @@ function DataForm() {
               required
             />
           </Field>
-          <Field label="Email" required>
+          <Field label="Email" required invalid={isMissing("email")}>
             <Input
               type="email"
               value={form.email ?? ""}
@@ -396,14 +463,14 @@ function DataForm() {
               required
             />
           </Field>
-          <Field label="Posisi Dilamar" required>
+          <Field label="Posisi Dilamar" required invalid={isMissing("position_applied")}>
             <Input
               value={form.position_applied ?? ""}
               onChange={(e) => setForm({ ...form, position_applied: e.target.value })}
               required
             />
           </Field>
-          <Field label="Foto Formal" required className="md:col-span-2">
+          <Field label="Foto Formal" required invalid={attempted && !fotoUrl} className="md:col-span-2">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="flex h-32 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted">
                 {fotoUrl ? (
@@ -426,17 +493,28 @@ function DataForm() {
                   className="hidden"
                   onChange={onPickFoto}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  disabled={uploadingFoto}
-                  onClick={() => document.getElementById("foto-formal")?.click()}
-                >
-                  {uploadingFoto ? "Mengunggah…" : fotoUrl ? "Ganti Foto" : "Unggah Foto Formal"}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="lg"
+                    disabled={uploadingFoto}
+                    onClick={() => setCamOpen(true)}
+                  >
+                    {fotoUrl ? "Foto Ulang dengan Kamera" : "Ambil Foto dengan Kamera"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    disabled={uploadingFoto}
+                    onClick={() => document.getElementById("foto-formal")?.click()}
+                  >
+                    {uploadingFoto ? "Mengunggah…" : "Unggah dari File"}
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Foto formal terbaru, latar polos, wajah terlihat jelas. JPG/PNG/WEBP, maks 5MB.
+                  Selfie langsung dari kamera laptop, bisa pilih warna latar (merah/biru/putih/abu).
+                  Foto otomatis tersimpan setelah diambil. JPG/PNG/WEBP, maks 5MB.
                 </p>
               </div>
             </div>
@@ -458,18 +536,29 @@ function DataForm() {
           </div>
         </form>
       </CardContent>
+      <PhotoCapture
+        open={camOpen}
+        onOpenChange={setCamOpen}
+        onCapture={onCapturePhoto}
+        busy={uploadingFoto}
+      />
     </Card>
   );
 }
 
-function Field({ label, required, children, className = "" }: any) {
+function Field({ label, required, children, invalid = false, className = "" }: any) {
   return (
-    <div className={`space-y-2 ${className}`}>
-      <Label>
+    <div
+      className={`space-y-2 ${className} ${
+        invalid ? "rounded-lg border border-destructive/50 bg-destructive/5 p-3 -m-1" : ""
+      }`}
+    >
+      <Label className={invalid ? "text-destructive" : ""}>
         {label}
         {required && <span className="text-destructive"> *</span>}
       </Label>
       {children}
+      {invalid && <p className="text-xs text-destructive">Bagian ini belum diisi.</p>}
     </div>
   );
 }
