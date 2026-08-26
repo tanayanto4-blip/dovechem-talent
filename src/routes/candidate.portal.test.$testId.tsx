@@ -323,7 +323,9 @@ function TakeTest() {
   useEffect(() => {
     if (!data?.test || !data?.attempt) return;
     const durMin = Number((data.test as any).duration_minutes);
-    const startedAt = new Date(data.attempt.started_at).getTime();
+    const startedAt = data.attempt.started_at
+      ? new Date(data.attempt.started_at).getTime()
+      : NaN;
     if (!Number.isFinite(durMin) || durMin <= 0 || !Number.isFinite(startedAt)) {
       // Durasi belum diatur -> jangan pernah auto-submit karena timer.
       deadlineRef.current = null;

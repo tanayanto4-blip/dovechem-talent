@@ -556,11 +556,25 @@ export const candidateStartTest = createServerFn({ method: "POST" })
     if (!attempt) {
       const ins = await sb
         .from("test_attempts")
-        .insert({ candidate_id: cand.id, test_id: data.test_id })
+        .insert({
+          candidate_id: cand.id,
+          test_id: data.test_id,
+          started_at: new Date().toISOString(),
+        })
         .select()
         .single();
       if (ins.error) throw new Error(ins.error.message);
       attempt = ins.data;
+    } else if (!(attempt as any).started_at && (attempt as any).status !== "finished") {
+      // Test ulang: waktu baru mulai dihitung sekarang, saat kandidat membuka test.
+      const upd = await sb
+        .from("test_attempts")
+        .update({ started_at: new Date().toISOString() })
+        .eq("id", (attempt as any).id)
+        .select()
+        .single();
+      if (upd.error) throw new Error(upd.error.message);
+      attempt = upd.data;
     }
     const [test, questions, answers] = await Promise.all([
       sb.from("tests").select("*").eq("id", data.test_id).single(),

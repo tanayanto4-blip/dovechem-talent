@@ -1,0 +1,1 @@
+ALTER TABLE public.test_attempts ALTER COLUMN started_at DROP NOT NULL; ALTER TABLE public.test_attempts ALTER COLUMN started_at DROP DEFAULT;
