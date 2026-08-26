@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateGetTestIntro, candidateGetProfile } from "@/lib/candidate.functions";
@@ -14,7 +14,9 @@ import { rmibGroupComplete } from "@/lib/rmib-key";
 import { ISHIHARA_PLATES } from "@/lib/ishihara-plates";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Loader2, Lightbulb, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Loader2, Lightbulb, CheckCircle2, Volume2, Timer, RotateCcw } from "lucide-react";
+import { VoiceInstructionPlayer } from "@/components/voice-instruction";
+import { voiceTemplateFor } from "@/lib/voice-templates";
 
 export const Route = createFileRoute("/candidate/portal/latihan/$testId")({
   head: () => ({
@@ -65,6 +67,9 @@ function PracticePage() {
   const q = sample.question;
   const [answer, setAnswer] = useState("");
   const [disc, setDisc] = useState<{ most?: string; least?: string }>({});
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const replayVoiceRef = useRef<(() => void) | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const isPauli = sample.testType === "pauli";
   const isWpt = sample.testType === "wpt";
