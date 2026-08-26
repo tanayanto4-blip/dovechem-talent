@@ -16,6 +16,7 @@ import { rmibGroupComplete } from "@/lib/rmib-key";
 import { TestQuestionCard } from "@/components/test-question-card";
 import { voiceTemplateFor } from "@/lib/voice-templates";
 import { RotateCcw, Volume2 } from "lucide-react";
+import { testDisplayName } from "@/lib/test-display-name";
 import { useCandidateSession } from "@/lib/candidate-session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -244,14 +245,13 @@ function TakeTest() {
   const getIntro = useServerFn(candidateGetTestIntro);
   const getProfile = useServerFn(candidateGetProfile);
 
-  // Label generik: kandidat hanya melihat "TEST 1", "TEST 2", dst.
   const profileQ = useQuery({
     queryKey: ["candidate-profile", session?.code],
     queryFn: () => getProfile({ data: { code: session!.code, device: session!.device } }),
     enabled: !!session,
   });
-  const testIndex = ((profileQ.data?.tests ?? []) as any[]).findIndex((t: any) => t.id === testId);
-  const testLabel = testIndex >= 0 ? `TEST ${testIndex + 1}` : "TEST";
+  const testMeta = ((profileQ.data?.tests ?? []) as any[]).find((t: any) => t.id === testId);
+  const testLabel = testDisplayName(testMeta);
 
   // Instruction gate: the attempt (and timer) only starts after the candidate
   // has listened to / read the spoken instruction and pressed "Mulai Test".

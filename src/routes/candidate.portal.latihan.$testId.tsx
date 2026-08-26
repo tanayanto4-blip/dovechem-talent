@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { candidateGetTestIntro, candidateGetProfile } from "@/lib/candidate.functions";
+import { testDisplayName } from "@/lib/test-display-name";
 import { useCandidateSession } from "@/lib/candidate-session";
 import { practiceSampleFor } from "@/lib/practice-samples";
 import { TestQuestionCard } from "@/components/test-question-card";
@@ -49,8 +50,8 @@ function PracticePage() {
     queryFn: () => getProfile({ data: { code: session!.code, device: session!.device } }),
     enabled: !!session,
   });
-  const testIndex = ((profileQ.data?.tests ?? []) as any[]).findIndex((t: any) => t.id === testId);
-  const testLabel = testIndex >= 0 ? `TEST ${testIndex + 1}` : "TEST";
+  const testMeta = ((profileQ.data?.tests ?? []) as any[]).find((t: any) => t.id === testId);
+  const testLabel = testDisplayName(testMeta);
 
   const intro = useQuery({
     queryKey: ["test-intro", testId, session?.code],
