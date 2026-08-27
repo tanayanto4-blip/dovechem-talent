@@ -1347,9 +1347,9 @@ const AccessInput = z.object({
   reason: z.string().trim().max(300).optional().nullable(),
 });
 
-/** Admin-only: open or close a single test for a candidate. */
+/** Staff (Super Admin & HR): open or close a single test for a candidate. */
 export const setCandidateTestAccess = createServerFn({ method: "POST" })
-  .middleware([requireAdmin])
+  .middleware([requireStaff])
   .inputValidator((d) => AccessInput.parse(d))
   .handler(async ({ context, data }) => {
     const { error } = await context.supabase.from("candidate_test_access").upsert(
@@ -1376,9 +1376,9 @@ export const setCandidateTestAccess = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Admin-only: open or close every active test for a candidate at once. */
+/** Staff (Super Admin & HR): open or close every active test for a candidate. */
 export const setAllCandidateTestAccess = createServerFn({ method: "POST" })
-  .middleware([requireAdmin])
+  .middleware([requireStaff])
   .inputValidator((d) =>
     z
       .object({
@@ -1424,12 +1424,12 @@ const ReopenInput = z.object({
 });
 
 /**
- * Admin-only: ask a candidate to redo a test. The existing attempt is reset to
+ * Staff (Super Admin & HR): ask a candidate to redo a test. The existing attempt is reset to
  * `in_progress` (previous score/result snapshotted into the audit trail) and
  * the test is re-opened for the candidate.
  */
 export const reopenCandidateTest = createServerFn({ method: "POST" })
-  .middleware([requireAdmin])
+  .middleware([requireStaff])
   .inputValidator((d) => ReopenInput.parse(d))
   .handler(async ({ context, data }) => {
     const { data: attempt } = await context.supabase

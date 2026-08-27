@@ -35,7 +35,8 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
     queryFn: () => listFn({ data: { candidate_id: candidateId } }),
   });
 
-  const isAdmin = !!data?.isAdmin;
+  // Super Admin & HR sama-sama boleh membuka/menutup dan mengulang test.
+  const isAdmin = true;
   const attempts = new Map((data?.attempts ?? []).map((a: any) => [a.test_id, a]));
   const access = new Map((data?.access ?? []).map((a: any) => [a.test_id, a]));
 

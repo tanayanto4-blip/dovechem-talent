@@ -87,9 +87,8 @@ function TestAccessPage() {
       <div>
         <h1 className="font-display text-3xl font-bold text-primary">Kontrol Pengerjaan Test</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {isAdmin
-            ? "Super Admin dapat membuka/menutup akses test dan menyetujui permintaan pengulangan dari HR."
-            : "Ajukan permintaan pengulangan test kandidat. Super Admin yang akan membuka aksesnya."}
+          Super Admin dan HR dapat langsung membuka/menutup akses test serta mengulang pengerjaan
+          test kandidat tanpa menunggu persetujuan.
         </p>
       </div>
 
