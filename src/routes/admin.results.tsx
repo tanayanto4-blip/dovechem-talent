@@ -188,7 +188,11 @@ function ResultsBank() {
           .toUpperCase();
         if (ans === "A" || ans === "B") picks[q.question_number] = ans;
       }
-      await exportPapiExcel(picks, meta);
+      await exportPapiExcel(picks, {
+        ...buildCandidateMeta(d.attempt?.candidates ?? {}, { finishedAt: r.finished_at }),
+        ...meta,
+      });
+
       return true;
     }
     if (t === "msdt") {
