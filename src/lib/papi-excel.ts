@@ -115,7 +115,21 @@ export async function exportPapiExcel(picks: Record<number, string>, meta: PapiE
   // otomatis dari sheet 1; rumusnya divalidasi tetap identik.
   const formulaBefore = await clearFormulaCache(zip, sheets, main.path);
 
+  // Sheet "Summary" — hanya sel biodata (H7:H10) yang diisi dari data diri
+  // kandidat; rumus & layout template tetap utuh (divalidasi di bawah).
+  const summary = sheets.find((s) => /summary/i.test(s.name));
+  if (summary) {
+    const sFile = zip.file(summary.path);
+    if (sFile) {
+      zip.file(
+        summary.path,
+        patchSheet(await sFile.async("string"), summaryBiodata(meta), true),
+      );
+    }
+  }
+
   forceRecalc(zip, wbXml);
+
   await assertTemplateIntact(zip, before, main.path, "template PAPI Kostick", formulaBefore);
 
   const blob = await zip.generateAsync({
