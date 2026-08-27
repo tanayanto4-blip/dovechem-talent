@@ -255,7 +255,7 @@ export function LiveMonitor({ isAdmin }: { isAdmin: boolean }) {
                 · {r.elapsed_minutes} menit
                 {r.duration_minutes ? ` / ${r.duration_minutes} menit` : ""}
               </span>
-              {isAdmin && r.overdue && (
+              {r.overdue && (
                 <Button
                   size="sm"
                   variant="outline"

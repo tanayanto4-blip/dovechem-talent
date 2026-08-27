@@ -1615,9 +1615,9 @@ export const listRetakeRequests = createServerFn({ method: "POST" })
     return { requests: rows ?? [], isAdmin: context.isAdmin };
   });
 
-/** Admin-only: approve (reopen the test) or reject a retake request. */
+/** Staff (Super Admin & HR): approve (reopen the test) or reject a retake request. */
 export const decideRetakeRequest = createServerFn({ method: "POST" })
-  .middleware([requireAdmin])
+  .middleware([requireStaff])
   .inputValidator((d) =>
     z
       .object({

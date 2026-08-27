@@ -50,7 +50,6 @@ function TestAccessPage() {
     queryFn: () => reqFn({ data: { status: "pending" } }),
   });
 
-  const isAdmin = !!reqData?.isAdmin;
   const candidates = (candData?.candidates ?? []) as any[];
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -118,23 +117,19 @@ function TestAccessPage() {
                       {r.reason ? ` · Alasan: ${r.reason}` : ""}
                     </div>
                   </div>
-                  {isAdmin ? (
-                    <div className="flex gap-2">
-                      <Button size="sm" disabled={busy === r.id} onClick={() => decide(r.id, true)}>
-                        <Check className="mr-2 h-4 w-4" /> Setujui & Buka
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={busy === r.id}
-                        onClick={() => decide(r.id, false)}
-                      >
-                        <X className="mr-2 h-4 w-4" /> Tolak
-                      </Button>
-                    </div>
-                  ) : (
-                    <Badge variant="outline">Menunggu Super Admin</Badge>
-                  )}
+                  <div className="flex gap-2">
+                    <Button size="sm" disabled={busy === r.id} onClick={() => decide(r.id, true)}>
+                      <Check className="mr-2 h-4 w-4" /> Setujui & Buka
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy === r.id}
+                      onClick={() => decide(r.id, false)}
+                    >
+                      <X className="mr-2 h-4 w-4" /> Tolak
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
