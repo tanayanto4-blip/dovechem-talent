@@ -188,7 +188,13 @@ function ResultsBank() {
           .toUpperCase();
         if (ans === "A" || ans === "B") picks[q.question_number] = ans;
       }
-      await exportPapiExcel(picks, meta);
+      await exportPapiExcel(picks, {
+        ...buildCandidateMeta(d.attempt?.candidates ?? {}, { finishedAt: r.finished_at }),
+        candidateName: meta.candidateName ?? d.attempt?.candidates?.full_name ?? null,
+        candidateCode: meta.candidateCode ?? null,
+      });
+
+
       return true;
     }
     if (t === "msdt") {
@@ -943,11 +949,17 @@ function ResultsBank() {
                                                   picks[q.question_number] = ans;
                                               }
                                               const res = await exportPapiExcel(picks, {
-                                                candidateName: g.name,
-                                                candidateCode: g.code,
-                                                position: g.position,
-                                                finishedAt: r.finished_at,
+                                                ...buildCandidateMeta(
+                                                  d.attempt?.candidates ?? {},
+                                                  { finishedAt: r.finished_at },
+                                                ),
+                                                candidateName:
+                                                  g.name ??
+                                                  d.attempt?.candidates?.full_name ??
+                                                  null,
+                                                candidateCode: g.code ?? null,
                                               });
+
                                               toast.success(
                                                 `Excel PAPI diunduh — ${res.answered}/${res.total} item, skala tertinggi ${res.highest.join(", ") || "-"}`,
                                               );

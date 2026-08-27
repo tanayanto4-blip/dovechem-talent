@@ -51,6 +51,45 @@ const SCALE_COLUMNS: Array<{ col: string; scale: string }> = [
 /** Baris data pertama pada sheet "POLA DASAR" — yang dirujuk sheet Summary. */
 const DATA_ROW = 6;
 
+const MONTHS = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+];
+
+function fmtTanggal(v?: string | null) {
+  const d = v ? new Date(v) : new Date();
+  if (Number.isNaN(d.getTime())) return "-";
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+/** Biodata sheet "Summary": H7 usia, H8 pendidikan, H9 posisi, H10 tanggal. */
+function summaryBiodata(meta: PapiExcelMeta) {
+  const edu = [meta.education, meta.major]
+    .map((v) => (v ?? "").toString().trim())
+    .filter(Boolean)
+    .join(" ");
+  const school = (meta.school ?? "").toString().trim();
+  const pendidikan = edu && school ? `${edu} - ${school}` : edu || school || "-";
+  const usia = meta.age == null || meta.age === "" ? "-" : `${meta.age} Th`;
+  return new Map<string, CellValue>([
+    ["H7", usia],
+    ["H8", pendidikan],
+    ["H9", (meta.position ?? "").toString().trim() || "-"],
+    ["H10", fmtTanggal(meta.finishedAt)],
+  ]);
+}
+
+
 export async function exportPapiExcel(picks: Record<number, string>, meta: PapiExcelMeta = {}) {
   const score = papiScore(picks);
 
@@ -76,7 +115,21 @@ export async function exportPapiExcel(picks: Record<number, string>, meta: PapiE
   // otomatis dari sheet 1; rumusnya divalidasi tetap identik.
   const formulaBefore = await clearFormulaCache(zip, sheets, main.path);
 
+  // Sheet "Summary" — hanya sel biodata (H7:H10) yang diisi dari data diri
+  // kandidat; rumus & layout template tetap utuh (divalidasi di bawah).
+  const summary = sheets.find((s) => /summary/i.test(s.name));
+  if (summary) {
+    const sFile = zip.file(summary.path);
+    if (sFile) {
+      zip.file(
+        summary.path,
+        patchSheet(await sFile.async("string"), summaryBiodata(meta), true),
+      );
+    }
+  }
+
   forceRecalc(zip, wbXml);
+
   await assertTemplateIntact(zip, before, main.path, "template PAPI Kostick", formulaBefore);
 
   const blob = await zip.generateAsync({
