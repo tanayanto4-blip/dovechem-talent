@@ -571,6 +571,7 @@ export const candidateStartTest = createServerFn({ method: "POST" })
         .from("test_attempts")
         .update({ started_at: new Date().toISOString() })
         .eq("id", (attempt as any).id)
+        .eq("candidate_id", cand.id)
         .select()
         .single();
       if (upd.error) throw new Error(upd.error.message);
