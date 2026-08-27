@@ -190,8 +190,10 @@ function ResultsBank() {
       }
       await exportPapiExcel(picks, {
         ...buildCandidateMeta(d.attempt?.candidates ?? {}, { finishedAt: r.finished_at }),
-        ...meta,
+        candidateName: meta.candidateName ?? d.attempt?.candidates?.full_name ?? null,
+        candidateCode: meta.candidateCode ?? null,
       });
+
 
       return true;
     }
