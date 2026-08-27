@@ -7,7 +7,6 @@ import {
   setCandidateTestAccess,
   setAllCandidateTestAccess,
   reopenCandidateTest,
-  requestCandidateRetake,
 } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,6 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
   const setFn = useServerFn(setCandidateTestAccess);
   const setAllFn = useServerFn(setAllCandidateTestAccess);
   const reopenFn = useServerFn(reopenCandidateTest);
-  const requestFn = useServerFn(requestCandidateRetake);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -35,8 +33,6 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
     queryFn: () => listFn({ data: { candidate_id: candidateId } }),
   });
 
-  // Super Admin & HR sama-sama boleh membuka/menutup dan mengulang test.
-  const isAdmin = true;
   const attempts = new Map((data?.attempts ?? []).map((a: any) => [a.test_id, a]));
   const access = new Map((data?.access ?? []).map((a: any) => [a.test_id, a]));
 
@@ -60,8 +56,7 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
           <span className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-primary" /> Kontrol Pengerjaan Test
           </span>
-          {isAdmin ? (
-            <div className="flex gap-2">
+          <div className="flex gap-2">
               <Button
                 size="sm"
                 variant="outline"
@@ -96,32 +91,16 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
               >
                 <Lock className="mr-2 h-4 w-4" /> Tutup semua
               </Button>
-            </div>
-          ) : null}
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {isAdmin ? (
-          <Input
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Alasan (opsional) — mis. 'Ulangi karena koneksi terputus'"
-            maxLength={300}
-          />
-        ) : (
-          <div className="space-y-2">
-            <Input
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Alasan permintaan (opsional) — mis. 'Koneksi kandidat terputus'"
-              maxLength={300}
-            />
-            <p className="text-sm text-muted-foreground">
-              Anda dapat <b>mengajukan permintaan ulang test</b>. Persetujuan buka/tutup akses
-              dilakukan oleh Super Admin.
-            </p>
-          </div>
-        )}
+        <Input
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="Alasan (opsional) — mis. 'Ulangi karena koneksi terputus'"
+          maxLength={300}
+        />
 
         <div className="divide-y rounded-md border">
           {(data?.tests ?? []).map((t: any) => {
@@ -155,7 +134,7 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
                   <label className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Switch
                       checked={!closed}
-                      disabled={!isAdmin || busy === `acc-${t.id}`}
+                      disabled={busy === `acc-${t.id}`}
                       onCheckedChange={(v) =>
                         run(
                           `acc-${t.id}`,
@@ -174,8 +153,7 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
                     />
                     {closed ? "Tutup" : "Buka"}
                   </label>
-                  {isAdmin ? (
-                    <Button
+                  <Button
                       size="sm"
                       variant="secondary"
                       disabled={busy === `re-${t.id}`}
@@ -202,30 +180,7 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
                       }}
                     >
                       <RotateCcw className="mr-2 h-4 w-4" /> Ulangi
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={busy === `req-${t.id}`}
-                      onClick={() =>
-                        run(
-                          `req-${t.id}`,
-                          () =>
-                            requestFn({
-                              data: {
-                                candidate_id: candidateId,
-                                test_id: t.id,
-                                reason: reason || null,
-                              },
-                            }),
-                          `Permintaan ulang ${t.name} dikirim ke Super Admin.`,
-                        )
-                      }
-                    >
-                      <RotateCcw className="mr-2 h-4 w-4" /> Minta Ulangi
-                    </Button>
-                  )}
+                  </Button>
                 </div>
               </div>
             );
