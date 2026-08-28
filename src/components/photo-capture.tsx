@@ -343,7 +343,12 @@ export function PhotoCapture({
         {!shot && (
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground">
-              Warna latar {segReady ? "" : "(memuat…)"}
+              Warna latar{" "}
+              {segReady
+                ? ""
+                : segFailed
+                  ? "(tidak tersedia di perangkat ini — foto tetap bisa diambil)"
+                  : "(menyiapkan…)"}
             </p>
             <div className="flex flex-wrap gap-2">
               {BACKGROUNDS.map((b) => (
