@@ -20,13 +20,13 @@ const BACKGROUNDS: { label: string; value: string | null }[] = [
 ];
 
 // The wasm runtime MUST match the installed @mediapipe/tasks-vision build, so
-// it is served locally: loader scripts from /public, binaries as hosted assets
-// (never imported into the bundle).
+// it is served locally: loader scripts as bundled assets, binaries as hosted
+// assets (kept out of the bundle because of their size).
+import wasmLoaderUrl from "@/assets/mediapipe/vision_wasm_internal.js?url";
+import wasmNoSimdLoaderUrl from "@/assets/mediapipe/vision_wasm_nosimd_internal.js?url";
 import wasmBinaryAsset from "@/assets/vision_wasm_internal.wasm.asset.json";
 import wasmNoSimdBinaryAsset from "@/assets/vision_wasm_nosimd_internal.wasm.asset.json";
 
-const wasmLoaderUrl = "/wasm/vision_wasm_internal.js";
-const wasmNoSimdLoaderUrl = "/wasm/vision_wasm_nosimd_internal.js";
 const wasmBinaryUrl = wasmBinaryAsset.url;
 const wasmNoSimdBinaryUrl = wasmNoSimdBinaryAsset.url;
 
