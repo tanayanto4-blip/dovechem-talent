@@ -50,6 +50,7 @@ export function PhotoCapture({
   const [bg, setBg] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [segReady, setSegReady] = useState(false);
+  const [segFailed, setSegFailed] = useState(false);
   const [shot, setShot] = useState<string | null>(null);
 
   useEffect(() => {
@@ -66,6 +67,7 @@ export function PhotoCapture({
     streamRef.current = null;
     setReady(false);
     setSegReady(false);
+    setSegFailed(false);
   }, []);
 
   useEffect(() => {
@@ -78,6 +80,9 @@ export function PhotoCapture({
 
     (async () => {
       try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          throw new Error("unsupported");
+        }
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 720 }, height: { ideal: 960 }, facingMode: "user" },
           audio: false,
@@ -90,12 +95,26 @@ export function PhotoCapture({
         const v = videoRef.current;
         if (v) {
           v.srcObject = stream;
+          if (v.readyState < 2) {
+            await new Promise<void>((resolve) => {
+              const done = () => resolve();
+              v.addEventListener("loadeddata", done, { once: true });
+              setTimeout(done, 3000);
+            });
+          }
           await v.play().catch(() => {});
         }
         setReady(true);
         loop();
-      } catch {
-        toast.error("Tidak dapat mengakses kamera. Izinkan akses kamera pada browser Anda.");
+      } catch (err: any) {
+        const name = err?.name ?? "";
+        toast.error(
+          name === "NotAllowedError"
+            ? "Akses kamera ditolak. Izinkan kamera pada browser, lalu coba lagi."
+            : name === "NotFoundError"
+              ? "Kamera tidak ditemukan pada perangkat ini."
+              : "Tidak dapat mengakses kamera. Pastikan halaman dibuka lewat HTTPS dan izinkan kamera.",
+        );
         onOpenChange(false);
       }
     })();
@@ -103,23 +122,49 @@ export function PhotoCapture({
     (async () => {
       try {
         const vision = await import("@mediapipe/tasks-vision");
-        const fileset = await vision.FilesetResolver.forVisionTasks(WASM_BASE);
-        const seg = await vision.ImageSegmenter.createFromOptions(fileset, {
-          baseOptions: { modelAssetPath: MODEL_URL, delegate: "GPU" },
-          runningMode: "VIDEO",
-          outputCategoryMask: true,
-          outputConfidenceMasks: true,
-        });
+        // Locally bundled runtime keeps the wasm version in sync with the JS bundle.
+        const fileset = {
+          wasmLoaderPath: new URL(wasmLoaderUrl, window.location.href).href,
+          wasmBinaryPath: new URL(wasmBinaryUrl, window.location.href).href,
+        };
+        const noSimdFileset = {
+          wasmLoaderPath: new URL(wasmNoSimdLoaderUrl, window.location.href).href,
+          wasmBinaryPath: new URL(wasmNoSimdBinaryUrl, window.location.href).href,
+        };
+        const build = async (
+          set: { wasmLoaderPath: string; wasmBinaryPath: string },
+          delegate: "GPU" | "CPU",
+        ) =>
+          vision.ImageSegmenter.createFromOptions(set as any, {
+            baseOptions: { modelAssetPath: MODEL_URL, delegate },
+            runningMode: "VIDEO",
+            outputCategoryMask: true,
+            outputConfidenceMasks: true,
+          });
+
+        let seg: any;
+        try {
+          seg = await build(fileset, "GPU");
+        } catch {
+          try {
+            seg = await build(fileset, "CPU");
+          } catch {
+            seg = await build(noSimdFileset, "CPU");
+          }
+        }
         if (cancelled) {
           seg.close();
           return;
         }
         segRef.current = seg;
         setSegReady(true);
+        setSegFailed(false);
       } catch {
         setSegReady(false);
+        setSegFailed(true);
       }
     })();
+
 
     const sourceCanvas = document.createElement("canvas");
     const personCanvas = document.createElement("canvas");
