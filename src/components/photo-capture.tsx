@@ -20,11 +20,15 @@ const BACKGROUNDS: { label: string; value: string | null }[] = [
 ];
 
 // The wasm runtime MUST match the installed @mediapipe/tasks-vision build, so
-// we bundle it locally instead of pulling a mismatched version from a CDN.
-import wasmLoaderUrl from "@mediapipe/tasks-vision/vision_wasm_internal.js?url";
-import wasmBinaryUrl from "@mediapipe/tasks-vision/vision_wasm_internal.wasm?url";
-import wasmNoSimdLoaderUrl from "@mediapipe/tasks-vision/vision_wasm_nosimd_internal.js?url";
-import wasmNoSimdBinaryUrl from "@mediapipe/tasks-vision/vision_wasm_nosimd_internal.wasm?url";
+// it is served locally: loader scripts from /public, binaries as hosted assets
+// (never imported into the bundle).
+import wasmBinaryAsset from "@/assets/vision_wasm_internal.wasm.asset.json";
+import wasmNoSimdBinaryAsset from "@/assets/vision_wasm_nosimd_internal.wasm.asset.json";
+
+const wasmLoaderUrl = "/wasm/vision_wasm_internal.js";
+const wasmNoSimdLoaderUrl = "/wasm/vision_wasm_nosimd_internal.js";
+const wasmBinaryUrl = wasmBinaryAsset.url;
+const wasmNoSimdBinaryUrl = wasmNoSimdBinaryAsset.url;
 
 const MODEL_URL =
   "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/1/selfie_segmenter.tflite";
