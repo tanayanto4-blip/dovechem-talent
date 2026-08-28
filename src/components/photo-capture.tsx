@@ -19,7 +19,17 @@ const BACKGROUNDS: { label: string; value: string | null }[] = [
   { label: "Abu", value: "#9e9e9e" },
 ];
 
-const WASM_BASE = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
+// The wasm runtime MUST match the installed @mediapipe/tasks-vision build, so
+// it is served locally: loader scripts from /public, binaries as hosted assets
+// (never imported into the bundle).
+import wasmBinaryAsset from "@/assets/vision_wasm_internal.wasm.asset.json";
+import wasmNoSimdBinaryAsset from "@/assets/vision_wasm_nosimd_internal.wasm.asset.json";
+
+const wasmLoaderUrl = "/wasm/vision_wasm_internal.js";
+const wasmNoSimdLoaderUrl = "/wasm/vision_wasm_nosimd_internal.js";
+const wasmBinaryUrl = wasmBinaryAsset.url;
+const wasmNoSimdBinaryUrl = wasmNoSimdBinaryAsset.url;
+
 const MODEL_URL =
   "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/1/selfie_segmenter.tflite";
 
@@ -44,6 +54,7 @@ export function PhotoCapture({
   const [bg, setBg] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [segReady, setSegReady] = useState(false);
+  const [segFailed, setSegFailed] = useState(false);
   const [shot, setShot] = useState<string | null>(null);
 
   useEffect(() => {
@@ -60,6 +71,7 @@ export function PhotoCapture({
     streamRef.current = null;
     setReady(false);
     setSegReady(false);
+    setSegFailed(false);
   }, []);
 
   useEffect(() => {
@@ -72,6 +84,9 @@ export function PhotoCapture({
 
     (async () => {
       try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          throw new Error("unsupported");
+        }
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 720 }, height: { ideal: 960 }, facingMode: "user" },
           audio: false,
@@ -84,12 +99,26 @@ export function PhotoCapture({
         const v = videoRef.current;
         if (v) {
           v.srcObject = stream;
+          if (v.readyState < 2) {
+            await new Promise<void>((resolve) => {
+              const done = () => resolve();
+              v.addEventListener("loadeddata", done, { once: true });
+              setTimeout(done, 3000);
+            });
+          }
           await v.play().catch(() => {});
         }
         setReady(true);
         loop();
-      } catch {
-        toast.error("Tidak dapat mengakses kamera. Izinkan akses kamera pada browser Anda.");
+      } catch (err: any) {
+        const name = err?.name ?? "";
+        toast.error(
+          name === "NotAllowedError"
+            ? "Akses kamera ditolak. Izinkan kamera pada browser, lalu coba lagi."
+            : name === "NotFoundError"
+              ? "Kamera tidak ditemukan pada perangkat ini."
+              : "Tidak dapat mengakses kamera. Pastikan halaman dibuka lewat HTTPS dan izinkan kamera.",
+        );
         onOpenChange(false);
       }
     })();
@@ -97,23 +126,49 @@ export function PhotoCapture({
     (async () => {
       try {
         const vision = await import("@mediapipe/tasks-vision");
-        const fileset = await vision.FilesetResolver.forVisionTasks(WASM_BASE);
-        const seg = await vision.ImageSegmenter.createFromOptions(fileset, {
-          baseOptions: { modelAssetPath: MODEL_URL, delegate: "GPU" },
-          runningMode: "VIDEO",
-          outputCategoryMask: true,
-          outputConfidenceMasks: true,
-        });
+        // Locally bundled runtime keeps the wasm version in sync with the JS bundle.
+        const fileset = {
+          wasmLoaderPath: new URL(wasmLoaderUrl, window.location.href).href,
+          wasmBinaryPath: new URL(wasmBinaryUrl, window.location.href).href,
+        };
+        const noSimdFileset = {
+          wasmLoaderPath: new URL(wasmNoSimdLoaderUrl, window.location.href).href,
+          wasmBinaryPath: new URL(wasmNoSimdBinaryUrl, window.location.href).href,
+        };
+        const build = async (
+          set: { wasmLoaderPath: string; wasmBinaryPath: string },
+          delegate: "GPU" | "CPU",
+        ) =>
+          vision.ImageSegmenter.createFromOptions(set as any, {
+            baseOptions: { modelAssetPath: MODEL_URL, delegate },
+            runningMode: "VIDEO",
+            outputCategoryMask: true,
+            outputConfidenceMasks: true,
+          });
+
+        let seg: any;
+        try {
+          seg = await build(fileset, "GPU");
+        } catch {
+          try {
+            seg = await build(fileset, "CPU");
+          } catch {
+            seg = await build(noSimdFileset, "CPU");
+          }
+        }
         if (cancelled) {
           seg.close();
           return;
         }
         segRef.current = seg;
         setSegReady(true);
+        setSegFailed(false);
       } catch {
         setSegReady(false);
+        setSegFailed(true);
       }
     })();
+
 
     const sourceCanvas = document.createElement("canvas");
     const personCanvas = document.createElement("canvas");
@@ -269,7 +324,14 @@ export function PhotoCapture({
         </DialogHeader>
 
         <div className="relative overflow-hidden rounded-lg border bg-muted">
-          <video ref={videoRef} playsInline muted className="hidden" />
+          {/* Kept rendered (not display:none) so browsers keep decoding frames. */}
+          <video
+            ref={videoRef}
+            playsInline
+            muted
+            autoPlay
+            className="pointer-events-none absolute h-px w-px opacity-0"
+          />
           {shot ? (
             <img src={shot} alt="Pratinjau foto formal" className="w-full" />
           ) : (
@@ -285,7 +347,12 @@ export function PhotoCapture({
         {!shot && (
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground">
-              Warna latar {segReady ? "" : "(memuat…)"}
+              Warna latar{" "}
+              {segReady
+                ? ""
+                : segFailed
+                  ? "(tidak tersedia di perangkat ini — foto tetap bisa diambil)"
+                  : "(menyiapkan…)"}
             </p>
             <div className="flex flex-wrap gap-2">
               {BACKGROUNDS.map((b) => (
