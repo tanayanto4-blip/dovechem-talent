@@ -320,7 +320,14 @@ export function PhotoCapture({
         </DialogHeader>
 
         <div className="relative overflow-hidden rounded-lg border bg-muted">
-          <video ref={videoRef} playsInline muted className="hidden" />
+          {/* Kept rendered (not display:none) so browsers keep decoding frames. */}
+          <video
+            ref={videoRef}
+            playsInline
+            muted
+            autoPlay
+            className="pointer-events-none absolute h-px w-px opacity-0"
+          />
           {shot ? (
             <img src={shot} alt="Pratinjau foto formal" className="w-full" />
           ) : (
