@@ -40,6 +40,7 @@ export const Route = createFileRoute("/admin/candidates/$id")({
 
 function CandidateDetail() {
   const { id } = Route.useParams();
+  const isAdmin = useIsAdmin();
   const detail = useServerFn(getCandidateDetail);
   const signed = useServerFn(getFileSignedUrl);
   const versionsFn = useServerFn(listCandidateFileVersions);
