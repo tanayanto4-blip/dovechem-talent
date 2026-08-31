@@ -282,9 +282,11 @@ function AssistPage() {
                 <Save className="mr-2 h-4 w-4" /> Simpan Jawaban
               </Button>
               <Button disabled={busy} onClick={() => submit(true)}>
-                <CheckCircle2 className="mr-2 h-4 w-4" /> Simpan & Nilai (Selesaikan)
+                <CheckCircle2 className="mr-2 h-4 w-4" />{" "}
+                {attemptStatus === "finished" ? "Simpan & Nilai Ulang" : "Simpan & Nilai (Selesaikan)"}
               </Button>
             </div>
+
           </CardContent>
         </Card>
       ) : null}
