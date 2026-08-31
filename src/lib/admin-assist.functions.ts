@@ -69,7 +69,7 @@ export const adminUpdateCandidateBiodata = createServerFn({ method: "POST" })
     }
     if (Object.keys(update).length === 0) return { ok: true, saved: [] };
 
-    const { error } = await sb.from("candidates").update(update).eq("id", id);
+    const { error } = await sb.from("candidates").update(update as any).eq("id", id);
     if (error) throw new Error(error.message);
     await logAudit(context, "candidate.biodata_edit", "candidate", id, {
       fields: Object.keys(update),
