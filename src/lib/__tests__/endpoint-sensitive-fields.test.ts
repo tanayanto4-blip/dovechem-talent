@@ -59,6 +59,9 @@ const SELECT_STAR_WHITELIST: Record<string, readonly string[]> = {
     "getTestQuestionsForReview",
     "getTestWithQuestions",
     "getAttemptDetail",
+    // pendampingan pengisian oleh staff (requireStaff): skoring + tinjau soal
+    "adminAssistTest",
+    "adminSaveAssistedAnswers",
   ],
 };
 

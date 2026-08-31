@@ -39,6 +39,8 @@ import { dirname, resolve } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const src = readFileSync(resolve(here, "../candidate.functions.ts"), "utf8");
+// Mesin skoring dipakai bersama oleh submit kandidat & pendampingan staff.
+const scoringSrc = readFileSync(resolve(here, "../test-scoring.ts"), "utf8");
 
 function extractHandler(name: string): string {
   const startRe = new RegExp(`export const ${name}\\s*=\\s*createServerFn`);
@@ -99,21 +101,21 @@ describe("candidateSubmitTest — static guarantees", () => {
 
   it("MCQ and Kraepelin branches compare answers against correct_answer", () => {
     // Two independent comparisons (one per branch)
-    const matches = body.match(/map\.get\(q\.id\)\s*===\s*q\.correct_answer/g) ?? [];
+    const matches = scoringSrc.match(/map\.get\(q\.id\)\s*===\s*q\.correct_answer/g) ?? [];
     expect(matches.length).toBeGreaterThanOrEqual(2);
-    expect(body).toMatch(/Math\.round\(\(correct\s*\/\s*total\)\s*\*\s*100\)/);
+    expect(scoringSrc).toMatch(/Math\.round\(\(correct\s*\/\s*total\)\s*\*\s*100\)/);
   });
 
   it("DISC branch tallies most/least across D/I/S/C and derives dominant + score", () => {
-    expect(body).toMatch(
+    expect(scoringSrc).toMatch(
       /most:\s*Record<string,\s*number>\s*=\s*\{\s*D:\s*0,\s*I:\s*0,\s*S:\s*0,\s*C:\s*0/,
     );
-    expect(body).toMatch(
+    expect(scoringSrc).toMatch(
       /least:\s*Record<string,\s*number>\s*=\s*\{\s*D:\s*0,\s*I:\s*0,\s*S:\s*0,\s*C:\s*0/,
     );
-    expect(body).toMatch(/change:\s*Record<string,\s*number>/);
-    expect(body).toMatch(/const dominant\s*=\s*\(Object\.entries\(most\)\.sort/);
-    expect(body).toMatch(/Math\.round\(\(most\[dominant\]\s*\/\s*totalGroups\)\s*\*\s*100\)/);
+    expect(scoringSrc).toMatch(/change:\s*Record<string,\s*number>/);
+    expect(scoringSrc).toMatch(/const dominant\s*=\s*\(Object\.entries\(most\)\.sort/);
+    expect(scoringSrc).toMatch(/Math\.round\(\(most\[dominant\]\s*\/\s*totalGroups\)\s*\*\s*100\)/);
   });
 });
 
