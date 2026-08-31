@@ -75,6 +75,8 @@ async function resolveActiveCode(sb: any, code: string, device?: string) {
   if (!row) throw new Error("Kode akses tidak ditemukan.");
   if (!row.active) throw new Error("Kode akses sudah dinonaktifkan.");
   if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) {
+    // Otomatis nonaktifkan kode yang kedaluwarsa begitu terdeteksi.
+    await sb.from("candidate_codes").update({ active: false }).eq("id", row.id);
     throw new Error("Kode akses sudah melewati masa berlaku.");
   }
   if (row.active_device_token && device && row.active_device_token !== device) {
@@ -293,6 +295,11 @@ export const candidateSessionStatus = createServerFn({ method: "POST" })
     if (!row.active)
       return { status: "invalid" as const, message: "Kode akses sudah dinonaktifkan." };
     if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) {
+      // Otomatis nonaktifkan kode yang kedaluwarsa begitu terdeteksi.
+      await sb
+        .from("candidate_codes")
+        .update({ active: false })
+        .eq("code", data.code.toUpperCase());
       return { status: "invalid" as const, message: "Kode akses sudah melewati masa berlaku." };
     }
     // Token berbeda (atau sesi lama tanpa token) = kode dipakai perangkat lain.
