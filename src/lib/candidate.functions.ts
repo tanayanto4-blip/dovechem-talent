@@ -3,6 +3,7 @@ import { z } from "zod";
 import { papiScore } from "@/lib/papi-key";
 import { msdtScore } from "@/lib/msdt-key";
 import { rmibScore } from "@/lib/rmib-key";
+import { scoreTest } from "@/lib/test-scoring";
 import { DEVICE_CONFLICT_MESSAGE } from "@/lib/candidate-session";
 import {
   audiencesFor,
