@@ -257,9 +257,9 @@ const SaveInput = z.object({
 });
 
 /**
- * Simpan jawaban hasil pendampingan staff. Jika `finalize` true, attempt
- * ditutup dan langsung dinilai ulang memakai mesin skoring yang sama dengan
- * submit kandidat.
+ * Simpan jawaban hasil pendampingan staff. Berlaku juga untuk attempt yang
+ * SUDAH selesai: jawaban boleh diperbaiki/dikosongkan, dan skor otomatis
+ * dihitung ulang memakai mesin skoring yang sama dengan submit kandidat.
  */
 export const adminSaveAssistedAnswers = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
@@ -288,8 +288,13 @@ export const adminSaveAssistedAnswers = createServerFn({ method: "POST" })
       attempt = ins.data;
     }
     const attemptId = (attempt as any).id as string;
+    const wasFinished = (attempt as any).status === "finished";
 
     const filled = data.answers.filter((a) => (a.answer ?? "").trim() !== "");
+    const cleared = data.answers
+      .filter((a) => (a.answer ?? "").trim() === "")
+      .map((a) => a.question_id);
+
     if (filled.length > 0) {
       const { error } = await sb
         .from("test_answers")
@@ -299,9 +304,18 @@ export const adminSaveAssistedAnswers = createServerFn({ method: "POST" })
         );
       if (error) throw new Error(error.message);
     }
+    if (cleared.length > 0) {
+      await sb
+        .from("test_answers")
+        .delete()
+        .eq("attempt_id", attemptId)
+        .in("question_id", cleared);
+    }
 
+    // Attempt yang sudah selesai selalu dinilai ulang agar hasil konsisten.
+    const shouldScore = data.finalize || wasFinished;
     let score: number | null = (attempt as any).score ?? null;
-    if (data.finalize) {
+    if (shouldScore) {
       const [{ data: test }, { data: questions }, { data: saved }] = await Promise.all([
         sb.from("tests").select("*").eq("id", data.test_id).single(),
         sb.from("test_questions").select("*").eq("test_id", data.test_id),
@@ -317,7 +331,7 @@ export const adminSaveAssistedAnswers = createServerFn({ method: "POST" })
         .from("test_attempts")
         .update({
           status: "finished",
-          finished_at: new Date().toISOString(),
+          finished_at: (attempt as any).finished_at ?? new Date().toISOString(),
           score: scored.score,
           result: scored.result,
         })
@@ -329,7 +343,70 @@ export const adminSaveAssistedAnswers = createServerFn({ method: "POST" })
       candidate_id: data.candidate_id,
       test_id: data.test_id,
       saved: filled.length,
+      cleared: cleared.length,
       finalized: !!data.finalize,
+      rescored_finished: wasFinished,
     });
-    return { ok: true, attempt_id: attemptId, saved: filled.length, score };
+    return {
+      ok: true,
+      attempt_id: attemptId,
+      saved: filled.length,
+      cleared: cleared.length,
+      score,
+      rescored: shouldScore,
+    };
   });
+
+/**
+ * Buka kembali attempt yang sudah selesai supaya kandidat / Super Admin bisa
+ * melengkapi soal yang terlewat. Skor lama dipertahankan sampai dinilai ulang.
+ */
+export const adminReopenAttempt = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .inputValidator((d) =>
+    z
+      .object({
+        candidate_id: z.string().uuid(),
+        test_id: z.string().uuid(),
+        reason: z.string().trim().max(300).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const sb = await admin();
+    const { data: attempt } = await sb
+      .from("test_attempts")
+      .select("id, status")
+      .eq("candidate_id", data.candidate_id)
+      .eq("test_id", data.test_id)
+      .maybeSingle();
+    if (!attempt) throw new Error("Attempt belum ada untuk test ini.");
+
+    const upd = await sb
+      .from("test_attempts")
+      .update({ status: "in_progress", finished_at: null })
+      .eq("id", (attempt as any).id);
+    if (upd.error) throw new Error(upd.error.message);
+
+    await sb
+      .from("candidate_test_access")
+      .upsert(
+        {
+          candidate_id: data.candidate_id,
+          test_id: data.test_id,
+          is_open: true,
+          reason: data.reason ?? "Dibuka kembali oleh Super Admin",
+          last_reopened_at: new Date().toISOString(),
+          updated_by: context.userId,
+        },
+        { onConflict: "candidate_id,test_id" },
+      );
+
+    await logAudit(context, "attempt.assist_reopen", "test_attempt", (attempt as any).id, {
+      candidate_id: data.candidate_id,
+      test_id: data.test_id,
+      reason: data.reason ?? null,
+    });
+    return { ok: true, attempt_id: (attempt as any).id };
+  });
+
