@@ -9,6 +9,7 @@ import {
 import { candidateTrackOf, jobLevelLabel } from "@/lib/candidate-type";
 import { TestAccessControl } from "@/components/test-access-control";
 import { CandidateEditPanel } from "@/components/candidate-edit-panel";
+import { useIsAdmin } from "@/components/publish-toggle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

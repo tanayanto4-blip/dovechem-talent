@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireStaff } from "@/lib/staff-middleware";
+import { requireAdmin } from "@/lib/staff-middleware";
 import { scoreTest } from "@/lib/test-scoring";
 import { audienceMatches, candidateLevelOf, jobLevelOfPosition } from "@/lib/candidate-type";
 
@@ -54,7 +54,7 @@ const BiodataInput = z.object({
 
 /** Perbaiki / lengkapi data diri kandidat dari dashboard staff. */
 export const adminUpdateCandidateBiodata = createServerFn({ method: "POST" })
-  .middleware([requireStaff])
+  .middleware([requireAdmin])
   .inputValidator((d) => BiodataInput.parse(d))
   .handler(async ({ context, data }) => {
     const sb = await admin();
@@ -101,7 +101,7 @@ const UploadInput = z.object({
 
 /** Unggah berkas kandidat yang kurang atas nama staff (tercatat di riwayat versi). */
 export const adminUploadCandidateFile = createServerFn({ method: "POST" })
-  .middleware([requireStaff])
+  .middleware([requireAdmin])
   .inputValidator((d) => UploadInput.parse(d))
   .handler(async ({ context, data }) => {
     const mime = data.mime_type.toLowerCase().trim();
@@ -178,7 +178,7 @@ export const adminUploadCandidateFile = createServerFn({ method: "POST" })
  * plus status attempt masing-masing test.
  */
 export const adminAssistOverview = createServerFn({ method: "POST" })
-  .middleware([requireStaff])
+  .middleware([requireAdmin])
   .inputValidator((d) => z.object({ candidate_id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
     const sb = await admin();
@@ -212,7 +212,7 @@ export const adminAssistOverview = createServerFn({ method: "POST" })
 
 /** Soal + jawaban tersimpan satu test untuk layar pendampingan. */
 export const adminAssistTest = createServerFn({ method: "POST" })
-  .middleware([requireStaff])
+  .middleware([requireAdmin])
   .inputValidator((d) =>
     z.object({ candidate_id: z.string().uuid(), test_id: z.string().uuid() }).parse(d),
   )
@@ -262,7 +262,7 @@ const SaveInput = z.object({
  * submit kandidat.
  */
 export const adminSaveAssistedAnswers = createServerFn({ method: "POST" })
-  .middleware([requireStaff])
+  .middleware([requireAdmin])
   .inputValidator((d) => SaveInput.parse(d))
   .handler(async ({ context, data }) => {
     const sb = await admin();
