@@ -183,20 +183,57 @@ function AssistPage() {
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="flex flex-wrap items-center justify-between gap-3">
-              <span>{testDisplayName(testData?.test as any)}</span>
+              <span className="flex flex-wrap items-center gap-2">
+                {testDisplayName(testData?.test as any)}
+                {attemptStatus === "finished" ? (
+                  <Badge className="bg-success">Sudah dikerjakan</Badge>
+                ) : attemptStatus ? (
+                  <Badge variant="secondary">Sedang berjalan</Badge>
+                ) : null}
+              </span>
               <span className="text-sm font-normal text-muted-foreground">
                 {filledCount}/{questions.length} soal terisi
               </span>
             </CardTitle>
+            {attemptStatus === "finished" ? (
+              <p className="text-xs text-muted-foreground">
+                Test ini sudah selesai. Setiap perubahan jawaban akan otomatis dinilai ulang.
+                Kosongkan kolom jawaban untuk menghapus jawaban yang salah.
+              </p>
+            ) : null}
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={onlyEmpty ? "default" : "outline"}
+                onClick={() => setOnlyEmpty((v) => !v)}
+              >
+                {onlyEmpty ? "Tampilkan Semua Soal" : "Tampilkan Soal Kosong Saja"}
+              </Button>
+              {attemptStatus === "finished" ? (
+                <Button type="button" size="sm" variant="outline" disabled={busy} onClick={reopen}>
+                  <Unlock className="mr-2 h-4 w-4" /> Buka Kembali untuk Kandidat
+                </Button>
+              ) : null}
+              <Button type="button" size="sm" variant="ghost" disabled={busy} onClick={refresh}>
+                <RefreshCw className="mr-2 h-4 w-4" /> Muat Ulang
+              </Button>
+            </div>
+
             {questions.length === 0 ? (
               <div className="py-6 text-center text-sm text-muted-foreground">
                 Belum ada soal aktif pada test ini.
               </div>
+            ) : visibleQuestions.length === 0 ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                Semua soal sudah terisi.
+              </div>
             ) : (
               <div className="space-y-3">
-                {questions.map((q) => {
+                {visibleQuestions.map((q) => {
+
                   const opts = Array.isArray(q.options) ? q.options : null;
                   return (
                     <div key={q.id} className="rounded-md border p-3">
