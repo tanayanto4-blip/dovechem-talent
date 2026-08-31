@@ -214,6 +214,13 @@ export const listCandidateCodes = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const limit = data.limit ?? 500;
     const offset = data.offset ?? 0;
+    // Nonaktifkan otomatis kode yang masa berlakunya sudah habis.
+    await context.supabase
+      .from("candidate_codes")
+      .update({ active: false })
+      .eq("active", true)
+      .not("expires_at", "is", null)
+      .lt("expires_at", new Date().toISOString());
     const {
       data: rows,
       error,
