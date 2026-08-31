@@ -16,6 +16,7 @@ import { toast } from "sonner";
  */
 const CANDIDATE_QUERY_KEYS = [
   ["candidates"],
+  ["codes"],
   ["biodata-bank-candidates"],
   ["admin-stats"],
   ["admin-all-attempts"],
