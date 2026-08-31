@@ -131,7 +131,8 @@ export async function exportProfilingExcel(input: ProfilingInput) {
   let discType: string | null = null;
   if (input.discAnswers?.length) {
     const d = computeDiscScores(input.discAnswers);
-    if (d.valid) discType = d.type;
+    // SUMMARY PERSONALITY BACKGROUND memakai Line 1 (MOST) pada sheet Result
+    if (d.valid) discType = d.typeMost || d.type;
   }
 
   // Pauli -> jumlah jawaban benar untuk status qualified/unqualified.

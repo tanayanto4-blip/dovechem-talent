@@ -72,5 +72,24 @@ export function computeDiscScores(answers: DiscAnswerRow[]) {
   }
   const type = top.join("-");
 
-  return { line1, line2, line3, filled, type, letters: top, valid: filled > 0 };
+  // Tipe berdasarkan Line 1 (MOST) — dipakai SUMMARY PERSONALITY BACKGROUND
+  const max1 = Math.max(...DISC_LETTERS.map((l) => line1[l]));
+  let top1 = DISC_LETTERS.filter((l) => line1[l] === max1) as string[];
+  if (top1.length > 2) {
+    top1 = [...top1].sort((a, b) => line3[b] - line3[a]).slice(0, 2);
+    top1 = DISC_LETTERS.filter((l) => top1.includes(l));
+  }
+  const typeMost = top1.join("-");
+
+  return {
+    line1,
+    line2,
+    line3,
+    filled,
+    type,
+    letters: top,
+    typeMost,
+    lettersMost: top1,
+    valid: filled > 0,
+  };
 }
