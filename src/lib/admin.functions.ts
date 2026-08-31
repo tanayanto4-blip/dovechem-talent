@@ -220,7 +220,7 @@ export const listCandidateCodes = createServerFn({ method: "POST" })
       count,
     } = await context.supabase
       .from("candidate_codes")
-      .select("*, candidates(id, data_completed, updated_at)", { count: "exact" })
+      .select("*, candidates(id, full_name, data_completed, updated_at)", { count: "exact" })
       .order("created_at", { ascending: false })
       .order("code", { ascending: true })
       .order("id", { ascending: true })
