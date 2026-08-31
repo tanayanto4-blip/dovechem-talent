@@ -6,14 +6,16 @@ import {
   adminAssistOverview,
   adminAssistTest,
   adminSaveAssistedAnswers,
+  adminReopenAttempt,
 } from "@/lib/admin-assist.functions";
 import { testDisplayName } from "@/lib/test-display-name";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Save, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Save, CheckCircle2, Unlock, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/admin/pendampingan/$candidateId")({
   head: () => ({
@@ -44,10 +46,12 @@ function AssistPage() {
   const overviewFn = useServerFn(adminAssistOverview);
   const testFn = useServerFn(adminAssistTest);
   const saveFn = useServerFn(adminSaveAssistedAnswers);
+  const reopenFn = useServerFn(adminReopenAttempt);
 
   const [testId, setTestId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [onlyEmpty, setOnlyEmpty] = useState(false);
 
   const { data: overview } = useQuery({
     queryKey: ["assist-overview", candidateId],
@@ -68,26 +72,43 @@ function AssistPage() {
 
   const value = (qid: string) => draft[qid] ?? savedAnswers[qid] ?? "";
 
+  async function refresh() {
+    await qc.invalidateQueries({ queryKey: ["assist-test", candidateId, testId] });
+    await qc.invalidateQueries({ queryKey: ["assist-overview", candidateId] });
+    await qc.invalidateQueries({ queryKey: ["candidate", candidateId] });
+  }
+
   async function submit(finalize: boolean) {
     if (!testId) return;
     setBusy(true);
     try {
-      const questions = (testData?.questions ?? []) as any[];
-      const answers = questions
-        .map((q) => ({ question_id: q.id, answer: value(q.id) }))
-        .filter((a) => a.answer.trim() !== "");
+      const qs = (testData?.questions ?? []) as any[];
+      // Kirim semua soal: yang kosong akan menghapus jawaban lama (koreksi).
+      const answers = qs.map((q) => ({ question_id: q.id, answer: value(q.id) }));
       const res = await saveFn({
         data: { candidate_id: candidateId, test_id: testId, answers, finalize },
       });
       toast.success(
-        finalize
-          ? `Jawaban disimpan & dinilai (${res.saved} soal terisi).`
+        res.rescored
+          ? `Jawaban disimpan & dinilai ulang (${res.saved} soal terisi, skor ${res.score ?? 0}).`
           : `Jawaban tersimpan (${res.saved} soal terisi).`,
       );
       setDraft({});
-      await qc.invalidateQueries({ queryKey: ["assist-test", candidateId, testId] });
-      await qc.invalidateQueries({ queryKey: ["assist-overview", candidateId] });
-      await qc.invalidateQueries({ queryKey: ["candidate", candidateId] });
+      await refresh();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function reopen() {
+    if (!testId) return;
+    setBusy(true);
+    try {
+      await reopenFn({ data: { candidate_id: candidateId, test_id: testId } });
+      toast.success("Test dibuka kembali. Kandidat bisa melanjutkan pengerjaan.");
+      await refresh();
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -99,6 +120,11 @@ function AssistPage() {
   const tests = (overview?.tests ?? []) as any[];
   const questions = (testData?.questions ?? []) as any[];
   const filledCount = questions.filter((q) => value(q.id).trim() !== "").length;
+  const attemptStatus = (testData?.attempt as any)?.status ?? null;
+  const visibleQuestions = onlyEmpty
+    ? questions.filter((q) => value(q.id).trim() === "")
+    : questions;
+
 
   return (
     <div className="space-y-6">
@@ -157,20 +183,57 @@ function AssistPage() {
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="flex flex-wrap items-center justify-between gap-3">
-              <span>{testDisplayName(testData?.test as any)}</span>
+              <span className="flex flex-wrap items-center gap-2">
+                {testDisplayName(testData?.test as any)}
+                {attemptStatus === "finished" ? (
+                  <Badge className="bg-success">Sudah dikerjakan</Badge>
+                ) : attemptStatus ? (
+                  <Badge variant="secondary">Sedang berjalan</Badge>
+                ) : null}
+              </span>
               <span className="text-sm font-normal text-muted-foreground">
                 {filledCount}/{questions.length} soal terisi
               </span>
             </CardTitle>
+            {attemptStatus === "finished" ? (
+              <p className="text-xs text-muted-foreground">
+                Test ini sudah selesai. Setiap perubahan jawaban akan otomatis dinilai ulang.
+                Kosongkan kolom jawaban untuk menghapus jawaban yang salah.
+              </p>
+            ) : null}
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={onlyEmpty ? "default" : "outline"}
+                onClick={() => setOnlyEmpty((v) => !v)}
+              >
+                {onlyEmpty ? "Tampilkan Semua Soal" : "Tampilkan Soal Kosong Saja"}
+              </Button>
+              {attemptStatus === "finished" ? (
+                <Button type="button" size="sm" variant="outline" disabled={busy} onClick={reopen}>
+                  <Unlock className="mr-2 h-4 w-4" /> Buka Kembali untuk Kandidat
+                </Button>
+              ) : null}
+              <Button type="button" size="sm" variant="ghost" disabled={busy} onClick={refresh}>
+                <RefreshCw className="mr-2 h-4 w-4" /> Muat Ulang
+              </Button>
+            </div>
+
             {questions.length === 0 ? (
               <div className="py-6 text-center text-sm text-muted-foreground">
                 Belum ada soal aktif pada test ini.
               </div>
+            ) : visibleQuestions.length === 0 ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                Semua soal sudah terisi.
+              </div>
             ) : (
               <div className="space-y-3">
-                {questions.map((q) => {
+                {visibleQuestions.map((q) => {
+
                   const opts = Array.isArray(q.options) ? q.options : null;
                   return (
                     <div key={q.id} className="rounded-md border p-3">
@@ -219,9 +282,11 @@ function AssistPage() {
                 <Save className="mr-2 h-4 w-4" /> Simpan Jawaban
               </Button>
               <Button disabled={busy} onClick={() => submit(true)}>
-                <CheckCircle2 className="mr-2 h-4 w-4" /> Simpan & Nilai (Selesaikan)
+                <CheckCircle2 className="mr-2 h-4 w-4" />{" "}
+                {attemptStatus === "finished" ? "Simpan & Nilai Ulang" : "Simpan & Nilai (Selesaikan)"}
               </Button>
             </div>
+
           </CardContent>
         </Card>
       ) : null}
