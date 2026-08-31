@@ -46,10 +46,12 @@ function AssistPage() {
   const overviewFn = useServerFn(adminAssistOverview);
   const testFn = useServerFn(adminAssistTest);
   const saveFn = useServerFn(adminSaveAssistedAnswers);
+  const reopenFn = useServerFn(adminReopenAttempt);
 
   const [testId, setTestId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [onlyEmpty, setOnlyEmpty] = useState(false);
 
   const { data: overview } = useQuery({
     queryKey: ["assist-overview", candidateId],
@@ -70,26 +72,43 @@ function AssistPage() {
 
   const value = (qid: string) => draft[qid] ?? savedAnswers[qid] ?? "";
 
+  async function refresh() {
+    await qc.invalidateQueries({ queryKey: ["assist-test", candidateId, testId] });
+    await qc.invalidateQueries({ queryKey: ["assist-overview", candidateId] });
+    await qc.invalidateQueries({ queryKey: ["candidate", candidateId] });
+  }
+
   async function submit(finalize: boolean) {
     if (!testId) return;
     setBusy(true);
     try {
-      const questions = (testData?.questions ?? []) as any[];
-      const answers = questions
-        .map((q) => ({ question_id: q.id, answer: value(q.id) }))
-        .filter((a) => a.answer.trim() !== "");
+      const qs = (testData?.questions ?? []) as any[];
+      // Kirim semua soal: yang kosong akan menghapus jawaban lama (koreksi).
+      const answers = qs.map((q) => ({ question_id: q.id, answer: value(q.id) }));
       const res = await saveFn({
         data: { candidate_id: candidateId, test_id: testId, answers, finalize },
       });
       toast.success(
-        finalize
-          ? `Jawaban disimpan & dinilai (${res.saved} soal terisi).`
+        res.rescored
+          ? `Jawaban disimpan & dinilai ulang (${res.saved} soal terisi, skor ${res.score ?? 0}).`
           : `Jawaban tersimpan (${res.saved} soal terisi).`,
       );
       setDraft({});
-      await qc.invalidateQueries({ queryKey: ["assist-test", candidateId, testId] });
-      await qc.invalidateQueries({ queryKey: ["assist-overview", candidateId] });
-      await qc.invalidateQueries({ queryKey: ["candidate", candidateId] });
+      await refresh();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function reopen() {
+    if (!testId) return;
+    setBusy(true);
+    try {
+      await reopenFn({ data: { candidate_id: candidateId, test_id: testId } });
+      toast.success("Test dibuka kembali. Kandidat bisa melanjutkan pengerjaan.");
+      await refresh();
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -101,6 +120,11 @@ function AssistPage() {
   const tests = (overview?.tests ?? []) as any[];
   const questions = (testData?.questions ?? []) as any[];
   const filledCount = questions.filter((q) => value(q.id).trim() !== "").length;
+  const attemptStatus = (testData?.attempt as any)?.status ?? null;
+  const visibleQuestions = onlyEmpty
+    ? questions.filter((q) => value(q.id).trim() === "")
+    : questions;
+
 
   return (
     <div className="space-y-6">
