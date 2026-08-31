@@ -32,6 +32,7 @@ import { Route as CandidatePortalTestsRouteImport } from './routes/candidate.por
 import { Route as CandidatePortalDataRouteImport } from './routes/candidate.portal.data'
 import { Route as ApiPublicCandidateSessionStreamRouteImport } from './routes/api/public/candidate-session-stream'
 import { Route as AdminTestsIdRouteImport } from './routes/admin.tests.$id'
+import { Route as AdminPendampinganCandidateIdRouteImport } from './routes/admin.pendampingan.$candidateId'
 import { Route as AdminMbtiPreviewRouteImport } from './routes/admin.mbti.preview'
 import { Route as AdminCandidatesIdRouteImport } from './routes/admin.candidates.$id'
 import { Route as AdminAttemptsIdRouteImport } from './routes/admin.attempts.$id'
@@ -154,6 +155,12 @@ const AdminTestsIdRoute = AdminTestsIdRouteImport.update({
   path: '/tests/$id',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPendampinganCandidateIdRoute =
+  AdminPendampinganCandidateIdRouteImport.update({
+    id: '/pendampingan/$candidateId',
+    path: '/pendampingan/$candidateId',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminMbtiPreviewRoute = AdminMbtiPreviewRouteImport.update({
   id: '/mbti/preview',
   path: '/mbti/preview',
@@ -201,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/admin/attempts/$id': typeof AdminAttemptsIdRoute
   '/admin/candidates/$id': typeof AdminCandidatesIdRoute
   '/admin/mbti/preview': typeof AdminMbtiPreviewRoute
+  '/admin/pendampingan/$candidateId': typeof AdminPendampinganCandidateIdRoute
   '/admin/tests/$id': typeof AdminTestsIdRoute
   '/api/public/candidate-session-stream': typeof ApiPublicCandidateSessionStreamRoute
   '/candidate/portal/data': typeof CandidatePortalDataRoute
@@ -230,6 +238,7 @@ export interface FileRoutesByTo {
   '/admin/attempts/$id': typeof AdminAttemptsIdRoute
   '/admin/candidates/$id': typeof AdminCandidatesIdRoute
   '/admin/mbti/preview': typeof AdminMbtiPreviewRoute
+  '/admin/pendampingan/$candidateId': typeof AdminPendampinganCandidateIdRoute
   '/admin/tests/$id': typeof AdminTestsIdRoute
   '/api/public/candidate-session-stream': typeof ApiPublicCandidateSessionStreamRoute
   '/candidate/portal/data': typeof CandidatePortalDataRoute
@@ -261,6 +270,7 @@ export interface FileRoutesById {
   '/admin/attempts/$id': typeof AdminAttemptsIdRoute
   '/admin/candidates/$id': typeof AdminCandidatesIdRoute
   '/admin/mbti/preview': typeof AdminMbtiPreviewRoute
+  '/admin/pendampingan/$candidateId': typeof AdminPendampinganCandidateIdRoute
   '/admin/tests/$id': typeof AdminTestsIdRoute
   '/api/public/candidate-session-stream': typeof ApiPublicCandidateSessionStreamRoute
   '/candidate/portal/data': typeof CandidatePortalDataRoute
@@ -293,6 +303,7 @@ export interface FileRouteTypes {
     | '/admin/attempts/$id'
     | '/admin/candidates/$id'
     | '/admin/mbti/preview'
+    | '/admin/pendampingan/$candidateId'
     | '/admin/tests/$id'
     | '/api/public/candidate-session-stream'
     | '/candidate/portal/data'
@@ -322,6 +333,7 @@ export interface FileRouteTypes {
     | '/admin/attempts/$id'
     | '/admin/candidates/$id'
     | '/admin/mbti/preview'
+    | '/admin/pendampingan/$candidateId'
     | '/admin/tests/$id'
     | '/api/public/candidate-session-stream'
     | '/candidate/portal/data'
@@ -352,6 +364,7 @@ export interface FileRouteTypes {
     | '/admin/attempts/$id'
     | '/admin/candidates/$id'
     | '/admin/mbti/preview'
+    | '/admin/pendampingan/$candidateId'
     | '/admin/tests/$id'
     | '/api/public/candidate-session-stream'
     | '/candidate/portal/data'
@@ -537,6 +550,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTestsIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/pendampingan/$candidateId': {
+      id: '/admin/pendampingan/$candidateId'
+      path: '/pendampingan/$candidateId'
+      fullPath: '/admin/pendampingan/$candidateId'
+      preLoaderRoute: typeof AdminPendampinganCandidateIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/mbti/preview': {
       id: '/admin/mbti/preview'
       path: '/mbti/preview'
@@ -588,6 +608,7 @@ interface AdminRouteChildren {
   AdminAttemptsIdRoute: typeof AdminAttemptsIdRoute
   AdminCandidatesIdRoute: typeof AdminCandidatesIdRoute
   AdminMbtiPreviewRoute: typeof AdminMbtiPreviewRoute
+  AdminPendampinganCandidateIdRoute: typeof AdminPendampinganCandidateIdRoute
   AdminTestsIdRoute: typeof AdminTestsIdRoute
   AdminCandidatesIndexRoute: typeof AdminCandidatesIndexRoute
   AdminMbtiIndexRoute: typeof AdminMbtiIndexRoute
@@ -607,6 +628,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAttemptsIdRoute: AdminAttemptsIdRoute,
   AdminCandidatesIdRoute: AdminCandidatesIdRoute,
   AdminMbtiPreviewRoute: AdminMbtiPreviewRoute,
+  AdminPendampinganCandidateIdRoute: AdminPendampinganCandidateIdRoute,
   AdminTestsIdRoute: AdminTestsIdRoute,
   AdminCandidatesIndexRoute: AdminCandidatesIndexRoute,
   AdminMbtiIndexRoute: AdminMbtiIndexRoute,

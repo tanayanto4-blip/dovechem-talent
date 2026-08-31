@@ -8,10 +8,11 @@ import {
 } from "@/lib/admin.functions";
 import { candidateTrackOf, jobLevelLabel } from "@/lib/candidate-type";
 import { TestAccessControl } from "@/components/test-access-control";
+import { CandidateEditPanel } from "@/components/candidate-edit-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, History } from "lucide-react";
+import { ArrowLeft, Download, History, ClipboardList } from "lucide-react";
 
 export const Route = createFileRoute("/admin/candidates/$id")({
   head: () => ({
@@ -94,9 +95,18 @@ function CandidateDetail() {
             )}
           </div>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <CandidateEditPanel candidate={c} isMagang={candidateTrackOf(c) === "magang"} />
+          <Button asChild size="sm">
+            <Link to="/admin/pendampingan/$candidateId" params={{ candidateId: id }}>
+              <ClipboardList className="mr-2 h-4 w-4" /> Bantu Isi Test
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <TestAccessControl candidateId={id} />
+
 
       <Card className="shadow-card">
         <CardHeader>
