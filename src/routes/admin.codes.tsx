@@ -683,7 +683,9 @@ function CodesPage() {
                         <Copy className="h-3.5 w-3.5" />
                       </button>
                     </div>
-                    <div className="truncate text-sm font-medium">{c.candidate_name}</div>
+                    <div className="truncate text-sm font-medium">
+                      {c.candidates?.full_name || c.candidate_name}
+                    </div>
                     <div className="truncate text-xs text-muted-foreground">
                       {c.candidate_email}
                     </div>
@@ -798,7 +800,9 @@ function CodesPage() {
                       </div>
                     </TableCell>
                     <TableCell className="max-w-[200px]">
-                      <div className="truncate font-medium">{c.candidate_name}</div>
+                      <div className="truncate font-medium">
+                        {c.candidates?.full_name || c.candidate_name}
+                      </div>
                       <div className="truncate text-xs text-muted-foreground">
                         {c.candidate_email}
                       </div>
