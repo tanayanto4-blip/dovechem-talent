@@ -619,7 +619,8 @@ export const candidateStartTest = createServerFn({ method: "POST" })
     // Auto-lock: an in-progress attempt whose allotted duration has elapsed can
     // no longer be worked on. The client finalises it immediately (late submits
     // are scored from answers autosaved before the deadline).
-    const durMin = Number((test.data as any)?.duration_minutes) || 0;
+    const extraMin = await extraMinutesFor(sb, cand.id, data.test_id);
+    const durMin = (Number((test.data as any)?.duration_minutes) || 0) + extraMin;
     const startedMs = (attempt as any)?.started_at
       ? new Date((attempt as any).started_at).getTime()
       : NaN;
