@@ -7,13 +7,14 @@ import {
   setCandidateTestAccess,
   setAllCandidateTestAccess,
   reopenCandidateTest,
+  grantCandidateExtraTime,
 } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Lock, LockOpen, RotateCcw, ShieldCheck } from "lucide-react";
+import { Lock, LockOpen, RotateCcw, ShieldCheck, TimerReset } from "lucide-react";
 
 /**
  * Staff view of every test for one candidate with Super-Admin controls to
@@ -25,8 +26,10 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
   const setFn = useServerFn(setCandidateTestAccess);
   const setAllFn = useServerFn(setAllCandidateTestAccess);
   const reopenFn = useServerFn(reopenCandidateTest);
+  const extraFn = useServerFn(grantCandidateExtraTime);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [extraInput, setExtraInput] = useState<Record<string, string>>({});
 
   const { data } = useQuery({
     queryKey: ["candidate-test-access", candidateId],
@@ -127,8 +130,86 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
                       <Badge variant="outline">Terbuka</Badge>
                     )}
                     {ac?.retake_count ? <span>Diulang {ac.retake_count}x</span> : null}
+                    <span>Durasi {t.duration_minutes} mnt</span>
+                    {ac?.extra_minutes ? (
+                      <Badge className="bg-warning text-warning-foreground">
+                        +{ac.extra_minutes} mnt tambahan
+                      </Badge>
+                    ) : null}
+                  </div>
+
+                  {/* Tambahan waktu: kandidat melanjutkan test tanpa kehilangan jawaban */}
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {[5, 10, 15, 30].map((m) => (
+                      <Button
+                        key={m}
+                        size="sm"
+                        variant="outline"
+                        disabled={busy === `xt-${t.id}`}
+                        onClick={() =>
+                          run(
+                            `xt-${t.id}`,
+                            () =>
+                              extraFn({
+                                data: {
+                                  candidate_id: candidateId,
+                                  test_id: t.id,
+                                  minutes: m,
+                                  mode: "add",
+                                  resume: true,
+                                  reason: reason || null,
+                                },
+                              }),
+                            `Waktu ${t.name} ditambah ${m} menit.`,
+                          )
+                        }
+                      >
+                        <TimerReset className="mr-1 h-3.5 w-3.5" /> +{m}
+                      </Button>
+                    ))}
+                    <Input
+                      className="h-9 w-24"
+                      type="number"
+                      min={0}
+                      max={600}
+                      value={extraInput[t.id] ?? ""}
+                      onChange={(e) =>
+                        setExtraInput((s) => ({ ...s, [t.id]: e.target.value }))
+                      }
+                      placeholder="menit"
+                    />
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy === `xs-${t.id}`}
+                      onClick={() => {
+                        const n = Number(extraInput[t.id]);
+                        if (!Number.isFinite(n) || n < 0 || n > 600) {
+                          toast.error("Isi menit tambahan antara 0 dan 600.");
+                          return;
+                        }
+                        run(
+                          `xs-${t.id}`,
+                          () =>
+                            extraFn({
+                              data: {
+                                candidate_id: candidateId,
+                                test_id: t.id,
+                                minutes: n,
+                                mode: "set",
+                                resume: true,
+                                reason: reason || null,
+                              },
+                            }),
+                          `Tambahan waktu ${t.name} diatur menjadi ${n} menit.`,
+                        );
+                      }}
+                    >
+                      Set tambahan
+                    </Button>
                   </div>
                 </div>
+
 
                 <div className="flex items-center gap-4">
                   <label className="flex items-center gap-2 text-xs text-muted-foreground">

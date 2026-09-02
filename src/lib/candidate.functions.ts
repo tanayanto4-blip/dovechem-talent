@@ -147,6 +147,21 @@ async function assertTestOpen(sb: any, candidateId: string, testId: string) {
 }
 
 /**
+ * Tambahan waktu (menit) yang diberikan Super Admin / HR untuk satu test milik
+ * satu kandidat. Nilai ini ditambahkan ke durasi standar test.
+ */
+async function extraMinutesFor(sb: any, candidateId: string, testId: string): Promise<number> {
+  const { data } = await sb
+    .from("candidate_test_access")
+    .select("extra_minutes")
+    .eq("candidate_id", candidateId)
+    .eq("test_id", testId)
+    .maybeSingle();
+  const n = Number((data as any)?.extra_minutes);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+/**
  * Resolve (or auto-create) the candidate row for an access code.
  * A brand-new code has no candidate row yet, and duplicates can appear if two
  * tabs log in at once — both cases previously threw "Kandidat tidak ditemukan"
@@ -604,7 +619,8 @@ export const candidateStartTest = createServerFn({ method: "POST" })
     // Auto-lock: an in-progress attempt whose allotted duration has elapsed can
     // no longer be worked on. The client finalises it immediately (late submits
     // are scored from answers autosaved before the deadline).
-    const durMin = Number((test.data as any)?.duration_minutes) || 0;
+    const extraMin = await extraMinutesFor(sb, cand.id, data.test_id);
+    const durMin = (Number((test.data as any)?.duration_minutes) || 0) + extraMin;
     const startedMs = (attempt as any)?.started_at
       ? new Date((attempt as any).started_at).getTime()
       : NaN;
@@ -622,6 +638,7 @@ export const candidateStartTest = createServerFn({ method: "POST" })
       questions: questions.data ?? [],
       answers: answers.data ?? [],
       expired,
+      extra_minutes: extraMin,
       gender: (cand as any).gender ?? null,
       server_now: new Date().toISOString(),
     };
@@ -651,7 +668,9 @@ export const candidateSaveAnswer = createServerFn({ method: "POST" })
     if (!attempt) throw new Error("Attempt tidak valid.");
     if ((attempt as any).status === "finished") throw new Error("Attempt sudah selesai.");
     // Server-side time limit: reject autosaves after the allotted duration.
-    const dur = Number((attempt as any).tests?.duration_minutes) || 0;
+    const dur =
+      (Number((attempt as any).tests?.duration_minutes) || 0) +
+      (await extraMinutesFor(sb, cand.id, (attempt as any).test_id));
     const start = (attempt as any).started_at
       ? new Date((attempt as any).started_at).getTime()
       : NaN;
@@ -736,7 +755,9 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
     // submits are accepted only as a "finish" action: the payload answers are
     // discarded and scoring uses whatever was autosaved before the deadline.
     const testRow = (attempt as any).tests;
-    const durationMinutes = Number(testRow?.duration_minutes) || 0;
+    const durationMinutes =
+      (Number(testRow?.duration_minutes) || 0) +
+      (await extraMinutesFor(sb, cand.id, (attempt as any).test_id));
     const startedAt = (attempt as any).started_at
       ? new Date((attempt as any).started_at).getTime()
       : NaN;

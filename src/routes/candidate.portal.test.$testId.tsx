@@ -322,7 +322,9 @@ function TakeTest() {
   const deadlineRef = useRef<number | null>(null);
   useEffect(() => {
     if (!data?.test || !data?.attempt) return;
-    const durMin = Number((data.test as any).duration_minutes);
+    // Tambahan waktu dari Super Admin / HR ikut menambah batas pengerjaan.
+    const extraMin = Number((data as any).extra_minutes) || 0;
+    const durMin = Number((data.test as any).duration_minutes) + extraMin;
     const startedAt = data.attempt.started_at
       ? new Date(data.attempt.started_at).getTime()
       : NaN;
