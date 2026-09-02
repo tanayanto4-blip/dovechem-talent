@@ -1336,7 +1336,9 @@ export const listCandidateTestAccess = createServerFn({ method: "POST" })
         .eq("candidate_id", data.candidate_id),
       context.supabase
         .from("candidate_test_access")
-        .select("test_id, is_open, reason, retake_count, last_reopened_at, updated_at")
+        .select(
+          "test_id, is_open, reason, retake_count, last_reopened_at, updated_at, extra_minutes, extra_time_granted_at",
+        )
         .eq("candidate_id", data.candidate_id),
     ]);
     return {
