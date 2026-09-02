@@ -256,6 +256,8 @@ export type Database = {
         Row: {
           candidate_id: string
           created_at: string
+          extra_minutes: number
+          extra_time_granted_at: string | null
           id: string
           is_open: boolean
           last_reopened_at: string | null
@@ -268,6 +270,8 @@ export type Database = {
         Insert: {
           candidate_id: string
           created_at?: string
+          extra_minutes?: number
+          extra_time_granted_at?: string | null
           id?: string
           is_open?: boolean
           last_reopened_at?: string | null
@@ -280,6 +284,8 @@ export type Database = {
         Update: {
           candidate_id?: string
           created_at?: string
+          extra_minutes?: number
+          extra_time_granted_at?: string | null
           id?: string
           is_open?: boolean
           last_reopened_at?: string | null
