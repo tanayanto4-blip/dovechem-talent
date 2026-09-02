@@ -1502,6 +1502,79 @@ export const reopenCandidateTest = createServerFn({ method: "POST" })
     return { ok: true, reset: !!attempt };
   });
 
+const ExtraTimeInput = z.object({
+  candidate_id: z.string().uuid(),
+  test_id: z.string().uuid(),
+  /** Menit tambahan: ditambahkan (mode "add") atau dijadikan nilai baru (mode "set"). */
+  minutes: z.number().int().min(-600).max(600),
+  mode: z.enum(["add", "set"]).default("add"),
+  /** Lanjutkan pengerjaan: attempt yang sudah selesai/terkunci dibuka lagi tanpa menghapus jawaban. */
+  resume: z.boolean().default(true),
+  reason: z.string().trim().max(300).optional().nullable(),
+});
+
+/**
+ * Staff (Super Admin & HR): beri tambahan waktu pengerjaan untuk satu test milik
+ * satu kandidat. Bila `resume` true, attempt yang sudah terkunci karena waktu
+ * habis dibuka kembali sebagai `in_progress` TANPA menghapus jawaban, sehingga
+ * kandidat bisa melanjutkan (bukan mengulang dari nol).
+ */
+export const grantCandidateExtraTime = createServerFn({ method: "POST" })
+  .middleware([requireStaff])
+  .inputValidator((d) => ExtraTimeInput.parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: prev } = await context.supabase
+      .from("candidate_test_access")
+      .select("extra_minutes")
+      .eq("candidate_id", data.candidate_id)
+      .eq("test_id", data.test_id)
+      .maybeSingle();
+
+    const before = Number((prev as any)?.extra_minutes) || 0;
+    const next = Math.max(0, Math.min(600, data.mode === "set" ? data.minutes : before + data.minutes));
+
+    const { error } = await context.supabase.from("candidate_test_access").upsert(
+      {
+        candidate_id: data.candidate_id,
+        test_id: data.test_id,
+        is_open: true,
+        reason: data.reason?.length ? data.reason : null,
+        extra_minutes: next,
+        extra_time_granted_at: new Date().toISOString(),
+        updated_by: context.userId,
+      },
+      { onConflict: "candidate_id,test_id" },
+    );
+    if (error) throw new Error(error.message);
+
+    let resumed = false;
+    if (data.resume) {
+      const { data: attempt } = await context.supabase
+        .from("test_attempts")
+        .select("id, status")
+        .eq("candidate_id", data.candidate_id)
+        .eq("test_id", data.test_id)
+        .maybeSingle();
+      if (attempt && (attempt as any).status === "finished") {
+        const upd = await context.supabase
+          .from("test_attempts")
+          .update({ status: "in_progress", finished_at: null, score: null, result: null })
+          .eq("id", (attempt as any).id);
+        if (upd.error) throw new Error(upd.error.message);
+        resumed = true;
+      }
+    }
+
+    await logAudit(context, "test.extra_time", "candidate", data.candidate_id, {
+      test_id: data.test_id,
+      from: before,
+      to: next,
+      resumed,
+      reason: data.reason ?? null,
+    });
+    return { ok: true, extra_minutes: next, resumed };
+  });
+
 /* ---------------- Permintaan Ulang Test (HR mengajukan, Admin memutuskan) ---------------- */
 
 /** Reset an attempt and (re)open the test for a candidate. Shared by reopen + approval. */
