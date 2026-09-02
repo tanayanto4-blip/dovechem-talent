@@ -147,6 +147,21 @@ async function assertTestOpen(sb: any, candidateId: string, testId: string) {
 }
 
 /**
+ * Tambahan waktu (menit) yang diberikan Super Admin / HR untuk satu test milik
+ * satu kandidat. Nilai ini ditambahkan ke durasi standar test.
+ */
+async function extraMinutesFor(sb: any, candidateId: string, testId: string): Promise<number> {
+  const { data } = await sb
+    .from("candidate_test_access")
+    .select("extra_minutes")
+    .eq("candidate_id", candidateId)
+    .eq("test_id", testId)
+    .maybeSingle();
+  const n = Number((data as any)?.extra_minutes);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+/**
  * Resolve (or auto-create) the candidate row for an access code.
  * A brand-new code has no candidate row yet, and duplicates can appear if two
  * tabs log in at once — both cases previously threw "Kandidat tidak ditemukan"
