@@ -704,13 +704,16 @@ export const candidateSaveAnswer = createServerFn({ method: "POST" })
     if (!attempt) throw new Error("Attempt tidak valid.");
     if ((attempt as any).status === "finished") throw new Error("Attempt sudah selesai.");
     // Server-side time limit: reject autosaves after the allotted duration.
-    const dur =
-      (Number((attempt as any).tests?.duration_minutes) || 0) +
-      (await extraMinutesFor(sb, cand.id, (attempt as any).test_id));
+    const dur = Number((attempt as any).tests?.duration_minutes) || 0;
+    const extraSave = await extraTimeFor(sb, cand.id, (attempt as any).test_id);
     const start = (attempt as any).started_at
       ? new Date((attempt as any).started_at).getTime()
       : NaN;
-    if (dur > 0 && Number.isFinite(start) && Date.now() > start + dur * 60_000 + 60_000) {
+    if (
+      dur > 0 &&
+      Number.isFinite(start) &&
+      Date.now() > deadlineMsFor(start, dur, extraSave) + 60_000
+    ) {
       throw new Error("Waktu pengerjaan test sudah habis.");
     }
     await assertTestOpen(sb, cand.id, (attempt as any).test_id);
