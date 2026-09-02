@@ -322,23 +322,34 @@ function TakeTest() {
   const deadlineRef = useRef<number | null>(null);
   useEffect(() => {
     if (!data?.test || !data?.attempt) return;
-    // Tambahan waktu dari Super Admin / HR ikut menambah batas pengerjaan.
-    const extraMin = Number((data as any).extra_minutes) || 0;
-    const durMin = Number((data.test as any).duration_minutes) + extraMin;
-    const startedAt = data.attempt.started_at
-      ? new Date(data.attempt.started_at).getTime()
+    // Server sudah menghitung batas akhir termasuk tambahan waktu dari
+    // Super Admin / HR (tambahan yang diberikan setelah waktu habis dihitung
+    // sejak saat pemberian, sehingga kandidat benar-benar bisa melanjutkan).
+    const serverNow = new Date((data as any).server_now ?? Date.now()).getTime();
+    const skew = Number.isFinite(serverNow) ? Date.now() - serverNow : 0;
+    const serverDeadline = (data as any).deadline_at
+      ? new Date((data as any).deadline_at).getTime()
       : NaN;
-    if (!Number.isFinite(durMin) || durMin <= 0 || !Number.isFinite(startedAt)) {
+    let deadline = Number.isFinite(serverDeadline) ? serverDeadline + skew : NaN;
+    if (!Number.isFinite(deadline)) {
+      const extraMin = Number((data as any).extra_minutes) || 0;
+      const durMin = Number((data.test as any).duration_minutes) + extraMin;
+      const startedAt = data.attempt.started_at
+        ? new Date(data.attempt.started_at).getTime()
+        : NaN;
+      if (Number.isFinite(durMin) && durMin > 0 && Number.isFinite(startedAt)) {
+        deadline = startedAt + durMin * 60_000 + skew;
+      }
+    }
+    if (!Number.isFinite(deadline)) {
       // Durasi belum diatur -> jangan pernah auto-submit karena timer.
       deadlineRef.current = null;
       setRemaining(0);
       setTimerReady(false);
       return;
     }
-    const serverNow = new Date((data as any).server_now ?? Date.now()).getTime();
-    const skew = Number.isFinite(serverNow) ? Date.now() - serverNow : 0;
-    deadlineRef.current = startedAt + durMin * 60_000 + skew;
-    setRemaining(Math.max(0, Math.ceil((deadlineRef.current - Date.now()) / 1000)));
+    deadlineRef.current = deadline;
+    setRemaining(Math.max(0, Math.ceil((deadline - Date.now()) / 1000)));
     setTimerReady(true);
   }, [data]);
 

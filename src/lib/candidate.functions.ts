@@ -150,16 +150,47 @@ async function assertTestOpen(sb: any, candidateId: string, testId: string) {
  * Tambahan waktu (menit) yang diberikan Super Admin / HR untuk satu test milik
  * satu kandidat. Nilai ini ditambahkan ke durasi standar test.
  */
-async function extraMinutesFor(sb: any, candidateId: string, testId: string): Promise<number> {
+async function extraTimeFor(
+  sb: any,
+  candidateId: string,
+  testId: string,
+): Promise<{ minutes: number; grantedMs: number }> {
   const { data } = await sb
     .from("candidate_test_access")
-    .select("extra_minutes")
+    .select("extra_minutes, extra_time_granted_at")
     .eq("candidate_id", candidateId)
     .eq("test_id", testId)
     .maybeSingle();
   const n = Number((data as any)?.extra_minutes);
-  return Number.isFinite(n) && n > 0 ? n : 0;
+  const g = (data as any)?.extra_time_granted_at
+    ? new Date((data as any).extra_time_granted_at).getTime()
+    : NaN;
+  return {
+    minutes: Number.isFinite(n) && n > 0 ? n : 0,
+    grantedMs: Number.isFinite(g) ? g : NaN,
+  };
 }
+
+async function extraMinutesFor(sb: any, candidateId: string, testId: string): Promise<number> {
+  return (await extraTimeFor(sb, candidateId, testId)).minutes;
+}
+
+/**
+ * Batas akhir pengerjaan (epoch ms). Jika tambahan waktu diberikan SETELAH
+ * waktu asli habis, hitung mundur dimulai dari saat tambahan diberikan supaya
+ * kandidat benar-benar bisa melanjutkan, bukan langsung habis lagi.
+ */
+function deadlineMsFor(
+  startedMs: number,
+  baseMinutes: number,
+  extra: { minutes: number; grantedMs: number },
+): number {
+  const base = startedMs + baseMinutes * 60_000;
+  if (extra.minutes <= 0) return base;
+  const anchor = Number.isFinite(extra.grantedMs) ? Math.max(base, extra.grantedMs) : base;
+  return anchor + extra.minutes * 60_000;
+}
+
 
 /**
  * Resolve (or auto-create) the candidate row for an access code.
@@ -619,16 +650,19 @@ export const candidateStartTest = createServerFn({ method: "POST" })
     // Auto-lock: an in-progress attempt whose allotted duration has elapsed can
     // no longer be worked on. The client finalises it immediately (late submits
     // are scored from answers autosaved before the deadline).
-    const extraMin = await extraMinutesFor(sb, cand.id, data.test_id);
-    const durMin = (Number((test.data as any)?.duration_minutes) || 0) + extraMin;
+    const extra = await extraTimeFor(sb, cand.id, data.test_id);
+    const baseMin = Number((test.data as any)?.duration_minutes) || 0;
     const startedMs = (attempt as any)?.started_at
       ? new Date((attempt as any).started_at).getTime()
       : NaN;
+    const deadlineMs =
+      baseMin > 0 && Number.isFinite(startedMs)
+        ? deadlineMsFor(startedMs, baseMin, extra)
+        : NaN;
     const expired =
       (attempt as any)?.status !== "finished" &&
-      durMin > 0 &&
-      Number.isFinite(startedMs) &&
-      Date.now() > startedMs + durMin * 60_000;
+      Number.isFinite(deadlineMs) &&
+      Date.now() > deadlineMs;
     // server_now lets the client compute the countdown against the server clock
     // instead of the device clock (a skewed device clock would either expire the
     // test instantly or hand out extra time).
@@ -638,10 +672,12 @@ export const candidateStartTest = createServerFn({ method: "POST" })
       questions: questions.data ?? [],
       answers: answers.data ?? [],
       expired,
-      extra_minutes: extraMin,
+      extra_minutes: extra.minutes,
+      deadline_at: Number.isFinite(deadlineMs) ? new Date(deadlineMs).toISOString() : null,
       gender: (cand as any).gender ?? null,
       server_now: new Date().toISOString(),
     };
+
   });
 
 const SaveAnswerInput = z.object({
@@ -668,13 +704,16 @@ export const candidateSaveAnswer = createServerFn({ method: "POST" })
     if (!attempt) throw new Error("Attempt tidak valid.");
     if ((attempt as any).status === "finished") throw new Error("Attempt sudah selesai.");
     // Server-side time limit: reject autosaves after the allotted duration.
-    const dur =
-      (Number((attempt as any).tests?.duration_minutes) || 0) +
-      (await extraMinutesFor(sb, cand.id, (attempt as any).test_id));
+    const dur = Number((attempt as any).tests?.duration_minutes) || 0;
+    const extraSave = await extraTimeFor(sb, cand.id, (attempt as any).test_id);
     const start = (attempt as any).started_at
       ? new Date((attempt as any).started_at).getTime()
       : NaN;
-    if (dur > 0 && Number.isFinite(start) && Date.now() > start + dur * 60_000 + 60_000) {
+    if (
+      dur > 0 &&
+      Number.isFinite(start) &&
+      Date.now() > deadlineMsFor(start, dur, extraSave) + 60_000
+    ) {
       throw new Error("Waktu pengerjaan test sudah habis.");
     }
     await assertTestOpen(sb, cand.id, (attempt as any).test_id);
@@ -755,9 +794,8 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
     // submits are accepted only as a "finish" action: the payload answers are
     // discarded and scoring uses whatever was autosaved before the deadline.
     const testRow = (attempt as any).tests;
-    const durationMinutes =
-      (Number(testRow?.duration_minutes) || 0) +
-      (await extraMinutesFor(sb, cand.id, (attempt as any).test_id));
+    const durationMinutes = Number(testRow?.duration_minutes) || 0;
+    const extraSubmit = await extraTimeFor(sb, cand.id, (attempt as any).test_id);
     const startedAt = (attempt as any).started_at
       ? new Date((attempt as any).started_at).getTime()
       : NaN;
@@ -765,7 +803,7 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
     const isLate =
       durationMinutes > 0 &&
       Number.isFinite(startedAt) &&
-      Date.now() > startedAt + durationMinutes * 60_000 + GRACE_MS;
+      Date.now() > deadlineMsFor(startedAt, durationMinutes, extraSubmit) + GRACE_MS;
 
     let answers = data.answers;
 
