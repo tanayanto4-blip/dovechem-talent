@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Lock, LockOpen, RotateCcw, ShieldCheck } from "lucide-react";
+import { Lock, LockOpen, RotateCcw, ShieldCheck, TimerReset } from "lucide-react";
 
 /**
  * Staff view of every test for one candidate with Super-Admin controls to
