@@ -650,16 +650,19 @@ export const candidateStartTest = createServerFn({ method: "POST" })
     // Auto-lock: an in-progress attempt whose allotted duration has elapsed can
     // no longer be worked on. The client finalises it immediately (late submits
     // are scored from answers autosaved before the deadline).
-    const extraMin = await extraMinutesFor(sb, cand.id, data.test_id);
-    const durMin = (Number((test.data as any)?.duration_minutes) || 0) + extraMin;
+    const extra = await extraTimeFor(sb, cand.id, data.test_id);
+    const baseMin = Number((test.data as any)?.duration_minutes) || 0;
     const startedMs = (attempt as any)?.started_at
       ? new Date((attempt as any).started_at).getTime()
       : NaN;
+    const deadlineMs =
+      baseMin > 0 && Number.isFinite(startedMs)
+        ? deadlineMsFor(startedMs, baseMin, extra)
+        : NaN;
     const expired =
       (attempt as any)?.status !== "finished" &&
-      durMin > 0 &&
-      Number.isFinite(startedMs) &&
-      Date.now() > startedMs + durMin * 60_000;
+      Number.isFinite(deadlineMs) &&
+      Date.now() > deadlineMs;
     // server_now lets the client compute the countdown against the server clock
     // instead of the device clock (a skewed device clock would either expire the
     // test instantly or hand out extra time).
@@ -669,10 +672,12 @@ export const candidateStartTest = createServerFn({ method: "POST" })
       questions: questions.data ?? [],
       answers: answers.data ?? [],
       expired,
-      extra_minutes: extraMin,
+      extra_minutes: extra.minutes,
+      deadline_at: Number.isFinite(deadlineMs) ? new Date(deadlineMs).toISOString() : null,
       gender: (cand as any).gender ?? null,
       server_now: new Date().toISOString(),
     };
+
   });
 
 const SaveAnswerInput = z.object({
