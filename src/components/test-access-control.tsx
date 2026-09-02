@@ -26,8 +26,10 @@ export function TestAccessControl({ candidateId }: { candidateId: string }) {
   const setFn = useServerFn(setCandidateTestAccess);
   const setAllFn = useServerFn(setAllCandidateTestAccess);
   const reopenFn = useServerFn(reopenCandidateTest);
+  const extraFn = useServerFn(grantCandidateExtraTime);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [extraInput, setExtraInput] = useState<Record<string, string>>({});
 
   const { data } = useQuery({
     queryKey: ["candidate-test-access", candidateId],
