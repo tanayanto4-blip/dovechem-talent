@@ -150,16 +150,47 @@ async function assertTestOpen(sb: any, candidateId: string, testId: string) {
  * Tambahan waktu (menit) yang diberikan Super Admin / HR untuk satu test milik
  * satu kandidat. Nilai ini ditambahkan ke durasi standar test.
  */
-async function extraMinutesFor(sb: any, candidateId: string, testId: string): Promise<number> {
+async function extraTimeFor(
+  sb: any,
+  candidateId: string,
+  testId: string,
+): Promise<{ minutes: number; grantedMs: number }> {
   const { data } = await sb
     .from("candidate_test_access")
-    .select("extra_minutes")
+    .select("extra_minutes, extra_time_granted_at")
     .eq("candidate_id", candidateId)
     .eq("test_id", testId)
     .maybeSingle();
   const n = Number((data as any)?.extra_minutes);
-  return Number.isFinite(n) && n > 0 ? n : 0;
+  const g = (data as any)?.extra_time_granted_at
+    ? new Date((data as any).extra_time_granted_at).getTime()
+    : NaN;
+  return {
+    minutes: Number.isFinite(n) && n > 0 ? n : 0,
+    grantedMs: Number.isFinite(g) ? g : NaN,
+  };
 }
+
+async function extraMinutesFor(sb: any, candidateId: string, testId: string): Promise<number> {
+  return (await extraTimeFor(sb, candidateId, testId)).minutes;
+}
+
+/**
+ * Batas akhir pengerjaan (epoch ms). Jika tambahan waktu diberikan SETELAH
+ * waktu asli habis, hitung mundur dimulai dari saat tambahan diberikan supaya
+ * kandidat benar-benar bisa melanjutkan, bukan langsung habis lagi.
+ */
+function deadlineMsFor(
+  startedMs: number,
+  baseMinutes: number,
+  extra: { minutes: number; grantedMs: number },
+): number {
+  const base = startedMs + baseMinutes * 60_000;
+  if (extra.minutes <= 0) return base;
+  const anchor = Number.isFinite(extra.grantedMs) ? Math.max(base, extra.grantedMs) : base;
+  return anchor + extra.minutes * 60_000;
+}
+
 
 /**
  * Resolve (or auto-create) the candidate row for an access code.
