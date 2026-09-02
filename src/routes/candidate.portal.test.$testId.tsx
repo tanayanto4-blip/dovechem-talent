@@ -834,6 +834,47 @@ function TakeTest() {
           />
         )}
 
+        {/* WPT: tombol kirim hanya muncul di akhir setelah semua soal terisi */}
+        {isWpt &&
+          (answered === total && total > 0 ? (
+            <div className="flex justify-center pt-2">
+              <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button size="lg" disabled={submitting}>
+                    {submitting ? "Mengirim..." : `Kirim Jawaban (${answered}/${total})`}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Kirim jawaban sekarang?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Anda sudah mengisi {answered} dari {total} soal. Jawaban tidak dapat
+                      diubah setelah dikirim.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={submitting}>Periksa lagi</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={(e: React.MouseEvent) => {
+                        e.preventDefault();
+                        setConfirmOpen(false);
+                        void handleSubmit(true);
+                      }}
+                      disabled={submitting}
+                    >
+                      Ya, kirim jawaban
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          ) : (
+            <p className="rounded-md border border-dashed bg-muted/40 p-3 text-center text-xs text-muted-foreground">
+              Tombol kirim akan muncul setelah semua {total} soal terisi ({answered}/{total}{" "}
+              terisi).
+            </p>
+          ))}
+
         {isRmib && (
           <RmibSheet
             questions={data.questions as any}
@@ -868,7 +909,7 @@ function TakeTest() {
           ))}
         </div>
 
-        <div className="sticky bottom-4 flex justify-end">
+        <div className={isWpt ? "hidden" : "sticky bottom-4 flex justify-end"}>
           <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
             <AlertDialogTrigger asChild>
               <Button size="lg" disabled={submitting || answered === 0}>
