@@ -755,7 +755,9 @@ export const candidateSubmitTest = createServerFn({ method: "POST" })
     // submits are accepted only as a "finish" action: the payload answers are
     // discarded and scoring uses whatever was autosaved before the deadline.
     const testRow = (attempt as any).tests;
-    const durationMinutes = Number(testRow?.duration_minutes) || 0;
+    const durationMinutes =
+      (Number(testRow?.duration_minutes) || 0) +
+      (await extraMinutesFor(sb, cand.id, (attempt as any).test_id));
     const startedAt = (attempt as any).started_at
       ? new Date((attempt as any).started_at).getTime()
       : NaN;
