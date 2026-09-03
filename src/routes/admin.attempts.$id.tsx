@@ -5,7 +5,7 @@ import { getAttemptDetail } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, FileDown, FileSpreadsheet } from "lucide-react";
+import { Printer, FileDown, FileSpreadsheet } from "lucide-react";
 import { exportMbtiPdf } from "@/lib/mbti-pdf";
 import { exportMbtiExcel } from "@/lib/mbti-excel";
 import { exportEqExcel } from "@/lib/eq-excel";
@@ -20,6 +20,7 @@ import { rmibScore } from "@/lib/rmib-key";
 import { exportMsdtExcel } from "@/lib/msdt-excel";
 import { exportRmibExcel } from "@/lib/rmib-excel";
 import { buildCandidateMeta } from "@/lib/candidate-meta";
+import { BackButton } from "@/components/back-button";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/attempts/$id")({
