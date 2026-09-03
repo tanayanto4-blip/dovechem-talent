@@ -1,11 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAttemptDetail } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, FileDown, FileSpreadsheet } from "lucide-react";
+import { Printer, FileDown, FileSpreadsheet } from "lucide-react";
 import { exportMbtiPdf } from "@/lib/mbti-pdf";
 import { exportMbtiExcel } from "@/lib/mbti-excel";
 import { exportEqExcel } from "@/lib/eq-excel";
@@ -20,6 +20,7 @@ import { rmibScore } from "@/lib/rmib-key";
 import { exportMsdtExcel } from "@/lib/msdt-excel";
 import { exportRmibExcel } from "@/lib/rmib-excel";
 import { buildCandidateMeta } from "@/lib/candidate-meta";
+import { BackButton } from "@/components/back-button";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/attempts/$id")({
@@ -97,11 +98,11 @@ function AttemptDetail() {
   return (
     <div className="space-y-6 print-area">
       <div className="no-print flex flex-wrap items-center justify-between gap-2">
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/admin/candidates/$id" params={{ id: candId }}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke kandidat
-          </Link>
-        </Button>
+        <BackButton
+          fallbackTo="/admin/candidates/$id"
+          params={{ id: candId }}
+          label="Kembali"
+        />
         <div className="flex gap-2">
           {isMbti && a.result?.type && (
             <Button
