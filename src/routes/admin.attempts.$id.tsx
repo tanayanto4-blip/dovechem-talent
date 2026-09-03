@@ -97,11 +97,11 @@ function AttemptDetail() {
   return (
     <div className="space-y-6 print-area">
       <div className="no-print flex flex-wrap items-center justify-between gap-2">
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/admin/candidates/$id" params={{ id: candId }}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke kandidat
-          </Link>
-        </Button>
+        <BackButton
+          fallbackTo="/admin/candidates/$id"
+          params={{ id: candId }}
+          label="Kembali"
+        />
         <div className="flex gap-2">
           {isMbti && a.result?.type && (
             <Button
