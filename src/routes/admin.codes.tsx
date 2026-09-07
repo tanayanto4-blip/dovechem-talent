@@ -118,13 +118,18 @@ function CodesPage() {
   const [purging, setPurging] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  // Urutan stabil: kode yang dibuat massal punya created_at identik,
-  // tanpa tiebreaker urutannya bisa berubah tiap refetch (terlihat seperti "salah nomor").
-  const codes: any[] = [...(data?.codes ?? [])].sort(
-    (a: any, b: any) =>
+  // Kode terbaru selalu di atas. Dalam satu batch (created_at sama) urutan
+  // tetap stabil berdasarkan nomor kode agar tidak berubah tiap refetch.
+  const codes: any[] = [...(data?.codes ?? [])].sort((a: any, b: any) => {
+    const ta = new Date(a.created_at ?? 0).getTime();
+    const tb = new Date(b.created_at ?? 0).getTime();
+    if (tb !== ta) return tb - ta;
+    return (
       String(a.code).localeCompare(String(b.code), "en", { numeric: true }) ||
-      String(a.id).localeCompare(String(b.id)),
-  );
+      String(a.id).localeCompare(String(b.id))
+    );
+  });
+
 
   async function onToggle(id: string, active: boolean) {
     setTogglingId(id);
