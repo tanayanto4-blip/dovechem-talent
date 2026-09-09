@@ -999,6 +999,11 @@ function ResultsBank() {
                                               toast.success(
                                                 `Excel DISC diunduh — ${res?.filled ?? 0}/${res?.total ?? 24} kelompok terisi`,
                                               );
+                                              if ((res?.neutralMost ?? 0) >= 8)
+                                                toast.warning(
+                                                  `${res.neutralMost} pilihan "PALING" jatuh pada pernyataan netral (tidak diskor). Keterangan tipe pada sheet Result bisa tampil #N/A.`,
+                                                );
+
                                             } catch (e: any) {
                                               toast.error(e?.message ?? "Gagal membuat file Excel");
                                             }

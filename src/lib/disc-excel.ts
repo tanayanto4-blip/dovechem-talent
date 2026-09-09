@@ -67,10 +67,47 @@ function optionIndex(key: string | undefined): number {
   return Number.isFinite(n) && n >= 1 && n <= 4 ? n - 1 : -1;
 }
 
+/* --------------------- kunci resmi template (sheet Input) --------------------- */
+
+/**
+ * Membaca kunci konversi posisi pernyataan -> huruf DISC langsung dari rumus
+ * template (sheet "Input"). Sebagian pernyataan bernilai "*" (netral / tidak
+ * diskor). Bila kandidat banyak memilih pernyataan netral, grafik pada sheet
+ * Result tidak bisa diklasifikasikan dan keterangan tipe tampil #N/A.
+ */
+function readNeutralKey(inputXml: string) {
+  const cells = new Map<string, string>();
+  for (const m of inputXml.matchAll(/<c r="([A-Z]+\d+)"[^>]*>([\s\S]*?)<\/c>/g)) {
+    const f = /<f[^>]*>([\s\S]*?)<\/f>/.exec(m[2]);
+    if (f)
+      cells.set(
+        m[1],
+        f[1].replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&"),
+      );
+  }
+  const keyOf = (ref: string) => {
+    const out: Record<number, string> = {};
+    for (const k of (cells.get(ref) ?? "").matchAll(/=(\d),"(.)"/g)) out[Number(k[1])] = k[2];
+    return out;
+  };
+  const P_COLS = ["E", "J", "O"];
+  const K_COLS = ["F", "K", "P"];
+  const most: Array<Record<number, string>> = [];
+  const least: Array<Record<number, string>> = [];
+  for (let g = 1; g <= 24; g++) {
+    const i = Math.floor((g - 1) / 8);
+    const row = 6 + ((g - 1) % 8);
+    most.push(keyOf(`${P_COLS[i]}${row}`));
+    least.push(keyOf(`${K_COLS[i]}${row}`));
+  }
+  return { most, least };
+}
+
 /* ------------------------------- exporter ------------------------------- */
 
 export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExcelMeta = {}) {
   const res = await fetch(templateAsset.url);
+
   if (!res.ok) throw new Error("Template Excel DISC tidak dapat dimuat.");
   const zip = await JSZip.loadAsync(await res.arrayBuffer());
   const before = await snapshotZip(zip);
@@ -88,7 +125,13 @@ export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExce
     }
   }
 
+  const inputSheet = sheets.find((s) => /^input$/i.test(s.name.trim()));
+  const key = inputSheet
+    ? readNeutralKey(await zip.file(inputSheet.path)!.async("string"))
+    : null;
+
   let filled = 0;
+  let neutralMost = 0;
   for (const a of answers) {
     const g = Number(a.question_number);
     if (!Number.isFinite(g) || g < 1 || g > 24) continue;
@@ -101,7 +144,9 @@ export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExce
     if (mi >= 0) edits.set(`${set.p}${row0 + mi}`, "x");
     if (li >= 0) edits.set(`${set.k}${row0 + li}`, "x");
     if (mi >= 0 && li >= 0) filled++;
+    if (key && mi >= 0 && (key.most[g - 1]?.[mi + 1] ?? "*") === "*") neutralMost++;
   }
+
 
   // 2) Identitas kandidat pada kolom yang memang disediakan template
   const nama = [meta.candidateName, meta.candidateCode].filter(Boolean).join(" — ") || "-";
@@ -147,5 +192,5 @@ export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExce
   a.click();
   URL.revokeObjectURL(url);
 
-  return { filled, total: 24, valid: filled === 24 };
+  return { filled, total: 24, valid: filled === 24, neutralMost };
 }
