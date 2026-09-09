@@ -177,12 +177,17 @@ function AttemptDetail() {
                     question_number: q.question_number,
                     answer: answerMap.get(q.id)?.answer,
                   }));
-                  const { filled, total, valid } = await exportDiscExcel(rows, {
+                  const { filled, total, valid, neutralMost } = await exportDiscExcel(rows, {
                     ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
                   });
                   toast.success(
                     `Excel DISC diunduh — ${filled}/${total} kelompok terisi${valid ? "" : ", cek ulang isian"}`,
                   );
+                  if ((neutralMost ?? 0) >= 8)
+                    toast.warning(
+                      `${neutralMost} pilihan "PALING" jatuh pada pernyataan netral (tidak diskor). Grafik & keterangan tipe pada sheet Result bisa tampil #N/A.`,
+                    );
+
                 } catch (e: any) {
                   toast.error(e?.message ?? "Gagal membuat file Excel");
                 }
