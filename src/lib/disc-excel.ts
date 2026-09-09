@@ -192,5 +192,5 @@ export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExce
   a.click();
   URL.revokeObjectURL(url);
 
-  return { filled, total: 24, valid: filled === 24 };
+  return { filled, total: 24, valid: filled === 24, neutralMost };
 }
