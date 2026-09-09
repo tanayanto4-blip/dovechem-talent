@@ -67,9 +67,44 @@ function optionIndex(key: string | undefined): number {
   return Number.isFinite(n) && n >= 1 && n <= 4 ? n - 1 : -1;
 }
 
+/* --------------------- kunci resmi template (sheet Input) --------------------- */
+
+/**
+ * Membaca kunci konversi posisi pernyataan -> huruf DISC langsung dari rumus
+ * template (sheet "Input"). Sebagian pernyataan bernilai "*" (netral / tidak
+ * diskor). Bila kandidat banyak memilih pernyataan netral, grafik pada sheet
+ * Result tidak bisa diklasifikasikan dan keterangan tipe tampil #N/A.
+ */
+function readNeutralKey(inputXml: string) {
+  const cells = new Map<string, string>();
+  for (const m of inputXml.matchAll(/<c r="([A-Z]+\d+)"[^>]*>([\s\S]*?)<\/c>/g)) {
+    const f = /<f[^>]*>([\s\S]*?)<\/f>/.exec(m[2]);
+    if (f)
+      cells.set(
+        m[1],
+        f[1].replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&"),
+      );
+  }
+  const keyOf = (ref: string) => {
+    const out: Record<number, string> = {};
+    for (const k of (cells.get(ref) ?? "").matchAll(/=(\d),"(.)"/g)) out[Number(k[1])] = k[2];
+    return out;
+  };
+  const P_COLS = ["E", "J", "O"];
+  const K_COLS = ["F", "K", "P"];
+  const most: Array<Record<number, string>> = [];
+  const least: Array<Record<number, string>> = [];
+  for (let g = 1; g <= 24; g++) {
+    const i = Math.floor((g - 1) / 8);
+    const row = 6 + ((g - 1) % 8);
+    most.push(keyOf(`${P_COLS[i]}${row}`));
+    least.push(keyOf(`${K_COLS[i]}${row}`));
+  }
+  return { most, least };
+}
+
 /* ------------------------------- exporter ------------------------------- */
 
-export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExcelMeta = {}) {
   const res = await fetch(templateAsset.url);
   if (!res.ok) throw new Error("Template Excel DISC tidak dapat dimuat.");
   const zip = await JSZip.loadAsync(await res.arrayBuffer());
