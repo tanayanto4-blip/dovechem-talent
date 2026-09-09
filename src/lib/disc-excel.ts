@@ -125,7 +125,13 @@ export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExce
     }
   }
 
+  const inputSheet = sheets.find((s) => /^input$/i.test(s.name.trim()));
+  const key = inputSheet
+    ? readNeutralKey(await zip.file(inputSheet.path)!.async("string"))
+    : null;
+
   let filled = 0;
+  let neutralMost = 0;
   for (const a of answers) {
     const g = Number(a.question_number);
     if (!Number.isFinite(g) || g < 1 || g > 24) continue;
@@ -138,7 +144,9 @@ export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExce
     if (mi >= 0) edits.set(`${set.p}${row0 + mi}`, "x");
     if (li >= 0) edits.set(`${set.k}${row0 + li}`, "x");
     if (mi >= 0 && li >= 0) filled++;
+    if (key && mi >= 0 && (key.most[g - 1]?.[mi + 1] ?? "*") === "*") neutralMost++;
   }
+
 
   // 2) Identitas kandidat pada kolom yang memang disediakan template
   const nama = [meta.candidateName, meta.candidateCode].filter(Boolean).join(" — ") || "-";
