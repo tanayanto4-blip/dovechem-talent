@@ -105,7 +105,9 @@ function readNeutralKey(inputXml: string) {
 
 /* ------------------------------- exporter ------------------------------- */
 
+export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExcelMeta = {}) {
   const res = await fetch(templateAsset.url);
+
   if (!res.ok) throw new Error("Template Excel DISC tidak dapat dimuat.");
   const zip = await JSZip.loadAsync(await res.arrayBuffer());
   const before = await snapshotZip(zip);
