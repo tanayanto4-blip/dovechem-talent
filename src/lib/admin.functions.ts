@@ -644,11 +644,22 @@ export const listAuditLogs = createServerFn({ method: "POST" })
 export const dashboardStats = createServerFn({ method: "GET" })
   .middleware([requireStaff])
   .handler(async ({ context }) => {
-    const [codes, cands, attempts] = await Promise.all([
+    const [codes, cands, attempts, inProgress] = await Promise.all([
       context.supabase.from("candidate_codes").select("id, active", { count: "exact" }),
       context.supabase.from("candidates").select("id, data_completed", { count: "exact" }),
       context.supabase.from("test_attempts").select("id, status, score"),
+      context.supabase
+        .from("test_attempts")
+        .select("id, candidates!inner(code_id, candidate_codes!inner(last_seen_at))")
+        .eq("status", "in_progress"),
     ]);
+    // Hanya hitung kandidat yang benar-benar sedang online (heartbeat < 30 detik)
+    const now = Date.now();
+    const inProgressCount = (inProgress.data ?? []).filter((a) => {
+      const seen = (a as any).candidates?.candidate_codes?.last_seen_at;
+      const seenMs = seen ? new Date(seen).getTime() : 0;
+      return seenMs > 0 && now - seenMs < 30_000;
+    }).length;
     return {
       total_codes: codes.count ?? 0,
       active_codes: (codes.data ?? []).filter((c) => c.active).length,
@@ -656,9 +667,7 @@ export const dashboardStats = createServerFn({ method: "GET" })
       completed_profiles: (cands.data ?? []).filter((c) => c.data_completed).length,
       total_attempts: attempts.data?.length ?? 0,
       finished_attempts: (attempts.data ?? []).filter((a) => a.status === "finished").length,
-      in_progress_attempts: (attempts.data ?? []).filter(
-        (a) => a.status === "in_progress",
-      ).length,
+      in_progress_attempts: inProgressCount,
       avg_score: (() => {
         const done = (attempts.data ?? []).filter(
           (a) => a.status === "finished" && a.score != null,
