@@ -1,6 +1,6 @@
 import JSZip from "jszip";
 import type { CandidateMeta } from "@/lib/candidate-meta";
-import { papiScore } from "@/lib/papi-key";
+import { papiScore, papiSpecialCount } from "@/lib/papi-key";
 import templateAsset from "@/assets/papi-template.xlsx.asset.json";
 import {
   type CellValue,
