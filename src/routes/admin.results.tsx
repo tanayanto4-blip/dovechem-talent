@@ -817,7 +817,6 @@ function ResultsBank() {
                         variant="default"
                         className="shrink-0"
                         disabled={summaryKey === g.key}
-                        title="Unduh rangkuman PDF dari file Excel skoring kandidat"
                         onClick={(e) => {
                           e.stopPropagation();
                           void downloadSummary(g);
