@@ -813,9 +813,11 @@ function TakeTest() {
                     )}
                   </span>
                 </div>
-                <span>
-                  {answered}/{total} soal
-                </span>
+                {!isPauli && (
+                  <span>
+                    {answered}/{total} soal
+                  </span>
+                )}
               </div>
               <Progress value={(answered / total) * 100} className="h-2" />
             </div>
