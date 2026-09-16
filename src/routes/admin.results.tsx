@@ -524,8 +524,12 @@ function ResultsBank() {
           pauli,
         });
       });
-      const n = await downloadExcelBundle(files, candidate.full_name);
-      toast.success(`Rangkuman ${g.name} diunduh — ${n} file Excel skoring`);
+      const n = await downloadSummaryPdf(
+        files,
+        candidate.full_name,
+        `${candidate.full_name} — ${candidate.position_applied ?? "-"}`,
+      );
+      toast.success(`Rangkuman PDF ${g.name} diunduh — ${n} halaman`);
     } catch (e: any) {
       toast.error(e?.message ?? "Gagal membuat rangkuman kandidat");
     } finally {
