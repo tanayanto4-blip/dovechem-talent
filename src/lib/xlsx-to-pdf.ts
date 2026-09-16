@@ -20,6 +20,16 @@ export interface SheetSpec {
   /** Batas kolom/baris maksimum yang dicetak (opsional). */
   maxCols?: number;
   maxRows?: number;
+  /**
+   * Halaman grafik: digambar sendiri dari nilai sheet (grafik bawaan Excel
+   * berupa objek gambar yang tidak bisa disalin di browser).
+   */
+  custom?: (
+    doc: jsPDF,
+    area: { x: number; y: number; w: number; h: number },
+    ws: ExcelJS.Worksheet,
+    valueAt: (r: number, c: number) => CellVal,
+  ) => void;
 }
 
 const MAX_COLS = 24;
@@ -76,6 +86,35 @@ export async function exportSheetsToPdf(
 
     const calc = new XlsxFormula(wb);
     const valueAt = (r: number, c: number) => calc.value(ws, r, c);
+
+    if (spec.custom) {
+      if (!first) doc.addPage();
+      first = false;
+      printed++;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(11, 61, 145);
+      doc.text(spec.title, margin, margin + 14);
+      if (subtitle) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(90);
+        doc.text(subtitle, margin, margin + 28);
+      }
+      spec.custom(
+        doc,
+        {
+          x: margin,
+          y: margin + 44,
+          w: pageW - margin * 2,
+          h: pageH - margin * 2 - 44,
+        },
+        ws,
+        valueAt,
+      );
+      continue;
+    }
+
 
     // Tentukan area terpakai: buang baris/kolom kosong di ujung
     const capCol = Math.min(spec.maxCols ?? MAX_COLS, Math.max(1, ws.actualColumnCount || 1));
