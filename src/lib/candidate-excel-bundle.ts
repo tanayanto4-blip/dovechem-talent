@@ -76,7 +76,15 @@ export async function downloadSummaryPdf(
   const specs: SheetSpec[] = [];
   for (const p of PAGE_ORDER) {
     const f = files.find((x) => x.filename.startsWith(p.prefix));
-    if (f) specs.push({ blob: f.blob, sheet: p.sheet, title: p.title, maxCols: p.maxCols, maxRows: p.maxRows });
+    if (f)
+      specs.push({
+        blob: f.blob,
+        sheet: p.sheet,
+        title: p.title,
+        maxCols: p.maxCols,
+        maxRows: p.maxRows,
+        custom: p.custom,
+      });
   }
   const safe = (candidateName || "kandidat").replace(/[^\w\-]+/g, "_");
   return exportSheetsToPdf(
