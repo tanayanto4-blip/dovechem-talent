@@ -14,7 +14,14 @@ import { exportDiscExcel } from "@/lib/disc-excel";
 import { exportPapiPdf } from "@/lib/papi-pdf";
 import { exportPapiExcel } from "@/lib/papi-excel";
 import { PauliResult } from "@/components/pauli-result";
-import { papiScore, PAPI_SCALE_LABEL, PAPI_TOP_ORDER, PAPI_BOTTOM_ORDER } from "@/lib/papi-key";
+import {
+  papiScore,
+  papiSpecialCount,
+  PAPI_SCALE_LABEL,
+  PAPI_SPECIAL_ITEMS,
+  PAPI_TOP_ORDER,
+  PAPI_BOTTOM_ORDER,
+} from "@/lib/papi-key";
 import { msdtScore, MSDT_STYLE_COLUMNS, MSDT_STYLE_LABEL } from "@/lib/msdt-key";
 import { rmibScore } from "@/lib/rmib-key";
 import { exportMsdtExcel } from "@/lib/msdt-excel";
