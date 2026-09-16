@@ -87,6 +87,35 @@ export async function exportSheetsToPdf(
     const calc = new XlsxFormula(wb);
     const valueAt = (r: number, c: number) => calc.value(ws, r, c);
 
+    if (spec.custom) {
+      if (!first) doc.addPage();
+      first = false;
+      printed++;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(11, 61, 145);
+      doc.text(spec.title, margin, margin + 14);
+      if (subtitle) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(90);
+        doc.text(subtitle, margin, margin + 28);
+      }
+      spec.custom(
+        doc,
+        {
+          x: margin,
+          y: margin + 44,
+          w: pageW - margin * 2,
+          h: pageH - margin * 2 - 44,
+        },
+        ws,
+        valueAt,
+      );
+      continue;
+    }
+
+
     // Tentukan area terpakai: buang baris/kolom kosong di ujung
     const capCol = Math.min(spec.maxCols ?? MAX_COLS, Math.max(1, ws.actualColumnCount || 1));
     const capRow = Math.min(spec.maxRows ?? MAX_ROWS, Math.max(1, ws.actualRowCount || 1));
