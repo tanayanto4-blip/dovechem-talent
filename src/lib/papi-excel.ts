@@ -1,6 +1,6 @@
 import JSZip from "jszip";
 import type { CandidateMeta } from "@/lib/candidate-meta";
-import { papiScore } from "@/lib/papi-key";
+import { papiScore, papiSpecialCount } from "@/lib/papi-key";
 import templateAsset from "@/assets/papi-template.xlsx.asset.json";
 import {
   type CellValue,
@@ -72,8 +72,10 @@ function fmtTanggal(v?: string | null) {
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-/** Biodata sheet "Summary": H7 usia, H8 pendidikan, H9 posisi, H10 tanggal. */
-function summaryBiodata(meta: PapiExcelMeta) {
+/** Biodata sheet "Summary": H7 usia, H8 pendidikan, H9 posisi, H10 tanggal.
+ *  G44 = total jawaban "A" pada nomor khusus (PAPI_SPECIAL_ITEMS); rumus
+ *  G42 (=C42-G44) dan E42 (=G42/C42) menghitung otomatis dari sel ini. */
+function summaryBiodata(meta: PapiExcelMeta, specialA: number) {
   const edu = [meta.education, meta.major]
     .map((v) => (v ?? "").toString().trim())
     .filter(Boolean)
@@ -86,6 +88,7 @@ function summaryBiodata(meta: PapiExcelMeta) {
     ["H8", pendidikan],
     ["H9", (meta.position ?? "").toString().trim() || "-"],
     ["H10", fmtTanggal(meta.finishedAt)],
+    ["G44", specialA],
   ]);
 }
 
@@ -123,7 +126,7 @@ export async function exportPapiExcel(picks: Record<number, string>, meta: PapiE
     if (sFile) {
       zip.file(
         summary.path,
-        patchSheet(await sFile.async("string"), summaryBiodata(meta), true),
+        patchSheet(await sFile.async("string"), summaryBiodata(meta, papiSpecialCount(picks).countA), true),
       );
     }
   }
