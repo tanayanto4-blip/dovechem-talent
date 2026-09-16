@@ -12,11 +12,56 @@ export async function buildCandidateExcelBundle(run: () => Promise<void>) {
 }
 
 /** Urutan halaman PDF: Resume -> PAPI (Summary) -> Chart PAPI -> DISC -> Profiling. */
-const PAGE_ORDER: Array<{ prefix: string; sheet: string; title: string; maxCols?: number; maxRows?: number }> = [
+const PAGE_ORDER: Array<{
+  prefix: string;
+  sheet: string;
+  title: string;
+  maxCols?: number;
+  maxRows?: number;
+  custom?: SheetSpec["custom"];
+}> = [
   { prefix: "Resume_", sheet: "Rec", title: "Recruitment Resume", maxCols: 14, maxRows: 40 },
   { prefix: "PAPI_", sheet: "Summary", title: "Key Background Review - PAPI Kostick", maxCols: 17, maxRows: 58 },
-  { prefix: "PAPI_", sheet: "CHART PAPIKOSTIK", title: "PAPI Kostick Chart", maxCols: 24, maxRows: 46 },
+  {
+    prefix: "PAPI_",
+    sheet: "POLA DASAR",
+    title: "PAPI Kostick Chart",
+    custom: (doc, area, _ws, valueAt) => {
+      const scales: Record<string, number> = {};
+      PAPI_SCALES.forEach((s, i) => {
+        const v = valueAt(6, 3 + i);
+        scales[s] = typeof v === "number" ? v : Number(v) || 0;
+      });
+      drawPapiChart(doc, scales, { ...area, h: Math.min(area.h, 340) });
+    },
+  },
   { prefix: "DISC_", sheet: "Result", title: "DISC Personality System", maxCols: 16, maxRows: 60 },
+  {
+    prefix: "DISC_",
+    sheet: "Result",
+    title: "DISC Personality System Graph",
+    custom: (doc, area, _ws, valueAt) => {
+      const num = (r: number, c: number) => {
+        const v = valueAt(r, c);
+        return typeof v === "number" ? v : Number(v) || 0;
+      };
+      const row = (r: number) => ({
+        D: num(r, 8),
+        I: num(r, 9),
+        S: num(r, 10),
+        C: num(r, 11),
+      });
+      drawDiscChart(
+        doc,
+        [
+          { title: "Graph I - Mask (Public Self)", values: row(10) },
+          { title: "Graph II - Core (Private Self)", values: row(11) },
+          { title: "Graph III - Mirror (Perceived Self)", values: row(12) },
+        ],
+        { ...area, h: Math.min(area.h, 320) },
+      );
+    },
+  },
   { prefix: "Profiling_", sheet: "PROFILING", title: "Key Background Review - Summary", maxCols: 16, maxRows: 60 },
   { prefix: "MBTI_", sheet: "MBTI", title: "MBTI Scoring", maxCols: 8, maxRows: 80 },
   { prefix: "WPT_", sheet: "WPT", title: "Cognitive Ability (WPT)", maxCols: 12, maxRows: 60 },
