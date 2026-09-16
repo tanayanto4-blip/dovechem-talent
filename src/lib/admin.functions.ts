@@ -656,6 +656,9 @@ export const dashboardStats = createServerFn({ method: "GET" })
       completed_profiles: (cands.data ?? []).filter((c) => c.data_completed).length,
       total_attempts: attempts.data?.length ?? 0,
       finished_attempts: (attempts.data ?? []).filter((a) => a.status === "finished").length,
+      in_progress_attempts: (attempts.data ?? []).filter(
+        (a) => a.status === "in_progress",
+      ).length,
       avg_score: (() => {
         const done = (attempts.data ?? []).filter(
           (a) => a.status === "finished" && a.score != null,
