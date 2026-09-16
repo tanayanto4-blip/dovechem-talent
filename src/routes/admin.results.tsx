@@ -12,7 +12,7 @@ import { exportMsdtExcel } from "@/lib/msdt-excel";
 import { exportDiscExcel } from "@/lib/disc-excel";
 import { exportResultSheetPdf } from "@/lib/result-sheet-pdf";
 import { exportResumeExcel } from "@/lib/resume-excel";
-import { exportCandidateSummaryPdf } from "@/lib/summary-pdf";
+import { buildCandidateExcelBundle, downloadExcelBundle } from "@/lib/candidate-excel-bundle";
 import { computePauli } from "@/components/pauli-result";
 
 import { buildCandidateMeta } from "@/lib/candidate-meta";
@@ -420,7 +420,8 @@ function ResultsBank() {
 
   const [summaryKey, setSummaryKey] = useState<string | null>(null);
 
-  /** Rangkuman kandidat (PDF) — Resume, PAPI, PAPI Chart, DISC, Summary MBTI/IQ. */
+  /** Rangkuman kandidat — seluruh file Excel skoring (Resume, PAPI, DISC, MBTI, WPT, Profiling)
+   *  digabung dalam satu arsip ZIP, isinya persis hasil template skoring tiap test. */
   async function downloadSummary(g: Group) {
     setSummaryKey(g.key);
     try {
@@ -475,29 +476,56 @@ function ResultsBank() {
         base.started_at ??
         null;
 
-      await exportCandidateSummaryPdf({
-        candidate: {
-          full_name: cand.full_name ?? g.name,
-          position_applied: cand.position_applied ?? g.position,
-          job_position: cand.job_position,
-          education: cand.education,
-          major: cand.major,
-          school_name: cand.school_name,
-          age: cand.age,
-          birth_date: cand.birth_date,
-          gender: cand.gender,
-          work_experience: cand.work_experience,
-        },
+      const candidate = {
+        full_name: cand.full_name ?? g.name,
+        position_applied: cand.position_applied ?? g.position,
+        job_position: cand.job_position,
+        education: cand.education,
+        major: cand.major,
+        school_name: cand.school_name,
+        age: cand.age,
+        birth_date: cand.birth_date,
+        gender: cand.gender,
+        work_experience: cand.work_experience,
+      };
+      const meta = {
+        candidateName: candidate.full_name,
         candidateCode: cand.candidate_codes?.code ?? cand.code_snapshot ?? g.code,
-        testDate,
-        papiPicks,
-        discAnswers,
-        mbtiAnswers,
-        wptAnswers,
-        ishihara: ishA?.result ?? null,
-        pauli: pauliCorrect != null ? { correct: pauliCorrect } : null,
+        position: candidate.position_applied,
+        education: candidate.education,
+        major: candidate.major,
+        school: candidate.school_name,
+        age: candidate.age,
+        birthDate: candidate.birth_date,
+        gender: candidate.gender,
+        workExperience: candidate.work_experience,
+        finishedAt: testDate,
+      };
+      const pauli = pauliCorrect != null ? { correct: pauliCorrect } : null;
+
+      const files = await buildCandidateExcelBundle(async () => {
+        await exportResumeExcel({
+          candidate,
+          testDate,
+          ishihara: ishA?.result ?? null,
+          wptAnswers,
+          pauli,
+        });
+        if (papiPicks) await exportPapiExcel(papiPicks, meta);
+        if (discAnswers) await exportDiscExcel(discAnswers, meta);
+        if (mbtiAnswers) await exportMbtiExcel(mbtiAnswers, meta);
+        if (wptAnswers) await exportWptExcel(wptAnswers, meta);
+        await exportProfilingExcel({
+          candidate,
+          testDate,
+          mbtiAnswers,
+          wptAnswers,
+          discAnswers,
+          pauli,
+        });
       });
-      toast.success(`Rangkuman ${g.name} diunduh`);
+      const n = await downloadExcelBundle(files, candidate.full_name);
+      toast.success(`Rangkuman ${g.name} diunduh — ${n} file Excel skoring`);
     } catch (e: any) {
       toast.error(e?.message ?? "Gagal membuat rangkuman kandidat");
     } finally {
@@ -785,14 +813,14 @@ function ResultsBank() {
                         variant="default"
                         className="shrink-0"
                         disabled={summaryKey === g.key}
-                        title="Unduh rangkuman lengkap kandidat (PDF)"
+                        title="Unduh semua file Excel skoring kandidat dalam satu arsip ZIP"
                         onClick={(e) => {
                           e.stopPropagation();
                           void downloadSummary(g);
                         }}
                       >
                         <FileDown className="mr-1 h-3.5 w-3.5" />
-                        {summaryKey === g.key ? "Menyiapkan..." : "Rangkuman PDF"}
+                        {summaryKey === g.key ? "Menyiapkan..." : "Rangkuman (Excel)"}
                       </Button>
                       <Button
                         size="sm"

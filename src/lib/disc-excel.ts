@@ -1,3 +1,4 @@
+import { deliverXlsx } from "@/lib/xlsx-deliver";
 import JSZip from "jszip";
 import {
   type CellValue,
@@ -185,12 +186,7 @@ export async function exportDiscExcel(answers: DiscExcelAnswer[], meta: DiscExce
   });
 
   const safe = (meta.candidateName ?? "kandidat").replace(/[^\w\-]+/g, "_");
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `DISC_${safe}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-  a.click();
-  URL.revokeObjectURL(url);
+  deliverXlsx(blob, `DISC_${safe}_${new Date().toISOString().slice(0, 10)}.xlsx`);
 
   return { filled, total: 24, valid: filled === 24, neutralMost };
 }

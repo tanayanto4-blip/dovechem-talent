@@ -2,6 +2,7 @@ import JSZip from "jszip";
 import type { CandidateMeta } from "@/lib/candidate-meta";
 import { papiScore, papiSpecialCount } from "@/lib/papi-key";
 import templateAsset from "@/assets/papi-template.xlsx.asset.json";
+import { deliverXlsx } from "@/lib/xlsx-deliver";
 import {
   type CellValue,
   assertTemplateIntact,
@@ -141,12 +142,7 @@ export async function exportPapiExcel(picks: Record<number, string>, meta: PapiE
     compression: "DEFLATE",
   });
   const safe = (meta.candidateName ?? "kandidat").replace(/[^\w\-]+/g, "_");
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `PAPI_${safe}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-  a.click();
-  URL.revokeObjectURL(url);
+  deliverXlsx(blob, `PAPI_${safe}_${new Date().toISOString().slice(0, 10)}.xlsx`);
 
   return {
     answered: score.answered,

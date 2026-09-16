@@ -1,3 +1,4 @@
+import { deliverXlsx } from "@/lib/xlsx-deliver";
 import JSZip from "jszip";
 import templateAsset from "@/assets/resume-template.xlsx.asset.json";
 import { computeWptScore } from "@/lib/wpt-excel";
@@ -159,12 +160,7 @@ export async function exportResumeExcel(input: ResumeInput) {
     compression: "DEFLATE",
   });
   const safe = (c.full_name ?? "kandidat").replace(/[^\w\-]+/g, "_");
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `Resume_${safe}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-  a.click();
-  URL.revokeObjectURL(url);
+  deliverXlsx(blob, `Resume_${safe}_${new Date().toISOString().slice(0, 10)}.xlsx`);
 
   return { iq, colour, pauliTotal };
 }

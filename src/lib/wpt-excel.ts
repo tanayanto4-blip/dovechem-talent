@@ -1,3 +1,4 @@
+import { deliverXlsx } from "@/lib/xlsx-deliver";
 import ExcelJS from "exceljs";
 import { applyInlineBiodata, type CandidateMeta } from "@/lib/candidate-meta";
 import templateAsset from "@/assets/wpt-template.xlsx.asset.json";
@@ -207,12 +208,7 @@ export async function exportWptExcel(answers: WptExcelAnswer[], meta: WptExcelMe
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
   const safe = (meta.candidateName ?? "kandidat").replace(/[^\w\-]+/g, "_");
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `WPT_${safe}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-  a.click();
-  URL.revokeObjectURL(url);
+  deliverXlsx(blob, `WPT_${safe}_${new Date().toISOString().slice(0, 10)}.xlsx`);
 
   return { filled, total, iq, category, lastAnswered, valid: filled > 0 };
 }
