@@ -268,7 +268,7 @@ export class XlsxFormula {
         case "NOT":
           return !truthy(s(0));
         case "SUM":
-          return nums().reduce((a, b) => a + num(b), 0);
+          return nums().reduce<number>((a, b) => a + num(b), 0);
         case "AVERAGE": {
           const v = nums().map(num);
           return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0;
