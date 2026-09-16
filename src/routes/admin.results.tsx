@@ -104,6 +104,8 @@ function summarize(r: any) {
 
 /** Jumlah soal yang dikerjakan (jawaban tersimpan) dari total soal test. */
 function answeredOf(r: any) {
+  // Tes koran (Pauli) tidak dihitung per soal — selalu tampilkan 0.
+  if (r?.tests?.test_type === "pauli") return { answered: 0, total: null };
   const answered = Array.isArray(r?.test_answers) && r.test_answers[0]?.count != null
     ? Number(r.test_answers[0].count)
     : null;
