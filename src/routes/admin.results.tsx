@@ -518,9 +518,13 @@ function ResultsBank() {
   );
 
   const finished = rows.filter((r) => r.status === "finished");
-  const avg = finished.length
-    ? Math.round(finished.reduce((s, r) => s + Number(r.score ?? 0), 0) / finished.length)
-    : 0;
+  // Hanya kandidat yang benar-benar online (heartbeat < 30 detik)
+  const sedangMengerjakan = rows.filter((r: any) => {
+    if (r.status !== "in_progress") return false;
+    const seen = r.candidates?.candidate_codes?.last_seen_at;
+    const seenMs = seen ? new Date(seen).getTime() : 0;
+    return seenMs > 0 && Date.now() - seenMs < 30_000;
+  }).length;
 
   function exportCsv() {
     const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
@@ -592,7 +596,7 @@ function ResultsBank() {
           { label: "Kandidat", value: groups.length, icon: Users },
           { label: "Total Attempt", value: rows.length, icon: BarChart3 },
           { label: "Selesai", value: finished.length, icon: BarChart3 },
-          { label: "Rata-rata Skor", value: avg, icon: BarChart3 },
+          { label: "Sedang Mengerjakan", value: sedangMengerjakan, icon: BarChart3 },
         ].map((c) => (
           <Card key={c.label} className="shadow-card">
             <CardContent className="flex items-center justify-between p-5">
