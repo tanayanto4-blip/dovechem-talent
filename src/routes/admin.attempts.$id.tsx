@@ -14,7 +14,14 @@ import { exportDiscExcel } from "@/lib/disc-excel";
 import { exportPapiPdf } from "@/lib/papi-pdf";
 import { exportPapiExcel } from "@/lib/papi-excel";
 import { PauliResult } from "@/components/pauli-result";
-import { papiScore, PAPI_SCALE_LABEL, PAPI_TOP_ORDER, PAPI_BOTTOM_ORDER } from "@/lib/papi-key";
+import {
+  papiScore,
+  papiSpecialCount,
+  PAPI_SCALE_LABEL,
+  PAPI_SPECIAL_ITEMS,
+  PAPI_TOP_ORDER,
+  PAPI_BOTTOM_ORDER,
+} from "@/lib/papi-key";
 import { msdtScore, MSDT_STYLE_COLUMNS, MSDT_STYLE_LABEL } from "@/lib/msdt-key";
 import { rmibScore } from "@/lib/rmib-key";
 import { exportMsdtExcel } from "@/lib/msdt-excel";
@@ -366,6 +373,35 @@ function AttemptDetail() {
                 </div>
               </div>
             ))}
+            {(() => {
+              const sp = papiSpecialCount(papiPicks);
+              return (
+                <div className="rounded border bg-muted/30 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-xs font-semibold uppercase text-muted-foreground">
+                      Total jawaban A (panah atas) pada nomor khusus
+                    </div>
+                    <b className="text-lg text-primary">
+                      {sp.countA}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        {" "}
+                        / {sp.total}
+                      </span>
+                    </b>
+                  </div>
+                  <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                    Nomor yang dihitung: {PAPI_SPECIAL_ITEMS.join(", ")}. Jawaban B (panah bawah)
+                    tidak dihitung ({sp.countB} jawaban B
+                    {sp.unanswered.length ? `, ${sp.unanswered.length} belum dijawab` : ""}).
+                  </p>
+                  {sp.itemsA.length > 0 && (
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      Nomor dengan jawaban A: <b className="text-foreground">{sp.itemsA.join(", ")}</b>
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
             <p className="text-xs text-muted-foreground">
               Skala tertinggi: <b className="text-foreground">{papi.highest.join(", ") || "-"}</b>.
               Opsi A dihitung ke panah atas dan opsi B ke panah bawah sesuai lembar jawaban resmi

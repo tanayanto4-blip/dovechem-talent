@@ -60,6 +60,46 @@ export const PAPI_KEY: Record<number, { A: string; B: string }> = Object.fromEnt
   }),
 );
 
+/**
+ * Daftar nomor item khusus yang ditotal terpisah untuk skoring tambahan.
+ * Hanya jawaban "A" (panah atas) yang dihitung; "B" (panah bawah) diabaikan.
+ */
+export const PAPI_SPECIAL_ITEMS = [
+  1, 3, 8, 11, 12, 21, 22, 31, 32, 34, 35, 36, 37, 43, 44, 46, 48, 49, 50, 58, 59, 60, 63, 68, 69,
+  70, 79, 80, 90,
+] as const;
+
+export type PapiSpecialCount = {
+  /** Jumlah jawaban "A" pada nomor-nomor khusus. */
+  countA: number;
+  /** Jumlah jawaban "B" pada nomor-nomor khusus (tidak dihitung ke total). */
+  countB: number;
+  /** Nomor khusus yang belum dijawab. */
+  unanswered: number[];
+  /** Nomor khusus yang dijawab "A". */
+  itemsA: number[];
+  total: number;
+};
+
+export function papiSpecialCount(picks: Record<number, string>): PapiSpecialCount {
+  const itemsA: number[] = [];
+  const unanswered: number[] = [];
+  let countB = 0;
+  for (const n of PAPI_SPECIAL_ITEMS) {
+    const pick = (picks[n] ?? "").toUpperCase();
+    if (pick === "A") itemsA.push(n);
+    else if (pick === "B") countB++;
+    else unanswered.push(n);
+  }
+  return {
+    countA: itemsA.length,
+    countB,
+    unanswered,
+    itemsA,
+    total: PAPI_SPECIAL_ITEMS.length,
+  };
+}
+
 export type PapiScores = {
   scales: Record<string, number>;
   top: Record<string, number>;
