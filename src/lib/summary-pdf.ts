@@ -835,7 +835,9 @@ export function buildSummaryDoc(input: SummaryInput, data: SummaryData, logo: st
   ];
   let ix = M;
   iqCells.forEach((v, ci) => {
-    doc.setFillColor(...(ci === 2 ? YELLOW : ([255, 255, 255] as [number, number, number])));
+    const iqFill: [number, number, number] =
+      ci !== 2 ? [255, 255, 255] : iq == null ? YELLOW : iq >= IQ_MIN ? GREEN : RED;
+    doc.setFillColor(...iqFill);
     doc.rect(ix, sy, mw[ci], 20, "F");
     doc.setDrawColor(200, 210, 224);
     doc.rect(ix, sy, mw[ci], 20);
