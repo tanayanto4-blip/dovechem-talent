@@ -61,7 +61,12 @@ function findSheet(wb: ExcelJS.Workbook, name: string) {
 }
 
 /** Gabungkan beberapa sheet Excel menjadi satu dokumen PDF dan unduh. */
-export async function exportSheetsToPdf(specs: SheetSpec[], filename: string, subtitle?: string) {
+export async function exportSheetsToPdf(
+  specs: SheetSpec[],
+  filename: string,
+  subtitle?: string,
+  onDoc?: (doc: jsPDF) => void,
+) {
   const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
