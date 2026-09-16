@@ -126,7 +126,7 @@ export async function exportPapiExcel(picks: Record<number, string>, meta: PapiE
     if (sFile) {
       zip.file(
         summary.path,
-        patchSheet(await sFile.async("string"), summaryBiodata(meta), true),
+        patchSheet(await sFile.async("string"), summaryBiodata(meta, papiSpecialCount(picks).countA), true),
       );
     }
   }
