@@ -122,7 +122,10 @@ function ResultsBank() {
   });
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const { track, q, type, status } = search;
+  const track: CandidateType = search.track ?? "magang";
+  const q = search.q ?? "";
+  const type = search.type ?? "all";
+  const status = search.status ?? "all";
   // Perubahan filter menimpa entri riwayat (replace) supaya tombol Back
   // dari halaman detail langsung balik ke daftar ini, bukan ke filter lama.
   const patch = (p: Partial<ResultsSearch>) =>
