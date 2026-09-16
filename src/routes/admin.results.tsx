@@ -45,8 +45,23 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+type ResultsSearch = {
+  track?: CandidateType;
+  q?: string;
+  type?: string;
+  status?: string;
+};
+
 export const Route = createFileRoute("/admin/results")({
   component: ResultsBank,
+  // Filter disimpan di URL supaya saat buka detail hasil lalu kembali,
+  // posisi tetap di jalur (Magang/Karyawan) & kata kunci yang sama.
+  validateSearch: (search: Record<string, unknown>): ResultsSearch => ({
+    track: search.track === "karyawan" ? "karyawan" : "magang",
+    q: typeof search.q === "string" ? search.q : "",
+    type: typeof search.type === "string" ? search.type : "all",
+    status: typeof search.status === "string" ? search.status : "all",
+  }),
   head: () => ({
     meta: [
       { title: "Bank Data Hasil Psikotest | Dover Chemical HR" },
@@ -105,10 +120,20 @@ function ResultsBank() {
     queryKey: ["admin-all-attempts"],
     queryFn: () => fn({ data: { limit: 1000 } }),
   });
-  const [q, setQ] = useState("");
-  const [type, setType] = useState("all");
-  const [track, setTrack] = useState<CandidateType>("magang");
-  const [status, setStatus] = useState("all");
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const track: CandidateType = search.track ?? "magang";
+  const q = search.q ?? "";
+  const type = search.type ?? "all";
+  const status = search.status ?? "all";
+  // Perubahan filter menimpa entri riwayat (replace) supaya tombol Back
+  // dari halaman detail langsung balik ke daftar ini, bukan ke filter lama.
+  const patch = (p: Partial<ResultsSearch>) =>
+    navigate({ replace: true, search: (prev: ResultsSearch) => ({ ...prev, ...p }) });
+  const setQ = (v: string) => patch({ q: v });
+  const setType = (v: string) => patch({ type: v });
+  const setTrack = (v: CandidateType) => patch({ track: v });
+  const setStatus = (v: string) => patch({ status: v });
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const qc = useQueryClient();
   const deleteResultsFn = useServerFn(deleteCandidateResults);
