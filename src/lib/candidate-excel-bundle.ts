@@ -1,5 +1,6 @@
 import { withXlsxCapture, type CapturedXlsx } from "@/lib/xlsx-deliver";
 import { exportSheetsToPdf, type SheetSpec } from "@/lib/xlsx-to-pdf";
+import { PAPI_SCALES, drawDiscChart, drawPapiChart } from "@/lib/summary-charts";
 
 /**
  * Rangkuman kandidat: menjalankan seluruh exporter Excel skoring (Resume,
