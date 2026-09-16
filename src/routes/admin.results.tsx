@@ -824,7 +824,7 @@ function ResultsBank() {
                         }}
                       >
                         <FileDown className="mr-1 h-3.5 w-3.5" />
-                        {summaryKey === g.key ? "Menyiapkan..." : "Rangkuman (Excel)"}
+                        {summaryKey === g.key ? "Menyiapkan..." : "Rangkuman PDF"}
                       </Button>
                       <Button
                         size="sm"
