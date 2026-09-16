@@ -107,29 +107,36 @@ export async function exportSheetsToPdf(
         for (let c = c1; c <= c2; c++) if (!(r === r1 && c === c1)) covered.add(`${r}:${c}`);
     }
 
-    // Tinggi baris seragam agar muat satu halaman
+    // Tinggi baris nyaman dibaca; bila tidak muat, lanjut ke halaman berikutnya
     const headerH = 44;
-    const avail = pageH - margin * 2 - headerH;
-    const rowH = Math.max(8, Math.min(18, avail / lastRow));
-    const fontSize = Math.max(4.5, Math.min(8, rowH * 0.55));
+    const rowH = 15;
 
     if (!first) doc.addPage();
     first = false;
     printed++;
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.setTextColor(11, 61, 145);
-    doc.text(spec.title, margin, margin + 14);
-    if (subtitle) {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(90);
-      doc.text(subtitle, margin, margin + 28);
-    }
+    const drawHeader = () => {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(11, 61, 145);
+      doc.text(spec.title, margin, margin + 14);
+      if (subtitle) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(90);
+        doc.text(subtitle, margin, margin + 28);
+      }
+    };
+    drawHeader();
 
     let y = margin + headerH;
     for (let r = 1; r <= lastRow; r++) {
+      if (y + rowH > pageH - margin) {
+        doc.addPage();
+        printed++;
+        drawHeader();
+        y = margin + headerH;
+      }
       let x = margin;
       for (let c = 1; c <= lastCol; c++) {
         const w = colW[c - 1]!;
@@ -153,17 +160,28 @@ export async function exportSheetsToPdf(
         if (text) {
           const font = cell.font ?? {};
           doc.setFont("helvetica", font.bold ? "bold" : "normal");
-          doc.setFontSize(fontSize);
           const fc = argbToRgb(font.color?.argb) ?? [20, 20, 20];
           doc.setTextColor(fc[0], fc[1], fc[2]);
+
+          // Shrink-to-fit: kecilkan font sampai teks muat di lebar sel
+          let fs = 7.5;
+          doc.setFontSize(fs);
+          const maxW = cw - 4;
+          while (fs > 3.6 && doc.getTextWidth(text) > maxW) {
+            fs -= 0.3;
+            doc.setFontSize(fs);
+          }
+          const lines =
+            doc.getTextWidth(text) > maxW ? doc.splitTextToSize(text, maxW).slice(0, 2) : [text];
           const align = cell.alignment?.horizontal;
-          const padded = cw - 4;
-          const lines = doc.splitTextToSize(text, padded);
-          const line = String(lines[0] ?? "");
-          const ty = y + ch / 2 + fontSize * 0.35;
-          if (align === "center") doc.text(line, x + cw / 2, ty, { align: "center" });
-          else if (align === "right") doc.text(line, x + cw - 2, ty, { align: "right" });
-          else doc.text(line, x + 2, ty);
+          const startY =
+            y + ch / 2 - ((lines.length - 1) * (fs + 1)) / 2 + fs * 0.35;
+          lines.forEach((line: string, i: number) => {
+            const ty = startY + i * (fs + 1);
+            if (align === "center") doc.text(line, x + cw / 2, ty, { align: "center" });
+            else if (align === "right") doc.text(line, x + cw - 2, ty, { align: "right" });
+            else doc.text(line, x + 2, ty);
+          });
         }
 
         doc.setDrawColor(220);
@@ -174,6 +192,7 @@ export async function exportSheetsToPdf(
       y += rowH;
     }
   }
+
 
   if (!printed) throw new Error("Tidak ada lembar skoring yang bisa dicetak");
   if (onDoc) onDoc(doc);
