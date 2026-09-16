@@ -518,9 +518,13 @@ function ResultsBank() {
   );
 
   const finished = rows.filter((r) => r.status === "finished");
-  const avg = finished.length
-    ? Math.round(finished.reduce((s, r) => s + Number(r.score ?? 0), 0) / finished.length)
-    : 0;
+  // Hanya kandidat yang benar-benar online (heartbeat < 30 detik)
+  const sedangMengerjakan = rows.filter((r: any) => {
+    if (r.status !== "in_progress") return false;
+    const seen = r.candidates?.candidate_codes?.last_seen_at;
+    const seenMs = seen ? new Date(seen).getTime() : 0;
+    return seenMs > 0 && Date.now() - seenMs < 30_000;
+  }).length;
 
   function exportCsv() {
     const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
