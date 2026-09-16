@@ -813,7 +813,7 @@ function ResultsBank() {
                         </span>
                       </button>
                       <Button
-                        size="sm"
+                        title="Unduh rangkuman PDF dari file Excel skoring kandidat"
                         variant="default"
                         className="shrink-0"
                         disabled={summaryKey === g.key}
