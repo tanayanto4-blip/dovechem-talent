@@ -511,8 +511,8 @@ export function buildSummaryDoc(input: SummaryInput, data: SummaryData, logo: st
 
   // Relative importance (total jawaban A pada item khusus)
   const special = data.papiSpecial;
-  py += 10;
-  if (py + 40 > PH - 50) {
+  py += 6;
+  if (py + 46 > PH - 32) {
     doc.addPage("a4", "portrait");
     head("KEY BACKGROUND REVIEW — PAPI Kostick", testDate, PW);
     py = 90;
