@@ -12,6 +12,7 @@ import { exportMsdtExcel } from "@/lib/msdt-excel";
 import { exportDiscExcel } from "@/lib/disc-excel";
 import { exportResultSheetPdf } from "@/lib/result-sheet-pdf";
 import { exportResumeExcel } from "@/lib/resume-excel";
+import { exportCandidateSummaryPdf } from "@/lib/summary-pdf";
 import { computePauli } from "@/components/pauli-result";
 
 import { buildCandidateMeta } from "@/lib/candidate-meta";
@@ -417,6 +418,92 @@ function ResultsBank() {
     }
   }
 
+  const [summaryKey, setSummaryKey] = useState<string | null>(null);
+
+  /** Rangkuman kandidat (PDF) — Resume, PAPI, PAPI Chart, DISC, Summary MBTI/IQ. */
+  async function downloadSummary(g: Group) {
+    setSummaryKey(g.key);
+    try {
+      const byType = (t: string) => g.attempts.find((a) => a.tests?.test_type === t);
+      const papiA = byType("papi");
+      const discA = byType("disc");
+      const mbtiA = byType("mbti");
+      const wptA = byType("wpt");
+      const ishA = byType("ishihara");
+      const pauliA = byType("pauli");
+      const base = papiA ?? discA ?? mbtiA ?? wptA ?? ishA ?? pauliA ?? g.attempts[0];
+      if (!base) throw new Error("Belum ada hasil test untuk kandidat ini");
+
+      const baseDetail = await answerRows(base.id);
+      const cand = baseDetail.d.attempt?.candidates ?? {};
+      const detailFor = async (a: any) =>
+        a ? (a.id === base.id ? baseDetail : await answerRows(a.id)) : null;
+
+      const papiDetail = await detailFor(papiA);
+      let papiPicks: Record<number, string> | null = null;
+      if (papiDetail) {
+        papiPicks = {};
+        for (const qn of papiDetail.d.questions ?? []) {
+          const ans = String(papiDetail.map.get(qn.id)?.answer ?? "")
+            .trim()
+            .toUpperCase();
+          if (ans === "A" || ans === "B") papiPicks[qn.question_number] = ans;
+        }
+      }
+
+      const discAnswers = (await detailFor(discA))?.rows ?? null;
+      const mbtiAnswers = (await detailFor(mbtiA))?.rows ?? null;
+      const wptAnswers = (await detailFor(wptA))?.rows ?? null;
+
+      let pauliCorrect: number | null =
+        typeof pauliA?.result?.correct === "number" ? pauliA.result.correct : null;
+      if (pauliA) {
+        try {
+          const pd = await detailFor(pauliA);
+          const computed = computePauli(
+            (pd?.d.questions ?? []) as any,
+            (id: string) => pd?.map.get(id)?.answer as string | undefined,
+          );
+          if (computed.total > 0) pauliCorrect = computed.correct;
+        } catch {
+          /* pakai nilai tersimpan */
+        }
+      }
+
+      const testDate =
+        [papiA, discA, mbtiA, wptA, ishA, pauliA, base].find((a) => a?.finished_at)?.finished_at ??
+        base.started_at ??
+        null;
+
+      await exportCandidateSummaryPdf({
+        candidate: {
+          full_name: cand.full_name ?? g.name,
+          position_applied: cand.position_applied ?? g.position,
+          job_position: cand.job_position,
+          education: cand.education,
+          major: cand.major,
+          school_name: cand.school_name,
+          age: cand.age,
+          birth_date: cand.birth_date,
+          gender: cand.gender,
+          work_experience: cand.work_experience,
+        },
+        candidateCode: cand.candidate_codes?.code ?? cand.code_snapshot ?? g.code,
+        testDate,
+        papiPicks,
+        discAnswers,
+        mbtiAnswers,
+        wptAnswers,
+        ishihara: ishA?.result ?? null,
+        pauli: pauliCorrect != null ? { correct: pauliCorrect } : null,
+      });
+      toast.success(`Rangkuman ${g.name} diunduh`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Gagal membuat rangkuman kandidat");
+    } finally {
+      setSummaryKey(null);
+    }
+  }
 
 
   const [bulkKey, setBulkKey] = useState<string | null>(null);
@@ -693,6 +780,20 @@ function ResultsBank() {
                           </span>
                         </span>
                       </button>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="shrink-0"
+                        disabled={summaryKey === g.key}
+                        title="Unduh rangkuman lengkap kandidat (PDF)"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void downloadSummary(g);
+                        }}
+                      >
+                        <FileDown className="mr-1 h-3.5 w-3.5" />
+                        {summaryKey === g.key ? "Menyiapkan..." : "Rangkuman PDF"}
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
