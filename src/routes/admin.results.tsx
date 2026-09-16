@@ -12,7 +12,7 @@ import { exportMsdtExcel } from "@/lib/msdt-excel";
 import { exportDiscExcel } from "@/lib/disc-excel";
 import { exportResultSheetPdf } from "@/lib/result-sheet-pdf";
 import { exportResumeExcel } from "@/lib/resume-excel";
-import { exportCandidateSummaryPdf } from "@/lib/summary-pdf";
+import { buildCandidateExcelBundle, downloadExcelBundle } from "@/lib/candidate-excel-bundle";
 import { computePauli } from "@/components/pauli-result";
 
 import { buildCandidateMeta } from "@/lib/candidate-meta";
