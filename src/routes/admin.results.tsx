@@ -817,7 +817,7 @@ function ResultsBank() {
                         variant="default"
                         className="shrink-0"
                         disabled={summaryKey === g.key}
-                        title="Unduh semua file Excel skoring kandidat dalam satu arsip ZIP"
+                        
                         onClick={(e) => {
                           e.stopPropagation();
                           void downloadSummary(g);
