@@ -72,8 +72,10 @@ function fmtTanggal(v?: string | null) {
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-/** Biodata sheet "Summary": H7 usia, H8 pendidikan, H9 posisi, H10 tanggal. */
-function summaryBiodata(meta: PapiExcelMeta) {
+/** Biodata sheet "Summary": H7 usia, H8 pendidikan, H9 posisi, H10 tanggal.
+ *  G44 = total jawaban "A" pada nomor khusus (PAPI_SPECIAL_ITEMS); rumus
+ *  G42 (=C42-G44) dan E42 (=G42/C42) menghitung otomatis dari sel ini. */
+function summaryBiodata(meta: PapiExcelMeta, specialA: number) {
   const edu = [meta.education, meta.major]
     .map((v) => (v ?? "").toString().trim())
     .filter(Boolean)
