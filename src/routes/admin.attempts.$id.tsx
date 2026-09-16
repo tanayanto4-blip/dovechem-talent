@@ -366,6 +366,35 @@ function AttemptDetail() {
                 </div>
               </div>
             ))}
+            {(() => {
+              const sp = papiSpecialCount(papiPicks);
+              return (
+                <div className="rounded border bg-muted/30 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-xs font-semibold uppercase text-muted-foreground">
+                      Total jawaban A (panah atas) pada nomor khusus
+                    </div>
+                    <b className="text-lg text-primary">
+                      {sp.countA}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        {" "}
+                        / {sp.total}
+                      </span>
+                    </b>
+                  </div>
+                  <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                    Nomor yang dihitung: {PAPI_SPECIAL_ITEMS.join(", ")}. Jawaban B (panah bawah)
+                    tidak dihitung ({sp.countB} jawaban B
+                    {sp.unanswered.length ? `, ${sp.unanswered.length} belum dijawab` : ""}).
+                  </p>
+                  {sp.itemsA.length > 0 && (
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      Nomor dengan jawaban A: <b className="text-foreground">{sp.itemsA.join(", ")}</b>
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
             <p className="text-xs text-muted-foreground">
               Skala tertinggi: <b className="text-foreground">{papi.highest.join(", ") || "-"}</b>.
               Opsi A dihitung ke panah atas dan opsi B ke panah bawah sesuai lembar jawaban resmi
