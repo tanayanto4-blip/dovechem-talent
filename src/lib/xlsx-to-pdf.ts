@@ -171,6 +171,7 @@ export async function exportSheetsToPdf(specs: SheetSpec[], filename: string, su
   }
 
   if (!printed) throw new Error("Tidak ada lembar skoring yang bisa dicetak");
-  doc.save(filename);
+  if (onDoc) onDoc(doc);
+  else doc.save(filename);
   return printed;
 }
