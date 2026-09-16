@@ -138,11 +138,6 @@ export async function exportMbtiExcel(answers: MbtiExcelAnswer[], meta: MbtiExce
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
   const safe = (meta.candidateName ?? "kandidat").replace(/[^\w\-]+/g, "_");
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `MBTI_${safe}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-  a.click();
-  URL.revokeObjectURL(url);
+  deliverXlsx(blob, `MBTI_${safe}_${new Date().toISOString().slice(0, 10)}.xlsx`);
   return { filled, type: typeLetters.join(""), valid: allOk && filled === 60, scores };
 }
