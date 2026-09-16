@@ -55,9 +55,9 @@ function Dashboard() {
       icon: ClipboardCheck,
     },
     {
-      label: "Rata-rata Skor",
-      value: data?.avg_score ?? "-",
-      sub: "seluruh test",
+      label: "Sedang Mengerjakan",
+      value: data?.in_progress_attempts ?? "-",
+      sub: "kandidat aktif mengerjakan test",
       icon: TrendingUp,
     },
   ];
