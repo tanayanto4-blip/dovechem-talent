@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import { jsPDF } from "jspdf";
+import { XlsxFormula, type CellVal } from "./xlsx-formula";
 
 /**
  * Konversi lembar Excel hasil skoring menjadi halaman PDF.
@@ -73,9 +74,23 @@ export async function exportSheetsToPdf(
     const ws = findSheet(wb, spec.sheet);
     if (!ws) continue;
 
-    // Tentukan area terpakai
-    const lastCol = Math.min(spec.maxCols ?? MAX_COLS, Math.max(1, ws.actualColumnCount || 1));
-    const lastRow = Math.min(spec.maxRows ?? MAX_ROWS, Math.max(1, ws.actualRowCount || 1));
+    const calc = new XlsxFormula(wb);
+    const valueAt = (r: number, c: number) => calc.value(ws, r, c);
+
+    // Tentukan area terpakai: buang baris/kolom kosong di ujung
+    const capCol = Math.min(spec.maxCols ?? MAX_COLS, Math.max(1, ws.actualColumnCount || 1));
+    const capRow = Math.min(spec.maxRows ?? MAX_ROWS, Math.max(1, ws.actualRowCount || 1));
+    let lastCol = 1;
+    let lastRow = 1;
+    for (let r = 1; r <= capRow; r++)
+      for (let c = 1; c <= capCol; c++) {
+        const v = valueAt(r, c);
+        if (v !== null && v !== "") {
+          if (r > lastRow) lastRow = r;
+          if (c > lastCol) lastCol = c;
+        }
+      }
+    if (lastRow < 2 && lastCol < 2) continue; // sheet grafik/kosong dilewati
 
     // Kumpulkan sel dan lebar kolom
     const widths: number[] = [];
@@ -149,7 +164,7 @@ export async function exportSheetsToPdf(
           doc.rect(x, y, cw, ch, "F");
         }
 
-        const text = cellText(cell);
+        const text = fmtVal(valueAt(r, c) as CellVal, cell);
         if (text) {
           const font = cell.font ?? {};
           doc.setFont("helvetica", font.bold ? "bold" : "normal");
