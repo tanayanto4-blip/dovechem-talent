@@ -45,8 +45,23 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+type ResultsSearch = {
+  track?: CandidateType;
+  q?: string;
+  type?: string;
+  status?: string;
+};
+
 export const Route = createFileRoute("/admin/results")({
   component: ResultsBank,
+  // Filter disimpan di URL supaya saat buka detail hasil lalu kembali,
+  // posisi tetap di jalur (Magang/Karyawan) & kata kunci yang sama.
+  validateSearch: (search: Record<string, unknown>): ResultsSearch => ({
+    track: search.track === "karyawan" ? "karyawan" : "magang",
+    q: typeof search.q === "string" ? search.q : "",
+    type: typeof search.type === "string" ? search.type : "all",
+    status: typeof search.status === "string" ? search.status : "all",
+  }),
   head: () => ({
     meta: [
       { title: "Bank Data Hasil Psikotest | Dover Chemical HR" },
