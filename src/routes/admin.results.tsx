@@ -420,7 +420,8 @@ function ResultsBank() {
 
   const [summaryKey, setSummaryKey] = useState<string | null>(null);
 
-  /** Rangkuman kandidat (PDF) — Resume, PAPI, PAPI Chart, DISC, Summary MBTI/IQ. */
+  /** Rangkuman kandidat — seluruh file Excel skoring (Resume, PAPI, DISC, MBTI, WPT, Profiling)
+   *  digabung dalam satu arsip ZIP, isinya persis hasil template skoring tiap test. */
   async function downloadSummary(g: Group) {
     setSummaryKey(g.key);
     try {
