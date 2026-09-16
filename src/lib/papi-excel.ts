@@ -88,6 +88,7 @@ function summaryBiodata(meta: PapiExcelMeta, specialA: number) {
     ["H8", pendidikan],
     ["H9", (meta.position ?? "").toString().trim() || "-"],
     ["H10", fmtTanggal(meta.finishedAt)],
+    ["G44", specialA],
   ]);
 }
 
