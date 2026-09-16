@@ -211,12 +211,7 @@ export async function exportProfilingExcel(input: ProfilingInput) {
     compression: "DEFLATE",
   });
   const safe = (c.full_name ?? "kandidat").replace(/[^\w\-]+/g, "_");
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `Profiling_${safe}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-  a.click();
-  URL.revokeObjectURL(url);
+  deliverXlsx(blob, `Profiling_${safe}_${new Date().toISOString().slice(0, 10)}.xlsx`);
 
   return {
     iq,
