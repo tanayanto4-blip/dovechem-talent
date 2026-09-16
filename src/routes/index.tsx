@@ -467,17 +467,16 @@ function Home() {
                 <li className="flex items-start gap-2.5">
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-white/70" />
                   <span>
-                    Gedung Blugreen-Boutique Office, 3rd Floor, Suite BG-03 &amp; BC-03,
-                    Jl. Lingkar Luar Barat Kav. 88, Puri Kembangan, Jakarta 11610
+                    PT Dover Chemical Plant A. Jl. Raya Gerem / Merak No.KM.117, Gerem, Kec. Pulomerak, Kota Cilegon, Banten 42438
                   </span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Phone className="h-4 w-4 shrink-0 text-white/70" />
-                  <span>Tel: +62-21-2952 7180</span>
+                  <span>Tel: (021) 29527180</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Phone className="h-4 w-4 shrink-0 text-white/70" />
-                  <span>Fax: +62-21-2952 7183</span>
+                  <span>Fax: (021) 29527180</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Mail className="h-4 w-4 shrink-0 text-white/70" />
