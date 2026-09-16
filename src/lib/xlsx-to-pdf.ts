@@ -32,16 +32,9 @@ function argbToRgb(argb?: string): [number, number, number] | null {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
-function cellText(cell: ExcelJS.Cell): string {
-  const v: any = cell.value;
-  if (v == null) return "";
-  if (typeof v === "object") {
-    if ("result" in v) return v.result == null ? "" : String(v.result);
-    if ("richText" in v) return v.richText.map((r: any) => r.text).join("");
-    if ("text" in v) return String(v.text);
-    if (v instanceof Date) return v.toLocaleDateString("id-ID");
-    return "";
-  }
+function fmtVal(v: CellVal, cell: ExcelJS.Cell): string {
+  if (v == null || v === "") return "";
+  if (typeof v === "boolean") return v ? "TRUE" : "FALSE";
   if (typeof v === "number") {
     const fmt = String(cell.numFmt ?? "");
     if (fmt.includes("%")) return `${(v * 100).toFixed(fmt.includes("0.0") ? 1 : 0)}%`;
