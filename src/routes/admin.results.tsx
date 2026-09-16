@@ -596,7 +596,7 @@ function ResultsBank() {
           { label: "Kandidat", value: groups.length, icon: Users },
           { label: "Total Attempt", value: rows.length, icon: BarChart3 },
           { label: "Selesai", value: finished.length, icon: BarChart3 },
-          { label: "Rata-rata Skor", value: avg, icon: BarChart3 },
+          { label: "Sedang Mengerjakan", value: sedangMengerjakan, icon: BarChart3 },
         ].map((c) => (
           <Card key={c.label} className="shadow-card">
             <CardContent className="flex items-center justify-between p-5">
