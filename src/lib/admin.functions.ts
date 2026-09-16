@@ -1237,7 +1237,7 @@ export const listAllAttempts = createServerFn({ method: "POST" })
     } = await context.supabase
       .from("test_attempts")
       .select(
-        "id, status, score, result, started_at, finished_at, test_id, candidate_id, tests(id, code, name, test_type), candidates(id, full_name, position_applied, job_position, job_level, code_snapshot, candidate_codes(code, candidate_type))",
+        "id, status, score, result, started_at, finished_at, test_id, candidate_id, tests(id, code, name, test_type, test_questions(count)), candidates(id, full_name, position_applied, job_position, job_level, code_snapshot, candidate_codes(code, candidate_type)), test_answers(count)",
         { count: "exact" },
       )
       .order("finished_at", { ascending: false, nullsFirst: false })
