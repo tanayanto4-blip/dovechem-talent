@@ -26,7 +26,7 @@ export function PauliSheet({
   questions: PauliQuestion[];
   answers: Record<string, string>;
   onChange: (questionId: string, value: string) => void;
-  /** Tampilkan status deret/baris & petunjuk (hanya untuk halaman latihan). */
+  /** Tampilkan petunjuk (hanya untuk halaman latihan). */
   showGuide?: boolean;
 }) {
   // Cursor = posisi soal aktif (kolom + celah antar dua angka)
@@ -38,23 +38,6 @@ export function PauliSheet({
   const digits = useMemo(() => pauliDigits(q), [q]);
   const gaps = Math.max(digits.length - 1, 0);
   const chars = pauliNormalize(answers[q?.id], gaps);
-
-  const totalGaps = useMemo(
-    () => questions.reduce((s, item) => s + Math.max(pauliDigits(item).length - 1, 0), 0),
-    [questions],
-  );
-  // Memoize per-question filled counts so we only recompute the changed column.
-  const filledPerQuestion = useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const item of questions) {
-      map[item.id] = pauliFilledCount(answers[item.id]);
-    }
-    return map;
-  }, [questions, answers]);
-  const totalFilled = useMemo(
-    () => Object.values(filledPerQuestion).reduce((s, n) => s + n, 0),
-    [filledPerQuestion],
-  );
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -102,18 +85,6 @@ export function PauliSheet({
 
   return (
     <div className="space-y-4">
-      {showGuide && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 text-xs text-muted-foreground">
-          <span>
-            Deret <b className="text-foreground">{col + 1}</b>/{questions.length} · baris{" "}
-            <b className="text-foreground">{row + 1}</b>/{gaps}
-          </span>
-          <span>
-            Terisi <b className="text-foreground">{totalFilled}</b>/{totalGaps}
-          </span>
-        </div>
-      )}
-
       <div className="rounded-lg border bg-card p-8" onClick={() => inputRef.current?.focus()}>
         <div className="mx-auto flex w-max items-start gap-4">
           {/* kolom angka */}
