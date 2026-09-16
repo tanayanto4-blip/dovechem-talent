@@ -418,11 +418,7 @@ function ResultsBank() {
     }
   }
 
-  const [summaryKey, setSummaryKey] = useState<string | null>(null);
-
-  /** Rangkuman kandidat — seluruh file Excel skoring (Resume, PAPI, DISC, MBTI, WPT, Profiling)
-   *  digabung dalam satu arsip ZIP, isinya persis hasil template skoring tiap test. */
-  async function downloadSummary(g: Group) {
+  const [bulkKey, setBulkKey] = useState<string | null>(null);
     setSummaryKey(g.key);
     try {
       const byType = (t: string) => g.attempts.find((a) => a.tests?.test_type === t);
@@ -812,19 +808,6 @@ function ResultsBank() {
                           </span>
                         </span>
                       </button>
-                      <Button
-                        title="Unduh rangkuman PDF dari file Excel skoring kandidat"
-                        variant="default"
-                        className="shrink-0"
-                        disabled={summaryKey === g.key}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void downloadSummary(g);
-                        }}
-                      >
-                        <FileDown className="mr-1 h-3.5 w-3.5" />
-                        {summaryKey === g.key ? "Menyiapkan..." : "Rangkuman PDF"}
-                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
