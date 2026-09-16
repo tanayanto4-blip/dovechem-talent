@@ -20,6 +20,16 @@ export interface SheetSpec {
   /** Batas kolom/baris maksimum yang dicetak (opsional). */
   maxCols?: number;
   maxRows?: number;
+  /**
+   * Halaman grafik: digambar sendiri dari nilai sheet (grafik bawaan Excel
+   * berupa objek gambar yang tidak bisa disalin di browser).
+   */
+  custom?: (
+    doc: jsPDF,
+    area: { x: number; y: number; w: number; h: number },
+    ws: ExcelJS.Worksheet,
+    valueAt: (r: number, c: number) => CellVal,
+  ) => void;
 }
 
 const MAX_COLS = 24;
