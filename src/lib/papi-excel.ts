@@ -2,6 +2,7 @@ import JSZip from "jszip";
 import type { CandidateMeta } from "@/lib/candidate-meta";
 import { papiScore, papiSpecialCount } from "@/lib/papi-key";
 import templateAsset from "@/assets/papi-template.xlsx.asset.json";
+import { deliverXlsx } from "@/lib/xlsx-deliver";
 import {
   type CellValue,
   assertTemplateIntact,
