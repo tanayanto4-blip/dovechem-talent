@@ -12,7 +12,7 @@ import { exportMsdtExcel } from "@/lib/msdt-excel";
 import { exportDiscExcel } from "@/lib/disc-excel";
 import { exportResultSheetPdf } from "@/lib/result-sheet-pdf";
 import { exportResumeExcel } from "@/lib/resume-excel";
-import { buildCandidateExcelBundle, downloadExcelBundle } from "@/lib/candidate-excel-bundle";
+import { buildCandidateExcelBundle, downloadSummaryPdf } from "@/lib/candidate-excel-bundle";
 import { computePauli } from "@/components/pauli-result";
 
 import { buildCandidateMeta } from "@/lib/candidate-meta";
@@ -524,8 +524,12 @@ function ResultsBank() {
           pauli,
         });
       });
-      const n = await downloadExcelBundle(files, candidate.full_name);
-      toast.success(`Rangkuman ${g.name} diunduh — ${n} file Excel skoring`);
+      const n = await downloadSummaryPdf(
+        files,
+        candidate.full_name,
+        `${candidate.full_name} — ${candidate.position_applied ?? "-"}`,
+      );
+      toast.success(`Rangkuman PDF ${g.name} diunduh — ${n} halaman`);
     } catch (e: any) {
       toast.error(e?.message ?? "Gagal membuat rangkuman kandidat");
     } finally {
@@ -809,18 +813,17 @@ function ResultsBank() {
                         </span>
                       </button>
                       <Button
-                        size="sm"
+                        title="Unduh rangkuman PDF dari file Excel skoring kandidat"
                         variant="default"
                         className="shrink-0"
                         disabled={summaryKey === g.key}
-                        title="Unduh semua file Excel skoring kandidat dalam satu arsip ZIP"
                         onClick={(e) => {
                           e.stopPropagation();
                           void downloadSummary(g);
                         }}
                       >
                         <FileDown className="mr-1 h-3.5 w-3.5" />
-                        {summaryKey === g.key ? "Menyiapkan..." : "Rangkuman (Excel)"}
+                        {summaryKey === g.key ? "Menyiapkan..." : "Rangkuman PDF"}
                       </Button>
                       <Button
                         size="sm"
