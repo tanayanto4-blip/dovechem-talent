@@ -531,7 +531,7 @@ function ResultsBank() {
       "Test",
       "Tipe",
       "Status",
-      "Skor",
+      "Soal Dikerjakan",
       "Ringkasan",
       "Mulai",
       "Selesai",
@@ -539,6 +539,7 @@ function ResultsBank() {
     const lines = [header.map(esc).join(",")];
     groups.forEach((g, gi) => {
       g.attempts.forEach((r, ai) => {
+        const { answered } = answeredOf(r);
         lines.push(
           [
             gi + 1,
@@ -549,7 +550,7 @@ function ResultsBank() {
             r.tests?.name ?? "-",
             r.tests?.test_type ?? "-",
             r.status,
-            r.status === "finished" ? (r.score ?? "") : "",
+            answered ?? "",
             summarize(r),
             fmt(r.started_at),
             fmt(r.finished_at),
@@ -752,7 +753,7 @@ function ResultsBank() {
                               <th className="py-2 pr-2">Urutan</th>
                               <th className="py-2 pr-2">Test</th>
                               <th className="py-2 pr-2">Status</th>
-                              <th className="py-2 pr-2">Skor</th>
+                              <th className="py-2 pr-2">Soal Dikerjakan</th>
                               <th className="py-2 pr-2">Ringkasan</th>
                               <th className="py-2 pr-2">Mulai</th>
                               <th className="py-2 pr-2">Selesai</th>
@@ -780,7 +781,11 @@ function ResultsBank() {
                                     )}
                                   </td>
                                   <td className="py-2 pr-2 font-semibold text-primary">
-                                    {r.status === "finished" ? (r.score ?? "-") : "-"}
+                                    {(() => {
+                                      const { answered, total } = answeredOf(r);
+                                      if (answered == null) return "-";
+                                      return total != null ? `${answered} / ${total}` : `${answered}`;
+                                    })()}
                                   </td>
                                   <td className="py-2 pr-2 text-xs text-muted-foreground">
                                     {summarize(r)}
