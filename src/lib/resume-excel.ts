@@ -1,3 +1,4 @@
+import { deliverXlsx } from "@/lib/xlsx-deliver";
 import JSZip from "jszip";
 import templateAsset from "@/assets/resume-template.xlsx.asset.json";
 import { computeWptScore } from "@/lib/wpt-excel";

@@ -1,3 +1,4 @@
+import { deliverXlsx } from "@/lib/xlsx-deliver";
 import JSZip from "jszip";
 import templateAsset from "@/assets/profiling-template.xlsx.asset.json";
 import { computeMbtiScores } from "@/lib/mbti-excel";

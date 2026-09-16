@@ -1,3 +1,4 @@
+import { deliverXlsx } from "@/lib/xlsx-deliver";
 import ExcelJS from "exceljs";
 import { applyInlineBiodata, type CandidateMeta } from "@/lib/candidate-meta";
 import templateAsset from "@/assets/mbti-template.xlsx.asset.json";
