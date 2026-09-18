@@ -115,27 +115,42 @@ function DataForm() {
   const initialFormRef = useRef<Record<string, string> | null>(null);
   const lastSavedRef = useRef<Record<string, string> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initializedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (c) {
-      const init: Record<string, string> = {
-        full_name: c.full_name ?? "",
-        gender: c.gender ?? "",
-        age: c.age != null ? String(c.age) : "",
-        school_name: c.school_name ?? "",
-        education: c.education ?? "",
-        major: c.major ?? "",
-        work_experience: c.work_experience ?? "",
-        job_position: (c as any).job_position ?? "",
-        phone: c.phone ?? "",
-        email: c.email ?? "",
-        position_applied: c.position_applied ?? "",
-      };
-      setForm(init);
-      initialFormRef.current = init;
-      lastSavedRef.current = init;
+    if (!c) return;
+    const server: Record<string, string> = {
+      full_name: c.full_name ?? "",
+      gender: c.gender ?? "",
+      age: c.age != null ? String(c.age) : "",
+      school_name: c.school_name ?? "",
+      education: c.education ?? "",
+      major: c.major ?? "",
+      work_experience: c.work_experience ?? "",
+      job_position: (c as any).job_position ?? "",
+      phone: c.phone ?? "",
+      email: c.email ?? "",
+      position_applied: c.position_applied ?? "",
+    };
+    // Isi penuh hanya sekali per kandidat. Pada refetch berikutnya (fokus tab,
+    // realtime, autosave) jangan timpa isian yang sedang diketik/dipilih —
+    // hanya lengkapi field yang masih kosong di layar.
+    if (initializedIdRef.current !== c.id) {
+      initializedIdRef.current = c.id;
+      setForm(server);
+      initialFormRef.current = server;
+      lastSavedRef.current = server;
+      return;
     }
+    setForm((prev) => {
+      const merged = { ...prev };
+      for (const [k, v] of Object.entries(server)) {
+        if (!String(merged[k] ?? "").trim() && v) merged[k] = v;
+      }
+      return merged;
+    });
   }, [c]);
+
 
   const doAutosave = useCallback(
     async (currentForm: Record<string, string>) => {
