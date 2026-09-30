@@ -24,7 +24,7 @@ type TestType =
   | "papi"
   | "msdt"
   | "pauli"
-  | "ishihara";
+  | "ishihara"
   | "leadership";
 
 export interface TestQuestionCardProps {

@@ -16,7 +16,7 @@ export type PracticeTestType =
   | "pauli"
   | "kraepelin"
   | "ishihara"
-  | "rmib";
+  | "rmib"
   | "leadership";
 
 export type PracticeQuestion = {
