@@ -27,7 +27,15 @@ export async function exportLeadershipDocx(
   // question, HR/USER, scoring, drawing, or paragraph formatting nodes.
   const questionStarts = [7, 23, 36, 48, 61, 72, 85, 100, 112, 123];
   const questionEnds = [...questionStarts.slice(1), 138];
-  if (paragraphs.length < 141 || !textOf(paragraphs[7] ?? body).includes("nilai-nilai budaya perusahaan")) {
+  const expectedPrompts = [
+    "nilai-nilai budaya perusahaan", "pencapaian terbesar", "merancang system kerja",
+    "gaya management", "Jelaskan tentang diri anda", "kegagalan terbesar",
+    "menyelesaikan konflik", "sasaran jangka panjang", "rencana kerja anda selama 3 bulan",
+    "usulan aspek penilaian kinerja",
+  ];
+  if (paragraphs.length !== 143 || questionStarts.some((index, i) =>
+    !paragraphs[index] || !textOf(paragraphs[index]).includes(expectedPrompts[i]),
+  )) {
     throw new Error("Susunan formulir berubah; jawaban tidak dapat ditempatkan dengan aman.");
   }
 
@@ -59,6 +67,7 @@ export async function exportLeadershipDocx(
     const lines: string[] = [];
     for (const word of words) {
       const last = lines.length - 1;
+      if (word.length > 65) throw new Error(`Jawaban soal ${i + 1} memuat kata yang terlalu panjang.`);
       if (last >= 0 && `${lines[last]} ${word}`.length <= 65) lines[last] += ` ${word}`;
       else lines.push(word);
     }
