@@ -26,6 +26,7 @@ import { msdtScore, MSDT_STYLE_COLUMNS, MSDT_STYLE_LABEL } from "@/lib/msdt-key"
 import { rmibScore } from "@/lib/rmib-key";
 import { exportMsdtExcel } from "@/lib/msdt-excel";
 import { exportRmibExcel } from "@/lib/rmib-excel";
+import { exportLeadershipDocx } from "@/lib/leadership-docx";
 import { buildCandidateMeta } from "@/lib/candidate-meta";
 import { BackButton } from "@/components/back-button";
 import { toast } from "sonner";
@@ -75,6 +76,7 @@ function AttemptDetail() {
   const isPauli = t?.test_type === "pauli";
   const isMsdt = t?.test_type === "msdt";
   const isRmib = t?.test_type === "rmib";
+  const isLeadership = t?.test_type === "leadership";
   const candId = a.candidates?.id;
   const papiPicks: Record<number, string> = {};
   if (isPapi) {
@@ -111,6 +113,22 @@ function AttemptDetail() {
           label="Kembali"
         />
         <div className="flex gap-2">
+          {isLeadership && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  await exportLeadershipDocx(a.candidates ?? {}, data.questions as any[], answerMap);
+                  toast.success("Lembar jawaban Word diunduh");
+                } catch (error) {
+                  toast.error(error instanceof Error ? error.message : "Gagal mengunduh formulir");
+                }
+              }}
+            >
+              <FileDown className="mr-2 h-4 w-4" /> Unduh Formulir Asli
+            </Button>
+          )}
           {isMbti && a.result?.type && (
             <Button
               size="sm"
@@ -327,7 +345,9 @@ function AttemptDetail() {
             className={a.status === "finished" ? "bg-success" : ""}
             variant={a.status === "finished" ? "default" : "secondary"}
           >
-            {a.status === "finished" ? `Skor: ${a.score}` : "Belum selesai"}
+              {a.status === "finished"
+                ? isLeadership ? "Menunggu penilaian HR / user" : `Skor: ${a.score}`
+                : "Belum selesai"}
           </Badge>
         </div>
       </div>
@@ -507,7 +527,7 @@ function AttemptDetail() {
         />
       )}
 
-      {a.result && !isPapi && !isPauli && (
+       {a.result && !isPapi && !isPauli && !isLeadership && (
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle>Ringkasan Hasil</CardTitle>
@@ -621,8 +641,8 @@ function AttemptDetail() {
                       <div className="text-xs italic text-muted-foreground">Tidak dijawab</div>
                     )}
                     {ans && !opts.some((o: any) => o.key === ans.answer) && (
-                      <div className="rounded border bg-muted/40 p-2 text-xs">
-                        Jawaban: <b>{ans.answer}</b>
+                       <div className="whitespace-pre-wrap break-words rounded border bg-muted/40 p-2 text-xs">
+                         Jawaban: <b>{ans.answer}</b>
                       </div>
                     )}
                   </div>

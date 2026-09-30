@@ -10,3 +10,5 @@
 > the editor, so keep the branch in a working state.
 
 <!-- LOVABLE:END -->
+
+Basic Leadership Tahap 1 uses a senior-employee-only (`karyawan_spv`) free-text test and downloads answers into the unchanged uploaded DOCX by filling its reserved blank paragraphs; this preserves the employer's original assessment layout and HR/USER scoring spaces.

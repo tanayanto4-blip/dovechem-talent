@@ -9,6 +9,7 @@ const DISPLAY_NAMES: Record<string, string> = {
   disc: "Disc Test",
   papi: "Papikostik",
   ishihara: "Color Blindness",
+  leadership: "Basic Leadership Assessment — Tahap 1",
 };
 
 export function testDisplayName(test?: { name?: string | null; test_type?: string | null } | null) {

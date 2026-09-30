@@ -17,6 +17,7 @@ export type PracticeTestType =
   | "kraepelin"
   | "ishihara"
   | "rmib";
+  | "leadership";
 
 export type PracticeQuestion = {
   id: string;
@@ -69,6 +70,20 @@ const DEFAULT_SAMPLE: PracticeSample = {
 };
 
 const SAMPLES: Record<string, PracticeSample> = {
+  leadership: {
+    testType: "leadership",
+    instructions: [
+      "Jawab setiap pertanyaan berdasarkan pengalaman dan rencana kerja Anda sendiri.",
+      "Tulis jawaban pada kolom yang tersedia; jawaban disimpan otomatis.",
+      "Penilaian dilakukan oleh HR dan user setelah test selesai.",
+    ],
+    question: {
+      id: "sample-leadership",
+      question_number: 1,
+      question_text: "Ceritakan satu contoh saat Anda membantu tim mencapai target kerja.",
+    },
+    explanation: "Jawaban Anda akan ditinjau oleh HR dan user.",
+  },
   disc: {
     testType: "disc",
     instructions: [

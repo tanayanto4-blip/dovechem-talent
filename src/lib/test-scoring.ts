@@ -118,6 +118,10 @@ if (test.test_type === "mcq") {
     { percent: 0 },
   ])[0];
   result = { perDim, dominant, sums, counts };
+} else if (test.test_type === "leadership") {
+  const answered = answers.filter((a) => (a.answer ?? "").trim() !== "").length;
+  score = 0;
+  result = { requires_manual_review: true, answered, total: questions.length };
 } else if (test.test_type === "wpt") {
   // WPT: jawaban bebas — tidak ada auto-scoring; menunggu review manual HR.
   const answered = answers.filter((a) => (a.answer ?? "").trim() !== "").length;
