@@ -2,6 +2,8 @@
 const TYPE_TEMPLATES: Record<string, (name: string) => string> = {
   leadership: (n) =>
     `Selamat datang di ${n}. Jawablah seluruh pertanyaan berdasarkan pengalaman kepemimpinan Anda. Jawaban tersimpan otomatis dan akan ditinjau oleh HR dan user. Tekan tombol Mulai Test bila Anda sudah siap.`,
+  leadership_likert: (n) =>
+    `Selamat datang di ${n}. Terdapat tiga puluh pernyataan. Pilih satu jawaban pada setiap pernyataan, dari Strongly Agree sampai Strongly Disagree, sesuai keadaan diri Anda. Tidak ada jawaban benar atau salah. Jawaban tersimpan otomatis. Tekan tombol Mulai Test bila Anda sudah siap.`,
   disc: (n) =>
     `Selamat datang di ${n}. Anda akan melihat kelompok pernyataan. Pada setiap kelompok, pilih satu pernyataan yang PALING menggambarkan diri Anda pada kolom Most, dan satu yang PALING TIDAK menggambarkan diri Anda pada kolom Least. Tidak ada jawaban benar atau salah. Tekan tombol Mulai Test bila Anda sudah siap.`,
   eq: (n) =>

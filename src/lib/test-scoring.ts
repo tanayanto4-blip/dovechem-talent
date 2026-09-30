@@ -118,7 +118,7 @@ if (test.test_type === "mcq") {
     { percent: 0 },
   ])[0];
   result = { perDim, dominant, sums, counts };
-} else if (test.test_type === "leadership") {
+} else if (test.test_type === "leadership" || test.test_type === "leadership_likert") {
   const answered = answers.filter((a) => (a.answer ?? "").trim() !== "").length;
   score = 0;
   result = { requires_manual_review: true, answered, total: questions.length };

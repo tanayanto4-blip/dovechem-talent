@@ -31,6 +31,10 @@ import {
   exportLeadershipPart2Excel,
   LEADERSHIP_PART2_CODE,
 } from "@/lib/leadership-part2-excel";
+import {
+  exportLeadershipPart3Excel,
+  LEADERSHIP_PART3_CODE,
+} from "@/lib/leadership-part3-excel";
 import { buildCandidateMeta } from "@/lib/candidate-meta";
 import { BackButton } from "@/components/back-button";
 import { toast } from "sonner";
@@ -82,7 +86,8 @@ function AttemptDetail() {
   const isRmib = t?.test_type === "rmib";
   const isLeadership = t?.test_type === "leadership";
   const isLeadershipPart2 = t?.code === LEADERSHIP_PART2_CODE;
-  const isLeadershipPart1 = isLeadership && !isLeadershipPart2;
+  const isLeadershipPart3 = t?.code === LEADERSHIP_PART3_CODE;
+  const isLeadershipPart1 = isLeadership && !isLeadershipPart2 && !isLeadershipPart3;
   const candId = a.candidates?.id;
   const papiPicks: Record<number, string> = {};
   if (isPapi) {
@@ -157,6 +162,30 @@ function AttemptDetail() {
               }}
             >
               <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel Leadership Part II
+            </Button>
+          )}
+          {isLeadershipPart3 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const rows = (data.questions as any[]).map((q) => ({
+                    question_number: q.question_number,
+                    answer: answerMap.get(q.id)?.answer,
+                  }));
+                  const result = await exportLeadershipPart3Excel(rows, {
+                    ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
+                  });
+                  toast.success(
+                    `Excel Leadership Test 3 diunduh — ${result.answered}/${result.total} jawaban dicentang`,
+                  );
+                } catch (error) {
+                  toast.error(error instanceof Error ? error.message : "Gagal membuat file Excel");
+                }
+              }}
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel Leadership Test 3
             </Button>
           )}
           {isMbti && a.result?.type && (
@@ -557,7 +586,7 @@ function AttemptDetail() {
         />
       )}
 
-       {a.result && !isPapi && !isPauli && !isLeadership && (
+       {a.result && !isPapi && !isPauli && !isLeadership && !isLeadershipPart3 && (
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle>Ringkasan Hasil</CardTitle>
