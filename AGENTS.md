@@ -11,4 +11,4 @@
 
 <!-- LOVABLE:END -->
 
-Basic Leadership Tahap 1 uses a senior-employee-only (`karyawan_spv`) free-text test and downloads answers into the unchanged uploaded DOCX by filling its reserved blank paragraphs; this preserves the employer's original assessment layout and HR/USER scoring spaces.
+Leadership assessments use senior-employee-only (`karyawan_spv`) free-text tests; Part I fills reserved DOCX paragraphs and Part II patches only identity/answer cells in its XLSX, preserving each employer template and HR/USER scoring areas.

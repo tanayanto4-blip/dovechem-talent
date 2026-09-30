@@ -1,7 +1,7 @@
 /** Teks instruksi bawaan per jenis test — dipakai bila admin belum mengisi teks. */
 const TYPE_TEMPLATES: Record<string, (name: string) => string> = {
   leadership: (n) =>
-    `Selamat datang di ${n}. Jawablah sepuluh pertanyaan berdasarkan pengalaman kepemimpinan Anda. Jawaban tersimpan otomatis dan akan ditinjau oleh HR dan user. Tekan tombol Mulai Test bila Anda sudah siap.`,
+    `Selamat datang di ${n}. Jawablah seluruh pertanyaan berdasarkan pengalaman kepemimpinan Anda. Jawaban tersimpan otomatis dan akan ditinjau oleh HR dan user. Tekan tombol Mulai Test bila Anda sudah siap.`,
   disc: (n) =>
     `Selamat datang di ${n}. Anda akan melihat kelompok pernyataan. Pada setiap kelompok, pilih satu pernyataan yang PALING menggambarkan diri Anda pada kolom Most, dan satu yang PALING TIDAK menggambarkan diri Anda pada kolom Least. Tidak ada jawaban benar atau salah. Tekan tombol Mulai Test bila Anda sudah siap.`,
   eq: (n) =>

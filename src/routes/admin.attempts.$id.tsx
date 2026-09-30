@@ -27,6 +27,10 @@ import { rmibScore } from "@/lib/rmib-key";
 import { exportMsdtExcel } from "@/lib/msdt-excel";
 import { exportRmibExcel } from "@/lib/rmib-excel";
 import { exportLeadershipDocx } from "@/lib/leadership-docx";
+import {
+  exportLeadershipPart2Excel,
+  LEADERSHIP_PART2_CODE,
+} from "@/lib/leadership-part2-excel";
 import { buildCandidateMeta } from "@/lib/candidate-meta";
 import { BackButton } from "@/components/back-button";
 import { toast } from "sonner";
@@ -77,6 +81,8 @@ function AttemptDetail() {
   const isMsdt = t?.test_type === "msdt";
   const isRmib = t?.test_type === "rmib";
   const isLeadership = t?.test_type === "leadership";
+  const isLeadershipPart2 = t?.code === LEADERSHIP_PART2_CODE;
+  const isLeadershipPart1 = isLeadership && !isLeadershipPart2;
   const candId = a.candidates?.id;
   const papiPicks: Record<number, string> = {};
   if (isPapi) {
@@ -113,7 +119,7 @@ function AttemptDetail() {
           label="Kembali"
         />
         <div className="flex gap-2">
-          {isLeadership && (
+          {isLeadershipPart1 && (
             <Button
               size="sm"
               variant="outline"
@@ -127,6 +133,30 @@ function AttemptDetail() {
               }}
             >
               <FileDown className="mr-2 h-4 w-4" /> Unduh Formulir Asli
+            </Button>
+          )}
+          {isLeadershipPart2 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const rows = (data.questions as any[]).map((q) => ({
+                    question_number: q.question_number,
+                    answer: answerMap.get(q.id)?.answer,
+                  }));
+                  const result = await exportLeadershipPart2Excel(rows, {
+                    ...buildCandidateMeta(a.candidates, { finishedAt: a.finished_at }),
+                  });
+                  toast.success(
+                    `Excel Leadership Part II diunduh — ${result.answered}/${result.total} jawaban terisi`,
+                  );
+                } catch (error) {
+                  toast.error(error instanceof Error ? error.message : "Gagal membuat file Excel");
+                }
+              }}
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Ekspor Excel Leadership Part II
             </Button>
           )}
           {isMbti && a.result?.type && (
