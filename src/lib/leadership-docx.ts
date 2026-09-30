@@ -35,7 +35,13 @@ export async function exportLeadershipDocx(
   ];
   if (paragraphs.length !== 143 || questionStarts.some((index, i) =>
     !paragraphs[index] || !textOf(paragraphs[index]).includes(expectedPrompts[i]),
-  )) {
+  ) || questionStarts.some((index, i) => {
+    const id = questions.find((question) => question.question_number === i + 1)?.id;
+    const answer = id ? (answers.get(id)?.answer ?? "").trim() : "";
+    return !!answer && !paragraphs.slice(index + 1, questionEnds[i]).some((paragraph) =>
+      !textOf(paragraph).trim() && !paragraph.getElementsByTagNameNS(ns, "drawing").length,
+    );
+  })) {
     throw new Error("Susunan formulir berubah; jawaban tidak dapat ditempatkan dengan aman.");
   }
 
