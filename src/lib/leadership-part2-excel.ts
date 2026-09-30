@@ -21,15 +21,33 @@ export interface LeadershipPart2Answer {
   answer?: string | null;
 }
 
-function readCellText(xml: string, ref: string) {
-  const cell = xml.match(new RegExp(`<c\\b[^>]*\\br="${ref}"[^>]*>[\\s\\S]*?<\\/c>`))?.[0] ?? "";
-  return [...cell.matchAll(/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g)]
-    .map((match) => match[1])
-    .join("")
+function decodeXml(value: string) {
+  return value
     .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">");
+}
+
+function readSharedStrings(xml: string) {
+  return [...xml.matchAll(/<si(?:\s[^>]*)?>([\s\S]*?)<\/si>/g)].map((item) =>
+    [...item[1].matchAll(/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g)]
+      .map((part) => decodeXml(part[1]))
+      .join(""),
+  );
+}
+
+function readCellText(xml: string, ref: string, sharedStrings: string[]) {
+  const cell = xml.match(new RegExp(`<c\\b[^>]*\\br="${ref}"[^>]*>[\\s\\S]*?<\\/c>`))?.[0] ?? "";
+  if (/\bt="s"/.test(cell)) {
+    const index = Number(cell.match(/<v>(\d+)<\/v>/)?.[1]);
+    return Number.isInteger(index) ? (sharedStrings[index] ?? "") : "";
+  }
+  return [...cell.matchAll(/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g)]
+    .map((match) => match[1])
+    .join("")
+    .replace(/^([\s\S]*)$/, (_match, value: string) => decodeXml(value));
 }
 
 /** Fill only the identity and answer cells in the original Leadership Part II workbook. */
@@ -47,10 +65,16 @@ export async function buildLeadershipPart2Workbook(
   const sheetFile = zip.file(sheet.path);
   if (!sheetFile) throw new Error("Isi lembar TES 2 tidak dapat dibaca.");
   const original = await sheetFile.async("string");
+  const sharedFile = zip.file("xl/sharedStrings.xml");
+  const sharedStrings = sharedFile
+    ? readSharedStrings(await sharedFile.async("string"))
+    : [];
   const promptCells = ["C6", "C8", "C11", "C13", "C16", "C18"];
   const validTemplate =
-    readCellText(original, "B4").includes("TES LEADERSHIP PART - II") &&
-    promptCells.every((cell, index) => readCellText(original, cell).includes(EXPECTED_PROMPTS[index]));
+    readCellText(original, "B4", sharedStrings).includes("TES LEADERSHIP PART - II") &&
+    promptCells.every((cell, index) =>
+      readCellText(original, cell, sharedStrings).includes(EXPECTED_PROMPTS[index]),
+    );
   if (!validTemplate) {
     throw new Error("Susunan file Leadership Part II berubah; jawaban tidak dapat ditempatkan dengan aman.");
   }
