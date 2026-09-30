@@ -180,8 +180,8 @@ function TestDetail() {
                   </div>
                 </div>
               ) : (
-                <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
-                  Soal isian bebas — kandidat mengetik jawaban sendiri.
+                 <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+                   Soal isian bebas — kandidat mengetik jawaban sendiri.
                   {q.correct_answer ? (
                     <>
                       {" "}

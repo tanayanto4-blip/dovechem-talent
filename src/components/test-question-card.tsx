@@ -1,6 +1,7 @@
 import { memo, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { PauliQuestion } from "./pauli-sheet";
@@ -23,7 +24,8 @@ type TestType =
   | "papi"
   | "msdt"
   | "pauli"
-  | "ishihara";
+  | "ishihara"
+  | "leadership";
 
 export interface TestQuestionCardProps {
   q: Question;
@@ -92,6 +94,7 @@ export const TestQuestionCard = memo(function TestQuestionCard({
   const isPapi = testType === "papi" || testType === "msdt";
   const isKraepelin = testType === "kraepelin";
   const isIshihara = testType === "ishihara";
+  const isLeadership = testType === "leadership";
 
   return (
     <Card className="shadow-card">
@@ -123,7 +126,17 @@ export const TestQuestionCard = memo(function TestQuestionCard({
           />
         )}
 
-        {isIshihara ? (
+        {isLeadership ? (
+          <Textarea
+            value={answer}
+            onChange={(e) => handleText(e.target.value)}
+            maxLength={500}
+            rows={5}
+            className="mt-4 min-h-32 resize-y"
+            aria-label={`Jawaban soal ${index + 1}`}
+            placeholder="Tulis jawaban Anda"
+          />
+        ) : isIshihara ? (
           <div className="mt-3 space-y-3">
             {wptImage && (
               <figure className="w-full overflow-hidden rounded-md border bg-white p-2 sm:p-3">
