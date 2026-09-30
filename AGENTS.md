@@ -11,4 +11,4 @@
 
 <!-- LOVABLE:END -->
 
-Leadership assessments use senior-employee-only (`karyawan_spv`) free-text tests; Part I fills reserved DOCX paragraphs and Part II patches only identity/answer cells in its XLSX, preserving each employer template and HR/USER scoring areas.
+Leadership assessments are senior-employee-only (`karyawan_spv`): Parts I–II use free text, while Test 3 uses 30 five-choice items and patches only identity/checkmark cells in the original XLSX; every exporter preserves employer templates and HR/USER scoring areas.

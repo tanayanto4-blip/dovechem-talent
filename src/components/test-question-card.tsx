@@ -25,7 +25,8 @@ type TestType =
   | "msdt"
   | "pauli"
   | "ishihara"
-  | "leadership";
+  | "leadership"
+  | "leadership_likert";
 
 export interface TestQuestionCardProps {
   q: Question;
@@ -95,6 +96,7 @@ export const TestQuestionCard = memo(function TestQuestionCard({
   const isKraepelin = testType === "kraepelin";
   const isIshihara = testType === "ishihara";
   const isLeadership = testType === "leadership";
+  const isLeadershipLikert = testType === "leadership_likert";
 
   return (
     <Card className="shadow-card">
@@ -126,7 +128,27 @@ export const TestQuestionCard = memo(function TestQuestionCard({
           />
         )}
 
-        {isLeadership ? (
+        {isLeadershipLikert ? (
+          <RadioGroup
+            className="mt-4 grid gap-2 sm:grid-cols-5"
+            value={answer}
+            onValueChange={(value) => handleMcq(value)}
+          >
+            {(q.options ?? []).map((opt: any) => (
+              <label
+                key={opt.key}
+                className={`flex min-h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border p-3 text-center text-xs transition ${
+                  answer === opt.key
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-input bg-background text-muted-foreground hover:border-primary/40"
+                }`}
+              >
+                <RadioGroupItem value={opt.key} id={`${q.id}-${opt.key}`} />
+                <span className="leading-snug">{opt.label}</span>
+              </label>
+            ))}
+          </RadioGroup>
+        ) : isLeadership ? (
           <Textarea
             value={answer}
             onChange={(e) => handleText(e.target.value)}

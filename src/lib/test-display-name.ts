@@ -10,10 +10,12 @@ const DISPLAY_NAMES: Record<string, string> = {
   papi: "Papikostik",
   ishihara: "Color Blindness",
   leadership: "Basic Leadership Assessment — Tahap 1",
+  leadership_likert: "Leadership Assessment — Test 3",
 };
 
 const CODE_NAMES: Record<string, string> = {
   "BASIC-LEADERSHIP-2": "Leadership Assessment — Part II",
+  "BASIC-LEADERSHIP-3": "Leadership Assessment — Test 3",
 };
 
 export function testDisplayName(
