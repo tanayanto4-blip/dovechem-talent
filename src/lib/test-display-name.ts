@@ -12,7 +12,15 @@ const DISPLAY_NAMES: Record<string, string> = {
   leadership: "Basic Leadership Assessment — Tahap 1",
 };
 
-export function testDisplayName(test?: { name?: string | null; test_type?: string | null } | null) {
+const CODE_NAMES: Record<string, string> = {
+  "BASIC-LEADERSHIP-2": "Leadership Assessment — Part II",
+};
+
+export function testDisplayName(
+  test?: { code?: string | null; name?: string | null; test_type?: string | null } | null,
+) {
   if (!test) return "Test";
+  const codeName = CODE_NAMES[(test.code ?? "").toUpperCase()];
+  if (codeName) return codeName;
   return DISPLAY_NAMES[(test.test_type ?? "").toLowerCase()] ?? test.name ?? "Test";
 }
